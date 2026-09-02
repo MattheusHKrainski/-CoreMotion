@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #0B0D11;
+    --bg-card: #12151C;
+    --bg-card-elevated: #181C25;
+    --bg-panel: #1E232F;
+    --border-subtle: #232836;
+    --border-hover: #333A4D;
+    --accent-red: #EF4444;
+    --accent-red-dark: #DC2626;
+    --accent-red-subtle: rgba(239, 68, 68, 0.08);
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+  }
+
+  body {
+    background-color: #0B0D11;
+    color: #F8FAFC;
+    -webkit-font-smoothing: antialiased;
+    background-image: linear-gradient(to bottom, #0D0F15, #0B0D11);
+    background-attachment: fixed;
+  }
+}
+
+/* Minimalist sleek scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0D11;
+}
+::-webkit-scrollbar-thumb {
+  background: #232836;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #EF4444;
+}
+
+/* Minimalist clean cards */
+.sleek-card {
+  background: #12151C;
+  border: 1px solid #232836;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sleek-card:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 20px -4px rgba(239, 68, 68, 0.1);
+}
+
+
