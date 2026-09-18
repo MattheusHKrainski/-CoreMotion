@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { CoreMotiomProvider } from '@/lib/store';
+import { QueryProvider } from '@/components/providers/query-provider';
 
 export const metadata: Metadata = {
   title: 'CoreMotiom — Marketplace & Plataforma Esportiva',
@@ -21,9 +22,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className="scroll-smooth dark">
       <body className="min-h-screen bg-[#090A0D] text-[#F8FAFC] antialiased selection:bg-red-600 selection:text-white" suppressHydrationWarning>
-        <CoreMotiomProvider>
-          {children}
-        </CoreMotiomProvider>
+        <QueryProvider>
+          <CoreMotiomProvider>
+            {children}
+          </CoreMotiomProvider>
+        </QueryProvider>
       </body>
     </html>
   );
