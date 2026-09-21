@@ -1,0 +1,7 @@
+{
+  "name": "CoreMotiom",
+  "description": "Plataforma e marketplace esportivo de alta performance com lojas oficiais verificadas, venda entre atletas (C2C), custódia financeira e serviços esportivos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

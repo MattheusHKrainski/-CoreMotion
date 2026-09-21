@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #0B0C10;
+    --bg-card: #111319;
+    --bg-card-elevated: #181B24;
+    --bg-panel: #1F232F;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(239, 68, 68, 0.4);
+    --accent-red: #E50914;
+    --accent-red-dark: #DC2626;
+    --accent-red-subtle: rgba(229, 9, 20, 0.1);
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+  }
+
+  body {
+    background-color: #0B0C10;
+    color: #F8FAFC;
+    -webkit-font-smoothing: antialiased;
+    background-image: 
+      radial-gradient(circle at 50% 0%, #171A24 0%, #0B0C10 75%),
+      radial-gradient(circle at 100% 50%, rgba(229, 9, 20, 0.03) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+/* Minimalist sleek scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0C10;
+}
+::-webkit-scrollbar-thumb {
+  background: #272C3D;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E50914;
+}
+
+/* Hide scrollbar for clean horizontal pills */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
