@@ -1,4 +1,10 @@
+/* ============================================================================
+   CORE MOTIOM — ESTILOS GLOBAIS (Tailwind CSS v4)
+   Tokens de tema (dark + acento crimson), scrollbar e cards customizados.
+   ========================================================================== */
+
 @import "tailwindcss";
+@import "tw-animate-css"; /* utilitários animate-in/fade-in usados nos modais */
 
 @layer base {
   :root {

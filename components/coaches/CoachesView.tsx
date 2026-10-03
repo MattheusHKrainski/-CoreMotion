@@ -1,3 +1,9 @@
+// ============================================================================
+// CORE MOTIOM — TREINADORES (Assessorias esportivas)
+// Filtro por modalidade, cards com registro CREF e modal de agendamento
+// com planos (mensal, avulso e semestral).
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';

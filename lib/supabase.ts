@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — CLIENTE SUPABASE
+// Inicialização segura (sem crash sem credenciais) + schema SQL com RLS.
+// ============================================================================
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Read configuration from environment variables

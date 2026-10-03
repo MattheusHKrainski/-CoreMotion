@@ -1,23 +1,34 @@
+// ============================================================================
+// CORE MOTIOM — ROTEADOR DA APLICAÇÃO (SPA)
+// Página única que renderiza a view ativa + modais globais + toasts.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product } from '@/lib/types';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import HomeHeroAndHighlights from '@/components/HomeHeroAndHighlights';
-import MarketplaceView from '@/components/MarketplaceView';
-import StoresView from '@/components/StoresView';
-import SellC2CView from '@/components/SellC2CView';
-import SmartScanView from '@/components/SmartScanView';
-import CoachesView from '@/components/CoachesView';
-import CommunityView from '@/components/CommunityView';
-import AdminDashboard from '@/components/AdminDashboard';
-import AuthModal from '@/components/AuthModal';
-import SupabaseConfigModal from '@/components/SupabaseConfigModal';
-import CheckoutModal from '@/components/CheckoutModal';
-import CreateStoreModal from '@/components/CreateStoreModal';
-import ProductDetailModal from '@/components/ProductDetailModal';
+
+// ===== LAYOUT (Cabeçalho e Rodapé) =====
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+
+// ===== VIEWS PRINCIPAIS =====
+import HomeHeroAndHighlights from '@/components/home/HomeHeroAndHighlights';
+import MarketplaceView from '@/components/marketplace/MarketplaceView';
+import StoresView from '@/components/stores/StoresView';
+import SellC2CView from '@/components/sell/SellC2CView';
+import SmartScanView from '@/components/smartscan/SmartScanView';
+import CoachesView from '@/components/coaches/CoachesView';
+import CommunityView from '@/components/community/CommunityView';
+import AdminDashboard from '@/components/admin/AdminDashboard';
+
+// ===== MODAIS GLOBAIS =====
+import AuthModal from '@/components/auth/AuthModal';
+import SupabaseConfigModal from '@/components/config/SupabaseConfigModal';
+import CheckoutModal from '@/components/checkout/CheckoutModal';
+import CreateStoreModal from '@/components/stores/CreateStoreModal';
+import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
 export default function CoreMotiomApp() {

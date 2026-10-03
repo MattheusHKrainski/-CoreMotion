@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — CHECKOUT (Modal em 4 etapas)
+// Carrinho → Endereço de entrega → Pagamento (PIX/cartão/boleto) → Confirmação
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';
@@ -24,7 +29,6 @@ export default function CheckoutModal() {
     cart,
     updateCartQty,
     removeFromCart,
-    clearCart,
     user,
     createOrder,
     addToast,
@@ -93,7 +97,7 @@ export default function CheckoutModal() {
 
       setCompletedOrderId(order.id);
       setStep('success');
-      clearCart();
+      // Obs.: o carrinho já é limpo dentro de createOrder()
     } catch {
       // ignore
     } finally {

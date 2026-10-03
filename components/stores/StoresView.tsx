@@ -1,9 +1,15 @@
+// ============================================================================
+// CORE MOTIOM — LOJAS OFICIAIS (Diretório + página da loja)
+// Busca/filtro de lojas, página interna com catálogo próprio e
+// formulário de solicitação de selo verificado (CNPJ).
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Store, Product } from '@/lib/types';
-import ProductCard from './ProductCard';
+import ProductCard from '@/components/marketplace/ProductCard';
 import {
   Store as StoreIcon,
   ShieldCheck,

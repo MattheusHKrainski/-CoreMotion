@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — LAYOUT RAIZ (Next.js App Router)
+// Metadados SEO/OG + providers globais (React Query e Estado CoreMotiom).
+// ============================================================================
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { CoreMotiomProvider } from '@/lib/store';

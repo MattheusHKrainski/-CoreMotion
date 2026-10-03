@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — CONFIGURAÇÃO SUPABASE (Modal)
+// Instruções de conexão: variáveis de ambiente + script SQL (tabelas + RLS).
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';
@@ -30,9 +35,9 @@ export default function SupabaseConfigModal() {
   };
 
   const copyEnvTemplate = () => {
-    const envText = `DATABASE_URL=postgresql://postgres:processadorryzen5600gt@db.erpwfjdycdlygxwkdakv.supabase.co:5432/postgres
-NEXT_PUBLIC_SUPABASE_URL=https://erpwfjdycdlygxwkdakv.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_uy8UzRCshqZJKFWPglav9Q_KoF38-sq`;
+    const envText = `NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON_AQUI
+SUPABASE_SERVICE_ROLE_KEY=SUA_CHAVE_SERVICE_ROLE_AQUI`;
     navigator.clipboard.writeText(envText);
     setCopiedEnv(true);
     addToast('Variáveis Copiadas', 'Template de variáveis copiado para a área de transferência.', 'success');
@@ -104,9 +109,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_uy8UzRCshqZJKFWPglav9Q_KoF38-sq`;
               </button>
             </div>
             <pre className="p-3 bg-[#08090D] border border-[#232836] rounded-lg text-[#E5E7EB] font-mono text-[11px] overflow-x-auto">
-{`DATABASE_URL=postgresql://postgres:processadorryzen5600gt@db.erpwfjdycdlygxwkdakv.supabase.co:5432/postgres
-NEXT_PUBLIC_SUPABASE_URL=https://erpwfjdycdlygxwkdakv.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_uy8UzRCshqZJKFWPglav9Q_KoF38-sq`}
+{`NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON_AQUI
+SUPABASE_SERVICE_ROLE_KEY=SUA_CHAVE_SERVICE_ROLE_AQUI`}
             </pre>
           </div>
 

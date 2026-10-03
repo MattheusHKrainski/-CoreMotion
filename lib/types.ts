@@ -1,3 +1,12 @@
+// ============================================================================
+// CORE MOTIOM — MODELO DE DOMÍNIO (TypeScript)
+// Tipos compartilhados por toda a aplicação:
+//   usuários, produtos, lojas, pedidos, comunidade e conteúdo.
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// SEÇÃO: USUÁRIOS & PAPÉIS
+// ----------------------------------------------------------------------------
 export type UserRole = 'visitor' | 'user' | 'seller' | 'admin';
 
 export interface UserProfile {
@@ -14,6 +23,9 @@ export interface UserProfile {
   store_id?: string;
 }
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: PRODUTOS (B2C & C2C)
+// ----------------------------------------------------------------------------
 export type ProductCondition = 'novo' | 'como_novo' | 'usado_excelente' | 'usado_bom';
 
 export type ProductType = 'b2c' | 'c2c';
@@ -48,6 +60,9 @@ export interface Product {
   reviews_count?: number;
 }
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: LOJAS OFICIAIS & VERIFICAÇÃO
+// ----------------------------------------------------------------------------
 export interface Store {
   id: string;
   owner_id: string;
@@ -76,6 +91,9 @@ export interface Store {
   created_at: string;
 }
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: CARRINHO, PAGAMENTOS & PEDIDOS
+// ----------------------------------------------------------------------------
 export interface CartItem {
   product: Product;
   quantity: number;
@@ -120,6 +138,9 @@ export interface Order {
   created_at: string;
 }
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: COMUNIDADE
+// ----------------------------------------------------------------------------
 export interface CommunityPost {
   id: string;
   author_id: string;
@@ -144,6 +165,9 @@ export interface CommunityPost {
   created_at: string;
 }
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: TREINADORES, ATLETAS & CONTEÚDO (NOTÍCIAS)
+// ----------------------------------------------------------------------------
 export interface Coach {
   id: string;
   name: string;
@@ -184,26 +208,4 @@ export interface NewsArticle {
   published_at: string;
   read_time: string;
   author: string;
-}
-
-export interface SmartScanResult {
-  product_name: string;
-  brand: string;
-  category: string;
-  estimated_condition: ProductCondition;
-  estimated_market_value: {
-    min: number;
-    max: number;
-    recommended: number;
-  };
-  wear_level_percentage: number;
-  technical_specs: {
-    drop_mm?: string;
-    weight_g?: string;
-    cushioning?: string;
-    suitability?: string;
-  };
-  authenticity_score: number;
-  summary: string;
-  timestamp: string;
 }

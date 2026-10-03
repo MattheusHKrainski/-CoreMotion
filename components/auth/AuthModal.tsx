@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — AUTENTICAÇÃO (Modal)
+// Login, cadastro, recuperação de senha e perfis de demonstração.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';

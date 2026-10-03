@@ -1,5 +1,13 @@
+// ============================================================================
+// CORE MOTIOM — DADOS INICIAIS (SEED)
+// Dados de demonstração usados quando o app roda em modo local (sem Supabase).
+// ============================================================================
+
 import { Product, Store, Coach, Athlete, NewsArticle, CommunityPost } from './types';
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: LOJAS OFICIAIS
+// ----------------------------------------------------------------------------
 export const INITIAL_STORES: Store[] = [
   {
     id: 'store-1',
@@ -95,6 +103,9 @@ export const INITIAL_STORES: Store[] = [
   },
 ];
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: PRODUTOS (B2C e C2C)
+// ----------------------------------------------------------------------------
 export const INITIAL_PRODUCTS: Product[] = [
   // B2C Products (Official Stores)
   {
@@ -335,6 +346,9 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
 ];
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: TREINADORES
+// ----------------------------------------------------------------------------
 export const INITIAL_COACHES: Coach[] = [
   {
     id: 'coach-1',
@@ -386,6 +400,9 @@ export const INITIAL_COACHES: Coach[] = [
   },
 ];
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: ATLETAS PATROCINADOS
+// ----------------------------------------------------------------------------
 export const INITIAL_ATHLETES: Athlete[] = [
   {
     id: 'athlete-1',
@@ -421,6 +438,9 @@ export const INITIAL_ATHLETES: Athlete[] = [
   },
 ];
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: POSTS DA COMUNIDADE
+// ----------------------------------------------------------------------------
 export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: 'post-1',
@@ -476,6 +496,9 @@ export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
   }
 ];
 
+// ----------------------------------------------------------------------------
+// SEÇÃO: NOTÍCIAS / EDITORIAL
+// ----------------------------------------------------------------------------
 export const INITIAL_NEWS: NewsArticle[] = [
   {
     id: 'news-1',

@@ -1,3 +1,13 @@
+// ============================================================================
+// CORE MOTIOM — ESTADO GLOBAL DA APLICAÇÃO (React Context)
+// Responsável por TODO o estado compartilhado:
+//   - Navegação, modais e busca
+//   - Autenticação (Supabase + fallback local) e papéis (visitor/user/seller/admin)
+//   - Carrinho, pedidos e checkout (PIX sandbox)
+//   - Produtos, lojas e verificação oficial
+//   - Comunidade, favoritos e notificações (toasts)
+// ============================================================================
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -14,7 +24,6 @@ import {
   Coach,
   Athlete,
   NewsArticle,
-  SmartScanResult,
 } from './types';
 import {
   INITIAL_PRODUCTS,
@@ -26,6 +35,9 @@ import {
 } from './initial-data';
 import { getSupabase, isSupabaseConfigured } from './supabase';
 
+// ----------------------------------------------------------------------------
+// TIPOS: Views disponíveis, Toast e contrato do Contexto
+// ----------------------------------------------------------------------------
 interface Toast {
   id: string;
   title: string;
@@ -41,8 +53,6 @@ export type ActiveView =
   | 'smartscan'
   | 'coaches'
   | 'community'
-  | 'news'
-  | 'profile'
   | 'admin';
 
 interface CoreMotiomContextType {
@@ -124,9 +134,6 @@ interface CoreMotiomContextType {
   favorites: string[];
   toggleFavorite: (productId: string) => void;
 
-  // SmartScan
-  runSmartScan: (imageSrc: string) => Promise<SmartScanResult>;
-
   // Toasts
   toasts: Toast[];
   addToast: (title: string, message: string, type?: 'success' | 'error' | 'info') => void;
@@ -138,6 +145,9 @@ const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undef
 const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
 
 export function CoreMotiomProvider({ children }: { children: ReactNode }) {
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: ESTADO — Navegação, modais e busca
+  // ----------------------------------------------------------------------------
   // Navigation & views
   const [activeView, setActiveView] = useState<ActiveView>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -149,6 +159,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: INICIALIZAÇÃO PERSISTENTE (lê estado salvo no localStorage)
+  // ----------------------------------------------------------------------------
   // Helper for safe client state init
   const getInitialState = () => {
     if (typeof window === 'undefined') return null;
@@ -174,6 +187,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: TOASTS — Notificações visuais globais
+  // ----------------------------------------------------------------------------
   // Toast system
   const addToast = useCallback((title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -187,6 +203,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: SESSÃO SUPABASE — Restaura usuário logado ao carregar
+  // ----------------------------------------------------------------------------
   // Check Supabase connection
   useEffect(() => {
     if (isSupabaseConfigured) {
@@ -214,6 +233,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: PERSISTÊNCIA — Salva o estado no localStorage
+  // ----------------------------------------------------------------------------
   // Save to local storage
   const saveState = useCallback(() => {
     try {
@@ -236,6 +258,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     saveState();
   }, [saveState]);
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: PAPEIS & PERMISSÕES — Roles derivadas e troca de perfil demo
+  // ----------------------------------------------------------------------------
   // Derived Auth info
   const role: UserRole = user?.role || 'visitor';
   const isVisitor = !user || role === 'visitor';
@@ -295,6 +320,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     );
   }, [addToast]);
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: AUTENTICAÇÃO — Login, cadastro, Google OAuth e logout
+  // ----------------------------------------------------------------------------
   // Auth: Email Login
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     if (isSupabaseConfigured) {
@@ -444,6 +472,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Perfil Salvo', 'Suas informações foram atualizadas.', 'success');
   };
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: CARRINHO — Adicionar, remover, quantidades e totais
+  // ----------------------------------------------------------------------------
   // Cart operations
   const addToCart = (product: Product, quantity = 1, selected_size?: string) => {
     setCart((prev) => {
@@ -480,6 +511,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: FAVORITOS — Lista de desejos do usuário
+  // ----------------------------------------------------------------------------
   // Favorites
   const toggleFavorite = (productId: string) => {
     setFavorites((prev) => {
@@ -494,6 +528,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: PEDIDOS & CHECKOUT — Criação de pedido com PIX sandbox e frete
+  // ----------------------------------------------------------------------------
   // Checkout & Order creation
   const createOrder = async (data: {
     address: ShippingAddress;
@@ -553,6 +590,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Pagamento Confirmado (Sandbox)', `Pedido ${orderId} aprovado com sucesso!`, 'success');
   };
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: PRODUTOS — CRUD de anúncios (B2C e C2C)
+  // ----------------------------------------------------------------------------
   // Products CRUD
   const createProduct = async (
     productData: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>
@@ -580,6 +620,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Produto Removido', 'O anúncio foi excluído.', 'info');
   };
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: LOJAS & VERIFICAÇÃO OFICIAL — Criação, solicitação e aprovação (admin)
+  // ----------------------------------------------------------------------------
   // Stores & Verification
   const createStore = async (
     storeData: Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | 'products_count' | 'is_verified' | 'verification_status'>
@@ -653,6 +696,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: COMUNIDADE — Posts, likes, comentários, denúncias e moderação
+  // ----------------------------------------------------------------------------
   // Community
   const createCommunityPost = (post: {
     title: string;
@@ -719,58 +765,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Post Excluído', 'A publicação foi removida pelo Administrador.', 'info');
   };
 
-  // SmartScan gear recognition simulation
-  const runSmartScan = async (_imageSrc: string): Promise<SmartScanResult> => {
-    // Realistic AI Vision scan calculation
-    await new Promise((resolve) => setTimeout(resolve, 2200));
-
-    const sampleAnalyses: SmartScanResult[] = [
-      {
-        product_name: 'Nike Air Zoom Alphafly NEXT% 2',
-        brand: 'Nike Running',
-        category: 'Calçados',
-        estimated_condition: 'usado_excelente',
-        estimated_market_value: {
-          min: 850,
-          max: 1150,
-          recommended: 980,
-        },
-        wear_level_percentage: 12,
-        technical_specs: {
-          drop_mm: '8mm',
-          weight_g: '225g (Tam 41)',
-          cushioning: 'Espuma ZoomX + Dupla cápsula Zoom Air + Placa de Carbono',
-          suitability: 'Maratona, Meia Maratona, Ritmo de Competição',
-        },
-        authenticity_score: 98,
-        summary: 'Calçado autêntico identificado. Solado de borracha com desgaste mínimo nas ranhuras de tração. Entressola ZoomX com resiliência elástica preservada. Excelente para revenda C2C.',
-        timestamp: new Date().toISOString(),
-      },
-      {
-        product_name: 'Garmin Forerunner 965 GPS AMOLED',
-        brand: 'Garmin',
-        category: 'Tecnologia & Wearables',
-        estimated_condition: 'como_novo',
-        estimated_market_value: {
-          min: 3200,
-          max: 3800,
-          recommended: 3490,
-        },
-        wear_level_percentage: 4,
-        technical_specs: {
-          cushioning: 'Bisel em Titânio + Lente Corning Gorilla Glass DX',
-          weight_g: '53g',
-          suitability: 'Triatlo, Corrida Avançada, Treinamento de Potência',
-        },
-        authenticity_score: 99,
-        summary: 'Wearable premium detectado. Ausência de microfissuras na lente AMOLED. Sensor óptico de frequência cardíaca Elevate V4 sem opacidade.',
-        timestamp: new Date().toISOString(),
-      },
-    ];
-
-    const result = sampleAnalyses[Math.floor(Math.random() * sampleAnalyses.length)];
-    return result;
-  };
+  // ----------------------------------------------------------------------------
+  // SEÇÃO: PROVIDER & HOOK (exposição do contexto para os componentes)
+  // ----------------------------------------------------------------------------
 
   return (
     <CoreMotiomContext.Provider
@@ -833,7 +830,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         news,
         favorites,
         toggleFavorite,
-        runSmartScan,
         toasts,
         addToast,
         removeToast,

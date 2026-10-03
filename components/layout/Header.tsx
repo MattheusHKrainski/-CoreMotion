@@ -1,3 +1,9 @@
+// ============================================================================
+// CORE MOTIOM — HEADER (Cabeçalho global)
+// Barra superior + navegação desktop/mobile, busca, carrinho,
+// troca rápida de papel (demo) e indicador de status do Supabase.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';
@@ -41,6 +47,7 @@ export default function Header() {
     switchRole,
     isSupabaseLive,
     setSupabaseConfigOpen,
+    addToast,
   } = useCoreMotiom();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -207,7 +214,7 @@ export default function Header() {
                   setAuthModalMode('login');
                   setAuthModalOpen(true);
                 } else {
-                  setActiveView('profile');
+                  addToast('Favoritos', 'Sua lista de favoritos estará disponível em breve.', 'info');
                 }
               }}
               aria-label="Ver Favoritos"
@@ -291,7 +298,7 @@ export default function Header() {
 
                     <div className="py-1 text-xs">
                       <button
-                        onClick={() => { setActiveView('profile'); setIsUserMenuOpen(false); }}
+                        onClick={() => { addToast('Meu Perfil', 'Página de perfil e pedidos disponível em breve.', 'info'); setIsUserMenuOpen(false); }}
                         className="w-full text-left px-4 py-2 hover:bg-[#181C25] text-[#CBD5E1] flex items-center gap-2"
                       >
                         <User className="w-3.5 h-3.5 text-[#64748B]" />

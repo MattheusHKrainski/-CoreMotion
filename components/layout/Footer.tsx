@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — FOOTER (Rodapé global)
+// Pilares de valor, links de navegação e barra de copyright.
+// ============================================================================
+
 'use client';
 
 import React from 'react';

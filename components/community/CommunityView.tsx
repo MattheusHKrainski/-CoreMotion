@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — COMUNIDADE (Feed de atletas)
+// Criação de posts com categoria, likes, comentários e compartilhamento.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';

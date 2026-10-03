@@ -1,9 +1,14 @@
+// ============================================================================
+// CORE MOTIOM — HOME (Hero + destaques)
+// Hero institucional, destaques B2C, banner SmartScan e deals C2C recentes.
+// ============================================================================
+
 'use client';
 
 import React from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product } from '@/lib/types';
-import ProductCard from './ProductCard';
+import ProductCard from '@/components/marketplace/ProductCard';
 import {
   ShieldCheck,
   ArrowRight,

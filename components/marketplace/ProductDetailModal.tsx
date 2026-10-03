@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — DETALHE DO PRODUTO (Modal)
+// Galeria, seleção de tamanho, cálculo de frete por CEP e ações de compra.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';

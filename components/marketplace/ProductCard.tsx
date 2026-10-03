@@ -1,3 +1,9 @@
+// ============================================================================
+// CORE MOTIOM — CARD DE PRODUTO
+// Miniatura com badges (Oficial/C2C/condição), favorito, preço e CTAs
+// de compra rápida. Usado na Home, Marketplace e página de Loja.
+// ============================================================================
+
 'use client';
 
 import React from 'react';

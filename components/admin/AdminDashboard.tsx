@@ -1,3 +1,9 @@
+// ============================================================================
+// CORE MOTIOM — PAINEL ADMINISTRATIVO
+// KPIs do ecossistema, aprovação de lojas verificadas e moderação
+// de anúncios (produtos) e lojas.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';

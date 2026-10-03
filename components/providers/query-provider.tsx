@@ -1,3 +1,7 @@
+// ============================================================================
+// CORE MOTIOM — PROVIDER DO REACT QUERY
+// QueryClient único com staleTime de 60s e retry único.
+// ============================================================================
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

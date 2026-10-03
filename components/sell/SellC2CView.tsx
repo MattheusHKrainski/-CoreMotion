@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — VENDER C2C (Área do anunciante)
+// Abas: criar anúncio, meus anúncios, vendas (custódia) e rascunhos.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';
@@ -42,10 +47,8 @@ export default function SellC2CView() {
   const [shippingAvailable, setShippingAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  // My listings
-  const myListings = products.filter(
-    (p) => p.seller_id === user?.id || (user?.role === 'user' && p.product_type === 'c2c')
-  );
+  // Meus anúncios: apenas produtos de propriedade do usuário logado
+  const myListings = products.filter((p) => p.seller_id === user?.id);
 
   const handleAddImage = () => {
     if (imageUrl.trim() && !imageGallery.includes(imageUrl.trim())) {

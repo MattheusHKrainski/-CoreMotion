@@ -1,3 +1,8 @@
+// ============================================================================
+// CORE MOTIOM — CRIAR LOJA (Modal)
+// Cadastro da vitrine oficial: dados comerciais, contato e identidade visual.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';

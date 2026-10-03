@@ -1,3 +1,9 @@
+// ============================================================================
+// CORE MOTIOM — CONFIGURAÇÃO DO NEXT.JS
+// Strict mode, imagens remotas, output standalone e HMR desabilitado
+// no ambiente AI Studio (via DISABLE_HMR).
+// ============================================================================
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -20,7 +26,6 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
-  transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
     // Do not modifyâfile watching is disabled to prevent flickering during agent edits.

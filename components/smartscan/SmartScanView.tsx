@@ -1,3 +1,9 @@
+// ============================================================================
+// CORE MOTIOM — SMARTSCAN (Avaliação de desgaste)
+// Formulário técnico (modelo, km, peso, ritmo) → simulação de diagnóstico
+// com integridade da placa/espuma/solado e preço justo de mercado.
+// ============================================================================
+
 'use client';
 
 import React, { useState } from 'react';

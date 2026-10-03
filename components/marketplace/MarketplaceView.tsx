@@ -1,9 +1,15 @@
+// ============================================================================
+// CORE MOTIOM — MARKETPLACE (Catálogo)
+// Filtros combinados (busca, tipo B2C/C2C, categoria, esporte, condição),
+// ordenação e grid de produtos com estado vazio.
+// ============================================================================
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product, ProductCondition } from '@/lib/types';
-import ProductCard from './ProductCard';
+import ProductCard from '@/components/marketplace/ProductCard';
 import {
   ShoppingBag,
   Filter,
