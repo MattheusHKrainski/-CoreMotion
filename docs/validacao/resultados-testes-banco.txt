@@ -1,0 +1,125 @@
+# Resultados da suíte de testes de autorização do banco (database/tests)
+# Gerado em 2026-10-08 (UTC 14:27) com: npm test (esquema endurecido) e BASELINE=1 npm test (esquema inicial).
+# Ambiente: PGlite 0.3.2 (PostgreSQL em WebAssembly). A linha de base deve reprovar; o esquema endurecido deve aprovar 47 de 47.
+
+== ESQUEMA ENDURECIDO ==
+2026-10-08 14:27 UTC
+
+> coremotiom-db-tests@1.0.0 test
+> node rls.test.mjs
+
+
+Testes de autorização do banco (RLS, triggers e privilégios) — esquema endurecido
+
+PASS  Cadastro com metadado role=admin NÃO gera administrador                          
+PASS  Conta-mestre recebe papel admin no cadastro                                      
+PASS  E-mail com prefixo da conta-mestre NÃO recebe admin (comparação exata)           
+PASS  Atleta não se promove a admin pelo próprio perfil                                
+PASS  Atleta não troca o e-mail para o da conta-mestre                                 
+PASS  Atleta edita o próprio nome, mas não se suspende                                 
+PASS  Atleta não altera o perfil de outro usuário (RLS)                                
+PASS  Atleta enxerga somente o próprio perfil                                          
+PASS  Supervisor enxerga todos os perfis (moderação)                                   
+PASS  Supervisor suspende um atleta                                                    
+PASS  Supervisor NÃO suspende conta-mestre/administrador                               
+PASS  Supervisor NÃO altera papéis                                                     
+PASS  Supervisor NÃO exclui perfis                                                     
+PASS  Supervisor reativa atleta                                                        
+PASS  Anúncio com seller_id de outro é gravado em nome do autor (trigger)              
+PASS  Atleta publica anúncio C2C                                                       
+PASS  Atleta NÃO publica anúncio B2C (somente lojista)                                 
+PASS  Dono não se autossuspende (moderação é exclusiva de staff)                       
+PASS  Supervisor suspende anúncio                                                      
+PASS  Anônimo não vê anúncio suspenso                                                  
+PASS  Lojista cria loja sem se autoverificar                                           
+PASS  Lojista NÃO aprova a própria verificação                                         
+PASS  Lojista solicita verificação (pending)                                           
+PASS  Supervisor aprova a verificação da loja                                          
+PASS  Atleta não altera loja de terceiros (RLS)                                        
+PASS  Cliente não cria pedido já pago ou em custódia                                   
+PASS  Cliente não marca o próprio pedido como pago nem altera o total                  
+PASS  Cliente cancela pedido ainda não pago                                            
+PASS  Outro usuário não altera pedido alheio (RLS)                                     
+PASS  Supervisor confirma pagamento do pedido                                          
+PASS  Atleta publica na comunidade                                                     
+PASS  Outro atleta curte a publicação                                                  
+PASS  Outro atleta NÃO altera o conteúdo da publicação                                 
+PASS  Atleta denuncia a publicação                                                     
+PASS  Atleta não remove publicação alheia                                              
+PASS  Supervisor remove publicação denunciada                                          
+PASS  Conta suspensa não consegue publicar na comunidade                               
+PASS  Anônimo lê a vitrine de anúncios ativos                                          
+PASS  Anônimo NÃO lê perfis (e-mails protegidos)                                       
+PASS  Anônimo não escreve em products                                                  
+PASS  Autenticado não consegue TRUNCATE (RLS não cobre TRUNCATE)                       
+PASS  Atleta não exclui o próprio perfil (somente administrador)                       
+PASS  Administrador altera papel de atleta para supervisor                             
+PASS  Administrador suspende atleta                                                    
+PASS  Conta-mestre mantém privilégio de administrador mesmo com papel gravado diferente
+PASS  Administrador exclui perfil via RLS                                              
+PASS  Remoção de auth.users remove o perfil em cascata                                 
+
+Total: 47  Aprovados: 47  Reprovados: 0
+
+EXIT=0
+
+== LINHA DE BASE (BASELINE=1, esquema inicial) ==
+2026-10-08 14:27 UTC
+
+> coremotiom-db-tests@1.0.0 test
+> node rls.test.mjs
+
+
+Testes de autorização do banco (RLS, triggers e privilégios) — LINHA DE BASE (esquema inicial)
+
+FAIL  Cadastro com metadado role=admin NÃO gera administrador                          
+PASS  Conta-mestre recebe papel admin no cadastro                                      
+FAIL  E-mail com prefixo da conta-mestre NÃO recebe admin (comparação exata)           
+FAIL  Atleta não se promove a admin pelo próprio perfil                                
+PASS  Atleta não troca o e-mail para o da conta-mestre                                 
+FAIL  Atleta edita o próprio nome, mas não se suspende                                 
+FAIL  Atleta não altera o perfil de outro usuário (RLS)                                
+FAIL  Atleta enxerga somente o próprio perfil                                          
+PASS  Supervisor enxerga todos os perfis (moderação)                                   
+FAIL  Supervisor suspende um atleta                                                    
+FAIL  Supervisor NÃO suspende conta-mestre/administrador                               
+PASS  Supervisor NÃO altera papéis                                                     
+PASS  Supervisor NÃO exclui perfis                                                     
+FAIL  Supervisor reativa atleta                                                        
+FAIL  Anúncio com seller_id de outro é gravado em nome do autor (trigger)              
+PASS  Atleta publica anúncio C2C                                                       
+FAIL  Atleta NÃO publica anúncio B2C (somente lojista)                                 
+FAIL  Dono não se autossuspende (moderação é exclusiva de staff)                       
+PASS  Supervisor suspende anúncio                                                      
+PASS  Anônimo não vê anúncio suspenso                                                  
+FAIL  Lojista cria loja sem se autoverificar                                           
+FAIL  Lojista NÃO aprova a própria verificação                                         
+PASS  Lojista solicita verificação (pending)                                           
+FAIL  Supervisor aprova a verificação da loja                                          
+FAIL  Atleta não altera loja de terceiros (RLS)                                        
+FAIL  Cliente não cria pedido já pago ou em custódia                                   
+FAIL  Cliente não marca o próprio pedido como pago nem altera o total                  
+PASS  Cliente cancela pedido ainda não pago                                            
+FAIL  Outro usuário não altera pedido alheio (RLS)                                     
+PASS  Supervisor confirma pagamento do pedido                                          
+PASS  Atleta publica na comunidade                                                     
+FAIL  Outro atleta curte a publicação                                                  
+PASS  Outro atleta NÃO altera o conteúdo da publicação                                 
+FAIL  Atleta denuncia a publicação                                                     
+PASS  Atleta não remove publicação alheia                                              
+FAIL  Supervisor remove publicação denunciada                                          
+FAIL  Conta suspensa não consegue publicar na comunidade                               
+PASS  Anônimo lê a vitrine de anúncios ativos                                          
+FAIL  Anônimo NÃO lê perfis (e-mails protegidos)                                       
+FAIL  Anônimo não escreve em products                                                  
+FAIL  Autenticado não consegue TRUNCATE (RLS não cobre TRUNCATE)                       
+FAIL  Atleta não exclui o próprio perfil (somente administrador)                       
+FAIL  Administrador altera papel de atleta para supervisor                             
+FAIL  Administrador suspende atleta                                                    
+PASS  Conta-mestre mantém privilégio de administrador mesmo com papel gravado diferente
+PASS  Administrador exclui perfil via RLS                                              
+PASS  Remoção de auth.users remove o perfil em cascata                                 
+
+Total: 47  Aprovados: 18  Reprovados: 29
+
+EXIT_BASELINE=1

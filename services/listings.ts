@@ -1,5 +1,7 @@
 import { Product, ProductCondition } from '@/lib/types';
 import { INITIAL_PRODUCTS } from '@/lib/initial-data';
+import { authedFetch } from '@/lib/auth-fetch';
+import { isSupabaseConfigured } from './supabaseClient';
 
 export interface ListingFilters {
   category?: string;
@@ -52,25 +54,16 @@ export class ListingsService {
     listing: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count' | 'product_type'>,
     sellerId?: string
   ): Promise<Product> {
-    try {
-      const res = await fetch('/api/listings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...listing,
-          product_type: 'c2c',
-          seller_id: sellerId || listing.seller_id,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.listing) {
-          return data.listing as Product;
-        }
-      }
-    } catch (err) {
-      console.warn('[ListingsService] Create listing error:', err);
+    const res = await authedFetch('/api/listings', {
+      method: 'POST',
+      body: JSON.stringify({ ...listing, product_type: 'c2c', seller_id: sellerId || listing.seller_id }),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success && data.listing) {
+      return data.listing as Product;
+    }
+    if (isSupabaseConfigured) {
+      throw new Error(data?.error || 'Não foi possível publicar o anúncio.');
     }
 
     return {
@@ -89,7 +82,7 @@ export class ListingsService {
    */
   static async deleteListing(id: string): Promise<boolean> {
     try {
-      const res = await fetch(`/api/listings?id=${id}`, { method: 'DELETE' });
+      const res = await authedFetch(`/api/listings?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       return res.ok;
     } catch {
       return false;

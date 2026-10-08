@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useCoreMotiom, isUserAdmin } from '@/lib/store';
+import { useCoreMotiom } from '@/lib/store';
+import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import {
   Search,
   ShoppingBag,
@@ -56,7 +58,10 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
   // Check if current user has admin role or master admin email
-  const userIsAdmin = user?.role === 'admin' || isUserAdmin(user?.email);
+  // Papel vem sempre da conta autenticada (banco) ou do perfil de demonstração.
+  const userIsAdmin = user?.role === 'admin';
+  const userIsStaff = isStaffRole(user?.role);
+  const showDemoSwitcher = !isSupabaseConfigured;
 
   // Calculate cart subtotal
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
@@ -110,7 +115,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       description: 'Feed de Atletas',
       icon: Layers,
     },
-    ...(userIsAdmin
+    ...(userIsStaff
       ? [
           {
             id: 'admin' as const,
@@ -430,6 +435,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider ${
                   userIsAdmin
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    : role === 'supervisor'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : role === 'seller'
                     ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -438,21 +445,27 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 {userIsAdmin ? (
                   <>
                     <ShieldCheck className="w-2.5 h-2.5" />
-                    <span>Super Admin</span>
+                    <span>{ROLE_LABELS.admin}</span>
+                  </>
+                ) : role === 'supervisor' ? (
+                  <>
+                    <ShieldCheck className="w-2.5 h-2.5" />
+                    <span>{ROLE_LABELS.supervisor}</span>
                   </>
                 ) : role === 'seller' ? (
                   <>
                     <StoreIcon className="w-2.5 h-2.5" />
-                    <span>Lojista Oficial</span>
+                    <span>{ROLE_LABELS.seller}</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-2.5 h-2.5" />
-                    <span>Atleta Verificado</span>
+                    <span>{ROLE_LABELS.user}</span>
                   </>
                 )}
               </span>
 
+              {showDemoSwitcher && (
               <button
                 onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
                 className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
@@ -461,16 +474,17 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 <SlidersHorizontal className="w-3 h-3 text-red-400" />
                 <span>Modo</span>
               </button>
+              )}
             </div>
 
             {/* Quick Test Role Switcher Accordion */}
-            {showRoleSwitcher && (
+            {showDemoSwitcher && showRoleSwitcher && (
               <div className="pt-2 border-t border-zinc-800/80 animate-in fade-in duration-150">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                  Simulação de Papel
+                  Simulação de Papel (demonstração)
                 </div>
                 <div className="grid grid-cols-2 gap-1">
-                  {(['visitor', 'user', 'seller', 'admin'] as const).map((r) => (
+                  {(['visitor', 'user', 'seller', 'supervisor', 'admin'] as const).map((r) => (
                     <button
                       key={r}
                       onClick={() => {
@@ -483,7 +497,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                           : 'bg-zinc-800 text-zinc-400 hover:text-white'
                       }`}
                     >
-                      {r === 'visitor' ? 'Visitante' : r === 'user' ? 'Usuário' : r === 'seller' ? 'Lojista' : 'Admin'}
+                      {ROLE_LABELS[r]}
                     </button>
                   ))}
                 </div>

@@ -10,7 +10,8 @@
     "type-check": "tsc --noEmit",
     "types:supabase": "supabase gen types typescript --local > types/supabase.ts",
     "ci": "npm run lint && npm run type-check && npm run build",
-    "clean": "next clean"
+    "clean": "next clean",
+    "test:db": "npm test --prefix database/tests"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

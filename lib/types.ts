@@ -1,4 +1,4 @@
-export type UserRole = 'visitor' | 'user' | 'seller' | 'admin';
+export type UserRole = 'visitor' | 'user' | 'seller' | 'supervisor' | 'admin';
 
 export interface UserProfile {
   id: string;
@@ -89,7 +89,15 @@ export interface CartItem {
 
 export type PaymentMethod = 'pix' | 'credit_card' | 'boleto';
 
-export type OrderStatus = 'pending_payment' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled';
+/** Valores idênticos aos da coluna orders.order_status (migração SQL). */
+export type OrderStatus =
+  | 'pending_payment'
+  | 'escrow_locked'
+  | 'preparing'
+  | 'shipped'
+  | 'delivered'
+  | 'completed'
+  | 'cancelled';
 
 export interface ShippingAddress {
   recipient_name: string;
@@ -113,7 +121,8 @@ export interface Order {
   discount: number;
   total: number;
   payment_method: PaymentMethod;
-  payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
+  /** Valores idênticos aos da coluna orders.payment_status (migração SQL). */
+  payment_status: 'pending' | 'approved' | 'paid' | 'failed' | 'refunded' | 'cancelled';
   pix_code?: string;
   pix_qr_url?: string;
   pix_expires_at?: string;

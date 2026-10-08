@@ -1,21 +1,10 @@
 import { getSupabaseClient } from './supabaseClient';
 import { UserProfile, UserRole } from '@/lib/types';
 
-export const MASTER_ADMIN_EMAIL = 'mattheusxmljz@gmail.com';
-export const OPERACAO_ADMIN_EMAIL = 'operacaoamd@gmail.com';
+import { isMasterAdminEmail as isMasterAdmin } from '@/lib/permissions';
+import { authedFetch } from '@/lib/auth-fetch';
 
-/**
- * Checks if the email belongs to a master administrator.
- */
-export function isMasterAdmin(email?: string | null): boolean {
-  if (!email) return false;
-  const clean = email.trim().toLowerCase();
-  return (
-    clean === MASTER_ADMIN_EMAIL ||
-    clean === OPERACAO_ADMIN_EMAIL ||
-    clean.startsWith('mattheusxmljz')
-  );
-}
+export { isMasterAdmin };
 
 export interface AuthResponse<T = unknown> {
   success: boolean;
@@ -38,15 +27,12 @@ export async function syncSessionWithDb(
   }
 ): Promise<UserProfile> {
   try {
-    const res = await fetch('/api/auth/sync', {
+    // O servidor identifica o usuário pelo token e decide o papel; nada de papel vindo do cliente.
+    const res = await authedFetch('/api/auth/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        supabaseId,
-        email,
         name: metadata?.name,
         avatar: metadata?.avatar,
-        role: isMasterAdmin(email) ? 'admin' : metadata?.role || 'athlete',
         city: metadata?.city,
         sport: metadata?.sport,
       }),
@@ -63,7 +49,6 @@ export async function syncSessionWithDb(
   }
 
   // Resilient fallback profile
-  const isAdmin = isMasterAdmin(email) || metadata?.role === 'admin';
   return {
     id: supabaseId || String(Date.now()),
     supabase_id: supabaseId,
@@ -72,7 +57,7 @@ export async function syncSessionWithDb(
     avatar_url:
       metadata?.avatar ||
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-    role: isAdmin ? 'admin' : (metadata?.role as UserRole) || 'user',
+    role: isMasterAdmin(email) ? 'admin' : 'user',
     city: metadata?.city || 'São Paulo',
     state: 'SP',
     sport_interests: metadata?.sport ? [metadata.sport] : ['Corrida', 'Alta Performance'],
@@ -106,9 +91,7 @@ export class AuthService {
           supabaseId = data.user.id;
           userName = data.user.user_metadata?.name || userName;
           userAvatar = data.user.user_metadata?.avatar_url;
-          userRole = isMasterAdmin(cleanEmail)
-            ? 'admin'
-            : (data.user.user_metadata?.role as UserRole) || userRole;
+          userRole = isMasterAdmin(cleanEmail) ? 'admin' : 'user';
         } else if (error) {
           console.warn('[AuthService] Supabase Auth returned error:', error.message);
           // If Supabase credentials/network failed, proceed to database synchronization
@@ -144,7 +127,9 @@ export class AuthService {
   ): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
     const sb = getSupabaseClient();
-    const assignedRole: UserRole = isMasterAdmin(cleanEmail) ? 'admin' : requestedRole;
+    // Papel nunca é escolhido no cadastro: contas nascem como atleta (contas-mestre como admin).
+    const assignedRole: UserRole = isMasterAdmin(cleanEmail) ? 'admin' : 'user';
+    void requestedRole;
     let supabaseId = `usr_${Date.now()}`;
 
     // 1. Try Supabase Auth
@@ -194,7 +179,6 @@ export class AuthService {
     return syncSessionWithDb(userId, email, {
       name: fallbackData?.name,
       avatar: fallbackData?.avatar_url,
-      role: isMasterAdmin(email) ? 'admin' : fallbackData?.role,
       city: fallbackData?.city,
       sport: fallbackData?.sport_interests?.[0],
     });
@@ -205,16 +189,19 @@ export class AuthService {
    */
   static async updateProfile(userId: string, data: Partial<UserProfile>): Promise<boolean> {
     try {
-      const res = await fetch('/api/auth/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Papéis não são alteráveis por esta via: apenas dados de perfil do próprio usuário.
+      const res = await authedFetch('/api/users', {
+        method: 'PATCH',
         body: JSON.stringify({
-          supabase_id: userId,
-          name: data.name,
-          avatar: data.avatar_url,
-          city: data.city,
-          state: data.state,
-          role: data.role,
+          action: 'updateProfile',
+          userId,
+          updates: {
+            name: data.name,
+            avatar_url: data.avatar_url,
+            city: data.city,
+            state: data.state,
+            phone: data.phone,
+          },
         }),
       });
       return res.ok;
@@ -268,7 +255,7 @@ export class AuthService {
    */
   static async getAllUsers(): Promise<UserProfile[]> {
     try {
-      const res = await fetch('/api/auth/sync?all=true');
+      const res = await authedFetch('/api/users');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.users)) {

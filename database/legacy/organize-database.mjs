@@ -1,3 +1,9 @@
+// ============================================================================
+// ARQUIVO LEGADO — NÃO EXECUTAR EM PRODUÇÃO.
+// Este script remove tabelas (DROP TABLE ... CASCADE) e recria um esquema anterior
+// ao oficial. O esquema vigente está em supabase/migrations/ (ver database/README.md).
+// Mantido apenas para histórico do projeto.
+// ============================================================================
 import pg from 'pg';
 
 const { Client } = pg;

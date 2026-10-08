@@ -110,6 +110,28 @@ export class OrderService {
   /**
    * Admin: retrieves all platform orders for financial custody overview.
    */
+  /**
+   * Pedidos do próprio comprador. O filtro por user_id é uma camada extra: a RLS
+   * (orders_select) já restringe as linhas ao dono do pedido e ao staff.
+   */
+  static async getMyOrders(userId: string): Promise<Order[]> {
+    const sb = getSupabaseClient();
+    if (!sb || !userId) return [];
+
+    try {
+      const { data, error } = await sb
+        .from('orders')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error || !data) return [];
+      return data.map(this.mapDbOrderToModel);
+    } catch {
+      return [];
+    }
+  }
+
   static async getAllOrdersAdmin(): Promise<Order[]> {
     const sb = getSupabaseClient();
     if (!sb) return [];
@@ -150,6 +172,27 @@ export class OrderService {
       const message = err instanceof Error ? err.message : String(err);
       return { success: false, error: message };
     }
+  }
+
+  /**
+   * Atualização administrativa de status (RLS: somente administrador ou supervisor).
+   */
+  static async updateOrderStatus(
+    orderId: string,
+    orderStatus: OrderStatus,
+    paymentStatus?: Order['payment_status']
+  ): Promise<{ success: boolean; error?: string }> {
+    const sb = getSupabaseClient();
+    if (!sb) return { success: true };
+
+    const patch: Record<string, unknown> = {
+      order_status: orderStatus,
+      updated_at: new Date().toISOString(),
+    };
+    if (paymentStatus) patch.payment_status = paymentStatus;
+
+    const { error } = await sb.from('orders').update(patch).eq('id', orderId);
+    return error ? { success: false, error: error.message } : { success: true };
   }
 
   /**

@@ -25,6 +25,14 @@ import {
   INITIAL_USERS,
 } from './initial-data';
 import { getSupabase, isSupabaseConfigured } from './supabase';
+import { authedFetch } from './auth-fetch';
+import {
+  canDeleteTarget,
+  canSuspendTarget,
+  hasCapability,
+  isAdminRole,
+  isMasterAdminEmail,
+} from './permissions';
 import {
   AuthService,
   ProductService,
@@ -32,20 +40,11 @@ import {
   OrderService,
   CommunityService,
   testSupabaseConnection,
-  isMasterAdmin,
-  MASTER_ADMIN_EMAIL,
 } from '@/services';
 
-export const ADMIN_EMAILS = [
-  'mattheusxmljz@gmail.com',
-  'professorchines2026@gmail.com',
-  'operacaoamd@gmail.com',
-  'admin@coremotiom.com',
-];
-
+/** Compatibilidade: conta-mestre por e-mail exato. Papéis de gestão usam hasCapability(role, ...). */
 export function isUserAdmin(email?: string | null): boolean {
-  if (!email) return false;
-  return isMasterAdmin(email);
+  return isMasterAdminEmail(email);
 }
 
 interface Toast {
@@ -62,7 +61,6 @@ export type ActiveView =
   | 'sell'
   | 'coaches'
   | 'community'
-  | 'news'
   | 'profile'
   | 'admin';
 
@@ -97,7 +95,7 @@ interface CoreMotiomContextType {
   updateUserRole: (userId: string, newRole: UserRole) => void;
   adminCreateUser: (userData: { name: string; email: string; role: UserRole; city?: string; state?: string }) => void;
   adminDeleteUser: (userId: string) => void;
-  adminBanUser: (userId: string, reason?: string) => void;
+  adminBanUser: (userId: string, reason: string) => Promise<void>;
   adminUnbanUser: (userId: string) => void;
   adminUpdateOrderStatus: (orderId: string, order_status: Order['order_status'], payment_status?: Order['payment_status']) => void;
   adminToggleProductStatus: (productId: string, newStatus: Product['status']) => void;
@@ -222,7 +220,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
             const profile = await AuthService.getProfileOrCreate(u.id, email, {
               name: u.user_metadata?.name || u.user_metadata?.full_name || email.split('@')[0],
               avatar_url: u.user_metadata?.avatar_url,
-              role: isUserAdmin(email) ? 'admin' : 'user',
             });
             setUser(profile);
             setAllUsers((prev) => {
@@ -299,7 +296,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
             const profile = await AuthService.getProfileOrCreate(u.id, email, {
               name: u.user_metadata?.name || email.split('@')[0],
               avatar_url: u.user_metadata?.avatar_url,
-              role: isUserAdmin(email) ? 'admin' : (u.user_metadata?.role as UserRole) || 'user',
             });
             setUser(profile);
           }
@@ -314,7 +310,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
             const profile = await AuthService.getProfileOrCreate(u.id, email, {
               name: u.user_metadata?.name || email.split('@')[0],
               avatar_url: u.user_metadata?.avatar_url,
-              role: isUserAdmin(email) ? 'admin' : (u.user_metadata?.role as UserRole) || 'user',
             });
             setUser(profile);
           } else if (event === 'SIGNED_OUT' && isMounted) {
@@ -365,6 +360,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
   const switchRole = useCallback((newRole: UserRole) => {
+    if (isSupabaseConfigured) {
+      addToast('Simulação indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
+      return;
+    }
     if (newRole === 'visitor') {
       setUser(null);
       addToast('Modo Visitante', 'Você está navegando como visitante.', 'info');
@@ -395,6 +394,17 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         sport_interests: ['Alta Performance', 'Corrida'],
         created_at: '2026-01-10T08:00:00Z',
       },
+      supervisor: {
+        id: 'usr-supervisor-demo',
+        email: 'supervisor@coremotiom.com',
+        name: 'Supervisor de Moderação (demo)',
+        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+        role: 'supervisor',
+        city: 'São Paulo',
+        state: 'SP',
+        sport_interests: ['Corrida', 'Ciclismo'],
+        created_at: '2026-02-01T00:00:00Z',
+      },
       user: {
         id: 'user-c2c-1',
         email: 'carlos.ramos@atleta.com',
@@ -412,45 +422,64 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setUser(targetProfile);
     addToast(
       'Perfil Atualizado',
-      `Agora você está operando com permissões de ${newRole === 'admin' ? 'Super Administrador (mattheusxmljz@gmail.com)' : newRole === 'seller' ? 'Lojista' : 'Usuário Atleta'}.`,
+      `Agora você está operando com permissões de ${newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Lojista' : 'Atleta'}.`,
       'success'
     );
   }, [addToast]);
 
+  // ---------------------------------------------------------------------------
+  // Ações administrativas. Com o banco conectado, cada ação é gravada no servidor
+  // (que revalida o papel) ANTES de alterar a tela. Sem banco (modo demonstração),
+  // a alteração é somente local e isso é informado ao usuário.
+  // ---------------------------------------------------------------------------
+  const errorText = (err: unknown, fallback: string) =>
+    err instanceof Error && err.message ? err.message : fallback;
+
+  const callUsersApi = async (
+    method: 'PATCH' | 'DELETE',
+    payload: Record<string, unknown> = {},
+    query = ''
+  ): Promise<void> => {
+    const res = await authedFetch(`/api/users${query}`, {
+      method,
+      ...(method === 'PATCH' ? { body: JSON.stringify(payload) } : {}),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || 'Operação recusada pelo servidor.');
+    }
+  };
+
   const updateUserRole = useCallback(async (userId: string, newRole: UserRole) => {
-    if (!isUserAdmin(user?.email)) {
-      addToast(
-        'Acesso Negado',
-        'Apenas administradores credenciados têm permissão para gerenciar papéis de usuários.',
-        'error'
-      );
+    if (!hasCapability(user?.role, 'users.change_role')) {
+      addToast('Acesso Negado', 'Somente administradores podem alterar papéis de usuários.', 'error');
       return;
     }
-    setAllUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-    );
-    if (user && user.id === userId) {
-      setUser((prev) => (prev ? { ...prev, role: newRole } : null));
-    }
     try {
-      await fetch('/api/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'updateRole', userId, newRole }),
-      });
-      addToast('Permissão Atualizada', 'Nível de acesso alterado e sincronizado no banco de dados.', 'success');
-    } catch {
-      addToast('Aviso', 'Permissão alterada localmente (falha de sincronização de rede).', 'info');
+      if (isSupabaseConfigured) await callUsersApi('PATCH', { action: 'updateRole', userId, newRole });
+      setAllUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
+      if (user?.id === userId) setUser((prev) => (prev ? { ...prev, role: newRole } : null));
+      addToast(
+        'Permissão Atualizada',
+        isSupabaseConfigured ? 'Papel gravado no banco de dados.' : 'Papel alterado (modo demonstração, apenas local).',
+        'success'
+      );
+    } catch (err: unknown) {
+      addToast('Falha ao alterar papel', errorText(err, 'Não foi possível alterar o papel.'), 'error');
     }
   }, [user, addToast]);
 
   const adminCreateUser = useCallback(
     (userData: { name: string; email: string; role: UserRole; city?: string; state?: string }) => {
-      if (!isUserAdmin(user?.email)) {
+      if (!isAdminRole(user?.role)) {
+        addToast('Acesso Negado', 'Somente administradores podem cadastrar usuários.', 'error');
+        return;
+      }
+      if (isSupabaseConfigured) {
         addToast(
-          'Acesso Negado',
-          'Apenas administradores credenciados têm permissão para cadastrar usuários.',
-          'error'
+          'Cadastro indisponível',
+          'Com o banco conectado, as contas são criadas pelo próprio usuário na tela de cadastro (Supabase Auth).',
+          'info'
         );
         return;
       }
@@ -466,80 +495,42 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         created_at: new Date().toISOString(),
       };
       setAllUsers((prev) => [newUser, ...prev]);
-      addToast('Usuário Cadastrado', `Conta de ${userData.name} (${userData.email}) registrada com sucesso com papel ${userData.role}.`, 'success');
+      addToast('Usuário Cadastrado (demo)', `Conta de ${userData.name} criada apenas nesta sessão.`, 'success');
     },
     [user, addToast]
   );
 
   const adminDeleteUser = useCallback(
     async (userId: string) => {
-      if (!isUserAdmin(user?.email)) {
-        addToast(
-          'Acesso Negado',
-          'Apenas administradores credenciados têm permissão para excluir usuários.',
-          'error'
-        );
-        return;
-      }
       const target = allUsers.find((u) => u.id === userId);
-      if (target && isUserAdmin(target.email)) {
-        addToast('Operação Não Permitida', 'A conta de Administrador Master / Desenvolvedor não pode ser excluída.', 'error');
+      if (!canDeleteTarget(user?.role, target?.email)) {
+        addToast('Operação Não Permitida', 'Somente administradores podem excluir contas; contas-mestre são protegidas.', 'error');
         return;
       }
-
       try {
-        const res = await fetch(`/api/users?userId=${encodeURIComponent(userId)}`, {
-          method: 'DELETE',
-        });
-        const data = await res.json().catch(() => null);
-
-        if (res.ok && data?.success) {
-          setAllUsers((prev) => prev.filter((u) => u.id !== userId));
-          addToast('Usuário Excluído do Banco', 'A conta foi removida permanentemente da plataforma e do PostgreSQL.', 'success');
-        } else {
-          // Even if API returns warning, remove from state if appropriate
-          setAllUsers((prev) => prev.filter((u) => u.id !== userId));
-          addToast('Usuário Removido', data?.error || 'A conta foi removida da plataforma.', 'info');
-        }
-      } catch (err: unknown) {
+        if (isSupabaseConfigured) await callUsersApi('DELETE', {}, `?userId=${encodeURIComponent(userId)}`);
         setAllUsers((prev) => prev.filter((u) => u.id !== userId));
-        addToast('Usuário Removido', 'Conta removida localmente com aviso de conexão.', 'info');
+        addToast('Usuário Excluído', 'A conta foi removida da plataforma.', 'success');
+      } catch (err: unknown) {
+        addToast('Falha ao excluir', errorText(err, 'Não foi possível excluir a conta.'), 'error');
       }
     },
     [user, allUsers, addToast]
   );
 
   const adminBanUser = useCallback(
-    async (userId: string, reason?: string) => {
-      if (!isUserAdmin(user?.email)) {
-        addToast('Acesso Negado', 'Apenas administradores podem suspender ou banir contas.', 'error');
-        return;
-      }
+    async (userId: string, reason: string) => {
       const target = allUsers.find((u) => u.id === userId);
-      if (target && isUserAdmin(target.email)) {
-        addToast('Operação Não Permitida', 'Não é permitido suspender a conta de Super Administrador / Desenvolvedor.', 'error');
+      if (!target || !canSuspendTarget(user?.role, target.role, target.email)) {
+        addToast('Acesso Negado', 'Seu papel não pode suspender esta conta.', 'error');
         return;
       }
-
-      const banReason = reason || 'Violação das diretrizes e termos de uso da comunidade CoreMotiom';
-
-      setAllUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId
-            ? { ...u, is_banned: true, ban_reason: banReason }
-            : u
-        )
-      );
-
       try {
-        await fetch('/api/users', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'ban', userId, reason: banReason }),
-        });
-        addToast('Usuário Banido', 'A conta foi suspensa e o bloqueio gravado no banco de dados.', 'info');
-      } catch {
-        addToast('Usuário Suspenso', 'A conta foi suspensa localmente.', 'info');
+        if (isSupabaseConfigured) await callUsersApi('PATCH', { action: 'ban', userId, reason });
+        setAllUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_banned: true, ban_reason: reason } : u)));
+        addToast('Conta Suspensa', 'A suspensão foi aplicada e registrada.', 'info');
+      } catch (err: unknown) {
+        addToast('Falha ao suspender', errorText(err, 'Não foi possível suspender a conta.'), 'error');
       }
     },
     [user, allUsers, addToast]
@@ -547,62 +538,60 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   const adminUnbanUser = useCallback(
     async (userId: string) => {
-      if (!isUserAdmin(user?.email)) {
-        addToast('Acesso Negado', 'Apenas administradores podem reativar contas.', 'error');
+      const target = allUsers.find((u) => u.id === userId);
+      if (!target || !canSuspendTarget(user?.role, target.role, target.email)) {
+        addToast('Acesso Negado', 'Seu papel não pode reativar esta conta.', 'error');
         return;
       }
-      setAllUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId ? { ...u, is_banned: false, ban_reason: undefined } : u
-        )
-      );
-
       try {
-        await fetch('/api/users', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'unban', userId }),
-        });
-        addToast('Conta Reativada', 'A conta foi desbloqueada com sucesso no banco de dados.', 'success');
-      } catch {
+        if (isSupabaseConfigured) await callUsersApi('PATCH', { action: 'unban', userId });
+        setAllUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_banned: false, ban_reason: undefined } : u)));
         addToast('Conta Reativada', 'A conta foi desbloqueada.', 'success');
+      } catch (err: unknown) {
+        addToast('Falha ao reativar', errorText(err, 'Não foi possível reativar a conta.'), 'error');
       }
     },
-    [user, addToast]
+    [user, allUsers, addToast]
   );
 
   const adminUpdateOrderStatus = useCallback(
-    (orderId: string, order_status: Order['order_status'], payment_status?: Order['payment_status']) => {
-      if (!isUserAdmin(user?.email)) {
-        addToast('Acesso Negado', 'Apenas administradores podem alterar pedidos.', 'error');
+    async (orderId: string, order_status: Order['order_status'], payment_status?: Order['payment_status']) => {
+      if (!hasCapability(user?.role, 'orders.manage')) {
+        addToast('Acesso Negado', 'Seu papel não pode alterar pedidos.', 'error');
         return;
       }
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === orderId
-            ? {
-                ...o,
-                order_status,
-                payment_status: payment_status || o.payment_status,
-              }
-            : o
-        )
-      );
-      addToast('Pedido Atualizado', `Status do pedido ${orderId} atualizado para ${order_status}.`, 'success');
+      try {
+        if (isSupabaseConfigured) {
+          const result = await OrderService.updateOrderStatus(orderId, order_status, payment_status);
+          if (!result.success) throw new Error(result.error || 'Falha ao atualizar o pedido.');
+        }
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, order_status, payment_status: payment_status || o.payment_status } : o))
+        );
+        addToast('Pedido Atualizado', `Pedido ${orderId} agora está em "${order_status}".`, 'success');
+      } catch (err: unknown) {
+        addToast('Falha ao atualizar pedido', errorText(err, 'Não foi possível atualizar o pedido.'), 'error');
+      }
     },
     [user, addToast]
   );
 
   const adminToggleProductStatus = useCallback(
-    (productId: string, newStatus: Product['status']) => {
-      if (!isUserAdmin(user?.email)) {
-        addToast('Acesso Negado', 'Apenas administradores podem alterar produtos.', 'error');
+    async (productId: string, newStatus: Product['status']) => {
+      if (!hasCapability(user?.role, 'products.moderate')) {
+        addToast('Acesso Negado', 'Seu papel não pode moderar anúncios.', 'error');
         return;
       }
-      setProducts((prev) =>
-        prev.map((p) => (p.id === productId ? { ...p, status: newStatus } : p))
-      );
-      addToast('Catálogo Atualizado', `Status do produto alterado para "${newStatus}".`, 'success');
+      try {
+        if (isSupabaseConfigured) {
+          const ok = await ProductService.updateProduct(productId, { status: newStatus });
+          if (!ok) throw new Error('Falha ao atualizar o status do anúncio.');
+        }
+        setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, status: newStatus } : p)));
+        addToast('Catálogo Atualizado', `Anúncio agora está "${newStatus}".`, 'success');
+      } catch (err: unknown) {
+        addToast('Falha ao moderar anúncio', errorText(err, 'Não foi possível alterar o anúncio.'), 'error');
+      }
     },
     [user, addToast]
   );
@@ -632,13 +621,17 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   }, [addToast]);
 
   const loginAsMasterAdmin = useCallback(() => {
+    if (isSupabaseConfigured) {
+      addToast('Acesso indisponível', 'Entre com suas credenciais de administrador.', 'info');
+      return;
+    }
     const masterAdmin = INITIAL_USERS[0];
     setUser(masterAdmin);
     setAllUsers((prev) => {
       const exists = prev.some((u) => u.email.toLowerCase() === masterAdmin.email.toLowerCase());
       return exists ? prev : [masterAdmin, ...prev];
     });
-    addToast('Sessão Super Admin', 'Conectado como Administrador Master (mattheusxmljz@gmail.com).', 'success');
+    addToast('Sessão Super Admin', 'Conectado como Administrador (perfil de demonstração).', 'success');
   }, [addToast]);
 
   // Auth: Email Login
@@ -803,7 +796,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       discount: 0,
       total,
       payment_method: data.paymentMethod,
-      payment_status: data.paymentMethod === 'pix' ? 'pending' : 'completed',
+      payment_status: data.paymentMethod === 'pix' ? 'pending' : 'paid',
       pix_code: fallbackPix,
       pix_qr_url: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fallbackPix)}`,
       pix_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
@@ -826,7 +819,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         ord.id === orderId
           ? {
               ...ord,
-              payment_status: 'completed',
+              payment_status: 'paid',
               order_status: 'preparing',
             }
           : ord
@@ -869,7 +862,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const createStore = async (
     storeData: Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | 'products_count' | 'is_verified' | 'verification_status'>
   ): Promise<Store> => {
-    const res = await StoreService.createStore(storeData, user?.id);
+    const res = await StoreService.createStore(storeData);
     const newStore: Store = (res.success && res.data) ? res.data : {
       ...storeData,
       id: `store-${Date.now()}`,
@@ -911,10 +904,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   };
 
   const adminVerifyStore = async (storeId: string, approve: boolean, notes?: string) => {
-    if (!isUserAdmin(user?.email)) {
+    if (!hasCapability(user?.role, 'stores.verify')) {
       addToast(
         'Acesso Negado',
-        'Apenas a conta administradora (mattheusxmljz@gmail.com) tem permissão para homologar lojas.',
+        'Apenas administradores e supervisores podem homologar lojas.',
         'error'
       );
       return;
@@ -1016,15 +1009,33 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   };
 
   const reportCommunityPost = (postId: string, reason: string) => {
+    if (!user) {
+      addToast('Entre na sua conta', 'É preciso estar autenticado para denunciar uma publicação.', 'info');
+      return;
+    }
     setCommunityPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, is_reported: true, report_reason: reason } : p))
     );
-    addToast('Denúncia Registrada', 'O post foi encaminhado para moderação administrativa.', 'info');
+    CommunityService.reportPost(postId, reason).then((result) => {
+      if (!result.success) addToast('Denúncia não gravada', result.error || 'Tente novamente.', 'error');
+    });
+    addToast('Denúncia Registrada', 'A publicação foi encaminhada para moderação.', 'info');
   };
 
-  const adminDeleteCommunityPost = (postId: string) => {
+  const adminDeleteCommunityPost = async (postId: string) => {
+    if (!hasCapability(user?.role, 'community.moderate')) {
+      addToast('Acesso Negado', 'Seu papel não pode remover publicações.', 'error');
+      return;
+    }
+    if (isSupabaseConfigured) {
+      const result = await CommunityService.deletePost(postId);
+      if (!result.success) {
+        addToast('Falha ao excluir', result.error || 'Não foi possível excluir a publicação.', 'error');
+        return;
+      }
+    }
     setCommunityPosts((prev) => prev.filter((p) => p.id !== postId));
-    addToast('Post Excluído', 'A publicação foi removida pelo Administrador.', 'info');
+    addToast('Post Excluído', 'A publicação foi removida pela moderação.', 'info');
   };
 
   return (
