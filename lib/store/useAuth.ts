@@ -6,10 +6,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { UserProfile, UserRole } from '../types';
 import { getSupabase } from '../supabase';
 import { readPersistedState } from './persistence';
-import { ActiveView, AuthSlice, Toast } from './types';
+import { ActiveView, AuthResult, AuthSlice, Toast } from './types';
 
 const SUPABASE_NOT_CONFIGURED =
   'Supabase não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.';
@@ -18,6 +19,39 @@ interface UseAuthDeps {
   addToast: (title: string, message: string, type?: Toast['type']) => void;
   setActiveView: (view: ActiveView) => void;
   setAuthModalOpen: (open: boolean) => void;
+  setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch' | 'reset') => void;
+}
+
+// Converte o usuário do Supabase no perfil da aplicação
+function mapSupabaseUser(u: User): UserProfile {
+  return {
+    id: u.id,
+    email: u.email || '',
+    name: u.user_metadata?.name || u.email?.split('@')[0] || 'Atleta CoreMotiom',
+    avatar_url: u.user_metadata?.avatar_url,
+    role: (u.user_metadata?.role as UserRole) || 'user',
+    created_at: u.created_at,
+  };
+}
+
+// Traduz mensagens técnicas do GoTrue para português
+function translateAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+  if (m.includes('email not confirmed')) return 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
+  if (m.includes('already registered') || m.includes('already been registered')) return 'Este e-mail já está cadastrado.';
+  if (m.includes('password should be at least') || m.includes('password is too short') || m.includes('requires a valid password')) {
+    return 'A senha deve ter pelo menos 6 caracteres.';
+  }
+  if (m.includes('new password should be different')) return 'A nova senha deve ser diferente da atual.';
+  if (m.includes('invalid format') || m.includes('invalid email') || m.includes('unable to validate email')) return 'E-mail inválido.';
+  if (m.includes('user not found')) return 'E-mail não encontrado.';
+  if (m.includes('rate limit') || m.includes('too many request')) return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+  if (m.includes('database error saving new user')) return 'Erro ao criar a conta. Tente novamente em instantes.';
+  if (m.includes('signups not allowed') || m.includes('sign up is disabled')) return 'Cadastros temporariamente desativados.';
+  if (m.includes('unsupported provider')) return 'Este provedor de login não está habilitado no Supabase.';
+  if (m.includes('fetch') || m.includes('network')) return 'Falha de conexão com o servidor. Verifique sua internet.';
+  return message;
 }
 
 // `setUser` é usado internamente pelo provider (promoção de loja) e não
@@ -30,37 +64,36 @@ export type AuthSliceInternal = AuthSlice & {
    FATIA DE AUTENTICAÇÃO (SUPABASE)
 =========================================================== */
 
-export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDeps): AuthSliceInternal {
+export function useAuth(
+  { addToast, setActiveView, setAuthModalOpen, setAuthModalMode }: UseAuthDeps
+): AuthSliceInternal {
   const [user, setUser] = useState<UserProfile | null>(
     () => (readPersistedState()?.user as UserProfile | null) ?? null
   );
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
 
-  // Restaura a sessão Supabase ao carregar a aplicação
+  // Sessão Supabase: restaura no load e sincroniza login/logout/recuperação
   useEffect(() => {
     const sb = getSupabase();
     if (!sb) return;
-    sb.auth
-      .getSession()
-      .then(({ data, error }) => {
-        if (error) return;
-        setIsSupabaseLive(true);
-        if (data.session?.user) {
-          const u = data.session.user;
-          setUser({
-            id: u.id,
-            email: u.email || '',
-            name: u.user_metadata?.name || u.email?.split('@')[0] || 'Atleta CoreMotiom',
-            avatar_url: u.user_metadata?.avatar_url,
-            role: (u.user_metadata?.role as UserRole) || 'user',
-            created_at: u.created_at,
-          });
-        }
-      })
-      .catch(() => {
-        setIsSupabaseLive(false);
-      });
-  }, []);
+    const {
+      data: { subscription },
+    } = sb.auth.onAuthStateChange((event, session) => {
+      setIsSupabaseLive(true);
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        return;
+      }
+      if (event === 'PASSWORD_RECOVERY') {
+        setAuthModalMode('reset');
+        setAuthModalOpen(true);
+      }
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [setAuthModalOpen, setAuthModalMode]);
 
   // Papéis derivados
   const role: UserRole = user?.role || 'visitor';
@@ -72,23 +105,15 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
   =========================================================== */
 
   // Auth: Login com e-mail (Supabase)
-  const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+  const loginWithEmail = async (email: string, pass: string): Promise<AuthResult> => {
     const sb = getSupabase();
     if (!sb) return { success: false, error: SUPABASE_NOT_CONFIGURED };
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: translateAuthError(error.message) };
     if (!data.user) return { success: false, error: 'Falha na autenticação.' };
 
-    const u = data.user;
-    const userProfile: UserProfile = {
-      id: u.id,
-      email: u.email || email,
-      name: u.user_metadata?.name || email.split('@')[0],
-      avatar_url: u.user_metadata?.avatar_url,
-      role: (u.user_metadata?.role as UserRole) || 'user',
-      created_at: u.created_at,
-    };
+    const userProfile = mapSupabaseUser(data.user);
     setUser(userProfile);
     addToast('Login Concluído', `Bem-vindo de volta, ${userProfile.name}!`, 'success');
     setAuthModalOpen(false);
@@ -105,7 +130,7 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     pass: string,
     name: string,
     desiredRole: UserRole = 'user'
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<AuthResult> => {
     const sb = getSupabase();
     if (!sb) return { success: false, error: SUPABASE_NOT_CONFIGURED };
 
@@ -116,17 +141,18 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
         data: { name, role: desiredRole },
       },
     });
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: translateAuthError(error.message) };
     if (!data.user) return { success: false, error: 'Falha ao criar a conta.' };
 
-    const newUser: UserProfile = {
-      id: data.user.id,
-      email,
-      name,
-      role: desiredRole,
-      created_at: new Date().toISOString(),
-    };
-    setUser(newUser);
+    // Projeto exige confirmação de e-mail: ainda não existe sessão
+    if (!data.session) {
+      return {
+        success: false,
+        info: 'Conta criada! Enviamos um link de confirmação para o seu e-mail. Confirme o cadastro e faça login.',
+      };
+    }
+
+    setUser(mapSupabaseUser(data.user));
     addToast('Conta Criada', 'Sua conta CoreMotiom foi criada com sucesso.', 'success');
     setAuthModalOpen(false);
     return { success: true };
@@ -150,7 +176,7 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
       },
     });
     if (error) {
-      addToast('Erro no Google OAuth', error.message, 'error');
+      addToast('Erro no Google OAuth', translateAuthError(error.message), 'error');
     }
   };
 
@@ -165,6 +191,35 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     setUser(null);
     setActiveView('home');
     addToast('Sessão Encerrada', 'Você saiu da sua conta com segurança.', 'info');
+  };
+
+  // Auth: Recuperação de senha (e-mail real via Supabase)
+  const resetPassword = async (email: string): Promise<AuthResult> => {
+    const sb = getSupabase();
+    if (!sb) return { success: false, error: SUPABASE_NOT_CONFIGURED };
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+    });
+    if (error) return { success: false, error: translateAuthError(error.message) };
+    return {
+      success: true,
+      info: 'E-mail de recuperação enviado! Verifique sua caixa de entrada e a pasta de spam.',
+    };
+  };
+
+  // Auth: Definir nova senha (link de recuperação ou troca estando logado)
+  const updatePassword = async (newPassword: string): Promise<AuthResult> => {
+    const sb = getSupabase();
+    if (!sb) return { success: false, error: SUPABASE_NOT_CONFIGURED };
+    if (newPassword.length < 6) {
+      return { success: false, error: 'A senha deve ter pelo menos 6 caracteres.' };
+    }
+    const { error } = await sb.auth.updateUser({ password: newPassword });
+    if (error) return { success: false, error: translateAuthError(error.message) };
+    addToast('Senha Atualizada', 'Sua nova senha foi salva com sucesso.', 'success');
+    setAuthModalMode('login');
+    setAuthModalOpen(false);
+    return { success: true };
   };
 
   /* ===========================================================
@@ -247,6 +302,8 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     signUpWithEmail,
     signInWithGoogle,
     logout,
+    resetPassword,
+    updatePassword,
     switchRole,
     updateUserProfile,
     // Uso interno pelo provider (não faz parte do contrato público do contexto)

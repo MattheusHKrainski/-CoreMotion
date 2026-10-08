@@ -45,8 +45,8 @@ export interface UiSlice {
   setSelectedStore: (s: Store | null) => void;
   isAuthModalOpen: boolean;
   setAuthModalOpen: (open: boolean) => void;
-  authModalMode: 'login' | 'register' | 'forgot' | 'switch';
-  setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch') => void;
+  authModalMode: 'login' | 'register' | 'forgot' | 'switch' | 'reset';
+  setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch' | 'reset') => void;
   isCheckoutOpen: boolean;
   setCheckoutOpen: (open: boolean) => void;
   isCreateStoreModalOpen: boolean;
@@ -59,16 +59,25 @@ export interface UiSlice {
 }
 
 // Autenticação: Supabase como único backend (sem fallback local)
+export interface AuthResult {
+  success: boolean;
+  error?: string;
+  /** Mensagem informativa para a UI (ex.: link de confirmação enviado) */
+  info?: string;
+}
+
 export interface AuthSlice {
   user: UserProfile | null;
   role: UserRole;
   isVisitor: boolean;
   isAuthenticated: boolean;
   isSupabaseLive: boolean;
-  loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  signUpWithEmail: (email: string, pass: string, name: string, role?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  loginWithEmail: (email: string, pass: string) => Promise<AuthResult>;
+  signUpWithEmail: (email: string, pass: string, name: string, role?: UserRole) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<AuthResult>;
+  updatePassword: (newPassword: string) => Promise<AuthResult>;
   switchRole: (newRole: UserRole) => void;
   updateUserProfile: (data: Partial<UserProfile>) => void;
 }

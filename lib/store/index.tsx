@@ -30,6 +30,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast: ui.addToast,
     setActiveView: ui.setActiveView,
     setAuthModalOpen: ui.setAuthModalOpen,
+    setAuthModalMode: ui.setAuthModalMode,
   });
   const cart = useCart({ addToast: ui.addToast, user: auth.user });
   const catalog = useCatalog({ addToast: ui.addToast, user: auth.user, setUser });

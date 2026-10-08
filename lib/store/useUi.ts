@@ -20,7 +20,7 @@ export function useUi(): UiSlice {
 
   // Modais
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch' | 'reset'>('login');
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
   const [isCreateStoreModalOpen, setCreateStoreModalOpen] = useState(false);
 

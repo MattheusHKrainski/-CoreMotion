@@ -15,6 +15,7 @@ import {
   User,
   ArrowRight,
   AlertCircle,
+  CheckCircle,
   SlidersHorizontal,
 } from 'lucide-react';
 
@@ -31,15 +32,19 @@ export default function AuthModal() {
     loginWithEmail,
     signUpWithEmail,
     signInWithGoogle,
+    resetPassword,
+    updatePassword,
     switchRole,
   } = useCoreMotiom();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [desiredRole, setDesiredRole] = useState<UserRole>('user');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [notice, setNotice] = useState('');
 
   if (!isAuthModalOpen) return null;
 
@@ -50,6 +55,7 @@ export default function AuthModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setNotice('');
     setLoading(true);
 
     try {
@@ -61,15 +67,40 @@ export default function AuthModal() {
       } else if (authModalMode === 'register') {
         if (!name.trim()) {
           setErrorMsg('Por favor, informe seu nome completo.');
-          setLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          setErrorMsg('A senha deve ter pelo menos 6 caracteres.');
           return;
         }
         const res = await signUpWithEmail(email, password, name, desiredRole);
-        if (!res.success) {
+        if (res.info) {
+          // Confirmação de e-mail pendente: mostra aviso e volta ao login
+          setNotice(res.info);
+          setAuthModalMode('login');
+        } else if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
         }
       } else if (authModalMode === 'forgot') {
-        setErrorMsg('Link de recuperação enviado caso o e-mail esteja cadastrado.');
+        const res = await resetPassword(email);
+        if (res.success) {
+          setNotice(res.info || 'E-mail de recuperação enviado. Verifique sua caixa de entrada.');
+        } else {
+          setErrorMsg(res.error || 'Não foi possível enviar o e-mail de recuperação.');
+        }
+      } else if (authModalMode === 'reset') {
+        if (password.length < 6) {
+          setErrorMsg('A senha deve ter pelo menos 6 caracteres.');
+          return;
+        }
+        if (password !== confirmPassword) {
+          setErrorMsg('As senhas não coincidem.');
+          return;
+        }
+        const res = await updatePassword(password);
+        if (!res.success) {
+          setErrorMsg(res.error || 'Não foi possível salvar a nova senha.');
+        }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro na autenticação.';
@@ -105,19 +136,22 @@ export default function AuthModal() {
                 {authModalMode === 'login' && 'Acessar CoreMotiom'}
                 {authModalMode === 'register' && 'Criar Conta'}
                 {authModalMode === 'forgot' && 'Recuperar Senha'}
+                {authModalMode === 'reset' && 'Definir Nova Senha'}
                 {authModalMode === 'switch' && 'Perfis de Demonstração'}
               </h3>
               <p className="text-xs text-[#94A3B8]">
                 {authModalMode === 'login' && 'Entre para gerenciar pedidos, compras e vendas.'}
                 {authModalMode === 'register' && 'Junte-se à plataforma esportiva de alta performance.'}
                 {authModalMode === 'forgot' && 'Enviaremos instruções de redefinição para seu e-mail.'}
+                {authModalMode === 'reset' && 'Escolha uma nova senha para sua conta.'}
                 {authModalMode === 'switch' && 'Selecione uma conta para testar o sistema instantaneamente.'}
               </p>
             </div>
           </div>
 
           {/* Quick Demo Switcher Tabs */}
-          <div className="mb-6 p-3 rounded-xl bg-[#0E1017] border border-[#232836]">
+          {(authModalMode === 'login' || authModalMode === 'register') && (
+            <div className="mb-6 p-3 rounded-xl bg-[#0E1017] border border-[#232836]">
             <div className="flex items-center justify-between text-[11px] font-semibold text-[#94A3B8] mb-2 uppercase tracking-wider">
               <span className="flex items-center gap-1.5">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-red-400" />
@@ -156,7 +190,8 @@ export default function AuthModal() {
                 Atleta (C2C)
               </button>
             </div>
-          </div>
+            </div>
+          )}
 
           {/* Error Message if any */}
           {errorMsg && (
@@ -166,8 +201,16 @@ export default function AuthModal() {
             </div>
           )}
 
+          {/* Info Notice (ex.: confirmação de e-mail enviada) */}
+          {notice && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/50 text-xs text-emerald-300 flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <span>{notice}</span>
+            </div>
+          )}
+
           {/* Google OAuth Button */}
-          {authModalMode !== 'forgot' && (
+          {authModalMode !== 'forgot' && authModalMode !== 'reset' && (
             <div className="mb-4">
               <button
                 type="button"
@@ -260,6 +303,7 @@ export default function AuthModal() {
               </>
             )}
 
+            {authModalMode !== 'reset' && (
             <div>
               <label className="block text-xs font-medium text-[#D1D5DB] mb-1">
                 E-mail
@@ -276,34 +320,56 @@ export default function AuthModal() {
                 />
               </div>
             </div>
+            )}
 
             {authModalMode !== 'forgot' && (
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-medium text-[#D1D5DB]">
-                    Senha
-                  </label>
-                  {authModalMode === 'login' && (
-                    <button
-                      type="button"
-                      onClick={() => setAuthModalMode('forgot')}
-                      className="text-[11px] text-red-400 hover:underline"
-                    >
-                      Esqueceu a senha?
-                    </button>
-                  )}
+              <div className="space-y-3.5">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-[#D1D5DB]">
+                      {authModalMode === 'reset' ? 'Nova Senha' : 'Senha'}
+                    </label>
+                    {authModalMode === 'login' && (
+                      <button
+                        type="button"
+                        onClick={() => setAuthModalMode('forgot')}
+                        className="text-[11px] text-red-400 hover:underline"
+                      >
+                        Esqueceu a senha?
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 w-4 h-4 text-[#6B7280]" />
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-9 pr-3 py-2 bg-[#0E1017] text-xs text-white rounded-lg border border-[#232836] focus:border-red-500/50 focus:outline-none"
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 w-4 h-4 text-[#6B7280]" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-9 pr-3 py-2 bg-[#0E1017] text-xs text-white rounded-lg border border-[#232836] focus:border-red-500/50 focus:outline-none"
-                  />
-                </div>
+
+                {authModalMode === 'reset' && (
+                  <div>
+                    <label className="block text-xs font-medium text-[#D1D5DB] mb-1">
+                      Confirmar Nova Senha
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 w-4 h-4 text-[#6B7280]" />
+                      <input
+                        type="password"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-9 pr-3 py-2 bg-[#0E1017] text-xs text-white rounded-lg border border-[#232836] focus:border-red-500/50 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -320,6 +386,7 @@ export default function AuthModal() {
                     {authModalMode === 'login' && 'Entrar na Plataforma'}
                     {authModalMode === 'register' && 'Concluir Cadastro'}
                     {authModalMode === 'forgot' && 'Enviar E-mail de Recuperação'}
+                    {authModalMode === 'reset' && 'Salvar Nova Senha'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
@@ -334,7 +401,7 @@ export default function AuthModal() {
                 Não possui conta?{' '}
                 <button
                   type="button"
-                  onClick={() => { setAuthModalMode('register'); setErrorMsg(''); }}
+                  onClick={() => { setAuthModalMode('register'); setErrorMsg(''); setNotice(''); }}
                   className="text-red-400 font-semibold hover:underline"
                 >
                   Cadastre-se gratuitamente
@@ -345,7 +412,7 @@ export default function AuthModal() {
                 Já possui uma conta?{' '}
                 <button
                   type="button"
-                  onClick={() => { setAuthModalMode('login'); setErrorMsg(''); }}
+                  onClick={() => { setAuthModalMode('login'); setErrorMsg(''); setNotice(''); }}
                   className="text-red-400 font-semibold hover:underline"
                 >
                   Fazer login
