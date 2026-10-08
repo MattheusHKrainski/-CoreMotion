@@ -46,7 +46,6 @@ export default function Header() {
     logout,
     switchRole,
     isSupabaseLive,
-    setSupabaseConfigOpen,
     addToast,
   } = useCoreMotiom();
 
@@ -78,14 +77,13 @@ export default function Header() {
 
           <div className="hidden sm:flex items-center gap-3 text-[11px]">
             {/* Supabase status indicator */}
-            <button
-              onClick={() => setSupabaseConfigOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#12151C] hover:bg-[#1A1F2A] text-[#CBD5E1] border border-[#232A38] transition-colors"
-              title="Configurações do Banco de Dados"
+            <span
+              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#12151C] text-[#CBD5E1] border border-[#232A38]"
+              title="Status da conexão Supabase"
             >
               <Database className="w-3 h-3 text-red-400" />
-              <span className="text-[10px] font-medium">{isSupabaseLive ? 'Supabase Conectado' : 'Configurar Banco'}</span>
-            </button>
+              <span className="text-[10px] font-medium">{isSupabaseLive ? 'Supabase Conectado' : 'Supabase Offline'}</span>
+            </span>
 
             {/* Quick role switcher */}
             <div className="relative">

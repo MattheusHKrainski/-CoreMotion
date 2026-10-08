@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Database,
   Trash2,
   DollarSign,
 } from 'lucide-react';
@@ -26,7 +25,6 @@ export default function AdminDashboard() {
     products,
     adminVerifyStore,
     deleteProduct,
-    setSupabaseConfigOpen,
   } = useCoreMotiom();
 
   const [activeTab, setActiveTab] = useState<'verifications' | 'products' | 'stores'>('verifications');
@@ -61,14 +59,6 @@ export default function AdminDashboard() {
             </p>
           </div>
         </div>
-
-        <button
-          onClick={() => setSupabaseConfigOpen(true)}
-          className="px-3.5 py-2 rounded-lg bg-[#12151C] hover:bg-[#1A1F2B] text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-2 transition-colors"
-        >
-          <Database className="w-4 h-4" />
-          <span>Status do Banco de Dados</span>
-        </button>
       </div>
 
       {/* KPI Cards */}

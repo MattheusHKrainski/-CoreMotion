@@ -25,7 +25,6 @@ import AdminDashboard from '@/components/admin/AdminDashboard';
 
 // ===== MODAIS GLOBAIS =====
 import AuthModal from '@/components/auth/AuthModal';
-import SupabaseConfigModal from '@/components/config/SupabaseConfigModal';
 import CheckoutModal from '@/components/checkout/CheckoutModal';
 import CreateStoreModal from '@/components/stores/CreateStoreModal';
 import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
@@ -87,7 +86,6 @@ export default function CoreMotiomApp() {
 
       {/* Global Modals */}
       <AuthModal />
-      <SupabaseConfigModal />
       <CheckoutModal />
       <CreateStoreModal />
       <ProductDetailModal
