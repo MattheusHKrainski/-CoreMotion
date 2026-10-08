@@ -1,4 +1,20 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --ns-muted: #4d4d4d;
+  --ns-accent: #006bff;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --border: #e2e8f0;
+}
+
+.dark {
+  --ns-muted: #8f8f8f;
+  --background: #0b0c10;
+  --foreground: #f8fafc;
+  --border: #1e232f;
+}
 
 @layer base {
   :root {
