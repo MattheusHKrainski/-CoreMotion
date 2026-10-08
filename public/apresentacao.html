@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreMotiom — Apresentação Acadêmica</title>
+<style>
+  :root{
+    --ink:#0F172A; --body:#334155; --muted:#64748B; --red:#DC2626; --red-dark:#B91C1C;
+    --card:#F1F5F9; --line:#E2E8F0; --red-soft:#FEF2F2; --canvas:#E9EAEC;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Segoe UI",Calibri,system-ui,-apple-system,sans-serif;
+    background:var(--canvas); color:var(--body); overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- área de trabalho (canvas estilo PowerPoint) ---------- */
+  #work{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; position:relative}
+  #scaler{position:relative; box-shadow:0 12px 40px rgba(15,23,42,.28), 0 2px 8px rgba(15,23,42,.18)}
+
+  /* ---------- slide 16:9 ---------- */
+  .slide{
+    width:1280px; height:720px; background:#fff; position:absolute; inset:0;
+    overflow:hidden; display:none; color:var(--body);
+  }
+  .slide.active{display:block}
+  .slide.enter{animation:push .42s cubic-bezier(.25,.8,.35,1)}
+  @keyframes push{from{opacity:0; transform:translateX(46px)} to{opacity:1; transform:none}}
+
+  .pad{position:absolute; inset:0; padding:46px 60px 34px}
+  .kicker{display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--red)}
+  .kicker::before{content:""; width:13px; height:13px; background:var(--red); flex:none}
+  h1.title{margin-top:10px; font-size:34px; font-weight:800; letter-spacing:-.01em; color:var(--ink)}
+  .rule{margin-top:12px; width:110px; height:5px; background:var(--red)}
+  .content{position:absolute; left:60px; right:60px; top:176px; bottom:64px}
+  .foot{position:absolute; left:60px; right:60px; bottom:22px; display:flex;
+    justify-content:space-between; font-size:11px; color:var(--muted)}
+
+  ul.bul{list-style:none}
+  ul.bul li{display:flex; gap:12px; margin-bottom:15px; font-size:16px; line-height:1.42}
+  ul.bul li::before{content:"▪"; color:var(--red); font-weight:700; flex:none; margin-top:1px}
+  ul.bul.sm li{font-size:15px; margin-bottom:11px}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px}
+  .card.soft{background:var(--red-soft)}
+  .card h3{display:flex; align-items:center; gap:9px; font-size:15px; color:var(--ink)}
+  .card h3::before{content:""; width:10px; height:10px; background:var(--red); flex:none}
+  .card p{margin-top:7px; font-size:13px; line-height:1.4}
+  .card .bare{margin-top:0}
+
+  code{font-family:Consolas,"SF Mono",Menlo,monospace; font-size:11.5px; color:var(--red-dark);
+    background:#fff; border:1px solid var(--line); border-radius:5px; padding:1px 5px}
+
+  .cols{display:flex; gap:28px; height:100%}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  .note{position:absolute; left:60px; right:60px; bottom:44px; font-size:11.5px; color:var(--muted)}
+
+  /* stats */
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:12px}
+  .stat::before{content:""; width:10px; height:10px; background:var(--red); margin-bottom:8px}
+  .stat b{font-size:38px; font-weight:900; color:var(--red); letter-spacing:-.01em}
+  .stat span{margin-top:4px; font-size:12px}
+
+  /* arquitetura */
+  .layer{display:flex; align-items:center; gap:26px; border:1px solid var(--line); border-radius:12px;
+    padding:12px 20px; background:var(--card)}
+  .layer:nth-child(4n){background:var(--red-soft)}
+  .layer b{width:150px; flex:none; font-size:14.5px; color:var(--ink)}
+  .layer span{font-size:12.5px}
+  .down{text-align:center; color:var(--red); font-size:12px; font-weight:700; line-height:1.5}
+
+  /* linhas de tabela (slide 8) */
+  .trow{display:flex; align-items:center; gap:16px; background:var(--card);
+    border:1px solid var(--line); border-radius:12px; padding:10px 16px}
+  .trow b{width:150px; flex:none; font-family:Consolas,Menlo,monospace; font-size:13px; color:var(--red)}
+  .trow span{font-size:12px}
+  .srow{display:flex; align-items:center; gap:16px; background:var(--red-soft);
+    border:1px solid var(--line); border-radius:12px; padding:10px 16px}
+  .srow b{width:64px; flex:none; text-align:center; font-size:28px; font-weight:900; color:var(--red)}
+  .srow span{font-size:12px}
+
+  /* módulos (slide 9) */
+  .mod{display:flex; align-items:center; gap:14px; background:var(--card);
+    border:1px solid var(--line); border-radius:12px; padding:12px 16px}
+  .mod::before{content:""; width:10px; height:10px; background:var(--red); flex:none}
+  .mod b{width:128px; flex:none; font-size:14px; color:var(--ink)}
+  .mod span{font-size:12px}
+
+  /* ---------- capa ---------- */
+  .cover-band{position:absolute; top:0; left:0; right:0; height:8px; background:var(--red)}
+  .blob{position:absolute; border-radius:50%; filter:blur(72px); pointer-events:none;
+    background:radial-gradient(circle at 38% 38%, #0f172a 0%, #475569 46%, transparent 72%)}
+  .b1{width:560px; height:560px; right:-150px; top:-160px; opacity:.30; animation:d1 16s ease-in-out infinite alternate}
+  .b2{width:430px; height:430px; right:230px; bottom:-190px; opacity:.22; animation:d2 21s ease-in-out infinite alternate}
+  .b3{width:300px; height:300px; right:40px; top:200px; opacity:.16; animation:d3 12s ease-in-out infinite alternate}
+  @keyframes d1{to{transform:translate(-70px,60px) scale(1.12)}}
+  @keyframes d2{to{transform:translate(90px,-50px) scale(.92)}}
+  @keyframes d3{to{transform:translate(-60px,-70px) scale(1.2)}}
+  .cover-box{position:absolute; left:72px; top:50%; transform:translateY(-50%);
+    max-width:660px; background:rgba(255,255,255,.82); backdrop-filter:blur(8px);
+    border:1px solid var(--line); border-radius:24px; padding:44px 48px;
+    box-shadow:0 24px 60px rgba(15,23,42,.14)}
+  .cover-box h1{margin-top:14px; font-size:64px; font-weight:900; letter-spacing:-.02em; color:var(--ink)}
+  .cover-box .sub{margin-top:6px; font-size:24px; font-weight:600; color:var(--red)}
+  .cover-box p.desc{margin-top:16px; font-size:16px; line-height:1.5}
+  .cover-box p.meta{margin-top:20px; font-size:13px; color:var(--muted); line-height:1.6}
+  .cover-box p.hint{margin-top:10px; font-size:11.5px; color:#94A3B8}
+
+  /* ---------- barra de status ---------- */
+  #bar{height:46px; background:#F3F2F1; border-top:1px solid #D9D9D9; display:flex;
+    align-items:center; gap:14px; padding:0 16px; font-size:12px; color:#444; position:relative}
+  #bar .prog{position:absolute; top:-2px; left:0; height:2px; background:var(--red); transition:width .3s}
+  #bar .name{font-weight:700; color:var(--ink)}
+  #bar .grow{flex:1}
+  #bar button{font:inherit; font-size:12px; color:#333; background:#fff; border:1px solid #CFCFCF;
+    border-radius:6px; padding:5px 11px; cursor:pointer}
+  #bar button:hover{border-color:var(--red); color:var(--red)}
+  #bar .nav{font-size:15px; font-weight:700; padding:3px 12px}
+  #count{min-width:96px; text-align:center; font-variant-numeric:tabular-nums}
+
+  /* ---------- classificador de slides (grade) ---------- */
+  #sorter{position:fixed; inset:0; background:var(--canvas); z-index:50; display:none;
+    overflow:auto; padding:28px 36px}
+  #sorter.open{display:block}
+  #sorter h2{font-size:15px; color:var(--ink); margin-bottom:18px}
+  #sorter .grid{display:grid; grid-template-columns:repeat(auto-fill,236px); gap:22px}
+  .thumb{cursor:pointer}
+  .thumb .box{width:236px; height:133px; overflow:hidden; position:relative; background:#fff;
+    border:2px solid transparent; border-radius:6px; box-shadow:0 3px 10px rgba(15,23,42,.2)}
+  .thumb.cur .box{border-color:var(--red)}
+  .thumb .box .slide{display:block; position:absolute; top:0; left:0; transform:scale(.1844); transform-origin:top left; pointer-events:none}
+  .thumb .num{margin-top:6px; font-size:11px; color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="work">
+  <div id="scaler">
+
+    <!-- ============ 1 · CAPA ============ -->
+    <section class="slide">
+      <div class="cover-band"></div>
+      <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+      <div class="cover-box">
+        <div class="kicker">Projeto Acadêmico • Engenharia de Software</div>
+        <h1>CoreMotiom</h1>
+        <div class="sub">Marketplace &amp; Plataforma Esportiva de Alta Performance</div>
+        <div class="rule" style="margin-top:18px"></div>
+        <p class="desc">Lojas oficiais verificadas · venda C2C entre atletas · custódia financeira (escrow) · treinadores e comunidade</p>
+        <p class="meta">Desenvolvimento: <strong style="color:var(--ink)">Mattheus</strong> · github.com/MattheusHKrainski<br>Curitiba — outubro de 2026</p>
+        <p class="hint">← → navegam · F tela cheia · G grade de slides · clique para avançar</p>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>1 / 11</span></div>
+    </section>
+
+    <!-- ============ 2 · PROBLEMA ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Contextualização</div>
+        <h1 class="title">O problema que o projeto resolve</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content cols">
+        <ul class="bul" style="flex:1.25">
+          <li>Equipamentos de alta performance (tênis com placa de carbono, GPS, compressão) têm alto custo e forte mercado de revenda.</li>
+          <li>A revenda entre atletas ocorre em canais genéricos: sem inspeção de desgaste, sem preço de referência e com risco de golpe.</li>
+          <li>Lojas esportivas online convivem com falsificações e não possuem selo de verificação confiável no varejo generalista.</li>
+          <li>Não havia plataforma vertical integrando marketplace, custódia financeira, treinadores e comunidade em um só produto.</li>
+        </ul>
+        <div class="card soft" style="flex:1">
+          <h3>Evidências no código</h3>
+          <p>Tela “Vender C2C” bloqueia visitantes: “proteção anti-golpe” <code>app/page.tsx</code></p>
+          <p>Solicitação de selo oficial com CNPJ <code>components/StoresView.tsx</code></p>
+          <p>Status de pedido com escrow: <code>escrow_locked</code> <code>types/supabase.ts</code></p>
+        </div>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>2 / 11</span></div>
+    </section>
+
+    <!-- ============ 3 · OBJETIVOS ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Objetivos</div>
+        <h1 class="title">Objetivo geral e específicos</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content" style="display:flex; flex-direction:column; gap:20px">
+        <div class="card">
+          <h3>Objetivo geral</h3>
+          <p class="bare" style="margin-top:8px; font-size:14.5px">Desenvolver uma plataforma web que integre um marketplace esportivo híbrido (B2C + C2C) com custódia financeira, lojas oficiais verificadas e serviços para atletas.</p>
+        </div>
+        <div>
+          <div class="kicker" style="font-size:12px">Objetivos específicos</div>
+          <ul class="bul sm" style="margin-top:12px">
+            <li>Implementar verificação de lojas oficiais com CNPJ e selo “Verificado”.</li>
+            <li>Proteger vendas C2C com pagamento retido em custódia (escrow) até a confirmação do pedido.</li>
+            <li>Oferecer checkout com PIX (5% de desconto), cartão de crédito e boleto.</li>
+            <li>Integrar comunidade esportiva, treinadores com CREF e notícias ao ecossistema.</li>
+            <li>Garantir segurança de dados com Row Level Security (RLS) e perfis de acesso.</li>
+            <li>Prover painel administrativo de auditoria, moderação e custódia.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>3 / 11</span></div>
+    </section>
+
+    <!-- ============ 4 · JUSTIFICATIVA ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Justificativa</div>
+        <h1 class="title">Por que este projeto é relevante</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content">
+        <ul class="bul" style="font-size:17px">
+          <li style="margin-bottom:22px">O crescimento da corrida de rua e dos esportes de performance no Brasil amplia o mercado de equipamentos novos e seminovos.</li>
+          <li style="margin-bottom:22px">Confiança é o principal entrave da revenda C2C: assimetria de informação sobre desgaste, autenticidade e preço justo.</li>
+          <li style="margin-bottom:22px">Supabase com RLS permite segurança em nível de banco de dados — prática de produção aplicada já no MVP acadêmico.</li>
+          <li style="margin-bottom:22px">O projeto consolida competências de engenharia: React/Next.js, TypeScript estrito, SQL, segurança e UX.</li>
+          <li style="margin-bottom:22px">Serve como base replicável: governança de Git, migrações versionadas e tipagem de ponta a ponta documentadas em <code>CONTRIBUTING.md</code>.</li>
+        </ul>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>4 / 11</span></div>
+    </section>
+
+    <!-- ============ 5 · METODOLOGIA ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Metodologia</div>
+        <h1 class="title">Processo de desenvolvimento e qualidade</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content">
+        <ul class="bul">
+          <li>Git Flow pragmático (equipe de 5): branch <code>main</code> protegida; merge apenas via Pull Request com revisão e verificação (<code>CONTRIBUTING.md</code>).</li>
+          <li>TypeScript em modo estrito (<code>strict: true</code>), sem <code>any</code> injustificado; tipagem do banco gerada automaticamente (<code>types/supabase.ts</code>).</li>
+          <li>Validação de ponta a ponta com schemas Zod + React Hook Form, centralizados em <code>lib/schemas/</code>.</li>
+          <li>Banco de dados governado: migrações versionadas em <code>supabase/migrations/</code> e RLS obrigatório em toda tabela nova.</li>
+          <li>Camada de serviços isolada da UI (<code>services/*.ts</code>), permitindo trocar Supabase/fallback local sem reescrever telas.</li>
+          <li>Pipeline de qualidade acionável localmente: <code>npm run ci</code> = lint + type-check + build.</li>
+        </ul>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>5 / 11</span></div>
+    </section>
+
+    <!-- ============ 6 · STACK ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Fundamentação técnica</div>
+        <h1 class="title">Stack tecnológica</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content grid2">
+        <div class="card"><h3>Front-end</h3>
+          <p>Next.js 15 — App Router, Server Components e Server Actions</p>
+          <p>React 19 · Tailwind CSS v4 · shadcn/ui (Radix UI)</p>
+          <p>motion (animações) · lucide-react (ícones)</p>
+        </div>
+        <div class="card"><h3>Back-end / BaaS</h3>
+          <p>Supabase: PostgreSQL 15+, Auth, Storage e RLS</p>
+          <p>Server Actions (<code>app/actions/</code>) e API Routes (<code>app/api/</code>)</p>
+          <p>node-postgres (pg) em scripts de seed e migração</p>
+        </div>
+        <div class="card"><h3>Qualidade &amp; validação</h3>
+          <p>TypeScript estrito · ESLint (eslint-config-next)</p>
+          <p>Zod (schemas) · React Hook Form (+ @hookform/resolvers)</p>
+          <p>type-check e build integrados no script ci</p>
+        </div>
+        <div class="card"><h3>Inteligência artificial</h3>
+          <p>@google/genai — API Gemini (dependência declarada)</p>
+          <p>SmartScan: avaliação de desgaste e preço justo</p>
+          <p>(componente prototipado, em fase de integração)</p>
+        </div>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>6 / 11</span></div>
+    </section>
+
+    <!-- ============ 7 · ARQUITETURA ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Arquitetura</div>
+        <h1 class="title">Visão em camadas do sistema</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content cols">
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:6px">
+          <div class="layer"><b>UI / Views</b><span>Marketplace · Lojas · Vender C2C · Coaches · Comunidade · Admin (components/)</span></div>
+          <div class="down">▼</div>
+          <div class="layer"><b>Estado global</b><span>CoreMotiomProvider (React Context): sessão, carrinho, toasts, modais — lib/store.tsx</span></div>
+          <div class="down">▼</div>
+          <div class="layer"><b>Integração</b><span>services/*.ts · Server Actions (app/actions/) · API Routes (app/api/)</span></div>
+          <div class="down">▼</div>
+          <div class="layer" style="background:var(--red-soft)"><b style="color:var(--red)">Dados</b><span>Supabase: Auth · PostgreSQL + RLS · Storage &nbsp;|&nbsp; fallback local (lib/initial-data.ts)</span></div>
+        </div>
+        <div style="width:170px; align-self:center; border:2px solid var(--red); border-radius:12px; background:#fff; text-align:center; padding:26px 10px">
+          <div style="font-size:17px; font-weight:900; color:var(--red)">Gemini<br>API</div>
+          <div style="margin-top:6px; font-size:12px; color:var(--muted)">SmartScan (IA)</div>
+        </div>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>7 / 11</span></div>
+    </section>
+
+    <!-- ============ 8 · DADOS & SEGURANÇA ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Banco de dados &amp; segurança</div>
+        <h1 class="title">Modelo relacional e RLS</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content cols" style="gap:22px">
+        <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between">
+          <div class="trow"><b>profiles</b><span>papéis: admin · merchant · seller · user; sincronizada com auth.users</span></div>
+          <div class="trow"><b>stores</b><span>verificação: none → pending → verified / rejected; docs + CNPJ</span></div>
+          <div class="trow"><b>products</b><span>product_type: b2c | c2c · condição · estoque · status active/sold/suspended</span></div>
+          <div class="trow"><b>orders</b><span>escrow: pending_payment → escrow_locked → preparing → shipped → delivered</span></div>
+          <div class="trow"><b>community_posts</b><span>categorias: treino · equipamento · evento · dúvida · conquista</span></div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between">
+          <div class="srow"><b>20</b><span>políticas de Row Level Security ativas</span></div>
+          <div class="srow"><b>8</b><span>índices para consultas de catálogo</span></div>
+          <div class="srow"><b>2</b><span>funções SQL: is_admin() e handle_new_user()</span></div>
+          <div class="srow"><b>314</b><span>linhas de migração versionada (supabase/migrations/)</span></div>
+        </div>
+      </div>
+      <div class="note"><code>is_admin()</code>: função SECURITY DEFINER que protege o admin mestre; visitantes têm apenas leitura de dados públicos.</div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>8 / 11</span></div>
+    </section>
+
+    <!-- ============ 9 · FUNCIONALIDADES ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Resultados funcionais</div>
+        <h1 class="title">Módulos implementados</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content grid2" style="gap:12px; align-content:space-between">
+        <div class="mod"><b>Início</b><span>Hero, destaques e vitrines curadas</span></div>
+        <div class="mod"><b>Marketplace</b><span>Filtros: tipo, categoria, esporte, condição, loja verificada</span></div>
+        <div class="mod"><b>Lojas Oficiais</b><span>Criação de loja e selo “Verificado” via CNPJ</span></div>
+        <div class="mod"><b>Vender C2C</b><span>Anúncio de seminovos com custódia anti-golpe</span></div>
+        <div class="mod"><b>Checkout</b><span>PIX (5% off) com QR Code, cartão e boleto; escrow</span></div>
+        <div class="mod"><b>Treinadores</b><span>Perfis com CREF, avaliação e valor/hora</span></div>
+        <div class="mod"><b>Comunidade</b><span>Posts, curtidas e comentários por categoria</span></div>
+        <div class="mod"><b>Painel Admin</b><span>Auditoria de lojas, pedidos e custódia (is_admin)</span></div>
+      </div>
+      <div class="note"><strong>Nota de transparência:</strong> o módulo SmartScan (IA) existe como componente prototipado <code>SmartScanView.tsx</code>, ainda não integrado à navegação.</div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>9 / 11</span></div>
+    </section>
+
+    <!-- ============ 10 · MÉTRICAS ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Resultados quantitativos</div>
+        <h1 class="title">Métricas do código e do banco</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content grid2" style="grid-template-columns:repeat(3,1fr); gap:16px">
+        <div class="stat"><b>86</b><span>arquivos TypeScript (.ts/.tsx)</span></div>
+        <div class="stat"><b>16.641</b><span>linhas de código TypeScript</span></div>
+        <div class="stat"><b>7.769</b><span>linhas em componentes de UI</span></div>
+        <div class="stat"><b>1.973</b><span>linhas na camada de serviços</span></div>
+        <div class="stat"><b>54 / 38</b><span>lojas / produtos no seed de testes</span></div>
+        <div class="stat"><b>20</b><span>políticas RLS no schema</span></div>
+      </div>
+      <div class="note">Medições diretas no repositório (wc -l / contagens de schema), outubro de 2026; seed em lib/initial-data.ts.</div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>10 / 11</span></div>
+    </section>
+
+    <!-- ============ 11 · CONCLUSÃO ============ -->
+    <section class="slide">
+      <div class="pad">
+        <div class="kicker">Conclusão</div>
+        <h1 class="title">Trabalhos futuros e síntese</h1>
+        <div class="rule"></div>
+      </div>
+      <div class="content" style="display:flex; flex-direction:column; gap:22px">
+        <div>
+          <div class="kicker" style="font-size:12px">Trabalhos futuros</div>
+          <ul class="bul" style="margin-top:12px">
+            <li>Integrar o SmartScan à navegação e conectar a inferência real da API Gemini.</li>
+            <li>Conectar gateway de pagamento real — hoje o fluxo roda em sandbox com custódia simulada.</li>
+            <li>Ativar CI com GitHub Actions (.github/workflows/) e testes end-to-end.</li>
+            <li>Evoluir para experiência mobile (PWA/app) com notificações de pedido.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Síntese</h3>
+          <p class="bare" style="margin-top:8px; font-size:14.5px">O CoreMotiom entrega um ecossistema esportivo vertical em que confiança é recurso de produto: lojas verificadas via CNPJ, escrow na revenda C2C e Row Level Security em nível de banco — com governança de código documentada e pronta para evolução.</p>
+        </div>
+      </div>
+      <div class="foot"><span>CoreMotiom — Apresentação Acadêmica de Projeto • Curitiba, outubro de 2026</span><span>11 / 11</span></div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ============ barra de status ============ -->
+<div id="bar">
+  <div class="prog" id="prog"></div>
+  <span class="name">CoreMotiom — Apresentação Acadêmica</span>
+  <span class="grow"></span>
+  <button class="nav" id="prev" title="Anterior (←)">‹</button>
+  <span id="count">Slide 1 de 11</span>
+  <button class="nav" id="next" title="Próximo (→)">›</button>
+  <button id="gridBtn" title="Classificador de slides (G)">Grade</button>
+  <button id="fsBtn" title="Tela cheia (F)">⛶ Tela cheia</button>
+</div>
+
+<!-- ============ classificador de slides ============ -->
+<div id="sorter">
+  <h2>Classificador de Slides — clique para abrir &nbsp;·&nbsp; Esc ou G para fechar</h2>
+  <div class="grid" id="sortGrid"></div>
+</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('#scaler > .slide'));
+  var N = slides.length;
+  var idx = 0;
+
+  var scaler = document.getElementById('scaler');
+  var work = document.getElementById('work');
+  var count = document.getElementById('count');
+  var prog = document.getElementById('prog');
+  var sorter = document.getElementById('sorter');
+  var sortGrid = document.getElementById('sortGrid');
+
+  /* ----- escala o slide 1280x720 para caber na janela ----- */
+  function fit() {
+    var pad = 48;
+    var aw = work.clientWidth - pad, ah = work.clientHeight - pad;
+    var s = Math.min(aw / 1280, ah / 720);
+    s = Math.max(0.2, s);
+    scaler.style.width = (1280 * s) + 'px';
+    scaler.style.height = (720 * s) + 'px';
+    slides.forEach(function (sl) {
+      sl.style.transform = 'scale(' + s + ')';
+      sl.style.transformOrigin = 'top left';
+      sl.style.position = 'absolute';
+    });
+  }
+
+  function show(i, animate) {
+    idx = Math.max(0, Math.min(N - 1, i));
+    slides.forEach(function (sl, k) {
+      sl.classList.toggle('active', k === idx);
+      sl.classList.remove('enter');
+    });
+    if (animate !== false) {
+      void slides[idx].offsetWidth;
+      slides[idx].classList.add('enter');
+    }
+    count.textContent = 'Slide ' + (idx + 1) + ' de ' + N;
+    prog.style.width = (((idx + 1) / N) * 100) + '%';
+    buildSorter();
+  }
+
+  /* ----- classificador de slides (miniaturas) ----- */
+  function buildSorter() {
+    sortGrid.innerHTML = '';
+    slides.forEach(function (sl, k) {
+      var th = document.createElement('div');
+      th.className = 'thumb' + (k === idx ? ' cur' : '');
+      var box = document.createElement('div');
+      box.className = 'box';
+      var clone = sl.cloneNode(true);
+      clone.classList.add('active');
+      clone.classList.remove('enter');
+      clone.style.transform = 'scale(0.1844)';
+      box.appendChild(clone);
+      var num = document.createElement('div');
+      num.className = 'num';
+      num.textContent = (k + 1) + ' · ' + (k === 0 ? 'Capa' : (clone.querySelector('.title') || {}).textContent || '');
+      th.appendChild(box);
+      th.appendChild(num);
+      th.addEventListener('click', function () { closeSorter(); show(k); });
+      sortGrid.appendChild(th);
+    });
+  }
+  function openSorter() { buildSorter(); sorter.classList.add('open'); }
+  function closeSorter() { sorter.classList.remove('open'); }
+  function toggleSorter() { sorter.classList.contains('open') ? closeSorter() : openSorter(); }
+
+  /* ----- tela cheia ----- */
+  function toggleFS() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+
+  document.getElementById('prev').addEventListener('click', function (e) { e.stopPropagation(); show(idx - 1); });
+  document.getElementById('next').addEventListener('click', function (e) { e.stopPropagation(); show(idx + 1); });
+  document.getElementById('gridBtn').addEventListener('click', function (e) { e.stopPropagation(); toggleSorter(); });
+  document.getElementById('fsBtn').addEventListener('click', function (e) { e.stopPropagation(); toggleFS(); });
+
+  /* clique no slide avança (como no PowerPoint) */
+  work.addEventListener('click', function () { if (!sorter.classList.contains('open')) show(idx + 1); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeSorter(); return; }
+    if (e.key === 'g' || e.key === 'G') { toggleSorter(); return; }
+    if (e.key === 'f' || e.key === 'F') { toggleFS(); return; }
+    if (sorter.classList.contains('open')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); show(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') { e.preventDefault(); show(idx - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(N - 1); }
+  });
+
+  window.addEventListener('resize', fit);
+  fit();
+  show(0, false);
+})();
+</script>
+</body>
+</html>
