@@ -26,6 +26,10 @@ interface ProductDetailModalProps {
   onOpenStore?: (storeId: string) => void;
 }
 
+/* ===========================================================
+   MODAL DE DETALHE DO PRODUTO
+=========================================================== */
+
 export default function ProductDetailModal({ product, onClose, onOpenStore }: ProductDetailModalProps) {
   const {
     addToCart,
@@ -46,6 +50,10 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
 
   const isFav = favorites.includes(product.id);
 
+  /* ===========================================================
+     FORMATAR PREÇO EM REAIS
+  =========================================================== */
+
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -53,12 +61,20 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
     }).format(val);
   };
 
+  /* ===========================================================
+     COMPARTILHAR PRODUTO
+  =========================================================== */
+
   const handleShare = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
       addToast('Link Copiado', 'Link do produto copiado para a área de transferência.', 'success');
     }
   };
+
+  /* ===========================================================
+     CALCULAR FRETE
+  =========================================================== */
 
   const handleCalculateShipping = (e: React.FormEvent) => {
     e.preventDefault();

@@ -14,10 +14,18 @@ interface UseCartDeps {
   user: UserProfile | null;
 }
 
+/* ===========================================================
+   FATIA DE CARRINHO E PEDIDOS
+=========================================================== */
+
 export function useCart({ addToast, user }: UseCartDeps): CartSlice {
   const [cart, setCart] = useState<CartItem[]>(() => (readPersistedState()?.cart as CartItem[]) || []);
   const [orders, setOrders] = useState<Order[]>(() => (readPersistedState()?.orders as Order[]) || []);
   const [favorites, setFavorites] = useState<string[]>(() => (readPersistedState()?.favorites as string[]) || []);
+
+  /* ===========================================================
+     ADICIONAR AO CARRINHO
+  =========================================================== */
 
   // Carrinho
   const addToCart = (product: Product, quantity = 1, selected_size?: string) => {
@@ -35,10 +43,18 @@ export function useCart({ addToast, user }: UseCartDeps): CartSlice {
     addToast('Carrinho Atualizado', `${product.title} adicionado ao seu carrinho.`, 'success');
   };
 
+  /* ===========================================================
+     REMOVER DO CARRINHO
+  =========================================================== */
+
   const removeFromCart = (productId: string) => {
     setCart((prev) => prev.filter((item) => item.product.id !== productId));
     addToast('Item Removido', 'Produto retirado do carrinho.', 'info');
   };
+
+  /* ===========================================================
+     ATUALIZAR QUANTIDADE DO CARRINHO
+  =========================================================== */
 
   const updateCartQty = (productId: string, quantity: number) => {
     if (quantity <= 0) {
@@ -48,10 +64,18 @@ export function useCart({ addToast, user }: UseCartDeps): CartSlice {
     setCart((prev) => prev.map((item) => (item.product.id === productId ? { ...item, quantity } : item)));
   };
 
+  /* ===========================================================
+     LIMPAR CARRINHO
+  =========================================================== */
+
   const clearCart = () => setCart([]);
 
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  /* ===========================================================
+     ALTERNAR FAVORITO
+  =========================================================== */
 
   // Favoritos
   const toggleFavorite = (productId: string) => {
@@ -64,6 +88,10 @@ export function useCart({ addToast, user }: UseCartDeps): CartSlice {
       return [...prev, productId];
     });
   };
+
+  /* ===========================================================
+     CRIAR PEDIDO (CHECKOUT)
+  =========================================================== */
 
   // Checkout: criação de pedido com PIX sandbox e frete
   const createOrder = async (data: {
@@ -108,6 +136,10 @@ export function useCart({ addToast, user }: UseCartDeps): CartSlice {
     clearCart();
     return newOrder;
   };
+
+  /* ===========================================================
+     CONFIRMAR PAGAMENTO (SANDBOX)
+  =========================================================== */
 
   const confirmPaymentSandbox = async (orderId: string) => {
     setOrders((prev) =>

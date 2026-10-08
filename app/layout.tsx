@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   },
 };
 
+/* ===========================================================
+   LAYOUT RAIZ DA APLICAÇÃO
+=========================================================== */
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="scroll-smooth dark">

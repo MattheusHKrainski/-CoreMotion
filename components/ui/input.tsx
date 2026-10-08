@@ -4,6 +4,10 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
+/* ===========================================================
+   COMPONENTE INPUT
+=========================================================== */
+
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
   ({ className, type, ...props }, ref) => {
     return (

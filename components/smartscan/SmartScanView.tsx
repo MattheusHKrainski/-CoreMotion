@@ -16,6 +16,10 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+/* ===========================================================
+   VISTA DO SMARTSCAN
+=========================================================== */
+
 export default function SmartScanView() {
   const { setActiveView, setSearchQuery } = useCoreMotiom();
 
@@ -37,6 +41,10 @@ export default function SmartScanView() {
     recommendation: string;
     targetEvents: string[];
   } | null>(null);
+
+  /* ===========================================================
+     EXECUTAR SCAN DE EQUIPAMENTO
+  =========================================================== */
 
   const handleRunScan = (e: React.FormEvent) => {
     e.preventDefault();

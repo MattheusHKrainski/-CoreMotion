@@ -19,6 +19,10 @@ import {
   DollarSign,
 } from 'lucide-react';
 
+/* ===========================================================
+   PAINEL DE ADMINISTRAÇÃO
+=========================================================== */
+
 export default function AdminDashboard() {
   const {
     stores,

@@ -30,6 +30,10 @@ import CreateStoreModal from '@/components/stores/CreateStoreModal';
 import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
+/* ===========================================================
+   ROTEADOR PRINCIPAL DA APLICAÇÃO
+=========================================================== */
+
 export default function CoreMotiomApp() {
   const {
     activeView,
@@ -41,6 +45,10 @@ export default function CoreMotiomApp() {
   } = useCoreMotiom();
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  /* ===========================================================
+     ABRIR DETALHES DA LOJA
+  =========================================================== */
 
   const handleOpenStore = (storeId: string) => {
     const st = stores.find((s) => s.id === storeId);

@@ -5,6 +5,10 @@
 
 const STORAGE_KEY = 'coremotiom_state_v1';
 
+/* ===========================================================
+   LER ESTADO PERSISTIDO (LOCALSTORAGE)
+=========================================================== */
+
 export function readPersistedState(): Record<string, unknown> | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -14,6 +18,10 @@ export function readPersistedState(): Record<string, unknown> | null {
     return null;
   }
 }
+
+/* ===========================================================
+   SALVAR ESTADO PERSISTIDO (LOCALSTORAGE)
+=========================================================== */
 
 export function writePersistedState(payload: Record<string, unknown>): void {
   try {

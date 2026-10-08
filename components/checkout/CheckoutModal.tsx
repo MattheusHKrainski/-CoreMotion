@@ -22,6 +22,10 @@ import {
   Check,
 } from 'lucide-react';
 
+/* ===========================================================
+   MODAL DE CHECKOUT
+=========================================================== */
+
 export default function CheckoutModal() {
   const {
     isCheckoutOpen,
@@ -62,12 +66,20 @@ export default function CheckoutModal() {
   const discount = paymentMethod === 'pix' ? subtotal * 0.05 : 0;
   const total = subtotal - discount + (cart.length > 0 ? shippingCost : 0);
 
+  /* ===========================================================
+     FORMATAR PREÇO EM REAIS
+  =========================================================== */
+
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(val);
   };
+
+  /* ===========================================================
+     COPIAR CÓDIGO PIX
+  =========================================================== */
 
   const handleCopyPix = () => {
     const pixPayload = `00020126580014br.gov.bcb.pix0136coremotiom-pay-${Date.now()}520400005303986540${total.toFixed(2)}5802BR5916COREMOTIOM SPORTS6009SAO PAULO62070503***6304`;
@@ -76,6 +88,10 @@ export default function CheckoutModal() {
     addToast('Código PIX Copiado', 'Cole no app do seu banco para pagar.', 'success');
     setTimeout(() => setCopiedPix(false), 2500);
   };
+
+  /* ===========================================================
+     FINALIZAR PAGAMENTO
+  =========================================================== */
 
   const handleFinishPayment = async () => {
     setIsProcessing(true);

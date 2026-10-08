@@ -29,6 +29,10 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+/* ===========================================================
+   CABEÇALHO (HEADER)
+=========================================================== */
+
 export default function Header() {
   const {
     activeView,

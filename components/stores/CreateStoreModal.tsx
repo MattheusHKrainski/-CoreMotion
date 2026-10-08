@@ -13,6 +13,10 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
+/* ===========================================================
+   MODAL DE CRIAÇÃO DE LOJA
+=========================================================== */
+
 export default function CreateStoreModal() {
   const {
     isCreateStoreModalOpen,
@@ -33,6 +37,10 @@ export default function CreateStoreModal() {
   const [loading, setLoading] = useState(false);
 
   if (!isCreateStoreModalOpen) return null;
+
+  /* ===========================================================
+     ENVIAR FORMULÁRIO DE LOJA
+  =========================================================== */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

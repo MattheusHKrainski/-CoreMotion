@@ -25,6 +25,10 @@ interface MarketplaceViewProps {
   onSelectProduct?: (product: Product) => void;
 }
 
+/* ===========================================================
+   VISTA DO MARKETPLACE
+=========================================================== */
+
 export default function MarketplaceView({ onSelectProduct }: MarketplaceViewProps) {
   const {
     products,
@@ -131,6 +135,10 @@ export default function MarketplaceView({ onSelectProduct }: MarketplaceViewProp
     selectedCondition !== 'all',
     onlyVerified,
   ].filter(Boolean).length;
+
+  /* ===========================================================
+     RESETAR FILTROS DO MARKETPLACE
+  =========================================================== */
 
   const resetFilters = () => {
     setSelectedType('all');

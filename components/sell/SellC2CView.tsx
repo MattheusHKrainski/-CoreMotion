@@ -19,6 +19,10 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
+/* ===========================================================
+   VISTA DE VENDA C2C
+=========================================================== */
+
 export default function SellC2CView() {
   const {
     products,
@@ -50,6 +54,10 @@ export default function SellC2CView() {
   // Meus anúncios: apenas produtos de propriedade do usuário logado
   const myListings = products.filter((p) => p.seller_id === user?.id);
 
+  /* ===========================================================
+     ADICIONAR IMAGEM DO ANÚNCIO
+  =========================================================== */
+
   const handleAddImage = () => {
     if (imageUrl.trim() && !imageGallery.includes(imageUrl.trim())) {
       setImageGallery([...imageGallery, imageUrl.trim()]);
@@ -57,9 +65,17 @@ export default function SellC2CView() {
     }
   };
 
+  /* ===========================================================
+     REMOVER IMAGEM DO ANÚNCIO
+  =========================================================== */
+
   const handleRemoveImage = (index: number) => {
     setImageGallery(imageGallery.filter((_, i) => i !== index));
   };
+
+  /* ===========================================================
+     PUBLICAR ANÚNCIO C2C
+  =========================================================== */
 
   const handlePublishListing = async (e: React.FormEvent) => {
     e.preventDefault();

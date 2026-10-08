@@ -20,6 +20,10 @@ import { useCatalog } from './useCatalog';
 
 const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undefined);
 
+/* ===========================================================
+   PROVIDER DO ESTADO GLOBAL
+=========================================================== */
+
 export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const ui = useUi();
   const { setUser, ...auth } = useAuth({
@@ -55,6 +59,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   return <CoreMotiomContext.Provider value={value}>{children}</CoreMotiomContext.Provider>;
 }
+
+/* ===========================================================
+   HOOK DO ESTADO GLOBAL
+=========================================================== */
 
 export function useCoreMotiom(): CoreMotiomContextType {
   const context = useContext(CoreMotiomContext);

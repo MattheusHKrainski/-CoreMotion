@@ -8,6 +8,10 @@ import { useState, useCallback } from 'react';
 import { Product, Store } from '../types';
 import { ActiveView, Toast, UiSlice } from './types';
 
+/* ===========================================================
+   FATIA DE INTERFACE (UI)
+=========================================================== */
+
 export function useUi(): UiSlice {
   // Navegação & views
   const [activeView, setActiveView] = useState<ActiveView>('home');
@@ -26,6 +30,10 @@ export function useUi(): UiSlice {
   // Toasts
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  /* ===========================================================
+     EXIBIR NOTIFICAÇÃO (TOAST)
+  =========================================================== */
+
   const addToast = useCallback(
     (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
       const id = Math.random().toString(36).substring(2, 9);
@@ -36,6 +44,10 @@ export function useUi(): UiSlice {
     },
     []
   );
+
+  /* ===========================================================
+     REMOVER NOTIFICAÇÃO (TOAST)
+  =========================================================== */
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

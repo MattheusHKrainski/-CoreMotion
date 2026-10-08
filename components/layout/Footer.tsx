@@ -14,6 +14,10 @@ import {
   Lock,
 } from 'lucide-react';
 
+/* ===========================================================
+   RODAPÉ
+=========================================================== */
+
 export default function Footer() {
   const { setActiveView } = useCoreMotiom();
 

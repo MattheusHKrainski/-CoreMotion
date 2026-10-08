@@ -26,6 +26,10 @@ interface StoresViewProps {
   onSelectProduct?: (product: Product) => void;
 }
 
+/* ===========================================================
+   VISTA DE LOJAS OFICIAIS
+=========================================================== */
+
 export default function StoresView({ onSelectProduct }: StoresViewProps) {
   const {
     stores,
@@ -58,6 +62,10 @@ export default function StoresView({ onSelectProduct }: StoresViewProps) {
     if (filterVerifiedOnly && !s.is_verified) return false;
     return true;
   });
+
+  /* ===========================================================
+     ENVIAR SOLICITAÇÃO DE VERIFICAÇÃO
+  =========================================================== */
 
   const handleRequestVerificationSubmit = (e: React.FormEvent) => {
     e.preventDefault();

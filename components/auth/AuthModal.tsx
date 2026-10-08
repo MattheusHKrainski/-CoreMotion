@@ -18,6 +18,10 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 
+/* ===========================================================
+   MODAL DE AUTENTICAÇÃO
+=========================================================== */
+
 export default function AuthModal() {
   const {
     isAuthModalOpen,
@@ -38,6 +42,10 @@ export default function AuthModal() {
   const [errorMsg, setErrorMsg] = useState('');
 
   if (!isAuthModalOpen) return null;
+
+  /* ===========================================================
+     ENVIAR FORMULÁRIO DE LOGIN/CADASTRO
+  =========================================================== */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -22,9 +22,17 @@ interface ProductCardProps {
   onSelect?: (product: Product) => void;
 }
 
+/* ===========================================================
+   CARD DE PRODUTO
+=========================================================== */
+
 export default function ProductCard({ product, onSelect }: ProductCardProps) {
   const { addToCart, setCheckoutOpen, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const isFav = favorites.includes(product.id);
+
+  /* ===========================================================
+     FORMATAR PREÇO EM REAIS
+  =========================================================== */
 
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -32,6 +40,10 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
       currency: 'BRL',
     }).format(val);
   };
+
+  /* ===========================================================
+     RÓTULO DA CONDIÇÃO DO PRODUTO
+  =========================================================== */
 
   const getConditionLabel = (cond: Product['condition']) => {
     switch (cond) {

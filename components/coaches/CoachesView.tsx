@@ -20,6 +20,10 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+/* ===========================================================
+   VISTA DE TREINADORES
+=========================================================== */
+
 export default function CoachesView() {
   const { coaches, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
   const [selectedSport, setSelectedSport] = useState<string>('all');
@@ -42,6 +46,10 @@ export default function CoachesView() {
     return true;
   });
 
+  /* ===========================================================
+     CONFIRMAR AGENDAMENTO
+  =========================================================== */
+
   const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault();
     setBookingConfirmed(true);
@@ -51,6 +59,10 @@ export default function CoachesView() {
       setBookingConfirmed(false);
     }, 2500);
   };
+
+  /* ===========================================================
+     FORMATAR PREÇO EM REAIS
+  =========================================================== */
 
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {

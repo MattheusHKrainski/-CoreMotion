@@ -19,6 +19,10 @@ export const isSupabaseConfigured = Boolean(
 
 let supabaseInstance: SupabaseClient | null = null;
 
+/* ===========================================================
+   OBTER CLIENTE SUPABASE
+=========================================================== */
+
 /**
  * Cliente Supabase único da aplicação.
  * Retorna `null` quando as credenciais não estão configuradas no .env.

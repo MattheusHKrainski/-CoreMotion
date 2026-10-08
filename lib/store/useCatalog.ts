@@ -24,6 +24,10 @@ interface UseCatalogDeps {
   setUser: Dispatch<SetStateAction<UserProfile | null>>;
 }
 
+/* ===========================================================
+   FATIA DE CATÁLOGO
+=========================================================== */
+
 export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): CatalogSlice {
   const [products, setProducts] = useState<Product[]>(
     () => (readPersistedState()?.products as Product[]) || INITIAL_PRODUCTS
@@ -37,6 +41,10 @@ export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): Catalog
   const [coaches] = useState(() => INITIAL_COACHES);
   const [athletes] = useState(() => INITIAL_ATHLETES);
   const [news] = useState(() => INITIAL_NEWS);
+
+  /* ===========================================================
+     CRIAR ANÚNCIO DE PRODUTO
+  =========================================================== */
 
   // Produtos (B2C & C2C)
   const createProduct = async (
@@ -54,15 +62,27 @@ export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): Catalog
     return newProduct;
   };
 
+  /* ===========================================================
+     ATUALIZAR PRODUTO
+  =========================================================== */
+
   const updateProduct = (id: string, data: Partial<Product>) => {
     setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
     addToast('Produto Atualizado', 'As alterações foram salvas com sucesso.', 'success');
   };
 
+  /* ===========================================================
+     EXCLUIR PRODUTO
+  =========================================================== */
+
   const deleteProduct = (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
     addToast('Produto Removido', 'O anúncio foi excluído.', 'info');
   };
+
+  /* ===========================================================
+     CRIAR LOJA
+  =========================================================== */
 
   // Lojas & verificação oficial
   const createStore = async (
@@ -86,6 +106,10 @@ export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): Catalog
     return newStore;
   };
 
+  /* ===========================================================
+     SOLICITAR VERIFICAÇÃO DE LOJA
+  =========================================================== */
+
   const requestStoreVerification = async (storeId: string, docs: NonNullable<Store['verification_docs']>) => {
     setStores((prev) =>
       prev.map((s) =>
@@ -105,6 +129,10 @@ export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): Catalog
       'info'
     );
   };
+
+  /* ===========================================================
+     APROVAR/REPROVAR LOJA (ADMIN)
+  =========================================================== */
 
   const adminVerifyStore = async (storeId: string, approve: boolean, notes?: string) => {
     setStores((prev) =>
@@ -136,6 +164,10 @@ export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): Catalog
     }
   };
 
+  /* ===========================================================
+     CRIAR PUBLICAÇÃO NA COMUNIDADE
+  =========================================================== */
+
   // Comunidade
   const createCommunityPost = (post: {
     title: string;
@@ -162,11 +194,19 @@ export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): Catalog
     addToast('Publicação Criada', 'Sua postagem está visível para a comunidade esportiva.', 'success');
   };
 
+  /* ===========================================================
+     CURTIR PUBLICAÇÃO
+  =========================================================== */
+
   const likeCommunityPost = (postId: string) => {
     setCommunityPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, likes_count: p.likes_count + 1 } : p))
     );
   };
+
+  /* ===========================================================
+     ADICIONAR COMENTÁRIO
+  =========================================================== */
 
   const addCommunityComment = (postId: string, content: string) => {
     const comment = {
@@ -190,12 +230,20 @@ export function useCatalog({ addToast, user, setUser }: UseCatalogDeps): Catalog
     addToast('Comentário Adicionado', 'Sua resposta foi enviada.', 'success');
   };
 
+  /* ===========================================================
+     DENUNCIAR PUBLICAÇÃO
+  =========================================================== */
+
   const reportCommunityPost = (postId: string, reason: string) => {
     setCommunityPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, is_reported: true, report_reason: reason } : p))
     );
     addToast('Denúncia Registrada', 'O post foi encaminhado para moderação administrativa.', 'info');
   };
+
+  /* ===========================================================
+     EXCLUIR PUBLICAÇÃO (ADMIN)
+  =========================================================== */
 
   const adminDeleteCommunityPost = (postId: string) => {
     setCommunityPosts((prev) => prev.filter((p) => p.id !== postId));

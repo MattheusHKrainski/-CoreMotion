@@ -16,6 +16,10 @@ import {
   Filter,
 } from 'lucide-react';
 
+/* ===========================================================
+   VISTA DA COMUNIDADE
+=========================================================== */
+
 export default function CommunityView() {
   const {
     communityPosts,
@@ -48,6 +52,10 @@ export default function CommunityView() {
     return true;
   });
 
+  /* ===========================================================
+     CRIAR PUBLICAÇÃO
+  =========================================================== */
+
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
     if (isVisitor) {
@@ -70,6 +78,10 @@ export default function CommunityView() {
     setNewPostContent('');
     addToast('Post Publicado', 'Seu relato já está no feed da comunidade.', 'success');
   };
+
+  /* ===========================================================
+     ENVIAR COMENTÁRIO
+  =========================================================== */
 
   const handleSendComment = (postId: string) => {
     if (isVisitor) {

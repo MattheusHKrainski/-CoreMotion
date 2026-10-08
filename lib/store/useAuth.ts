@@ -26,6 +26,10 @@ export type AuthSliceInternal = AuthSlice & {
   setUser: Dispatch<SetStateAction<UserProfile | null>>;
 };
 
+/* ===========================================================
+   FATIA DE AUTENTICAÇÃO (SUPABASE)
+=========================================================== */
+
 export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDeps): AuthSliceInternal {
   const [user, setUser] = useState<UserProfile | null>(
     () => (readPersistedState()?.user as UserProfile | null) ?? null
@@ -63,6 +67,10 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
   const isVisitor = !user || role === 'visitor';
   const isAuthenticated = Boolean(user && role !== 'visitor');
 
+  /* ===========================================================
+     LOGIN COM E-MAIL
+  =========================================================== */
+
   // Auth: Login com e-mail (Supabase)
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     const sb = getSupabase();
@@ -86,6 +94,10 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     setAuthModalOpen(false);
     return { success: true };
   };
+
+  /* ===========================================================
+     CADASTRO COM E-MAIL
+  =========================================================== */
 
   // Auth: Cadastro (Supabase)
   const signUpWithEmail = async (
@@ -120,6 +132,10 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     return { success: true };
   };
 
+  /* ===========================================================
+     LOGIN COM GOOGLE OAUTH
+  =========================================================== */
+
   // Auth: Google OAuth (Supabase)
   const signInWithGoogle = async () => {
     const sb = getSupabase();
@@ -138,6 +154,10 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     }
   };
 
+  /* ===========================================================
+     ENCERRAR SESSÃO (LOGOUT)
+  =========================================================== */
+
   // Auth: Logout
   const logout = async () => {
     const sb = getSupabase();
@@ -146,6 +166,10 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     setActiveView('home');
     addToast('Sessão Encerrada', 'Você saiu da sua conta com segurança.', 'info');
   };
+
+  /* ===========================================================
+     TROCAR PERFIL DEMO
+  =========================================================== */
 
   // Troca de perfil demo (testes de fluxo Admin/Lojista/Atleta/Visitante)
   const switchRole = useCallback(
@@ -202,6 +226,10 @@ export function useAuth({ addToast, setActiveView, setAuthModalOpen }: UseAuthDe
     },
     [addToast]
   );
+
+  /* ===========================================================
+     ATUALIZAR PERFIL DO USUÁRIO
+  =========================================================== */
 
   const updateUserProfile = (data: Partial<UserProfile>) => {
     if (!user) return;

@@ -21,6 +21,10 @@ interface HomeHeroAndHighlightsProps {
   onSelectProduct?: (product: Product) => void;
 }
 
+/* ===========================================================
+   BANNER INICIAL E DESTAQUES
+=========================================================== */
+
 export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHighlightsProps) {
   const {
     products,
