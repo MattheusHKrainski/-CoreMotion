@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import {
   canDeleteTarget,
@@ -11,6 +11,8 @@ import {
   ROLE_LABELS,
 } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { StoreService } from '@/services/stores';
+import type { Store as StoreModel } from '@/lib/types';
 import { UserRole } from '@/lib/types';
 import {
   ShieldCheck,
@@ -61,6 +63,11 @@ export default function AdminDashboard() {
     setSupabaseConfigOpen,
     addToast,
   } = useCoreMotiom();
+  // C6: documentos de verificação chegam só para a equipe (rota autenticada).
+  const [storeDocs, setStoreDocs] = useState<Record<string, NonNullable<StoreModel['verification_docs']>>>({});
+  useEffect(() => {
+    StoreService.getVerificationDocs().then(setStoreDocs);
+  }, []);
 
   // Search & Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -461,9 +468,9 @@ export default function AdminDashboard() {
                     </div>
                     <p className="text-xs text-zinc-400">{store.category} • {store.location}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
-                      <span>CNPJ: <strong className="text-zinc-200">{store.verification_docs?.cnpj || 'não informado'}</strong></span>
+                      <span>CNPJ: <strong className="text-zinc-200">{(storeDocs[store.id] ?? store.verification_docs)?.cnpj || 'não informado'}</strong></span>
                       <span>•</span>
-                      <span>Razão Social: <strong className="text-zinc-200">{store.verification_docs?.company_name || 'não informado'}</strong></span>
+                      <span>Razão Social: <strong className="text-zinc-200">{(storeDocs[store.id] ?? store.verification_docs)?.company_name || 'não informado'}</strong></span>
                       <span>•</span>
                       <span>E-mail: {store.contact_email}</span>
                     </div>
@@ -561,7 +568,7 @@ export default function AdminDashboard() {
                     <td className="p-4 whitespace-nowrap text-zinc-400">
                       <div className="text-zinc-200 font-medium">{s.location}</div>
                       <div className="text-[10px] text-zinc-500">
-                        CNPJ: {s.verification_docs?.cnpj || 'não informado'}
+                        CNPJ: {(storeDocs[s.id] ?? s.verification_docs)?.cnpj || 'não informado'}
                       </div>
                     </td>
                     <td className="p-4 whitespace-nowrap">

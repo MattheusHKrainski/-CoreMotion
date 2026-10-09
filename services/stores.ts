@@ -10,6 +10,22 @@ type StoreInput = Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | '
  * Serviço de lojas oficiais e verificação. Leitura pública; escrita autenticada no servidor.
  */
 export class StoreService {
+  /** Documentos de verificação por loja: só a equipe recebe (a API recusa quem não é da equipe). */
+  static async getVerificationDocs(): Promise<Record<string, NonNullable<Store['verification_docs']>>> {
+    try {
+      const res = await authedFetch('/api/stores?docs=1');
+      if (!res.ok) return {};
+      const data = await res.json();
+      const docsById: Record<string, NonNullable<Store['verification_docs']>> = {};
+      for (const store of (data.stores as Store[]) || []) {
+        if (store.verification_docs) docsById[store.id] = store.verification_docs;
+      }
+      return docsById;
+    } catch {
+      return {};
+    }
+  }
+
   /** Lista lojas do banco (ou dados de demonstração quando o banco não está configurado). */
   static async getStores(): Promise<Store[]> {
     try {
