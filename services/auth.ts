@@ -4,9 +4,8 @@ import { UserProfile, UserRole } from '@/lib/types';
 import { isMasterAdminEmail as isMasterAdmin } from '@/lib/permissions';
 import { authedFetch } from '@/lib/auth-fetch';
 
-export { isMasterAdmin };
 
-export interface AuthResponse<T = unknown> {
+interface AuthResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -15,7 +14,7 @@ export interface AuthResponse<T = unknown> {
 /**
  * Synchronizes user session with public.users using supabase_id.
  */
-export async function syncSessionWithDb(
+async function syncSessionWithDb(
   supabaseId: string,
   email: string,
   metadata?: {
@@ -250,21 +249,4 @@ export class AuthService {
     }
   }
 
-  /**
-   * Fetches all registered users (for admin panel).
-   */
-  static async getAllUsers(): Promise<UserProfile[]> {
-    try {
-      const res = await authedFetch('/api/users');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.users)) {
-          return data.users;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  }
 }

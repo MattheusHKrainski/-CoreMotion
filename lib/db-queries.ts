@@ -11,7 +11,7 @@ import { isMasterAdminEmail } from './permissions';
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80';
 
-export function toSafeUuid(val?: string | null): string | null {
+function toSafeUuid(val?: string | null): string | null {
   if (!val) return null;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) ? val : null;
 }
@@ -25,7 +25,7 @@ function toIso(value: Date | string | null | undefined): string {
 // PERFIS / USUÁRIOS  (public.profiles, espelho de auth.users)
 // ----------------------------------------------------
 
-export interface DbProfileRow {
+interface DbProfileRow {
   id: string;
   email: string;
   name: string;
@@ -42,7 +42,7 @@ export interface DbProfileRow {
   updated_at: Date | string;
 }
 
-export function mapDbProfileToUser(row: DbProfileRow): UserProfile {
+function mapDbProfileToUser(row: DbProfileRow): UserProfile {
   // A conta-mestre é sempre administradora, independentemente do valor gravado.
   const role: UserRole = isMasterAdminEmail(row.email) ? 'admin' : ((row.role as UserRole) || 'user');
   return {
@@ -177,7 +177,7 @@ export async function deleteAuthUser(id: string): Promise<boolean> {
 // PRODUTOS  (public.products — B2C de lojas e C2C entre atletas)
 // ----------------------------------------------------
 
-export interface DbProductRow {
+interface DbProductRow {
   id: string;
   title: string;
   description: string;
@@ -206,7 +206,7 @@ export interface DbProductRow {
   updated_at: Date | string;
 }
 
-export function mapDbProductToModel(row: DbProductRow): Product {
+function mapDbProductToModel(row: DbProductRow): Product {
   return {
     id: row.id,
     title: row.title,
@@ -236,7 +236,7 @@ export function mapDbProductToModel(row: DbProductRow): Product {
   };
 }
 
-export interface ProductFilters {
+interface ProductFilters {
   category?: string;
   sport?: string;
   condition?: string;
@@ -296,7 +296,7 @@ export async function getProductOwnerId(id: string): Promise<string | null> {
   return rows.length > 0 ? rows[0].seller_id : null;
 }
 
-export interface NewProductInput {
+interface NewProductInput {
   title: string;
   description: string;
   price: number;
@@ -404,7 +404,7 @@ export async function deleteProductInDb(id: string): Promise<boolean> {
 // LOJAS  (public.stores — lojas oficiais e verificação)
 // ----------------------------------------------------
 
-export interface DbStoreRow {
+interface DbStoreRow {
   id: string;
   owner_id: string | null;
   name: string;
@@ -429,7 +429,7 @@ export interface DbStoreRow {
   updated_at: Date | string;
 }
 
-export function mapDbStoreToModel(row: DbStoreRow): Store {
+function mapDbStoreToModel(row: DbStoreRow): Store {
   return {
     id: row.id,
     owner_id: row.owner_id ? String(row.owner_id) : '',

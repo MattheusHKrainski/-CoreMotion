@@ -32,7 +32,7 @@ Trabalho de Conclusão de Curso (TCC) desenvolvido pela equipe da disciplina, co
 - **Comunidade**: publicações, curtidas e comentários. A denúncia usa um dos motivos fixos (*Spam*, *Conteúdo ofensivo*, *Informação falsa* ou *Outro*) e marca a publicação para moderação; supervisores e administradores podem removê-la.
 - **Perfil**: edição de nome, telefone, cidade e UF, com exibição do papel, das regras que se aplicam a ele e dos pedidos.
 - **Painel de gestão** (supervisor e administrador): indicadores, verificação de lojas, moderação do catálogo e da comunidade, usuários (a troca de papel é exclusiva do administrador), pedidos e diagnóstico do banco.
-- Treinadores são **dados estáticos de demonstração**. A análise do *SmartScan* é **simulada**.
+- Treinadores são **dados estáticos de demonstração**.
 
 ## Papéis e permissões
 
@@ -215,7 +215,6 @@ Medidas implementadas nesta versão:
 ## Limitações conhecidas
 
 - Pagamentos (PIX, cartão e boleto) são **simulados**. Não há integração com gateway financeiro.
-- O *SmartScan* simula a análise de imagem. Não há modelo de inteligência artificial.
 - Treinadores são **dados estáticos** de demonstração.
 - Não há testes automatizados de interface (ponta a ponta). A interface foi verificada por tipos, lint, build e pelo teste de fumaça das rotas.
 - A interface não tem tela para editar anúncios já publicados.

@@ -24,7 +24,7 @@ import {
   INITIAL_NEWS,
   INITIAL_USERS,
 } from './initial-data';
-import { getSupabase, isSupabaseConfigured } from './supabase';
+import { getSupabaseClient as getSupabase, isSupabaseConfigured } from '@/services/supabaseClient';
 import { authedFetch } from './auth-fetch';
 import {
   canDeleteTarget,
@@ -42,10 +42,6 @@ import {
   testSupabaseConnection,
 } from '@/services';
 
-/** Compatibilidade: conta-mestre por e-mail exato. Papéis de gestão usam hasCapability(role, ...). */
-export function isUserAdmin(email?: string | null): boolean {
-  return isMasterAdminEmail(email);
-}
 
 interface Toast {
   id: string;
@@ -54,7 +50,7 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
-export type ActiveView =
+type ActiveView =
   | 'home'
   | 'marketplace'
   | 'stores'

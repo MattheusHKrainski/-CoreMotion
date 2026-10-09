@@ -11,7 +11,7 @@ const { Pool } = pg;
  */
 let poolInstance: pg.Pool | null = null;
 
-export function getDbPool(): pg.Pool | null {
+function getDbPool(): pg.Pool | null {
   const connectionString = (process.env.DATABASE_URL || '').trim();
   if (!connectionString) {
     return null;
@@ -32,10 +32,6 @@ export function getDbPool(): pg.Pool | null {
   }
 
   return poolInstance;
-}
-
-export function isDatabaseConfigured(): boolean {
-  return Boolean((process.env.DATABASE_URL || '').trim());
 }
 
 export async function queryDb<T = Record<string, unknown>>(

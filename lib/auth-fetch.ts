@@ -4,7 +4,7 @@
  */
 import { getSupabaseClient } from '@/services/supabaseClient';
 
-export async function getAccessToken(): Promise<string | null> {
+async function getAccessToken(): Promise<string | null> {
   const sb = getSupabaseClient();
   if (!sb) return null;
   try {

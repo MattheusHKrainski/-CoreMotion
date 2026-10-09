@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product } from '@/lib/types';
-import ProductCard from './ProductCard';
+import ProductCard from '@/components/marketplace/ProductCard';
 import {
   ShieldCheck,
   ArrowRight,

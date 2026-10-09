@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
 import type { Order, UserProfile, UserRole } from '@/lib/types';

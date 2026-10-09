@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/services/supabaseClient';
 import {
   Search,
   ShoppingBag,

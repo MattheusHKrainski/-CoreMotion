@@ -97,9 +97,3 @@ export class StoreService {
     }
   }
 }
-
-export const getStores = StoreService.getStores.bind(StoreService);
-export const getStoreBySlug = StoreService.getStoreBySlug.bind(StoreService);
-export const createStore = StoreService.createStore.bind(StoreService);
-export const requestStoreVerification = StoreService.requestVerification.bind(StoreService);
-export const adminVerifyStore = StoreService.adminVerifyStore.bind(StoreService);

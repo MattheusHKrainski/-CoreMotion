@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { X, Database, Check, Copy, ShieldCheck, Server, Key } from 'lucide-react';
 
 /** Modelo de ambiente SEM credenciais reais. Cada integrante preenche o seu arquivo .env.local. */

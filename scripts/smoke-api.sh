@@ -39,8 +39,6 @@ check() {
 
 PROTECTED_ROUTES=(
   "POST /api/auth/sync"
-  "POST /api/listings"
-  "DELETE /api/listings"
   "POST /api/products"
   "PATCH /api/products"
   "DELETE /api/products"

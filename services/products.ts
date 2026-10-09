@@ -3,7 +3,7 @@ import { INITIAL_PRODUCTS } from '@/lib/initial-data';
 import { authedFetch } from '@/lib/auth-fetch';
 import { isSupabaseConfigured } from './supabaseClient';
 
-export interface ProductFilters {
+interface ProductFilters {
   category?: string;
   sport?: string;
   condition?: ProductCondition;
@@ -153,8 +153,3 @@ export class ProductService {
     });
   }
 }
-
-export const getProducts = ProductService.getProducts.bind(ProductService);
-export const getProductById = ProductService.getProductById.bind(ProductService);
-export const createProduct = ProductService.createProduct.bind(ProductService);
-export const deleteProduct = ProductService.deleteProduct.bind(ProductService);
