@@ -20,6 +20,7 @@ import {
 export default function SellC2CView() {
   const {
     products,
+    stores,
     createProduct,
     deleteProduct,
     user,
@@ -49,6 +50,14 @@ export default function SellC2CView() {
     (p) => p.seller_id === user?.id || (user?.role === 'user' && p.product_type === 'c2c')
   );
 
+  // Lojista (ou administrador com loja) pode anunciar pela própria loja (B2C).
+  const myStore = user
+    ? stores.find((s) => s.id === user.store_id) ?? stores.find((s) => s.owner_id === user.id)
+    : undefined;
+  const canSellB2C = Boolean(myStore) && (user?.role === 'seller' || user?.role === 'admin');
+  const [saleType, setSaleType] = useState<'c2c' | 'b2c'>('c2c');
+  const effectiveSaleType: 'c2c' | 'b2c' = canSellB2C && saleType === 'b2c' ? 'b2c' : 'c2c';
+
   const handleAddImage = () => {
     if (imageUrl.trim() && !imageGallery.includes(imageUrl.trim())) {
       setImageGallery([...imageGallery, imageUrl.trim()]);
@@ -77,7 +86,10 @@ export default function SellC2CView() {
         category,
         sport,
         condition,
-        product_type: 'c2c',
+        product_type: effectiveSaleType,
+        store_id: effectiveSaleType === 'b2c' ? myStore?.id : undefined,
+        store_name: effectiveSaleType === 'b2c' ? myStore?.name : undefined,
+        is_verified_store: effectiveSaleType === 'b2c' ? Boolean(myStore?.is_verified) : false,
         images: imageGallery.length > 0 ? imageGallery : ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'],
         seller_id: user?.id || 'user-c2c',
         seller_name: user?.name || 'Atleta CoreMotiom',
@@ -86,7 +98,7 @@ export default function SellC2CView() {
         location,
         shipping_available: shippingAvailable,
         status: 'active',
-        tags: [sport, category, 'Venda Direta C2C'],
+        tags: effectiveSaleType === 'b2c' ? [sport, category, 'Loja Oficial'] : [sport, category, 'Venda Direta C2C'],
       });
 
       // Reset form & view active listings
@@ -182,6 +194,45 @@ export default function SellC2CView() {
               <Layers className="w-4 h-4 text-red-400" />
               <span>Especificações Técnicas do Equipamento</span>
             </h3>
+
+            {canSellB2C && myStore && (
+              <div>
+                <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
+                  Tipo de venda *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSaleType('c2c')}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                      effectiveSaleType === 'c2c'
+                        ? 'bg-red-600 border-red-500 text-white'
+                        : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-600'
+                    }`}
+                  >
+                    Entre atletas (C2C)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSaleType('b2c')}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                      effectiveSaleType === 'b2c'
+                        ? 'bg-red-600 border-red-500 text-white'
+                        : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-600'
+                    }`}
+                  >
+                    Loja oficial: {myStore.name} (B2C)
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-1.5">
+                  {effectiveSaleType === 'b2c'
+                    ? myStore.is_verified
+                      ? 'Sua loja está verificada: o anúncio exibe o selo de loja verificada.'
+                      : 'Sua loja ainda não está verificada: o anúncio não exibe o selo.'
+                    : 'Venda direta entre atletas, com pagamento retido em custódia.'}
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">

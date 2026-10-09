@@ -1,3 +1,5 @@
+// ATENÇÃO: este script APAGA dados da tabela products (DELETE FROM) antes de inserir o catálogo.
+// Use apenas em ambiente de desenvolvimento. Veja database/README.md.
 import pg from "pg";
 import fs from "fs";
 import crypto from "crypto";

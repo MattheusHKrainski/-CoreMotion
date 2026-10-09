@@ -3,6 +3,25 @@ import { CommunityPost } from '@/lib/types';
 import { INITIAL_COMMUNITY_POSTS } from '@/lib/initial-data';
 
 export class CommunityService {
+  /** Denúncia: marca a publicação para moderação (RLS: usuário autenticado). */
+  static async reportPost(postId: string, reason: string): Promise<{ success: boolean; error?: string }> {
+    const sb = getSupabaseClient();
+    if (!sb) return { success: true };
+    const { error } = await sb
+      .from('community_posts')
+      .update({ is_reported: true, report_reason: reason.slice(0, 300) })
+      .eq('id', postId);
+    return error ? { success: false, error: error.message } : { success: true };
+  }
+
+  /** Remoção por moderação (RLS: autor da publicação, administrador ou supervisor). */
+  static async deletePost(postId: string): Promise<{ success: boolean; error?: string }> {
+    const sb = getSupabaseClient();
+    if (!sb) return { success: true };
+    const { error } = await sb.from('community_posts').delete().eq('id', postId);
+    return error ? { success: false, error: error.message } : { success: true };
+  }
+
   /**
    * Fetches community posts from Supabase or fallback.
    */

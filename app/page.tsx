@@ -12,6 +12,7 @@ import HomeHeroAndHighlights from '@/components/HomeHeroAndHighlights';
 import SellC2CView from '@/components/SellC2CView';
 import CoachesView from '@/components/CoachesView';
 import CommunityView from '@/components/CommunityView';
+import ProfileView from '@/components/ProfileView';
 import SupabaseConfigModal from '@/components/SupabaseConfigModal';
 import CheckoutModal from '@/components/CheckoutModal';
 import { X, CheckCircle, AlertCircle, Info, Lock } from 'lucide-react';
@@ -103,6 +104,8 @@ export default function CoreMotiomApp() {
           {activeView === 'coaches' && <CoachesView />}
 
           {activeView === 'community' && <CommunityView />}
+
+          {activeView === 'profile' && <ProfileView />}
 
           {activeView === 'admin' && <AdminDashboard />}
         </main>

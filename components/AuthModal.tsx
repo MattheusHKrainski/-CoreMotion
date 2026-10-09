@@ -1,4 +1,5 @@
 'use client';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -144,7 +145,8 @@ export default function AuthModal() {
             </div>
           </div>
 
-          {/* Quick 1-Click Access Box */}
+          {/* Acesso rápido: somente em modo demonstração (sem banco conectado) */}
+          {!isSupabaseConfigured && (
           <div className="mb-6 p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300 mb-2.5 uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-zinc-300">
@@ -182,6 +184,7 @@ export default function AuthModal() {
               </button>
             </div>
           </div>
+          )}
 
           {/* Error Message if any */}
           {errorMsg && (

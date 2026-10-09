@@ -1,292 +1,180 @@
+/**
+ * Consultas SQL usadas pelas rotas de API (somente servidor).
+ * Todas seguem o esquema oficial em supabase/migrations/ (tabelas public.profiles,
+ * public.products, public.stores, public.orders e public.community_posts).
+ * Todas as consultas são parametrizadas (proteção contra SQL injection).
+ */
 import { queryDb } from './db';
 import { Product, Store, UserProfile, UserRole } from './types';
+import { isMasterAdminEmail } from './permissions';
 
-export const ADMIN_MASTER_EMAILS = [
-  'mattheusxmljz@gmail.com',
-  'professorchines2026@gmail.com',
-  'operacaoamd@gmail.com',
-  'admin@coremotiom.com',
-];
-
-export function isMasterAdminEmail(email?: string | null): boolean {
-  if (!email) return false;
-  const clean = email.trim().toLowerCase();
-  return (
-    ADMIN_MASTER_EMAILS.includes(clean) ||
-    clean.startsWith('mattheusxmljz') ||
-    clean.startsWith('professorchines')
-  );
-}
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80';
+const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80';
 
 export function toSafeUuid(val?: string | null): string | null {
   if (!val) return null;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) ? val : null;
 }
 
-export interface DbUserRow {
-  id: number;
-  name: string;
-  handle: string;
+function toIso(value: Date | string | null | undefined): string {
+  if (!value) return new Date().toISOString();
+  return typeof value === 'string' ? value : value.toISOString();
+}
+
+// ----------------------------------------------------
+// PERFIS / USUÁRIOS  (public.profiles, espelho de auth.users)
+// ----------------------------------------------------
+
+export interface DbProfileRow {
+  id: string;
   email: string;
-  password_hash: string;
+  name: string;
+  avatar_url: string | null;
+  phone: string | null;
   role: string;
-  sport: string;
-  city: string;
-  bio: string;
-  avatar: string;
-  level: string;
-  followers: number;
-  rating: number | string;
-  price_per_hour: number | null;
-  verified: boolean;
-  is_demo: boolean;
-  banned: boolean;
-  ban_reason: string;
-  report_count: number;
-  last_login_at: Date | string | null;
+  city: string | null;
+  state: string | null;
+  sport_interests: string[] | null;
+  store_id: string | null;
+  is_banned: boolean;
+  ban_reason: string | null;
   created_at: Date | string;
-  supabase_id: string | null;
-  status: string;
   updated_at: Date | string;
 }
 
-export function mapDbUserToProfile(row: DbUserRow): UserProfile {
-  const isAdmin = isMasterAdminEmail(row.email) || row.role === 'admin';
-  const role: UserRole = isAdmin ? 'admin' : (row.role as UserRole) || 'user';
-
+export function mapDbProfileToUser(row: DbProfileRow): UserProfile {
+  // A conta-mestre é sempre administradora, independentemente do valor gravado.
+  const role: UserRole = isMasterAdminEmail(row.email) ? 'admin' : ((row.role as UserRole) || 'user');
   return {
-    id: String(row.id),
-    supabase_id: row.supabase_id || undefined,
-    name: row.name || 'Atleta CoreMotiom',
+    id: row.id,
+    supabase_id: row.id,
     email: row.email,
-    avatar_url: row.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
+    name: row.name || row.email.split('@')[0],
+    avatar_url: row.avatar_url || DEFAULT_AVATAR,
+    phone: row.phone || undefined,
     role,
-    city: row.city || 'São Paulo',
-    state: 'SP',
-    sport_interests: row.sport ? [row.sport] : ['Corrida', 'Alta Performance'],
-    created_at: typeof row.created_at === 'string' ? row.created_at : row.created_at?.toISOString() || new Date().toISOString(),
+    city: row.city || undefined,
+    state: row.state || undefined,
+    sport_interests: row.sport_interests || [],
+    created_at: toIso(row.created_at),
+    store_id: row.store_id || undefined,
+    is_banned: Boolean(row.is_banned),
+    ban_reason: row.ban_reason || undefined,
   };
 }
 
-// ----------------------------------------------------
-// USER QUERIES & SYNCHRONIZATION
-// ----------------------------------------------------
+export async function getProfileById(id: string): Promise<UserProfile | null> {
+  const rows = await queryDb<DbProfileRow>(`SELECT * FROM public.profiles WHERE id = $1 LIMIT 1`, [id]);
+  return rows.length > 0 ? mapDbProfileToUser(rows[0]) : null;
+}
 
-export async function findUserBySupabaseId(supabaseId: string): Promise<UserProfile | null> {
-  const rows = await queryDb<DbUserRow>(
-    `SELECT * FROM public.users WHERE supabase_id = $1 LIMIT 1`,
-    [supabaseId]
+export async function listProfiles(): Promise<UserProfile[]> {
+  const rows = await queryDb<DbProfileRow>(`SELECT * FROM public.profiles ORDER BY created_at DESC`);
+  return rows.map(mapDbProfileToUser);
+}
+
+/**
+ * Cria ou atualiza o perfil do usuário autenticado. O papel NÃO é recebido do cliente:
+ * novos perfis nascem como 'user' (ou 'admin' para contas-mestre) e papéis existentes
+ * são preservados.
+ */
+export async function upsertOwnProfile(input: {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  city?: string;
+  state?: string;
+  phone?: string;
+  sport?: string;
+}): Promise<UserProfile> {
+  const email = input.email.trim().toLowerCase();
+  const name = input.name?.trim() || email.split('@')[0];
+  const role: UserRole = isMasterAdminEmail(email) ? 'admin' : 'user';
+
+  const rows = await queryDb<DbProfileRow>(
+    `INSERT INTO public.profiles (id, email, name, avatar_url, phone, role, city, state, sport_interests, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'São Paulo'), COALESCE($8, 'SP'), $9, NOW(), NOW())
+     ON CONFLICT (id) DO UPDATE SET
+       email = EXCLUDED.email,
+       name = COALESCE(NULLIF($3, ''), public.profiles.name),
+       avatar_url = COALESCE($4, public.profiles.avatar_url),
+       phone = COALESCE($5, public.profiles.phone),
+       city = COALESCE($7, public.profiles.city),
+       state = COALESCE($8, public.profiles.state),
+       role = CASE WHEN public.is_master_email(EXCLUDED.email) THEN 'admin' ELSE public.profiles.role END,
+       updated_at = NOW()
+     RETURNING *`,
+    [
+      input.id,
+      email,
+      name,
+      input.avatar || null,
+      input.phone || null,
+      role,
+      input.city || null,
+      input.state || null,
+      input.sport ? [input.sport] : ['Corrida', 'Alta Performance'],
+    ]
   );
-  if (rows.length === 0) return null;
-  return mapDbUserToProfile(rows[0]);
+  return mapDbProfileToUser(rows[0]);
 }
 
-export async function findUserByEmail(email: string): Promise<UserProfile | null> {
-  const rows = await queryDb<DbUserRow>(
-    `SELECT * FROM public.users WHERE LOWER(email) = LOWER($1) LIMIT 1`,
-    [email.trim()]
-  );
-  if (rows.length === 0) return null;
-  return mapDbUserToProfile(rows[0]);
-}
-
-export async function getAllUsersFromDb(): Promise<UserProfile[]> {
-  const rows = await queryDb<DbUserRow>(
-    `SELECT * FROM public.users ORDER BY id ASC`
-  );
-  return rows.map(mapDbUserToProfile);
-}
-
-export async function syncSupabaseUser(
-  supabaseId: string,
-  email: string,
-  metadata?: {
-    name?: string;
-    role?: string;
-    avatar?: string;
-    city?: string;
-    sport?: string;
-  }
-): Promise<UserProfile> {
-  const cleanEmail = email.trim().toLowerCase();
-  const isAdmin = isMasterAdminEmail(cleanEmail) || metadata?.role === 'admin';
-  const assignedRole = isAdmin ? 'admin' : metadata?.role || 'athlete';
-
-  // 1. Check if user already exists by supabase_id
-  const bySupabaseId = await queryDb<DbUserRow>(
-    `SELECT * FROM public.users WHERE supabase_id = $1 LIMIT 1`,
-    [supabaseId]
-  );
-
-  if (bySupabaseId.length > 0) {
-    const existing = bySupabaseId[0];
-    const updateRole = isAdmin ? 'admin' : existing.role;
-    const updated = await queryDb<DbUserRow>(
-      `UPDATE public.users 
-       SET last_login_at = NOW(), 
-           role = $1,
-           updated_at = NOW()
-       WHERE id = $2
-       RETURNING *`,
-      [updateRole, existing.id]
-    );
-    return mapDbUserToProfile(updated[0]);
-  }
-
-  // 2. Check if user already exists by email (link supabase_id)
-  const byEmail = await queryDb<DbUserRow>(
-    `SELECT * FROM public.users WHERE LOWER(email) = $1 LIMIT 1`,
-    [cleanEmail]
-  );
-
-  if (byEmail.length > 0) {
-    const existing = byEmail[0];
-    const updateRole = isAdmin ? 'admin' : existing.role;
-    const updated = await queryDb<DbUserRow>(
-      `UPDATE public.users 
-       SET supabase_id = $1,
-           last_login_at = NOW(),
-           role = $2,
-           updated_at = NOW()
-       WHERE id = $3
-       RETURNING *`,
-      [supabaseId, updateRole, existing.id]
-    );
-    return mapDbUserToProfile(updated[0]);
-  }
-
-  // 3. New user - Insert into public.users
-  const name = metadata?.name?.trim() || cleanEmail.split('@')[0];
-  const handle = `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}_${Math.floor(100 + Math.random() * 900)}`;
-  const avatar = metadata?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80';
-  const city = metadata?.city || 'São Paulo';
-  const sport = metadata?.sport || 'Multi-esportes';
-
-  const inserted = await queryDb<DbUserRow>(
-    `INSERT INTO public.users (
-      name, handle, email, password_hash, role, sport, city, bio, avatar, level, 
-      followers, rating, verified, is_demo, banned, report_count, 
-      last_login_at, created_at, supabase_id, status, updated_at
-    ) VALUES (
-      $1, $2, $3, 'supabase_auth', $4, $5, $6, '', $7, 'Iniciante',
-      0, 5.0, false, false, false, 0,
-      NOW(), NOW(), $8, 'active', NOW()
-    ) RETURNING *`,
-    [name, handle, cleanEmail, assignedRole, sport, city, avatar, supabaseId]
-  );
-
-  return mapDbUserToProfile(inserted[0]);
-}
-
-export async function updateUserRoleInDb(userIdOrSupabaseId: string, newRole: UserRole): Promise<boolean> {
-  const isNumeric = /^\d+$/.test(userIdOrSupabaseId);
-  const query = isNumeric
-    ? `UPDATE public.users SET role = $1, updated_at = NOW() WHERE id = $2`
-    : `UPDATE public.users SET role = $1, updated_at = NOW() WHERE supabase_id = $2`;
-
-  await queryDb(query, [newRole, isNumeric ? parseInt(userIdOrSupabaseId, 10) : userIdOrSupabaseId]);
-  return true;
-}
-
-export async function banUserInDb(userIdOrSupabaseId: string, reason: string = 'Violação das diretrizes da comunidade'): Promise<boolean> {
-  const isNumeric = /^\d+$/.test(userIdOrSupabaseId);
-  const query = isNumeric
-    ? `UPDATE public.users SET banned = true, ban_reason = $1, status = 'banned', updated_at = NOW() WHERE id = $2`
-    : `UPDATE public.users SET banned = true, ban_reason = $1, status = 'banned', updated_at = NOW() WHERE supabase_id = $2`;
-
-  await queryDb(query, [reason, isNumeric ? parseInt(userIdOrSupabaseId, 10) : userIdOrSupabaseId]);
-  return true;
-}
-
-export async function unbanUserInDb(userIdOrSupabaseId: string): Promise<boolean> {
-  const isNumeric = /^\d+$/.test(userIdOrSupabaseId);
-  const query = isNumeric
-    ? `UPDATE public.users SET banned = false, ban_reason = '', status = 'active', updated_at = NOW() WHERE id = $1`
-    : `UPDATE public.users SET banned = false, ban_reason = '', status = 'active', updated_at = NOW() WHERE supabase_id = $1`;
-
-  await queryDb(query, [isNumeric ? parseInt(userIdOrSupabaseId, 10) : userIdOrSupabaseId]);
-  return true;
-}
-
-export async function deleteUserFromDb(userIdOrSupabaseId: string): Promise<boolean> {
-  const isNumeric = /^\d+$/.test(userIdOrSupabaseId);
-  
-  // Find email first to ensure we don't accidentally delete master admin
-  const userCheck = isNumeric
-    ? await queryDb<DbUserRow>(`SELECT * FROM public.users WHERE id = $1`, [parseInt(userIdOrSupabaseId, 10)])
-    : await queryDb<DbUserRow>(`SELECT * FROM public.users WHERE supabase_id = $1`, [userIdOrSupabaseId]);
-
-  if (userCheck.length > 0 && isMasterAdminEmail(userCheck[0].email)) {
-    throw new Error('A conta do Administrador Master / Desenvolvedor não pode ser removida.');
-  }
-
-  const userRow = userCheck[0];
-
-  // 1. Delete from public.users
-  if (isNumeric) {
-    await queryDb(`DELETE FROM public.users WHERE id = $1`, [parseInt(userIdOrSupabaseId, 10)]);
-  } else {
-    await queryDb(`DELETE FROM public.users WHERE supabase_id = $1`, [userIdOrSupabaseId]);
-  }
-
-  // 2. Also remove from auth.users if supabase_id or email is known
-  if (userRow?.email) {
-    try {
-      await queryDb(`DELETE FROM auth.identities WHERE email = $1`, [userRow.email]);
-      await queryDb(`DELETE FROM auth.users WHERE email = $1`, [userRow.email]);
-    } catch {
-      // Best effort deletion from auth schema
-    }
-  }
-
-  return true;
-}
-
-export async function updateUserProfileInDb(
-  userIdOrSupabaseId: string,
-  updates: { name?: string; bio?: string; city?: string; sport?: string; avatar?: string }
+export async function updateProfileFields(
+  id: string,
+  fields: { name?: string; phone?: string; city?: string; state?: string; avatar_url?: string; sport_interests?: string[] }
 ): Promise<UserProfile | null> {
-  const isNumeric = /^\d+$/.test(userIdOrSupabaseId);
-  const fields: string[] = [];
+  const sets: string[] = [];
   const values: unknown[] = [];
-  let idx = 1;
+  const push = (column: string, value: unknown) => {
+    values.push(value);
+    sets.push(`${column} = $${values.length}`);
+  };
 
-  if (updates.name !== undefined) {
-    fields.push(`name = $${idx++}`);
-    values.push(updates.name.trim());
-  }
-  if (updates.bio !== undefined) {
-    fields.push(`bio = $${idx++}`);
-    values.push(updates.bio.trim());
-  }
-  if (updates.city !== undefined) {
-    fields.push(`city = $${idx++}`);
-    values.push(updates.city.trim());
-  }
-  if (updates.sport !== undefined) {
-    fields.push(`sport = $${idx++}`);
-    values.push(updates.sport.trim());
-  }
-  if (updates.avatar !== undefined) {
-    fields.push(`avatar = $${idx++}`);
-    values.push(updates.avatar.trim());
-  }
+  if (fields.name !== undefined) push('name', fields.name.trim());
+  if (fields.phone !== undefined) push('phone', fields.phone.trim() || null);
+  if (fields.city !== undefined) push('city', fields.city.trim());
+  if (fields.state !== undefined) push('state', fields.state.trim().toUpperCase());
+  if (fields.avatar_url !== undefined) push('avatar_url', fields.avatar_url.trim() || null);
+  if (fields.sport_interests !== undefined) push('sport_interests', fields.sport_interests);
 
-  if (fields.length === 0) return null;
+  if (sets.length === 0) return getProfileById(id);
 
-  fields.push(`updated_at = NOW()`);
-  values.push(isNumeric ? parseInt(userIdOrSupabaseId, 10) : userIdOrSupabaseId);
+  values.push(id);
+  const rows = await queryDb<DbProfileRow>(
+    `UPDATE public.profiles SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${values.length} RETURNING *`,
+    values
+  );
+  return rows.length > 0 ? mapDbProfileToUser(rows[0]) : null;
+}
 
-  const whereClause = isNumeric ? `id = $${idx}` : `supabase_id = $${idx}`;
-  const query = `UPDATE public.users SET ${fields.join(', ')} WHERE ${whereClause} RETURNING *`;
+export async function setUserRole(id: string, role: UserRole): Promise<UserProfile | null> {
+  const rows = await queryDb<DbProfileRow>(
+    `UPDATE public.profiles SET role = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+    [role, id]
+  );
+  return rows.length > 0 ? mapDbProfileToUser(rows[0]) : null;
+}
 
-  const rows = await queryDb<DbUserRow>(query, values);
-  if (rows.length === 0) return null;
-  return mapDbUserToProfile(rows[0]);
+export async function setUserBan(id: string, banned: boolean, reason?: string): Promise<UserProfile | null> {
+  const rows = await queryDb<DbProfileRow>(
+    `UPDATE public.profiles
+        SET is_banned = $1, ban_reason = $2, updated_at = NOW()
+      WHERE id = $3
+      RETURNING *`,
+    [banned, banned ? reason || 'Violação das diretrizes da comunidade' : null, id]
+  );
+  return rows.length > 0 ? mapDbProfileToUser(rows[0]) : null;
+}
+
+/** Remove a conta de autenticação; o perfil é apagado em cascata (ON DELETE CASCADE). */
+export async function deleteAuthUser(id: string): Promise<boolean> {
+  const rows = await queryDb<{ id: string }>(`DELETE FROM auth.users WHERE id = $1 RETURNING id`, [id]);
+  return rows.length > 0;
 }
 
 // ----------------------------------------------------
-// PRODUCT & LISTING QUERIES
+// PRODUTOS  (public.products — B2C de lojas e C2C entre atletas)
 // ----------------------------------------------------
 
 export interface DbProductRow {
@@ -329,10 +217,8 @@ export function mapDbProductToModel(row: DbProductRow): Product {
     sport: row.sport,
     condition: (row.condition as Product['condition']) || 'como_novo',
     product_type: (row.product_type as Product['product_type']) || 'b2c',
-    images: Array.isArray(row.images) && row.images.length > 0 ? row.images : [
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'
-    ],
-    seller_id: row.seller_id || 'system',
+    images: Array.isArray(row.images) && row.images.length > 0 ? row.images : [DEFAULT_PRODUCT_IMAGE],
+    seller_id: row.seller_id,
     seller_name: row.seller_name || 'CoreMotiom Parceiro',
     seller_avatar: row.seller_avatar || undefined,
     store_id: row.store_id || undefined,
@@ -346,11 +232,11 @@ export function mapDbProductToModel(row: DbProductRow): Product {
     status: (row.status as Product['status']) || 'active',
     brand: row.brand || undefined,
     tags: row.tags || [],
-    created_at: typeof row.created_at === 'string' ? row.created_at : row.created_at?.toISOString() || new Date().toISOString(),
+    created_at: toIso(row.created_at),
   };
 }
 
-export async function getProductsFromDb(filters?: {
+export interface ProductFilters {
   category?: string;
   sport?: string;
   condition?: string;
@@ -361,88 +247,80 @@ export async function getProductsFromDb(filters?: {
   minPrice?: number;
   maxPrice?: number;
   status?: string;
-}): Promise<Product[]> {
+}
+
+export async function getProductsFromDb(filters?: ProductFilters): Promise<Product[]> {
   const conditions: string[] = [];
   const params: unknown[] = [];
-  let paramIdx = 1;
+  const add = (sql: string, value: unknown) => {
+    params.push(value);
+    conditions.push(sql.replace('?', `$${params.length}`));
+  };
 
-  if (filters?.status) {
-    conditions.push(`status = $${paramIdx++}`);
-    params.push(filters.status);
-  } else {
-    conditions.push(`status = 'active'`);
-  }
+  // Por padrão só anúncios ativos aparecem; o chamador pode pedir outro status (ex.: o próprio vendedor).
+  add('status = ?', filters?.status || 'active');
 
-  if (filters?.product_type) {
-    conditions.push(`product_type = $${paramIdx++}`);
-    params.push(filters.product_type);
-  }
-
-  if (filters?.category && filters.category !== 'all' && filters.category !== 'Todos') {
-    conditions.push(`category = $${paramIdx++}`);
-    params.push(filters.category);
-  }
-
-  if (filters?.sport && filters.sport !== 'all' && filters.sport !== 'Todos') {
-    conditions.push(`sport = $${paramIdx++}`);
-    params.push(filters.sport);
-  }
-
-  if (filters?.condition) {
-    conditions.push(`condition = $${paramIdx++}`);
-    params.push(filters.condition);
-  }
-
-  if (filters?.store_id) {
-    conditions.push(`store_id = $${paramIdx++}`);
-    params.push(filters.store_id);
-  }
-
-  if (filters?.seller_id) {
-    conditions.push(`seller_id = $${paramIdx++}`);
-    params.push(filters.seller_id);
-  }
-
-  if (filters?.minPrice !== undefined) {
-    conditions.push(`price >= $${paramIdx++}`);
-    params.push(filters.minPrice);
-  }
-
-  if (filters?.maxPrice !== undefined) {
-    conditions.push(`price <= $${paramIdx++}`);
-    params.push(filters.maxPrice);
-  }
+  if (filters?.product_type) add('product_type = ?', filters.product_type);
+  if (filters?.category && filters.category !== 'all' && filters.category !== 'Todos') add('category = ?', filters.category);
+  if (filters?.sport && filters.sport !== 'all' && filters.sport !== 'Todos') add('sport = ?', filters.sport);
+  if (filters?.condition) add('condition = ?', filters.condition);
+  if (filters?.store_id) add('store_id = ?', filters.store_id);
+  if (filters?.seller_id) add('seller_id = ?', filters.seller_id);
+  if (filters?.minPrice !== undefined && Number.isFinite(filters.minPrice)) add('price >= ?', filters.minPrice);
+  if (filters?.maxPrice !== undefined && Number.isFinite(filters.maxPrice)) add('price <= ?', filters.maxPrice);
 
   if (filters?.search && filters.search.trim().length > 0) {
-    conditions.push(`(title ILIKE $${paramIdx} OR description ILIKE $${paramIdx} OR category ILIKE $${paramIdx} OR sport ILIKE $${paramIdx})`);
     params.push(`%${filters.search.trim()}%`);
-    paramIdx++;
+    const p = `$${params.length}`;
+    conditions.push(`(title ILIKE ${p} OR description ILIKE ${p} OR category ILIKE ${p} OR sport ILIKE ${p})`);
   }
 
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const query = `SELECT * FROM public.products ${whereClause} ORDER BY created_at DESC`;
-
-  const rows = await queryDb<DbProductRow>(query, params);
+  const whereClause = `WHERE ${conditions.join(' AND ')}`;
+  const rows = await queryDb<DbProductRow>(
+    `SELECT * FROM public.products ${whereClause} ORDER BY created_at DESC`,
+    params
+  );
   return rows.map(mapDbProductToModel);
 }
 
 export async function getProductByIdFromDb(id: string): Promise<Product | null> {
-  const rows = await queryDb<DbProductRow>(
-    `SELECT * FROM public.products WHERE id = $1 LIMIT 1`,
-    [id]
-  );
-  if (rows.length === 0) return null;
-  return mapDbProductToModel(rows[0]);
+  const rows = await queryDb<DbProductRow>(`SELECT * FROM public.products WHERE id = $1 LIMIT 1`, [id]);
+  return rows.length > 0 ? mapDbProductToModel(rows[0]) : null;
 }
 
-export async function createProductInDb(
-  product: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>,
-  sellerId?: string
-): Promise<Product> {
-  const images = product.images && product.images.length > 0
-    ? product.images
-    : ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'];
+export async function getProductOwnerId(id: string): Promise<string | null> {
+  const rows = await queryDb<{ seller_id: string | null }>(
+    `SELECT seller_id FROM public.products WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+  return rows.length > 0 ? rows[0].seller_id : null;
+}
 
+export interface NewProductInput {
+  title: string;
+  description: string;
+  price: number;
+  original_price?: number | null;
+  category: string;
+  sport: string;
+  condition: string;
+  product_type: 'b2c' | 'c2c';
+  images?: string[];
+  seller_name: string;
+  seller_avatar?: string | null;
+  store_id?: string | null;
+  store_name?: string | null;
+  is_verified_store?: boolean;
+  stock?: number;
+  location?: string | null;
+  shipping_available?: boolean;
+  status?: 'active' | 'draft';
+  brand?: string | null;
+  tags?: string[];
+}
+
+export async function createProductInDb(product: NewProductInput, sellerId: string): Promise<Product> {
+  const images = product.images && product.images.length > 0 ? product.images : [DEFAULT_PRODUCT_IMAGE];
   const rows = await queryDb<DbProductRow>(
     `INSERT INTO public.products (
       title, description, price, original_price, category, sport, condition,
@@ -463,10 +341,10 @@ export async function createProductInDb(
       product.category,
       product.sport,
       product.condition,
-      product.product_type || 'c2c',
+      product.product_type,
       images,
-      toSafeUuid(sellerId || product.seller_id),
-      product.seller_name || 'Atleta CoreMotiom',
+      sellerId,
+      product.seller_name,
       product.seller_avatar || null,
       toSafeUuid(product.store_id),
       product.store_name || null,
@@ -479,17 +357,51 @@ export async function createProductInDb(
       product.tags || [],
     ]
   );
-
   return mapDbProductToModel(rows[0]);
 }
 
+/** Campos editáveis pelo dono do anúncio. */
+export const OWNER_EDITABLE_PRODUCT_FIELDS = [
+  'title',
+  'description',
+  'price',
+  'original_price',
+  'stock',
+  'location',
+  'shipping_available',
+  'brand',
+  'tags',
+  'images',
+  'condition',
+] as const;
+
+/** Campos que somente moderadores (admin/supervisor) podem alterar. */
+export const MODERATOR_PRODUCT_FIELDS = ['status'] as const;
+
+export async function updateProductInDb(id: string, fields: Record<string, unknown>): Promise<Product | null> {
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  for (const [column, value] of Object.entries(fields)) {
+    values.push(value);
+    sets.push(`${column} = $${values.length}`);
+  }
+  if (sets.length === 0) return getProductByIdFromDb(id);
+
+  values.push(id);
+  const rows = await queryDb<DbProductRow>(
+    `UPDATE public.products SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${values.length} RETURNING *`,
+    values
+  );
+  return rows.length > 0 ? mapDbProductToModel(rows[0]) : null;
+}
+
 export async function deleteProductInDb(id: string): Promise<boolean> {
-  await queryDb(`DELETE FROM public.products WHERE id = $1`, [id]);
-  return true;
+  const rows = await queryDb<{ id: string }>(`DELETE FROM public.products WHERE id = $1 RETURNING id`, [id]);
+  return rows.length > 0;
 }
 
 // ----------------------------------------------------
-// STORE QUERIES
+// LOJAS  (public.stores — lojas oficiais e verificação)
 // ----------------------------------------------------
 
 export interface DbStoreRow {
@@ -520,7 +432,7 @@ export interface DbStoreRow {
 export function mapDbStoreToModel(row: DbStoreRow): Store {
   return {
     id: row.id,
-    owner_id: row.owner_id ? String(row.owner_id) : 'system',
+    owner_id: row.owner_id ? String(row.owner_id) : '',
     name: row.name,
     slug: row.slug,
     description: row.description || '',
@@ -528,44 +440,51 @@ export function mapDbStoreToModel(row: DbStoreRow): Store {
     banner_url: row.banner_url || 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&q=80',
     category: row.category,
     is_verified: Boolean(row.is_verified),
-    verification_status: (row.verification_status as Store['verification_status']) || 'verified',
-    verification_requested_at: row.verification_requested_at
-      ? typeof row.verification_requested_at === 'string'
-        ? row.verification_requested_at
-        : row.verification_requested_at.toISOString()
-      : undefined,
-    verification_docs: row.verification_docs || (row.cnpj ? { cnpj: row.cnpj } : undefined),
+    verification_status: (row.verification_status as Store['verification_status']) || 'none',
+    verification_requested_at: row.verification_requested_at ? toIso(row.verification_requested_at) : undefined,
+    verification_docs: (row.verification_docs as Store['verification_docs']) || undefined,
     contact_email: row.contact_email,
     contact_phone: row.contact_phone || undefined,
     location: row.location || 'São Paulo, SP',
     rating: row.rating ? Number(row.rating) : 5.0,
     sales_count: row.sales_count ?? 0,
     products_count: row.products_count ?? 0,
-    created_at: typeof row.created_at === 'string' ? row.created_at : row.created_at?.toISOString() || new Date().toISOString(),
+    created_at: toIso(row.created_at),
   };
 }
 
 export async function getStoresFromDb(): Promise<Store[]> {
-  const rows = await queryDb<DbStoreRow>(
-    `SELECT * FROM public.stores ORDER BY is_verified DESC, name ASC`
-  );
+  const rows = await queryDb<DbStoreRow>(`SELECT * FROM public.stores ORDER BY is_verified DESC, name ASC`);
   return rows.map(mapDbStoreToModel);
 }
 
 export async function getStoreBySlugFromDb(slug: string): Promise<Store | null> {
-  const rows = await queryDb<DbStoreRow>(
-    `SELECT * FROM public.stores WHERE slug = $1 LIMIT 1`,
-    [slug]
-  );
-  if (rows.length === 0) return null;
-  return mapDbStoreToModel(rows[0]);
+  const rows = await queryDb<DbStoreRow>(`SELECT * FROM public.stores WHERE slug = $1 LIMIT 1`, [slug]);
+  return rows.length > 0 ? mapDbStoreToModel(rows[0]) : null;
+}
+
+export async function getStoreById(id: string): Promise<Store | null> {
+  const rows = await queryDb<DbStoreRow>(`SELECT * FROM public.stores WHERE id = $1 LIMIT 1`, [id]);
+  return rows.length > 0 ? mapDbStoreToModel(rows[0]) : null;
 }
 
 export async function createStoreInDb(
-  storeData: Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | 'products_count' | 'is_verified' | 'verification_status'>,
-  ownerId?: string
+  storeData: {
+    name: string;
+    slug: string;
+    description?: string;
+    logo_url?: string;
+    banner_url?: string;
+    category: string;
+    contact_email: string;
+    contact_phone?: string;
+    location?: string;
+    verification_docs?: Store['verification_docs'];
+  },
+  ownerId: string
 ): Promise<Store> {
-  const cnpj = (storeData.verification_docs?.cnpj as string) || null;
+  const docs = storeData.verification_docs || null;
+  const cnpj = typeof docs?.cnpj === 'string' ? docs.cnpj : null;
   const rows = await queryDb<DbStoreRow>(
     `INSERT INTO public.stores (
       owner_id, name, slug, description, logo_url, banner_url, category,
@@ -574,42 +493,103 @@ export async function createStoreInDb(
       created_at, updated_at
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7,
-      false, 'pending', $8, $9,
+      false, 'none', $8, $9,
       $10, $11, $12, 5.0, 0, 0,
       NOW(), NOW()
     ) RETURNING *`,
     [
-      toSafeUuid(ownerId),
+      ownerId,
       storeData.name,
       storeData.slug,
       storeData.description || null,
       storeData.logo_url || null,
       storeData.banner_url || null,
       storeData.category,
-      storeData.verification_docs ? JSON.stringify(storeData.verification_docs) : null,
+      docs ? JSON.stringify(docs) : null,
       cnpj,
       storeData.contact_email,
       storeData.contact_phone || null,
       storeData.location || null,
     ]
   );
-
   return mapDbStoreToModel(rows[0]);
 }
 
-export async function updateStoreVerificationInDb(
+export async function getStoreOwnerId(storeId: string): Promise<string | null> {
+  const rows = await queryDb<{ owner_id: string | null }>(
+    `SELECT owner_id FROM public.stores WHERE id = $1 LIMIT 1`,
+    [storeId]
+  );
+  return rows.length > 0 ? rows[0].owner_id : null;
+}
+
+/** Dados da loja usados em anúncios B2C (dono, nome e selo), sempre lidos do banco. */
+export async function getStoreForSale(
+  storeId: string
+): Promise<{ ownerId: string | null; name: string; isVerified: boolean } | null> {
+  const safeId = toSafeUuid(storeId);
+  if (!safeId) return null;
+  const rows = await queryDb<{ owner_id: string | null; name: string; is_verified: boolean }>(
+    `SELECT owner_id, name, is_verified FROM public.stores WHERE id = $1 LIMIT 1`,
+    [safeId]
+  );
+  if (rows.length === 0) return null;
+  return { ownerId: rows[0].owner_id, name: rows[0].name, isVerified: Boolean(rows[0].is_verified) };
+}
+
+/** Lojista solicita verificação oficial: status 'pending' e documentos anexados. */
+export async function requestStoreVerificationInDb(
+  storeId: string,
+  docs: NonNullable<Store['verification_docs']>
+): Promise<Store | null> {
+  const rows = await queryDb<DbStoreRow>(
+    `UPDATE public.stores
+        SET verification_status = 'pending',
+            verification_requested_at = NOW(),
+            verification_docs = $1,
+            cnpj = COALESCE($2, cnpj),
+            updated_at = NOW()
+      WHERE id = $3
+      RETURNING *`,
+    [JSON.stringify(docs), typeof docs.cnpj === 'string' ? docs.cnpj : null, storeId]
+  );
+  return rows.length > 0 ? mapDbStoreToModel(rows[0]) : null;
+}
+
+/** Moderação: aprova ('verified') ou reprova ('rejected') a verificação de uma loja. */
+export async function reviewStoreVerificationInDb(
   storeId: string,
   approve: boolean,
-  notes?: string
-): Promise<boolean> {
-  const status = approve ? 'verified' : 'rejected';
-  await queryDb(
-    `UPDATE public.stores 
-     SET is_verified = $1,
-         verification_status = $2,
-         updated_at = NOW()
-     WHERE id = $3`,
-    [approve, status, storeId]
+  notes?: string,
+  reviewerId?: string
+): Promise<Store | null> {
+  const rows = await queryDb<DbStoreRow>(
+    `UPDATE public.stores
+        SET is_verified = $1,
+            verification_status = $2,
+            verification_docs = COALESCE(verification_docs, '{}'::jsonb) || jsonb_build_object(
+              'review_notes', $3::text,
+              'reviewed_by', $4::text,
+              'reviewed_at', NOW()::text
+            ),
+            updated_at = NOW()
+      WHERE id = $5
+      RETURNING *`,
+    [approve, approve ? 'verified' : 'rejected', notes || '', reviewerId || '', storeId]
   );
-  return true;
+  return rows.length > 0 ? mapDbStoreToModel(rows[0]) : null;
+}
+
+/** Ao criar a primeira loja, a conta de atleta passa a ser lojista (nunca rebaixa administradores). */
+export async function promoteUserToSellerIfNeeded(userId: string, storeId: string): Promise<void> {
+  await queryDb(
+    `UPDATE public.profiles
+        SET role = 'seller', store_id = $2, updated_at = NOW()
+      WHERE id = $1 AND role = 'user'`,
+    [userId, storeId]
+  );
+  await queryDb(
+    `UPDATE public.profiles SET store_id = $2, updated_at = NOW() WHERE id = $1 AND role IN ('seller','admin','supervisor')`,
+    [userId, storeId]
+  );
 }

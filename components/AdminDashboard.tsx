@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useCoreMotiom, isUserAdmin } from '@/lib/store';
+import { useCoreMotiom } from '@/lib/store';
+import {
+  canDeleteTarget,
+  canSuspendTarget,
+  isAdminRole,
+  isMasterAdminEmail,
+  isStaffRole,
+  ROLE_LABELS,
+} from '@/lib/permissions';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { UserRole, Product, Order } from '@/lib/types';
 import {
   ShieldCheck,
@@ -54,6 +63,8 @@ export default function AdminDashboard() {
     adminUpdateOrderStatus,
     adminSyncSupabase,
     confirmPaymentSandbox,
+    communityPosts,
+    adminDeleteCommunityPost,
     loginAsMasterAdmin,
     setSupabaseConfigOpen,
     isSupabaseLive,
@@ -74,8 +85,14 @@ export default function AdminDashboard() {
   const [newUserCity, setNewUserCity] = useState('');
   const [newUserState, setNewUserState] = useState('');
 
-  // Strict Admin Guard: mattheusxmljz is the authorized admin account
-  const hasAdminAccess = isUserAdmin(user?.email);
+  // Publicações denunciadas aguardando moderação (supervisor ou administrador).
+  const reportedPosts = communityPosts.filter((post) => post.is_reported);
+
+  // Guarda de acesso: o papel vem do banco (ver lib/permissions.ts).
+  // Painel liberado a administradores e supervisores (papel vindo do banco).
+  // Ações de gestão de papéis, criação e exclusão de contas são exclusivas do administrador.
+  const hasAdminAccess = isStaffRole(user?.role);
+  const isAdminUser = isAdminRole(user?.role);
 
   if (!hasAdminAccess) {
     return (
@@ -91,12 +108,11 @@ export default function AdminDashboard() {
             Painel Administrativo & Desenvolvedor Fechado
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
-            Esta área e todas as funções executivas são reservadas exclusivamente para a equipe administradora e desenvolvedora credenciada (<strong className="text-white">mattheusxmljz@gmail.com</strong> e <strong className="text-white">professorchines2026@gmail.com</strong>).
-          </p>
+            Esta área é restrita a administradores e supervisores autenticados. Faça login com uma conta autorizada.</p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <button
+          {!isSupabaseConfigured && <button
             onClick={() => {
               loginAsMasterAdmin();
             }}
@@ -104,7 +120,7 @@ export default function AdminDashboard() {
           >
             <ShieldCheck className="w-4 h-4" />
             <span>Entrar como Super Admin Master</span>
-          </button>
+          </button>}
           
           <button
             onClick={() => setActiveView('marketplace')}
@@ -210,7 +226,7 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <p className="text-xs text-zinc-300 mt-1">
-                Conectado como <strong className="text-white">{user?.email || 'mattheusxmljz@gmail.com'}</strong> • Acesso total e ilimitado a todos os módulos do CoreMotiom.
+                Conectado como <strong className="text-white">{user?.email || 'conta de gestão'}</strong> • Papel: {ROLE_LABELS[user?.role ?? 'visitor'] ?? 'Visitante'}Motiom.
               </p>
             </div>
           </div>
@@ -227,13 +243,13 @@ export default function AdminDashboard() {
               <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar Supabase'}</span>
             </button>
 
-            <button
+            {isAdminUser && <button
               onClick={() => setIsCreateUserOpen(true)}
               className="px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-red-950/50 hover:scale-105"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>+ Novo Usuário</span>
-            </button>
+            </button>}
 
             <button
               onClick={() => setSupabaseConfigOpen(true)}
@@ -454,9 +470,9 @@ export default function AdminDashboard() {
                     </div>
                     <p className="text-xs text-zinc-400">{store.category} • {store.location}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
-                      <span>CNPJ: <strong className="text-zinc-200">{store.verification_docs?.cnpj || '12.345.678/0001-90'}</strong></span>
+                      <span>CNPJ: <strong className="text-zinc-200">{store.verification_docs?.cnpj || 'não informado'}</strong></span>
                       <span>•</span>
-                      <span>Razão Social: <strong className="text-zinc-200">{store.verification_docs?.company_name || store.name + ' Ltda.'}</strong></span>
+                      <span>Razão Social: <strong className="text-zinc-200">{store.verification_docs?.company_name || 'não informado'}</strong></span>
                       <span>•</span>
                       <span>E-mail: {store.contact_email}</span>
                     </div>
@@ -554,7 +570,7 @@ export default function AdminDashboard() {
                     <td className="p-4 whitespace-nowrap text-zinc-400">
                       <div className="text-zinc-200 font-medium">{s.location}</div>
                       <div className="text-[10px] text-zinc-500">
-                        CNPJ: {s.verification_docs?.cnpj || 'Homologado na Receita'}
+                        CNPJ: {s.verification_docs?.cnpj || 'não informado'}
                       </div>
                     </td>
                     <td className="p-4 whitespace-nowrap">
@@ -764,13 +780,13 @@ export default function AdminDashboard() {
               />
             </div>
 
-            <button
+            {isAdminUser && <button
               onClick={() => setIsCreateUserOpen(true)}
               className="px-3.5 py-1.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1 shadow-md shadow-red-950/40"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>+ Novo</span>
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -789,7 +805,7 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
                 {filteredUsers.map((u) => {
-                  const isCurrentSuperAdmin = isUserAdmin(u.email);
+                  const isCurrentSuperAdmin = isMasterAdminEmail(u.email);
                   return (
                     <tr key={u.id} className="hover:bg-zinc-800/30 transition-colors">
                       <td className="p-4 flex items-center gap-3">
@@ -818,12 +834,14 @@ export default function AdminDashboard() {
                         ) : (
                           <select
                             value={u.role}
+                            disabled={!isAdminUser || isCurrentSuperAdmin}
                             onChange={(e) => updateUserRole(u.id, e.target.value as UserRole)}
                             className="px-2.5 py-1 rounded-full bg-zinc-950 text-white border border-zinc-700 text-xs font-semibold focus:outline-none focus:border-red-500"
                           >
                             <option value="user">Usuário Atleta</option>
-                            <option value="seller">Lojista Parceiro</option>
-                            <option value="admin">Administrador</option>
+                            <option value="seller">{ROLE_LABELS.seller}</option>
+                            <option value="supervisor">{ROLE_LABELS.supervisor}</option>
+                            <option value="admin">{ROLE_LABELS.admin}</option>
                           </select>
                         )}
                       </td>
@@ -850,7 +868,7 @@ export default function AdminDashboard() {
                           </span>
                         ) : (
                           <div className="flex items-center justify-end gap-1.5">
-                            {u.is_banned ? (
+                            {canSuspendTarget(user?.role, u.role, u.email) && (u.is_banned ? (
                               <button
                                 onClick={() => adminUnbanUser(u.id)}
                                 className="px-2.5 py-1 rounded-full bg-zinc-800 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors text-[10px] font-semibold"
@@ -874,8 +892,9 @@ export default function AdminDashboard() {
                               >
                                 <Ban className="w-3.5 h-3.5" />
                               </button>
-                            )}
+                            ))}
 
+                            {canDeleteTarget(user?.role, u.email) && (
                             <button
                               onClick={() => {
                                 if (
@@ -891,6 +910,7 @@ export default function AdminDashboard() {
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
+                            )}
                           </div>
                         )}
                       </td>
@@ -948,12 +968,12 @@ export default function AdminDashboard() {
                       <td className="p-4 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            ord.payment_status === 'completed'
+                            ord.payment_status === 'paid'
                               ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
                               : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
                           }`}
                         >
-                          {ord.payment_status === 'completed' ? 'PIX Aprovado' : 'Aguardando PIX'}
+                          {ord.payment_status === 'paid' ? 'PIX Aprovado' : 'Aguardando PIX'}
                         </span>
                       </td>
                       <td className="p-4 whitespace-nowrap">
@@ -982,7 +1002,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {ord.payment_status !== 'completed' && (
+                          {ord.payment_status !== 'paid' && (
                             <button
                               onClick={() => confirmPaymentSandbox(ord.id)}
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
@@ -1087,12 +1107,47 @@ export default function AdminDashboard() {
         </div>
       </section>
 
+      {/* 7. SECTION: MODERAÇÃO DA COMUNIDADE (publicações denunciadas) */}
+      <section id="sec-moderacao-comunidade" className="space-y-4">
+        <h2 className="text-lg font-black text-white tracking-tight">
+          7. Moderação da Comunidade ({reportedPosts.length} {reportedPosts.length === 1 ? 'denúncia' : 'denúncias'})
+        </h2>
+        {reportedPosts.length === 0 ? (
+          <p className="text-sm text-zinc-400">Nenhuma publicação denunciada no momento.</p>
+        ) : (
+          <ul className="space-y-3">
+            {reportedPosts.map((post) => (
+              <li
+                key={post.id}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 flex flex-col sm:flex-row sm:items-start gap-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-white truncate">{post.title}</p>
+                  <p className="text-xs text-zinc-500">
+                    por {post.author_name} • {post.category}
+                  </p>
+                  <p className="text-sm text-zinc-300 mt-2 line-clamp-3">{post.content}</p>
+                  <p className="text-xs text-red-300 mt-2">Motivo da denúncia: {post.report_reason || 'não informado'}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => adminDeleteCommunityPost(post.id)}
+                  className="shrink-0 px-3 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+                >
+                  Remover publicação
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {/* 8. SECTION: DIAGNÓSTICO DO BANCO DE DADOS SUPABASE (Aberto) */}
       <section id="sec-banco" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-red-500" />
-            <h2 className="text-lg font-black text-white tracking-tight">7. Diagnóstico & Status do Banco de Dados Supabase (PostgreSQL)</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">8. Diagnóstico & Status do Banco de Dados Supabase (PostgreSQL)</h2>
           </div>
           <button
             onClick={() => setSupabaseConfigOpen(true)}
@@ -1147,8 +1202,8 @@ export default function AdminDashboard() {
               <span className="text-emerald-400 font-bold">Ativo & Auditado para anon / authenticated</span>
             </div>
             <div className="flex items-center justify-between text-[11px] font-mono">
-              <span className="text-zinc-500">Super Admin Autorizado:</span>
-              <span className="text-white font-bold">mattheusxmljz@gmail.com</span>
+              <span className="text-zinc-500">Contas-mestre:</span>
+              <span className="text-white font-bold">protegidas no servidor (lib/permissions.ts)</span>
             </div>
           </div>
         </div>

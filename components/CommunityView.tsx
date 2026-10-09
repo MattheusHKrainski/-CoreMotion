@@ -10,7 +10,11 @@ import {
   Share2,
   Filter,
   Sparkles,
+  Flag,
 } from 'lucide-react';
+
+/** Motivos fixos para denúncias (enviados ao moderador junto com a publicação). */
+const REPORT_REASONS = ['Spam', 'Conteúdo ofensivo', 'Informação falsa', 'Outro'];
 
 export default function CommunityView() {
   const {
@@ -18,6 +22,7 @@ export default function CommunityView() {
     createCommunityPost,
     likeCommunityPost,
     addCommunityComment,
+    reportCommunityPost,
     isVisitor,
     setAuthModalOpen,
     addToast,
@@ -29,6 +34,7 @@ export default function CommunityView() {
   const [newPostCategory, setNewPostCategory] = useState<CommunityPost['category']>('equipamento');
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
+  const [reportingPostId, setReportingPostId] = useState<string | null>(null);
 
   const categories: { label: string; value: CommunityPost['category'] }[] = [
     { label: 'Equipamentos & Tênis', value: 'equipamento' },
@@ -250,6 +256,18 @@ export default function CommunityView() {
                 </button>
               </div>
 
+              {!isVisitor && (
+                <button
+                  type="button"
+                  onClick={() => setReportingPostId(reportingPostId === post.id ? null : post.id)}
+                  className="text-zinc-500 hover:text-red-400 p-1 rounded-full hover:bg-zinc-800 transition-colors"
+                  aria-label="Denunciar publicação"
+                  title="Denunciar publicação"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   navigator.clipboard?.writeText(window.location.href);
@@ -260,6 +278,28 @@ export default function CommunityView() {
                 <Share2 className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {/* Report Area: a denúncia marca a publicação para moderação (supervisor ou administrador) */}
+            {reportingPostId === post.id && (
+              <div className="pt-3 border-t border-zinc-800/80 space-y-2">
+                <p className="text-xs text-zinc-400">Por que você está denunciando esta publicação?</p>
+                <div className="flex flex-wrap gap-2">
+                  {REPORT_REASONS.map((reason) => (
+                    <button
+                      key={reason}
+                      type="button"
+                      onClick={() => {
+                        reportCommunityPost(post.id, reason);
+                        setReportingPostId(null);
+                      }}
+                      className="px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200"
+                    >
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Comments Expand Area */}
             {activeCommentPostId === post.id && (

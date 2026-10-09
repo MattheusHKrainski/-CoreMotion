@@ -1,5 +1,7 @@
 import { Product, ProductCondition, ProductType } from '@/lib/types';
 import { INITIAL_PRODUCTS } from '@/lib/initial-data';
+import { authedFetch } from '@/lib/auth-fetch';
+import { isSupabaseConfigured } from './supabaseClient';
 
 export interface ProductFilters {
   category?: string;
@@ -69,25 +71,21 @@ export class ProductService {
     product: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>,
     sellerId?: string
   ): Promise<{ success: boolean; data: Product } & Product> {
-    try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...product, seller_id: sellerId || product.seller_id }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.product) {
-          const prod = data.product as Product;
-          return { success: true, data: prod, ...prod };
-        }
-      }
-    } catch (err) {
-      console.warn('[ProductService] Failed to create product in DB:', err);
+    // O servidor define o vendedor a partir do token da sessão (sellerId é apenas informativo).
+    const res = await authedFetch('/api/products', {
+      method: 'POST',
+      body: JSON.stringify({ ...product, seller_id: sellerId || product.seller_id }),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success && data.product) {
+      const prod = data.product as Product;
+      return { success: true, data: prod, ...prod };
+    }
+    if (isSupabaseConfigured) {
+      throw new Error(data?.error || 'Não foi possível publicar o anúncio.');
     }
 
-    // Fallback local creation
+    // Modo demonstração (sem banco de dados): criação apenas local.
     const fallbackProd: Product = {
       ...product,
       id: `prod_${Date.now()}`,
@@ -104,9 +102,8 @@ export class ProductService {
    */
   static async updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
     try {
-      const res = await fetch(`/api/products?id=${id}`, {
+      const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
       return res.ok;
@@ -120,7 +117,7 @@ export class ProductService {
    */
   static async deleteProduct(id: string): Promise<boolean> {
     try {
-      const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
+      const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       return res.ok;
     } catch {
       return false;

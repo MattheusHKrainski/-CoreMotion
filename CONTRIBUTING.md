@@ -5,13 +5,13 @@ Este documento estabelece os padrões técnicos, regras de ramificação (Git Fl
 ---
 
 ## 1. Stack Tecnológica
-- **Framework**: Next.js 15+ (App Router, Server Components & Server Actions)
+- **Framework**: Next.js 15 (App Router, Server Components e rotas de API em `app/api/`)
 - **Linguagem**: TypeScript em modo estrito (`strict: true`, sem `any` injustificado)
 - **Design System**: Tailwind CSS v4 + shadcn/ui (Radix UI primitives em `components/ui/`)
-- **Backend-as-a-Service**: Supabase (PostgreSQL 15+, Auth, Storage, RLS)
-- **Validação de Schemas**: Zod (`lib/schemas/`)
-- **Formulários**: React Hook Form integrado via `@hookform/resolvers/zod`
-- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`) + Vercel Hosting
+- **Backend-as-a-Service**: Supabase (PostgreSQL 15+, Auth, RLS)
+- **Validação**: utilitários de entrada no servidor (`lib/api-utils.ts`); os esquemas Zod em `lib/schemas/` ainda não são usados pelas rotas
+- **Formulários**: primitivo `components/ui/form.tsx` (React Hook Form); os formulários atuais usam estado do React
+- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`); a hospedagem do sistema publicado está em definição (ver README, seção Publicação)
 
 ---
 
@@ -46,7 +46,7 @@ npm run type-check
 npm run build
 
 # 4. Commit e push
-git commit -m "feat(auth): adiciona validacao com zod no login"
+git commit -m "feat(auth): valida o e-mail no login"
 git push origin feature/minha-feature
 ```
 
@@ -68,7 +68,7 @@ git push origin feature/minha-feature
    - Toda nova tabela DEVE ter RLS ativado: `ALTER TABLE nome_tabela ENABLE ROW LEVEL SECURITY;`.
    - Visitantes: apenas leitura de dados públicos.
    - Usuários autenticados: acesso restrito aos seus próprios dados (`auth.uid() = user_id`).
-   - Admin Mestre (`mattheusxmljz@gmail.com`): acesso via função protegida `is_admin()`.
+   - Contas-mestre (lista em `lib/permissions.ts` e na função `is_master_email`): acesso de administrador, via função protegida `is_admin()`.
 
 ---
 

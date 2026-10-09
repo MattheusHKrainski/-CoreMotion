@@ -1,23 +1,21 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const DEFAULT_SUPABASE_URL = 'https://erpwfjdycdlygxwkdakv.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycHdmamR5Y2RseWd4d2tkYWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDc5MDYsImV4cCI6MjEwMzA4MzkwNn0.iX2IpAtEkmEeFGLmtnnzcznSpXXhw1k_UoUqgeWcEmU';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
+/**
+ * Configuração do Supabase lida exclusivamente de variáveis de ambiente públicas
+ * (NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY). Nenhum projeto é
+ * embutido no código. Sem configuração, o app roda em modo demonstração.
+ */
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl &&
-  supabaseAnonKey &&
-  supabaseUrl.startsWith('https://') &&
-  supabaseAnonKey.length > 15 &&
-  !supabaseUrl.includes('MY_SUPABASE_URL')
+  supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 15
 );
 
 let browserClient: SupabaseClient | null = null;
 
 /**
- * Returns the shared browser Supabase client instance with auto-refresh and session persistence.
+ * Retorna o cliente Supabase compartilhado (navegador) ou um cliente sem persistência (servidor).
  */
 export function getSupabaseClient(): SupabaseClient | null {
   if (!isSupabaseConfigured) {
@@ -25,12 +23,8 @@ export function getSupabaseClient(): SupabaseClient | null {
   }
 
   if (typeof window === 'undefined') {
-    // Server-side execution
     return createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
+      auth: { persistSession: false, autoRefreshToken: false },
     });
   }
 
@@ -55,7 +49,7 @@ export function getSupabaseClient(): SupabaseClient | null {
 }
 
 /**
- * Tests direct Supabase connectivity.
+ * Testa a conectividade com o Supabase (leitura pública de produtos).
  */
 export async function testSupabaseConnection(): Promise<{ connected: boolean; latencyMs?: number; error?: string }> {
   const client = getSupabaseClient();
@@ -65,7 +59,7 @@ export async function testSupabaseConnection(): Promise<{ connected: boolean; la
 
   const start = Date.now();
   try {
-    const { data, error } = await client.from('products').select('id').limit(1);
+    const { error } = await client.from('products').select('id').limit(1);
     if (error) {
       return { connected: false, error: error.message };
     }
