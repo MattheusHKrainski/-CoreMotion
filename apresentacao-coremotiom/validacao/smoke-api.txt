@@ -1,0 +1,34 @@
+# Teste de fumaça das rotas /api (scripts/smoke-api.sh)
+# Gerado em 2026-10-08 (UTC 14:30) com: npm run build && npm run start (build de produção, sem DATABASE_URL),
+# e BASE_URL=http://localhost:3000 bash scripts/smoke-api.sh.
+# Este teste não usa banco: confirma apenas que as rotas de escrita exigem sessão válida (401 sem token e com token forjado).
+
+Alvo: http://localhost:3000
+
+== Rotas protegidas sem token (esperado 401) ==
+PASS  POST /api/auth/sync (sem token) -> 401
+PASS  POST /api/listings (sem token) -> 401
+PASS  DELETE /api/listings (sem token) -> 401
+PASS  POST /api/products (sem token) -> 401
+PASS  PATCH /api/products (sem token) -> 401
+PASS  DELETE /api/products (sem token) -> 401
+PASS  POST /api/stores (sem token) -> 401
+PASS  PATCH /api/stores (sem token) -> 401
+PASS  GET /api/users (sem token) -> 401
+PASS  PATCH /api/users (sem token) -> 401
+PASS  DELETE /api/users (sem token) -> 401
+
+== Rotas protegidas com token forjado (esperado 401) ==
+PASS  POST /api/auth/sync (token forjado) -> 401
+PASS  POST /api/listings (token forjado) -> 401
+PASS  DELETE /api/listings (token forjado) -> 401
+PASS  POST /api/products (token forjado) -> 401
+PASS  PATCH /api/products (token forjado) -> 401
+PASS  DELETE /api/products (token forjado) -> 401
+PASS  POST /api/stores (token forjado) -> 401
+PASS  PATCH /api/stores (token forjado) -> 401
+PASS  GET /api/users (token forjado) -> 401
+PASS  PATCH /api/users (token forjado) -> 401
+PASS  DELETE /api/users (token forjado) -> 401
+
+Resultado: 22 aprovados, 0 reprovados.
