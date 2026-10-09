@@ -85,7 +85,6 @@ Cada integrante aparece com **foto**, **nome** e **papel no Scrum e no projeto**
 ## Slide 12: Limitações e trabalhos futuros
 
 - Pagamentos simulados: integrar gateway financeiro real.
-- SmartScan simulado: integrar modelo de análise de imagem.
 - Testes ponta a ponta de interface (Playwright).
 - Treinadores com dados estáticos: migrar para tabela no banco.
 

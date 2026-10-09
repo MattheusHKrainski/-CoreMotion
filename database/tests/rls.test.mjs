@@ -1,8 +1,9 @@
 /**
  * Testes de autorização do banco (RLS, triggers e privilégios).
  *
- * Executa em PostgreSQL em memória (PGlite) o esquema inicial e a migração
- * 20261008000000_roles_hierarchy_and_security.sql, com um "shim" mínimo do Supabase Auth
+ * Executa em PostgreSQL em memória (PGlite) o esquema inicial e as migrações
+ * 20261008000000_roles_hierarchy_and_security.sql e 20261009000000_security_fixes.sql,
+ * com um "shim" mínimo do Supabase Auth
  * (schema auth, funções auth.uid()/auth.role()/auth.jwt() e roles anon/authenticated).
  * Cada cenário assume um papel real do PostgreSQL com um JWT, como faz o PostgREST.
  *
@@ -19,6 +20,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const migrationsDir = resolve(here, '../../supabase/migrations');
 const INITIAL = resolve(migrationsDir, '20250101000000_coremotiom_initial_schema.sql');
 const HARDENING = resolve(migrationsDir, '20261008000000_roles_hierarchy_and_security.sql');
+const SECURITY_FIXES = resolve(migrationsDir, '20261009000000_security_fixes.sql');
 
 const AUTH_SHIM = `
   CREATE ROLE anon NOLOGIN;
@@ -65,6 +67,12 @@ async function state(sql, params = []) {
   return r.rows[0] ?? {}; // linha ausente vira objeto vazio: a verificação falha, sem erro fatal
 }
 
+/** Escrita de preparo/moderação como superusuário: zera as claims da sessão (auth.uid() fica nulo). */
+async function sys(sql, params = []) {
+  await db.query(`SELECT set_config('request.jwt.claims', '{}', false)`);
+  return db.query(sql, params);
+}
+
 function check(name, pass, detail = '') {
   results.push({ name, pass: Boolean(pass), detail });
 }
@@ -82,6 +90,7 @@ async function main() {
   // BASELINE=1 executa somente o esquema inicial (linha de base, para comparação antes/depois).
   if (process.env.BASELINE !== '1') {
     await db.exec(readFileSync(HARDENING, 'utf8'));
+    await db.exec(readFileSync(SECURITY_FIXES, 'utf8'));
   }
 
   // Contas de teste. Cada cadastro dispara handle_new_user, como o Supabase Auth faz.
@@ -209,8 +218,8 @@ async function main() {
   // ------------------------------------------------------------------ 6. Pedidos
   const order = await run('authenticated', claims('a2'),
     `INSERT INTO public.orders (user_id, user_email, items, subtotal, shipping_fee, discount, total, payment_method, payment_status, order_status)
-     VALUES ($1, 'ana@atleta.com', '[]'::jsonb, 100, 10, 0, 110, 'pix', 'paid', 'escrow_locked')
-     RETURNING id, payment_status, order_status`, [id.a2]);
+     VALUES ($1, 'ana@atleta.com', (SELECT jsonb_agg(jsonb_build_object('product', jsonb_build_object('id', x.id), 'quantity', 1)) FROM (SELECT id FROM public.products WHERE status = 'active' LIMIT 1) x), 100, 10, 0, 110, 'pix', 'paid', 'escrow_locked')
+     RETURNING id, payment_status, order_status, total`, [id.a2]);
   check('Cliente não cria pedido já pago ou em custódia',
     order.ok && order.rows[0].payment_status === 'pending' && order.rows[0].order_status === 'pending_payment', order.error || '');
   const orderId = order.rows[0]?.id;
@@ -218,7 +227,7 @@ async function main() {
   await run('authenticated', claims('a2'), `UPDATE public.orders SET payment_status = 'paid', total = 1 WHERE id = $1`, [orderId]);
   const afterFraud = await state(`SELECT payment_status, total FROM public.orders WHERE id = $1`, [orderId]);
   check('Cliente não marca o próprio pedido como pago nem altera o total',
-    afterFraud.payment_status === 'pending' && Number(afterFraud.total) === 110);
+    afterFraud.payment_status === 'pending' && Number(afterFraud.total) === Number(order.rows[0].total));
 
   await run('authenticated', claims('a2'), `UPDATE public.orders SET order_status = 'cancelled' WHERE id = $1`, [orderId]);
   check('Cliente cancela pedido ainda não pago',
@@ -303,6 +312,87 @@ async function main() {
   await db.query(`DELETE FROM auth.users WHERE id = $1`, [id.a2]);
   check('Remoção de auth.users remove o perfil em cascata',
     (await state(`SELECT count(*)::int AS n FROM public.profiles WHERE id = $1`, [id.a2])).n === 0);
+
+  // ------------------------------------------------ Regressões (migração 20261009000000)
+  // Preparo como superusuário (sem JWT): os triggers de proteção só se aplicam a chamadas autenticadas.
+  const regStoreIns = await sys(
+    `INSERT INTO public.stores (owner_id, name, slug, category, contact_email, verification_status, is_verified, verification_docs)
+     VALUES ($1, 'Loja Regressão', 'loja-regressao', 'Calçados', 'contato@loja-regressao.test', 'verified', true,
+             '{"cnpj":"00000000000191","company_name":"Empresa Teste LTDA"}'::jsonb)
+     RETURNING id`,
+    [id.seller]
+  );
+  const regStoreId = regStoreIns.rows[0].id;
+  const regProdIns = await sys(
+    `INSERT INTO public.products (title, description, price, category, sport, seller_name, seller_id, product_type, status, store_id, is_verified_store)
+     VALUES ('Tênis regressão', 'Anúncio usado nos testes de regressão', 100.00, 'Calçados', 'Corrida', 'Loja', $1, 'b2c', 'active', $2, true)
+     RETURNING id`,
+    [id.seller, regStoreId]
+  );
+  const regProdId = regProdIns.rows[0].id;
+
+  // E1 / C3: o dono não reativa anúncio suspenso; a moderação reativa.
+  await sys(`UPDATE public.products SET status = 'suspended' WHERE id = $1`, [regProdId]);
+  await run('authenticated', claims('seller'), `UPDATE public.products SET status = 'active' WHERE id = $1`, [regProdId]);
+  check('E1 dono não reativa anúncio suspenso',
+    (await state(`SELECT status FROM public.products WHERE id = $1`, [regProdId])).status === 'suspended');
+  const regModReactivates = await run('authenticated', claims('sup'), `UPDATE public.products SET status = 'active' WHERE id = $1`, [regProdId]);
+  check('E1 supervisor reativa anúncio suspenso',
+    regModReactivates.ok && (await state(`SELECT status FROM public.products WHERE id = $1`, [regProdId])).status === 'active');
+
+  // E2 / C4 + C11: o total enviado pelo cliente (0,01) é ignorado; o banco recalcula.
+  // 2 x R$ 100,00 = 200,00; PIX 5% = 10,00; frete PAC = 24,90; total = 214,90.
+  const regOrderIns = await run('authenticated', claims('a1'),
+    `INSERT INTO public.orders (user_id, user_email, items, subtotal, shipping_fee, discount, total, payment_method, shipping_method)
+     VALUES ($1, 'carlos@atleta.com', $2::jsonb, 0.01, 0, 0, 0.01, 'pix', 'pac') RETURNING id`,
+    [id.a1, JSON.stringify([{ product: { id: regProdId }, quantity: 2 }])]);
+  const regOrderRow = regOrderIns.ok ? await state(`SELECT subtotal, shipping_fee, discount, total FROM public.orders WHERE id = $1`, [regOrderIns.rows[0].id]) : {};
+  check('E2 total do pedido é recalculado pelo banco (PIX, frete PAC)',
+    regOrderIns.ok && Number(regOrderRow.subtotal) === 200 && Number(regOrderRow.discount) === 10 && Number(regOrderRow.shipping_fee) === 24.9 && Number(regOrderRow.total) === 214.9,
+    regOrderIns.ok ? '' : regOrderIns.error);
+  await sys(`UPDATE public.products SET status = 'suspended' WHERE id = $1`, [regProdId]);
+  const regOrderSuspended = await run('authenticated', claims('a1'),
+    `INSERT INTO public.orders (user_id, user_email, items, subtotal, shipping_fee, discount, total, payment_method, shipping_method)
+     VALUES ($1, 'carlos@atleta.com', $2::jsonb, 1, 0, 0, 1, 'boleto', 'pac')`,
+    [id.a1, JSON.stringify([{ product: { id: regProdId }, quantity: 1 }])]);
+  check('E2 pedido de anúncio suspenso é recusado', !regOrderSuspended.ok);
+  await sys(`UPDATE public.products SET status = 'active' WHERE id = $1`, [regProdId]);
+
+  // E3 / C5: não autor não limpa denúncia nem apaga comentário; acrescenta um comentário por vez.
+  const regPostIns = await sys(
+    `INSERT INTO public.community_posts (author_id, author_name, title, content, category, is_reported, report_reason, comments, comments_count)
+     VALUES ($1, 'Loja', 'Post regressão', 'Conteúdo de teste do post', 'Dicas', true, 'spam',
+             '[{"id":"c1","author_name":"Ana","content":"Olá"}]'::jsonb, 1)
+     RETURNING id`,
+    [id.seller]
+  );
+  const regPostId = regPostIns.rows[0].id;
+  const regWipeAttempt = await run('authenticated', claims('a1'),
+    `UPDATE public.community_posts SET is_reported = false, report_reason = NULL, comments = '[]'::jsonb, comments_count = 0 WHERE id = $1`, [regPostId]);
+  const regAfterWipe = await state(`SELECT is_reported, jsonb_array_length(comments) AS n FROM public.community_posts WHERE id = $1`, [regPostId]);
+  check('E3 não autor não apaga comentários nem limpa denúncia (ataque combinado)',
+    regWipeAttempt.ok === false && regAfterWipe.is_reported === true && Number(regAfterWipe.n) === 1);
+  await run('authenticated', claims('a1'), `UPDATE public.community_posts SET is_reported = false WHERE id = $1`, [regPostId]);
+  check('E3 não autor não remove denúncia isoladamente',
+    (await state(`SELECT is_reported FROM public.community_posts WHERE id = $1`, [regPostId])).is_reported === true);
+  const regAppendOne = await run('authenticated', claims('a1'),
+    `UPDATE public.community_posts SET comments = comments || $2::jsonb, comments_count = comments_count + 1 WHERE id = $1`,
+    [regPostId, JSON.stringify([{ id: 'c2', author_name: 'Carlos', content: 'Boa!' }])]);
+  check('E3 não autor acrescenta um comentário',
+    regAppendOne.ok && Number((await state(`SELECT jsonb_array_length(comments) AS n FROM public.community_posts WHERE id = $1`, [regPostId])).n) === 2);
+
+  // E4 / C6: documentos de verificação são privados; a vitrine continua pública.
+  const regAnonDocs = await run('anon', {}, `SELECT verification_docs FROM public.stores`);
+  check('E4 anônimo não lê verification_docs', !regAnonDocs.ok);
+  const regAuthDocs = await run('authenticated', claims('a1'), `SELECT verification_docs FROM public.stores WHERE id = $1`, [regStoreId]);
+  check('E4 usuário comum não lê verification_docs de outra loja', !regAuthDocs.ok);
+  const regAnonShowcase = await run('anon', {}, `SELECT name, verification_status FROM public.stores LIMIT 1`);
+  check('E4 anônimo continua lendo a vitrine das lojas', regAnonShowcase.ok);
+
+  // Selo de loja: o anúncio acompanha a verificação da loja.
+  await sys(`UPDATE public.stores SET is_verified = false WHERE id = $1`, [regStoreId]);
+  check('Selo do anúncio acompanha a verificação da loja',
+    (await state(`SELECT is_verified_store FROM public.products WHERE id = $1`, [regProdId])).is_verified_store === false);
 
   // ------------------------------------------------------------------ Relatório
   const width = Math.max(...results.map((r) => r.name.length));

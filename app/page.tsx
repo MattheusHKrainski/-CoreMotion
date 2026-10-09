@@ -3,11 +3,14 @@
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product } from '@/lib/types';
-import { Sidebar, Footer } from '@/components/shared';
-import { AuthModal } from '@/components/auth';
-import { MarketplaceView, ProductDetailModal } from '@/components/marketplace';
-import { StoresView, CreateStoreModal } from '@/components/stores';
-import { AdminDashboard } from '@/components/admin';
+import Sidebar from '@/components/shared/Sidebar';
+import Footer from '@/components/shared/Footer';
+import AuthModal from '@/components/auth/AuthModal';
+import MarketplaceView from '@/components/marketplace/MarketplaceView';
+import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
+import StoresView from '@/components/stores/StoresView';
+import CreateStoreModal from '@/components/stores/CreateStoreModal';
+import AdminDashboard from '@/components/admin/AdminDashboard';
 import HomeHeroAndHighlights from '@/components/HomeHeroAndHighlights';
 import SellC2CView from '@/components/SellC2CView';
 import CoachesView from '@/components/CoachesView';
@@ -23,11 +26,8 @@ export default function CoreMotiomApp() {
     setActiveView,
     toasts,
     removeToast,
-    selectedStore,
     setSelectedStore,
     stores,
-    user,
-    role,
     isVisitor,
     setAuthModalOpen,
     setAuthModalMode,
@@ -75,7 +75,7 @@ export default function CoreMotiomApp() {
                     Acesso Restrito para Atletas Cadastrados
                   </h2>
                   <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
-                    Para anunciar seus equipamentos com custódia garantida e proteção anti-golpe, conecte-se à sua conta ou cadastre-se em instantes.
+                    Para anunciar seus equipamentos, conecte-se à sua conta ou cadastre-se em instantes.
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

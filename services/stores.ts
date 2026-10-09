@@ -1,5 +1,6 @@
 import { Store } from '@/lib/types';
-import { INITIAL_STORES } from '@/lib/initial-data';
+import { INITIAL_STORES } from '@/fixtures/initial-data';
+import { DEMO_MODE } from '@/lib/demo-mode';
 import { authedFetch } from '@/lib/auth-fetch';
 import { isSupabaseConfigured } from './supabaseClient';
 
@@ -9,6 +10,22 @@ type StoreInput = Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | '
  * Serviço de lojas oficiais e verificação. Leitura pública; escrita autenticada no servidor.
  */
 export class StoreService {
+  /** Documentos de verificação por loja: só a equipe recebe (a API recusa quem não é da equipe). */
+  static async getVerificationDocs(): Promise<Record<string, NonNullable<Store['verification_docs']>>> {
+    try {
+      const res = await authedFetch('/api/stores?docs=1');
+      if (!res.ok) return {};
+      const data = await res.json();
+      const docsById: Record<string, NonNullable<Store['verification_docs']>> = {};
+      for (const store of (data.stores as Store[]) || []) {
+        if (store.verification_docs) docsById[store.id] = store.verification_docs;
+      }
+      return docsById;
+    } catch {
+      return {};
+    }
+  }
+
   /** Lista lojas do banco (ou dados de demonstração quando o banco não está configurado). */
   static async getStores(): Promise<Store[]> {
     try {
@@ -22,7 +39,7 @@ export class StoreService {
     } catch (err) {
       console.warn('[StoreService] Fetch /api/stores failed, using local cache:', err);
     }
-    return INITIAL_STORES;
+    return DEMO_MODE ? INITIAL_STORES : [];
   }
 
   static async getStoreBySlug(slug: string): Promise<Store | null> {
@@ -97,9 +114,3 @@ export class StoreService {
     }
   }
 }
-
-export const getStores = StoreService.getStores.bind(StoreService);
-export const getStoreBySlug = StoreService.getStoreBySlug.bind(StoreService);
-export const createStore = StoreService.createStore.bind(StoreService);
-export const requestStoreVerification = StoreService.requestVerification.bind(StoreService);
-export const adminVerifyStore = StoreService.adminVerifyStore.bind(StoreService);

@@ -128,7 +128,7 @@ export default function SellC2CView() {
             Central de Vendas C2C
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Anuncie seus equipamentos seminovos com proteção de pagamento retido em custódia e garantia de envio rastreado.
+            Anuncie seus equipamentos seminovos. Pagamentos e envios são simulados nesta versão.
           </p>
         </div>
       </div>
@@ -168,7 +168,7 @@ export default function SellC2CView() {
           }`}
         >
           <TrendingUp className="w-3.5 h-3.5" />
-          <span>Vendas em Custódia</span>
+          <span>Vendas simuladas</span>
         </button>
 
         <button
@@ -229,7 +229,7 @@ export default function SellC2CView() {
                     ? myStore.is_verified
                       ? 'Sua loja está verificada: o anúncio exibe o selo de loja verificada.'
                       : 'Sua loja ainda não está verificada: o anúncio não exibe o selo.'
-                    : 'Venda direta entre atletas, com pagamento retido em custódia.'}
+                    : 'Venda direta entre atletas (fluxo simulado).'}
                 </p>
               </div>
             )}
@@ -447,11 +447,10 @@ export default function SellC2CView() {
             <div className="p-5 rounded-3xl bg-red-600/10 border border-red-500/20 space-y-2">
               <h4 className="font-bold text-red-400 text-xs flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Protocolo de Custódia Segura</span>
+                <span>Fluxo simulado</span>
               </h4>
               <p className="text-zinc-300 leading-relaxed text-xs">
-                O valor pago pelo comprador fica retido em custódia segura e só é liberado para você após a confirmação e inspeção do produto.
-              </p>
+                Nesta versão, o pagamento é simulado e não há retenção real.</p>
             </div>
           </div>
         </div>
@@ -512,7 +511,7 @@ export default function SellC2CView() {
       {activeTab === 'sales' && (
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-10 text-center text-xs text-zinc-400 space-y-2">
           <TrendingUp className="w-8 h-8 text-red-400 mx-auto" />
-          <h4 className="font-bold text-white text-sm">Histórico de Custódia & Vendas</h4>
+          <h4 className="font-bold text-white text-sm">Histórico de Vendas</h4>
           <p>Quando outros atletas adquirirem seus produtos, os dados de envio e liberação de saldo aparecerão aqui.</p>
         </div>
       )}

@@ -11,7 +11,7 @@ import { isMasterAdminEmail } from './permissions';
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80';
 
-export function toSafeUuid(val?: string | null): string | null {
+function toSafeUuid(val?: string | null): string | null {
   if (!val) return null;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) ? val : null;
 }
@@ -25,7 +25,7 @@ function toIso(value: Date | string | null | undefined): string {
 // PERFIS / USUÁRIOS  (public.profiles, espelho de auth.users)
 // ----------------------------------------------------
 
-export interface DbProfileRow {
+interface DbProfileRow {
   id: string;
   email: string;
   name: string;
@@ -42,7 +42,7 @@ export interface DbProfileRow {
   updated_at: Date | string;
 }
 
-export function mapDbProfileToUser(row: DbProfileRow): UserProfile {
+function mapDbProfileToUser(row: DbProfileRow): UserProfile {
   // A conta-mestre é sempre administradora, independentemente do valor gravado.
   const role: UserRole = isMasterAdminEmail(row.email) ? 'admin' : ((row.role as UserRole) || 'user');
   return {
@@ -177,7 +177,7 @@ export async function deleteAuthUser(id: string): Promise<boolean> {
 // PRODUTOS  (public.products — B2C de lojas e C2C entre atletas)
 // ----------------------------------------------------
 
-export interface DbProductRow {
+interface DbProductRow {
   id: string;
   title: string;
   description: string;
@@ -206,7 +206,7 @@ export interface DbProductRow {
   updated_at: Date | string;
 }
 
-export function mapDbProductToModel(row: DbProductRow): Product {
+function mapDbProductToModel(row: DbProductRow): Product {
   return {
     id: row.id,
     title: row.title,
@@ -236,7 +236,7 @@ export function mapDbProductToModel(row: DbProductRow): Product {
   };
 }
 
-export interface ProductFilters {
+interface ProductFilters {
   category?: string;
   sport?: string;
   condition?: string;
@@ -288,6 +288,14 @@ export async function getProductByIdFromDb(id: string): Promise<Product | null> 
   return rows.length > 0 ? mapDbProductToModel(rows[0]) : null;
 }
 
+export async function getProductStatus(id: string): Promise<string | null> {
+  const rows = await queryDb<{ status: string | null }>(
+    `SELECT status FROM public.products WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+  return rows.length > 0 ? rows[0].status : null;
+}
+
 export async function getProductOwnerId(id: string): Promise<string | null> {
   const rows = await queryDb<{ seller_id: string | null }>(
     `SELECT seller_id FROM public.products WHERE id = $1 LIMIT 1`,
@@ -296,7 +304,7 @@ export async function getProductOwnerId(id: string): Promise<string | null> {
   return rows.length > 0 ? rows[0].seller_id : null;
 }
 
-export interface NewProductInput {
+interface NewProductInput {
   title: string;
   description: string;
   price: number;
@@ -375,8 +383,6 @@ export const OWNER_EDITABLE_PRODUCT_FIELDS = [
   'condition',
 ] as const;
 
-/** Campos que somente moderadores (admin/supervisor) podem alterar. */
-export const MODERATOR_PRODUCT_FIELDS = ['status'] as const;
 
 export async function updateProductInDb(id: string, fields: Record<string, unknown>): Promise<Product | null> {
   const sets: string[] = [];
@@ -404,7 +410,7 @@ export async function deleteProductInDb(id: string): Promise<boolean> {
 // LOJAS  (public.stores — lojas oficiais e verificação)
 // ----------------------------------------------------
 
-export interface DbStoreRow {
+interface DbStoreRow {
   id: string;
   owner_id: string | null;
   name: string;
@@ -429,7 +435,7 @@ export interface DbStoreRow {
   updated_at: Date | string;
 }
 
-export function mapDbStoreToModel(row: DbStoreRow): Store {
+function mapDbStoreToModel(row: DbStoreRow, opts: { includeDocs?: boolean } = {}): Store {
   return {
     id: row.id,
     owner_id: row.owner_id ? String(row.owner_id) : '',
@@ -442,7 +448,8 @@ export function mapDbStoreToModel(row: DbStoreRow): Store {
     is_verified: Boolean(row.is_verified),
     verification_status: (row.verification_status as Store['verification_status']) || 'none',
     verification_requested_at: row.verification_requested_at ? toIso(row.verification_requested_at) : undefined,
-    verification_docs: (row.verification_docs as Store['verification_docs']) || undefined,
+    // C6: documentos de verificação saem só para a equipe (a vitrine pública não os recebe).
+    verification_docs: opts.includeDocs ? (row.verification_docs as Store['verification_docs']) || undefined : undefined,
     contact_email: row.contact_email,
     contact_phone: row.contact_phone || undefined,
     location: row.location || 'São Paulo, SP',
@@ -453,14 +460,14 @@ export function mapDbStoreToModel(row: DbStoreRow): Store {
   };
 }
 
-export async function getStoresFromDb(): Promise<Store[]> {
+export async function getStoresFromDb(opts: { includeDocs?: boolean } = {}): Promise<Store[]> {
   const rows = await queryDb<DbStoreRow>(`SELECT * FROM public.stores ORDER BY is_verified DESC, name ASC`);
-  return rows.map(mapDbStoreToModel);
+  return rows.map((row) => mapDbStoreToModel(row, opts));
 }
 
-export async function getStoreBySlugFromDb(slug: string): Promise<Store | null> {
+export async function getStoreBySlugFromDb(slug: string, opts: { includeDocs?: boolean } = {}): Promise<Store | null> {
   const rows = await queryDb<DbStoreRow>(`SELECT * FROM public.stores WHERE slug = $1 LIMIT 1`, [slug]);
-  return rows.length > 0 ? mapDbStoreToModel(rows[0]) : null;
+  return rows.length > 0 ? mapDbStoreToModel(rows[0], opts) : null;
 }
 
 export async function getStoreById(id: string): Promise<Store | null> {

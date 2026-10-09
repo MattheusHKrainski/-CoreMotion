@@ -11,14 +11,14 @@ import { queryDb } from './db';
 import { isMasterAdminEmail } from './permissions';
 import type { UserRole } from './types';
 
-export interface AuthContext {
+interface AuthContext {
   userId: string;
   email: string;
   role: UserRole;
   isBanned: boolean;
 }
 
-export function getBearerToken(req: NextRequest): string | null {
+function getBearerToken(req: NextRequest): string | null {
   const header = req.headers.get('authorization') || '';
   const match = /^Bearer\s+(.+)$/i.exec(header.trim());
   return match ? match[1].trim() : null;
@@ -38,7 +38,7 @@ async function verifyAccessToken(token: string): Promise<{ id: string; email: st
 }
 
 /** Retorna o contexto do usuário autenticado ou null (token ausente, inválido ou expirado). */
-export async function getAuthContext(req: NextRequest): Promise<AuthContext | null> {
+async function getAuthContext(req: NextRequest): Promise<AuthContext | null> {
   const token = getBearerToken(req);
   if (!token) return null;
 
@@ -61,7 +61,7 @@ export async function getAuthContext(req: NextRequest): Promise<AuthContext | nu
   };
 }
 
-export type AuthResult = { ok: true; ctx: AuthContext } | { ok: false; response: NextResponse };
+type AuthResult = { ok: true; ctx: AuthContext } | { ok: false; response: NextResponse };
 
 /**
  * Exige usuário autenticado, não suspenso e (opcionalmente) com um dos papéis informados.

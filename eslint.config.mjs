@@ -1,11 +1,16 @@
-import { defineConfig } from "eslint/config";
-import next from "eslint-config-next";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { FlatCompat } from '@eslint/eslintrc';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const baseDirectory = dirname(fileURLToPath(import.meta.url));
+const compat = new FlatCompat({ baseDirectory });
 
-export default defineConfig([{
-    extends: [...next],
-}]);
+/** Configuração ESLint 9 (flat) com as regras oficiais do Next 15. */
+const config = [
+  {
+    ignores: ['.next/**', 'out/**', 'build/**', 'coverage/**', 'node_modules/**', 'database/tests/node_modules/**', 'next-env.d.ts'],
+  },
+  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+];
+
+export default config;

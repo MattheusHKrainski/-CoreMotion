@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product } from '@/lib/types';
-import ProductCard from './ProductCard';
+import ProductCard from '@/components/marketplace/ProductCard';
 import {
   ShieldCheck,
   ArrowRight,
@@ -11,14 +11,11 @@ import {
   ChevronLeft,
   PlusCircle,
   ShoppingBag,
-  Zap,
   Lock,
   CheckCircle2,
   Users,
   Layers,
-  Sparkles,
   Flame,
-  Activity,
 } from 'lucide-react';
 
 interface HomeHeroAndHighlightsProps {
@@ -46,7 +43,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
       id: 1,
       badge: 'Streetwear & Casual Esportivo',
       title: 'Estilo Urbano e Conforto para o Dia a Dia',
-      subtitle: 'Compre e venda os tênis casuais mais icônicos do mundo — Nike Air Force 1, Adidas Samba, Vans e Puma com autenticidade garantida e envio seguro.',
+      subtitle: 'Compre e venda os tênis casuais mais icônicos do mundo — Air Force 1, Samba e outros clássicos com autenticidade garantida e envio seguro.',
       productName: "Tênis Nike Air Force 1 '07 Branco",
       productSpecs: 'Couro Legítimo • Amortecimento Air Encapsulado • Sola Antiderrapante',
       price: 'R$ 799,90',
@@ -181,12 +178,12 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
                 <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Garantia</span>
                   <span className="font-bold text-white text-xs block mt-0.5">Lojas Oficiais</span>
-                  <span className="text-[10px] text-red-400">Produtos com NF</span>
+                  <span className="text-[10px] text-red-400">Vitrine de demonstração</span>
                 </div>
                 <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Custódia C2C</span>
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Pagamento C2CC</span>
                   <span className="font-bold text-white text-xs block mt-0.5">Retenção Segura</span>
-                  <span className="text-[10px] text-red-400">Liberação 48h</span>
+                  <span className="text-[10px] text-red-400">Prazos simulados</span>
                 </div>
                 <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Comunidade</span>
@@ -483,14 +480,14 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
             </button>
           </div>
 
-          {/* Widget 2: Protocolo de Custódia Segura C2C */}
+          {/* Widget 2: Protocolo de Fluxo C2C simulado */}
           <div className="p-5 rounded-3xl bg-gradient-to-br from-zinc-950 via-[#10131B] to-black border border-zinc-800/80 shadow-xl space-y-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-full bg-red-500/15 text-red-400">
                 <Lock className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="font-extrabold text-xs text-white">Custódia Segura C2C</h4>
+                <h4 className="font-extrabold text-xs text-white">Fluxo C2C simulado</h4>
                 <p className="text-[10px] text-zinc-400">Proteção total para compradores e atletas</p>
               </div>
             </div>
@@ -499,7 +496,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
               <div className="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-red-600/20 text-red-400 font-bold text-[10px] flex items-center justify-center shrink-0">1</span>
                 <div>
-                  <p className="font-semibold text-zinc-200 text-[11px]">Pagamento Retido em Escrow</p>
+                  <p className="font-semibold text-zinc-200 text-[11px]">Pagamento simulado (sem retenção real)</p>
                   <p className="text-[10px] text-zinc-500">O valor não vai direto para o vendedor.</p>
                 </div>
               </div>
@@ -507,7 +504,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
               <div className="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-red-600/20 text-red-400 font-bold text-[10px] flex items-center justify-center shrink-0">2</span>
                 <div>
-                  <p className="font-semibold text-zinc-200 text-[11px]">Envio Rastreável com Seguro</p>
+                  <p className="font-semibold text-zinc-200 text-[11px]">Envio: modelo de demonstração</p>
                   <p className="text-[10px] text-zinc-500">Código de rastreio integrado à plataforma.</p>
                 </div>
               </div>
@@ -515,7 +512,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
               <div className="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-red-600/20 text-red-400 font-bold text-[10px] flex items-center justify-center shrink-0">3</span>
                 <div>
-                  <p className="font-semibold text-zinc-200 text-[11px]">48h para Inspeção do Atleta</p>
+                  <p className="font-semibold text-zinc-200 text-[11px]">Prazo de inspeção: modelo de demonstração</p>
                   <p className="text-[10px] text-zinc-500">Confira se o equipamento confere com as fotos.</p>
                 </div>
               </div>

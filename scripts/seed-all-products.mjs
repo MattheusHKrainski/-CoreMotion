@@ -1,9 +1,10 @@
 import pg from 'pg';
+import { pgSsl } from './lib/pg-ssl.mjs';
 
 const { Client } = pg;
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: pgSsl()
 });
 
 const additionalProducts = [

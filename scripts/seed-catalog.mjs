@@ -1,8 +1,10 @@
 // ATENÇÃO: este script APAGA dados da tabela products (DELETE FROM) antes de inserir o catálogo.
+// Só roda com CONFIRM_DESTRUCTIVE_SEED=SIM.
 // Use apenas em ambiente de desenvolvimento. Veja database/README.md.
 import pg from "pg";
 import fs from "fs";
 import crypto from "crypto";
+import { pgSsl } from './lib/pg-ssl.mjs';
 
 // Deterministic UUID generator from slug
 function getUuid(name) {
@@ -549,7 +551,11 @@ const products = [
 ];
 
 async function run() {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  if (process.env.CONFIRM_DESTRUCTIVE_SEED !== 'SIM') {
+    console.error('Este script APAGA todos os produtos (DELETE FROM public.products). Defina CONFIRM_DESTRUCTIVE_SEED=SIM para executar.');
+    process.exit(1);
+  }
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: pgSsl() });
   await client.connect();
 
   console.log("Replacing all products in PostgreSQL database with valid UUIDs...");
@@ -603,18 +609,18 @@ async function run() {
   const countRes = await client.query("SELECT COUNT(*) FROM public.products");
   console.log("SUCCESS! Total products in PostgreSQL database:", countRes.rows[0].count);
 
-  // Update lib/initial-data.ts
-  let initialDataContent = fs.readFileSync("lib/initial-data.ts", "utf-8");
+  // Update fixtures/initial-data.ts
+  let initialDataContent = fs.readFileSync("fixtures/initial-data.ts", "utf-8");
   const pStart = initialDataContent.indexOf("export const INITIAL_PRODUCTS: Product[] = [");
   const pEnd = initialDataContent.indexOf("export const INITIAL_COACHES: Coach[] = [");
 
   if (pStart !== -1 && pEnd !== -1) {
     const tsCode = "export const INITIAL_PRODUCTS: Product[] = " + JSON.stringify(products, null, 2) + ";\n\n";
     initialDataContent = initialDataContent.slice(0, pStart) + tsCode + initialDataContent.slice(pEnd);
-    fs.writeFileSync("lib/initial-data.ts", initialDataContent, "utf-8");
-    console.log("Successfully updated lib/initial-data.ts with all", products.length, "curated products!");
+    fs.writeFileSync("fixtures/initial-data.ts", initialDataContent, "utf-8");
+    console.log("Successfully updated fixtures/initial-data.ts with all", products.length, "curated products!");
   } else {
-    console.error("Could not find delimiters in lib/initial-data.ts");
+    console.error("Could not find delimiters in fixtures/initial-data.ts");
   }
 
   await client.end();

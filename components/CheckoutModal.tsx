@@ -1,5 +1,6 @@
 'use client';
 
+import { calculateCheckoutTotals } from '@/lib/checkout';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import {
@@ -15,7 +16,6 @@ import {
   Trash2,
   Copy,
   Check,
-  ShieldCheck,
 } from 'lucide-react';
 
 export default function CheckoutModal() {
@@ -44,7 +44,6 @@ export default function CheckoutModal() {
   const [address, setAddress] = useState('Av. Paulista, 1000');
   const [city, setCity] = useState('São Paulo');
   const [state, setState] = useState('SP');
-  const [shippingCost, setShippingCost] = useState(24.9);
 
   // Credit Card Form State
   const [cardNumber, setCardNumber] = useState('');
@@ -56,8 +55,11 @@ export default function CheckoutModal() {
   if (!isCheckoutOpen) return null;
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  const discount = paymentMethod === 'pix' ? subtotal * 0.05 : 0;
-  const total = subtotal - discount + (cart.length > 0 ? shippingCost : 0);
+  // Mesma regra do servidor (lib/checkout.ts): PIX com 5% de desconto; frete PAC.
+  const checkoutTotals = calculateCheckoutTotals(subtotal, 'pac', paymentMethod);
+  const shippingCost = cart.length > 0 ? checkoutTotals.shippingFee : 0;
+  const discount = checkoutTotals.discount;
+  const total = checkoutTotals.subtotal - discount + shippingCost;
 
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -95,8 +97,9 @@ export default function CheckoutModal() {
       setCompletedOrderId(order.id);
       setStep('success');
       clearCart();
-    } catch {
-      // ignore
+    } catch (err) {
+      // C8: falha do servidor é mostrada; nenhum pedido aparece como concluído.
+      addToast('Pedido não concluído', err instanceof Error ? err.message : 'Tente novamente.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -122,7 +125,7 @@ export default function CheckoutModal() {
               <p className="text-xs text-zinc-400">
                 {step === 'cart' && `${cart.length} item(s) selecionado(s)`}
                 {step === 'shipping' && 'Informe onde você deseja receber seu equipamento'}
-                {step === 'payment' && 'Transação criptografada com custódia segura'}
+                {step === 'payment' && 'Ambiente de demonstração: nenhum pagamento real é processado'}
                 {step === 'success' && 'Seu pedido já está sendo preparado'}
               </p>
             </div>
@@ -493,7 +496,7 @@ export default function CheckoutModal() {
                 <span>{formatPrice(shippingCost)}</span>
               </div>
               <div className="flex justify-between text-white font-black text-sm pt-2 border-t border-zinc-800">
-                <span>Total com Custódia Protegida</span>
+                <span>Total do pedido</span>
                 <span className="text-red-400 font-black">{formatPrice(total)}</span>
               </div>
             </div>
@@ -539,7 +542,7 @@ export default function CheckoutModal() {
                 <span className="text-zinc-400">Status do Pagamento:</span>
                 <span className="text-red-400 font-bold inline-flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" />
-                  Retido em Custódia Segura
+                  Pagamento simulado
                 </span>
               </div>
               <div className="flex justify-between">

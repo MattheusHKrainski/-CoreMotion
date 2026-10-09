@@ -10,7 +10,7 @@ Este documento estabelece os padrões técnicos, regras de ramificação (Git Fl
 - **Design System**: Tailwind CSS v4 + shadcn/ui (Radix UI primitives em `components/ui/`)
 - **Backend-as-a-Service**: Supabase (PostgreSQL 15+, Auth, RLS)
 - **Validação**: utilitários de entrada no servidor (`lib/api-utils.ts`); os esquemas Zod em `lib/schemas/` ainda não são usados pelas rotas
-- **Formulários**: primitivo `components/ui/form.tsx` (React Hook Form); os formulários atuais usam estado do React
+- **Formulários**: os formulários atuais usam estado do React (React Hook Form não é usado nesta base);
 - **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`); a hospedagem do sistema publicado está em definição (ver README, seção Publicação)
 
 ---
@@ -27,7 +27,7 @@ Este documento estabelece os padrões técnicos, regras de ramificação (Git Fl
 
 ### Padrão de Nomenclatura de Branches
 Crie sua branch a partir da `main` atualizada seguindo a convenção:
-- `feature/nome-da-funcionalidade` (Ex.: `feature/auth-supabase`, `feature/escrow-pix`)
+- `feature/nome-da-funcionalidade` (Ex.: `feature/auth-supabase`, `feature/pix-checkout`)
 - `fix/descricao-do-bug` (Ex.: `fix/checkout-total-calculation`)
 - `refactor/area-modificada` (Ex.: `refactor/products-services`)
 

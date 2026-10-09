@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/services/supabaseClient';
 import {
   Search,
   ShoppingBag,
@@ -16,15 +16,11 @@ import {
   Compass,
   Menu,
   X,
-  ChevronRight,
   LogOut,
   SlidersHorizontal,
   Layers,
   Database,
   CheckCircle2,
-  Package,
-  Activity,
-  Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -48,7 +44,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setSearchQuery,
     logout,
     switchRole,
-    isSupabaseLive,
     setSupabaseConfigOpen,
     addToast,
     stores,
@@ -133,7 +128,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     if (id === 'sell' && isVisitor) {
       setAuthModalMode('login');
       setAuthModalOpen(true);
-      addToast('Acesso Restrito', 'Faça login para anunciar seus equipamentos com custódia segura.', 'info');
+      addToast('Acesso Restrito', 'Faça login para anunciar seus equipamentos.', 'info');
       return;
     }
     setActiveView(id);

@@ -1,9 +1,10 @@
 import pg from 'pg';
 import fs from 'fs';
+import { pgSsl } from './lib/pg-ssl.mjs';
 
 const client = new pg.Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: pgSsl(),
 });
 
 await client.connect();
@@ -452,8 +453,8 @@ for (const prod of products) {
 
 console.log(`\nSuccessfully updated ${updatedCount} products in PostgreSQL database.`);
 
-// Now let us also update INITIAL_PRODUCTS in lib/initial-data.ts so they stay perfectly in sync
-console.log('Syncing updated images to lib/initial-data.ts...');
+// Now let us also update INITIAL_PRODUCTS in fixtures/initial-data.ts so they stay perfectly in sync
+console.log('Syncing updated images to fixtures/initial-data.ts...');
 const allUpdated = await client.query('SELECT * FROM public.products ORDER BY category, title');
 const productsFormatted = allUpdated.rows.map((p) => {
   return {
@@ -483,17 +484,17 @@ const productsFormatted = allUpdated.rows.map((p) => {
   };
 });
 
-let initialDataContent = fs.readFileSync('lib/initial-data.ts', 'utf-8');
+let initialDataContent = fs.readFileSync('fixtures/initial-data.ts', 'utf-8');
 const pStart = initialDataContent.indexOf('export const INITIAL_PRODUCTS: Product[] = [');
 const pEnd = initialDataContent.indexOf('export const COACHES: Coach[] = [');
 
 if (pStart !== -1 && pEnd !== -1) {
   const tsCode = 'export const INITIAL_PRODUCTS: Product[] = ' + JSON.stringify(productsFormatted, null, 2) + ';\n\n';
   initialDataContent = initialDataContent.slice(0, pStart) + tsCode + initialDataContent.slice(pEnd);
-  fs.writeFileSync('lib/initial-data.ts', initialDataContent, 'utf-8');
-  console.log('Successfully updated lib/initial-data.ts with all accurate product images!');
+  fs.writeFileSync('fixtures/initial-data.ts', initialDataContent, 'utf-8');
+  console.log('Successfully updated fixtures/initial-data.ts with all accurate product images!');
 } else {
-  console.log('Could not find markers in lib/initial-data.ts');
+  console.log('Could not find markers in fixtures/initial-data.ts');
 }
 
 await client.end();

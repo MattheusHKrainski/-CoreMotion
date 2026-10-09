@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
 import type { Order, UserProfile, UserRole } from '@/lib/types';
@@ -28,7 +28,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Pagamento em custódia',
+  escrow_locked: 'Pagamento simulado',
   preparing: 'Em preparação',
   shipped: 'Enviado',
   delivered: 'Entregue',

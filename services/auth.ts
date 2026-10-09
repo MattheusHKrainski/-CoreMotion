@@ -1,54 +1,26 @@
 import { getSupabaseClient } from './supabaseClient';
-import { UserProfile, UserRole } from '@/lib/types';
+import { UserProfile } from '@/lib/types';
 
 import { isMasterAdminEmail as isMasterAdmin } from '@/lib/permissions';
 import { authedFetch } from '@/lib/auth-fetch';
+import { DEMO_MODE } from '@/lib/demo-mode';
 
-export { isMasterAdmin };
 
-export interface AuthResponse<T = unknown> {
+interface AuthResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
 }
 
-/**
- * Synchronizes user session with public.users using supabase_id.
- */
-export async function syncSessionWithDb(
-  supabaseId: string,
-  email: string,
-  metadata?: {
-    name?: string;
-    avatar?: string;
-    role?: UserRole;
-    city?: string;
-    sport?: string;
-  }
-): Promise<UserProfile> {
-  try {
-    // O servidor identifica o usuário pelo token e decide o papel; nada de papel vindo do cliente.
-    const res = await authedFetch('/api/auth/sync', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: metadata?.name,
-        avatar: metadata?.avatar,
-        city: metadata?.city,
-        sport: metadata?.sport,
-      }),
-    });
+type SyncMetadata = {
+  name?: string;
+  avatar?: string;
+  city?: string;
+  sport?: string;
+};
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.user) {
-        return data.user as UserProfile;
-      }
-    }
-  } catch (err) {
-    console.warn('[AuthService] /api/auth/sync network call failed, using fallback:', err);
-  }
-
-  // Resilient fallback profile
+/** Perfil local, usado somente no modo demonstração quando o servidor não responde. */
+function localDemoProfile(supabaseId: string, email: string, metadata?: SyncMetadata): UserProfile {
   return {
     id: supabaseId || String(Date.now()),
     supabase_id: supabaseId,
@@ -65,106 +37,124 @@ export async function syncSessionWithDb(
   };
 }
 
+/**
+ * Sincroniza a sessão com public.users. O servidor identifica o usuário pelo token e decide o papel.
+ * Fora do modo demonstração, falha de sincronização é erro (nunca um perfil inventado).
+ */
+async function syncSessionWithDb(supabaseId: string, email: string, metadata?: SyncMetadata): Promise<UserProfile> {
+  let res: Response;
+  try {
+    res = await authedFetch('/api/auth/sync', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: metadata?.name,
+        avatar: metadata?.avatar,
+        city: metadata?.city,
+        sport: metadata?.sport,
+      }),
+    });
+  } catch {
+    if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
+    throw new Error('Não foi possível conectar ao servidor. Tente novamente.');
+  }
+
+  const data = await res.json().catch(() => null);
+  if (res.ok && data?.success && data.user) {
+    return data.user as UserProfile;
+  }
+  if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
+  throw new Error(data?.error || 'Não foi possível concluir o acesso. Tente novamente.');
+}
+
 export class AuthService {
   /**
-   * Signs in with email and password via Supabase Auth,
-   * then immediately synchronizes with public.users using supabase_id.
+   * Entra com e-mail e senha pelo Supabase Auth e sincroniza o perfil.
+   * Credencial recusada é falha: nenhuma sessão é criada.
    */
   static async loginWithEmail(email: string, pass: string): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
     const sb = getSupabaseClient();
 
-    let supabaseId = `usr_${Date.now()}`;
-    let userName = cleanEmail.split('@')[0];
-    let userAvatar: string | undefined = undefined;
-    let userRole: UserRole = isMasterAdmin(cleanEmail) ? 'admin' : 'user';
-
-    // 1. Try Supabase Auth if client is initialized
-    if (sb) {
-      try {
-        const { data, error } = await sb.auth.signInWithPassword({
-          email: cleanEmail,
-          password: pass,
-        });
-
-        if (!error && data.user) {
-          supabaseId = data.user.id;
-          userName = data.user.user_metadata?.name || userName;
-          userAvatar = data.user.user_metadata?.avatar_url;
-          userRole = isMasterAdmin(cleanEmail) ? 'admin' : 'user';
-        } else if (error) {
-          console.warn('[AuthService] Supabase Auth returned error:', error.message);
-          // If Supabase credentials/network failed, proceed to database synchronization
-        }
-      } catch (e) {
-        console.warn('[AuthService] Supabase Auth exception:', e);
+    if (!sb) {
+      // Sem Supabase configurado, só o modo demonstração entra (sessão local).
+      if (!DEMO_MODE || !pass) {
+        return { success: false, error: 'Login indisponível: o Supabase não está configurado.' };
       }
+      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name: cleanEmail.split('@')[0] });
     }
 
-    // 2. Synchronize with public.users
+    let result: { data: { user: { id: string; user_metadata?: Record<string, unknown> } | null }; error: { message: string } | null };
     try {
-      const profile = await syncSessionWithDb(supabaseId, cleanEmail, {
-        name: userName,
-        avatar: userAvatar,
-        role: userRole,
-      });
-
-      return { success: true, data: profile };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      return { success: false, error: message };
+      result = await sb.auth.signInWithPassword({ email: cleanEmail, password: pass });
+    } catch {
+      return { success: false, error: 'Não foi possível conectar ao servidor de autenticação.' };
     }
+    const { data, error } = result;
+    if (error || !data.user) {
+      const notConfirmed = error?.message?.toLowerCase().includes('email not confirmed');
+      return {
+        success: false,
+        error: notConfirmed ? 'Confirme seu e-mail antes de entrar.' : 'E-mail ou senha inválidos.',
+      };
+    }
+    const meta = data.user.user_metadata || {};
+    return this.finishSession(data.user.id, cleanEmail, {
+      name: (typeof meta.name === 'string' && meta.name) || cleanEmail.split('@')[0],
+      avatar: typeof meta.avatar_url === 'string' ? meta.avatar_url : undefined,
+    });
   }
 
   /**
-   * Registers a new account with Supabase Auth and persists into public.users.
+   * Cria a conta no Supabase Auth. O papel não é escolhido pelo cliente: contas nascem como atleta
+   * e o servidor aplica o papel de conta-mestre no sincronismo.
    */
-  static async signUpWithEmail(
-    email: string,
-    pass: string,
-    name: string,
-    requestedRole: UserRole = 'user'
-  ): Promise<AuthResponse<UserProfile>> {
+  static async signUpWithEmail(email: string, pass: string, name: string): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
     const sb = getSupabaseClient();
-    // Papel nunca é escolhido no cadastro: contas nascem como atleta (contas-mestre como admin).
-    const assignedRole: UserRole = isMasterAdmin(cleanEmail) ? 'admin' : 'user';
-    void requestedRole;
-    let supabaseId = `usr_${Date.now()}`;
 
-    // 1. Try Supabase Auth
-    if (sb) {
-      try {
-        const { data, error } = await sb.auth.signUp({
-          email: cleanEmail,
-          password: pass,
-          options: {
-            data: {
-              name,
-              role: assignedRole,
-            },
-          },
-        });
-
-        if (!error && data.user) {
-          supabaseId = data.user.id;
-        }
-      } catch (e) {
-        console.warn('[AuthService] Supabase signUp exception:', e);
+    if (!sb) {
+      if (!DEMO_MODE) {
+        return { success: false, error: 'Cadastro indisponível: o Supabase não está configurado.' };
       }
+      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name });
     }
 
-    // 2. Synchronize with public.users
     try {
-      const profile = await syncSessionWithDb(supabaseId, cleanEmail, {
-        name,
-        role: assignedRole,
+      const { data, error } = await sb.auth.signUp({
+        email: cleanEmail,
+        password: pass,
+        options: { data: { name } },
       });
+      if (error) {
+        const exists = error.message?.toLowerCase().includes('already');
+        return {
+          success: false,
+          error: exists ? 'Já existe uma conta com este e-mail.' : 'Não foi possível criar a conta. Verifique os dados.',
+        };
+      }
+      if (!data.user) {
+        return { success: false, error: 'Não foi possível criar a conta.' };
+      }
+      if (!data.session) {
+        // Confirmação de e-mail pendente: sem sessão não há como sincronizar o perfil ainda.
+        return { success: false, error: 'Conta criada. Confirme seu e-mail e depois entre.' };
+      }
+      return this.finishSession(data.user.id, cleanEmail, { name });
+    } catch {
+      return { success: false, error: 'Não foi possível conectar ao servidor de autenticação.' };
+    }
+  }
 
+  private static async finishSession(
+    supabaseId: string,
+    email: string,
+    metadata: SyncMetadata
+  ): Promise<AuthResponse<UserProfile>> {
+    try {
+      const profile = await syncSessionWithDb(supabaseId, email, metadata);
       return { success: true, data: profile };
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      return { success: false, error: message };
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
 
@@ -175,13 +165,19 @@ export class AuthService {
     userId: string,
     email: string,
     fallbackData?: Partial<UserProfile>
-  ): Promise<UserProfile> {
-    return syncSessionWithDb(userId, email, {
-      name: fallbackData?.name,
-      avatar: fallbackData?.avatar_url,
-      city: fallbackData?.city,
-      sport: fallbackData?.sport_interests?.[0],
-    });
+  ): Promise<UserProfile | null> {
+    try {
+      return await syncSessionWithDb(userId, email, {
+        name: fallbackData?.name,
+        avatar: fallbackData?.avatar_url,
+        city: fallbackData?.city,
+        sport: fallbackData?.sport_interests?.[0],
+      });
+    } catch (err) {
+      // Sessão válida no Supabase sem perfil sincronizado: o usuário não entra no app.
+      console.warn('[AuthService] Perfil não sincronizado:', err);
+      return null;
+    }
   }
 
   /**
@@ -250,21 +246,4 @@ export class AuthService {
     }
   }
 
-  /**
-   * Fetches all registered users (for admin panel).
-   */
-  static async getAllUsers(): Promise<UserProfile[]> {
-    try {
-      const res = await authedFetch('/api/users');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.users)) {
-          return data.users;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  }
 }

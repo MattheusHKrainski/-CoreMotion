@@ -9,7 +9,7 @@ import {
   requestStoreVerificationInDb,
   reviewStoreVerificationInDb,
 } from '@/lib/db-queries';
-import { hasCapability } from '@/lib/permissions';
+import { hasCapability, isStaffRole } from '@/lib/permissions';
 import { errorResponse, requireAuth } from '@/lib/server-auth';
 import { readJson, str } from '@/lib/api-utils';
 import type { Store } from '@/lib/types';
@@ -28,14 +28,25 @@ function slugify(value: string): string {
 
 /** Lojas oficiais: leitura pública. */
 export async function GET(req: NextRequest) {
-  const slug = new URL(req.url).searchParams.get('slug');
+  const params = new URL(req.url).searchParams;
+  const slug = params.get('slug');
+  // C6: documentos de verificação (CNPJ, razão social) só para a equipe, com ?docs=1 e login.
+  let includeDocs = false;
+  if (params.get('docs') === '1') {
+    const auth = await requireAuth(req);
+    if (!auth.ok) return auth.response;
+    if (!isStaffRole(auth.ctx.role)) {
+      return errorResponse('Somente a equipe pode ver os documentos de verificação.', 403);
+    }
+    includeDocs = true;
+  }
   try {
     if (slug) {
-      const store = await getStoreBySlugFromDb(slug);
+      const store = await getStoreBySlugFromDb(slug, { includeDocs });
       if (!store) return errorResponse('Loja não encontrada.', 404);
       return NextResponse.json({ success: true, store });
     }
-    const stores = await getStoresFromDb();
+    const stores = await getStoresFromDb({ includeDocs });
     return NextResponse.json({ success: true, stores });
   } catch (error: unknown) {
     console.error('[API /api/stores GET]', error);

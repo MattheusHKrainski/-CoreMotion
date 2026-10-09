@@ -16,7 +16,7 @@
 import type { UserRole } from './types';
 
 /** E-mails das contas-mestre (Super Admin). Comparação exata, sem prefixos. */
-export const MASTER_ADMIN_EMAILS: readonly string[] = [
+const MASTER_ADMIN_EMAILS: readonly string[] = [
   'mattheusxmljz@gmail.com',
   'operacaoamd@gmail.com',
   'professorchines2026@gmail.com',
@@ -36,16 +36,8 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
 };
 
-/** Ordem hierárquica usada para comparações (maior número = mais privilégio). */
-export const ROLE_RANK: Record<UserRole, number> = {
-  visitor: 0,
-  user: 1,
-  seller: 2,
-  supervisor: 3,
-  admin: 4,
-};
 
-export type Capability =
+type Capability =
   | 'listings.create' // anunciar equipamento C2C
   | 'orders.place' // comprar
   | 'community.post' // publicar, comentar, curtir e denunciar
@@ -124,7 +116,7 @@ export function canChangeRoleOf(actorRole: UserRole | null | undefined, targetEm
   return actorRole === 'admin' && !isMasterAdminEmail(targetEmail);
 }
 
-export const ASSIGNABLE_ROLES: readonly UserRole[] = ['user', 'seller', 'supervisor', 'admin'];
+const ASSIGNABLE_ROLES: readonly UserRole[] = ['user', 'seller', 'supervisor', 'admin'];
 
 export function isAssignableRole(value: unknown): value is UserRole {
   return typeof value === 'string' && (ASSIGNABLE_ROLES as readonly string[]).includes(value);
