@@ -75,7 +75,7 @@ export default function CoreMotiomApp() {
                     Acesso Restrito para Atletas Cadastrados
                   </h2>
                   <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
-                    Para anunciar seus equipamentos com custódia garantida e proteção anti-golpe, conecte-se à sua conta ou cadastre-se em instantes.
+                    Para anunciar seus equipamentos, conecte-se à sua conta ou cadastre-se em instantes.
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

@@ -24,7 +24,8 @@ import {
   INITIAL_COMMUNITY_POSTS,
   INITIAL_NEWS,
   INITIAL_USERS,
-} from './initial-data';
+} from '@/fixtures/initial-data';
+import { DEMO_MODE } from '@/lib/demo-mode';
 import { getSupabaseClient as getSupabase, isSupabaseConfigured } from '@/services/supabaseClient';
 import { authedFetch } from './auth-fetch';
 import {
@@ -173,16 +174,17 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Core entities with resilient initializers - SSR safe
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [allUsers, setAllUsers] = useState<UserProfile[]>(INITIAL_USERS);
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [stores, setStores] = useState<Store[]>(INITIAL_STORES);
+  // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
+  const [allUsers, setAllUsers] = useState<UserProfile[]>(DEMO_MODE ? INITIAL_USERS : []);
+  const [products, setProducts] = useState<Product[]>(DEMO_MODE ? INITIAL_PRODUCTS : []);
+  const [stores, setStores] = useState<Store[]>(DEMO_MODE ? INITIAL_STORES : []);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(INITIAL_COMMUNITY_POSTS);
-  const [coaches] = useState<Coach[]>(INITIAL_COACHES);
-  const [athletes] = useState<Athlete[]>(INITIAL_ATHLETES);
-  const [news] = useState<NewsArticle[]>(INITIAL_NEWS);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(DEMO_MODE ? INITIAL_COMMUNITY_POSTS : []);
+  const [coaches] = useState<Coach[]>(DEMO_MODE ? INITIAL_COACHES : []);
+  const [athletes] = useState<Athlete[]>(DEMO_MODE ? INITIAL_ATHLETES : []);
+  const [news] = useState<NewsArticle[]>(DEMO_MODE ? INITIAL_NEWS : []);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
   const [, setIsHydrated] = useState(false);
@@ -804,7 +806,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           : ord
       )
     );
-    addToast('Pagamento Confirmado (Sandbox)', `Pedido ${orderId} aprovado com custódia garantida!`, 'success');
+    addToast('Pagamento Confirmado (Sandbox)', `Pedido ${orderId} confirmado (pagamento simulado).`, 'success');
   };
 
   // Products CRUD
@@ -877,7 +879,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     );
     addToast(
       'Solicitação Enviada',
-      'Nossa equipe de compliance analisará a documentação e CNPJ em até 24 horas.',
+      'A documentação e o CNPJ são analisados manualmente pela equipe.',
       'info'
     );
   };

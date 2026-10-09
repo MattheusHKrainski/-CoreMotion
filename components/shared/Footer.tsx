@@ -35,9 +35,9 @@ export default function Footer() {
                 <Lock className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Custódia Segura C2C</h4>
+                <h4 className="text-sm font-bold text-white tracking-tight">Fluxo C2C simulado</h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Pagamento retido com segurança até o atleta inspecionar e aprovar o equipamento.
+                  Fluxo simulado: nesta versão o pagamento não é retido de verdade.
                 </p>
               </div>
             </div>
@@ -85,8 +85,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-              Ecossistema esportivo de alta performance. Marketplace curado, lojas oficiais com nota fiscal, intermediação com custódia segura entre atletas e assessoria de treinadores de elite.
-            </p>
+              Ecossistema esportivo de demonstração: marketplace, lojas e comunidade (fluxos simulados).</p>
             <div className="flex items-center gap-3 pt-2">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-300 bg-zinc-900/90 px-3 py-1 rounded-full border border-zinc-800">
                 <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
@@ -122,10 +121,8 @@ export default function Footer() {
           <div>
             <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Segurança & Legal</h5>
             <ul className="space-y-2 text-xs">
-              <li><span className="hover:text-white cursor-pointer transition-colors">Protocolo de Custódia Segura</span></li>
+              <li><span className="hover:text-white cursor-pointer transition-colors">Fluxo simulado</span></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Diretrizes de Verificação de Lojas</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Termos de Uso e Intermediação</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Política de Privacidade</span></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Canal de Atendimento ao Atleta</span></li>
             </ul>
           </div>

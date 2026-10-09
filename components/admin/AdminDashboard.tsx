@@ -288,7 +288,7 @@ export default function AdminDashboard() {
             className="px-3 py-1.5 rounded-full bg-zinc-800/70 hover:bg-zinc-700 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1.5"
           >
             <Truck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Pedidos & Custódia ({orders.length})</span>
+            <span>Pedidos ({orders.length})</span>
           </button>
           <button
             onClick={() => scrollToSection('sec-lojas')}
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
           {/* GMV */}
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Catálogo sob Custódia (GMV)</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Catálogo (GMV)</span>
               <DollarSign className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-black text-white">
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
           {/* Custody revenue */}
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Taxa de Custódia (4.5%)</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Taxa simulada (demonstração)</span>
               <Activity className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-black text-white">
@@ -403,16 +403,16 @@ export default function AdminDashboard() {
           <div className="bg-zinc-900/60 p-5 rounded-3xl border border-zinc-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Protocolo de Custódia & Antifraude</span>
+              <span>Fluxo simulado</span>
             </h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
                 <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Prazo de Liberação</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">48h pós-entrega</span>
+                <span className="text-white font-bold text-xs mt-0.5 block">Prazo simulado</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Taxa de Custódia</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">4.5% retido</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Taxa simulada</span>
+                <span className="text-white font-bold text-xs mt-0.5 block">4.5% (simulado)</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
                 <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Pagamentos PIX</span>
@@ -517,7 +517,7 @@ export default function AdminDashboard() {
         <div className="p-4 rounded-2xl bg-zinc-900/90 border border-blue-500/30 text-xs text-zinc-300 space-y-1.5 shadow-lg backdrop-blur-sm">
           <div className="flex items-center gap-2 text-blue-400 font-bold uppercase tracking-wider text-[11px]">
             <ShieldCheck className="w-4 h-4" />
-            <span>Política de Proteção de Dados & Sigilo Financeiro Comercial (LGPD - Lei 13.709/18)</span>
+            <span>Dados de demonstração (fictícios)</span>
           </div>
           <p className="text-zinc-400 leading-relaxed">
             Em conformidade com as diretrizes regulatórias e de sigilo comercial, os demonstrativos financeiros, lucros líquidos, extratos bancários e margens de venda de cada lojista parceiro são <strong className="text-zinc-200">estritamente restritos ao titular da loja</strong>. Contas administrativas e de desenvolvimento não têm acesso a essas informações privadas das lojas parceiras.
@@ -577,7 +577,7 @@ export default function AdminDashboard() {
                     <td className="p-4 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-950 text-zinc-400 border border-zinc-800">
                         <Lock className="w-3 h-3 text-blue-400" />
-                        <span>Sigilo Comercial LGPD</span>
+                        <span>Dados fictícios</span>
                       </span>
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
@@ -919,7 +919,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">5. Pedidos, Transações & Custódia Escrow ({orders.length})</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">5. Pedidos e Transações ({orders.length})</h2>
           </div>
           <span className="text-xs text-zinc-400">
             Volume em transações: <strong className="text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalOrdersAmount)}</strong>
@@ -1024,7 +1024,7 @@ export default function AdminDashboard() {
                           {ord.order_status === 'delivered' && (
                             <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                               <CheckCheck className="w-3.5 h-3.5" />
-                              Custódia Liberada
+                              Pagamento simulado
                             </span>
                           )}
                         </div>

@@ -184,7 +184,7 @@ export default function MarketplaceView({ onSelectProduct }: MarketplaceViewProp
             Equipamentos de Performance & Lojas Oficiais
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Super tênis com placa de carbono, relógios GPS e vestuário de compressão direto de fabricantes oficiais ou intermediados com custódia segura entre atletas.
+            Super tênis com placa de carbono, relógios GPS e vestuário de compressão (anúncios de demonstração) ou intermediados com custódia segura entre atletas.
           </p>
         </div>
 

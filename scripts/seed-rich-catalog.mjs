@@ -1361,18 +1361,18 @@ async function run() {
     console.log(`- ${row.category}: ${row.count} produtos`);
   }
 
-  // Update lib/initial-data.ts
-  let initialDataContent = fs.readFileSync("lib/initial-data.ts", "utf-8");
+  // Update fixtures/initial-data.ts
+  let initialDataContent = fs.readFileSync("fixtures/initial-data.ts", "utf-8");
   const pStart = initialDataContent.indexOf("export const INITIAL_PRODUCTS: Product[] = [");
   const pEnd = initialDataContent.indexOf("export const INITIAL_COACHES: Coach[] = [");
 
   if (pStart !== -1 && pEnd !== -1) {
     const tsCode = "export const INITIAL_PRODUCTS: Product[] = " + JSON.stringify(RICH_PRODUCTS, null, 2) + ";\n\n";
     initialDataContent = initialDataContent.slice(0, pStart) + tsCode + initialDataContent.slice(pEnd);
-    fs.writeFileSync("lib/initial-data.ts", initialDataContent, "utf-8");
-    console.log(`Successfully updated lib/initial-data.ts with all ${RICH_PRODUCTS.length} curated products!`);
+    fs.writeFileSync("fixtures/initial-data.ts", initialDataContent, "utf-8");
+    console.log(`Successfully updated fixtures/initial-data.ts with all ${RICH_PRODUCTS.length} curated products!`);
   } else {
-    console.error("Could not find delimiters in lib/initial-data.ts");
+    console.error("Could not find delimiters in fixtures/initial-data.ts");
   }
 
   await client.end();

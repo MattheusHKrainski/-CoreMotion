@@ -28,7 +28,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Pagamento em custódia',
+  escrow_locked: 'Pagamento simulado',
   preparing: 'Em preparação',
   shipped: 'Enviado',
   delivered: 'Entregue',

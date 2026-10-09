@@ -128,7 +128,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     if (id === 'sell' && isVisitor) {
       setAuthModalMode('login');
       setAuthModalOpen(true);
-      addToast('Acesso Restrito', 'Faça login para anunciar seus equipamentos com custódia segura.', 'info');
+      addToast('Acesso Restrito', 'Faça login para anunciar seus equipamentos.', 'info');
       return;
     }
     setActiveView(id);

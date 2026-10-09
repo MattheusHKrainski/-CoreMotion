@@ -1,5 +1,6 @@
 import { Store } from '@/lib/types';
-import { INITIAL_STORES } from '@/lib/initial-data';
+import { INITIAL_STORES } from '@/fixtures/initial-data';
+import { DEMO_MODE } from '@/lib/demo-mode';
 import { authedFetch } from '@/lib/auth-fetch';
 import { isSupabaseConfigured } from './supabaseClient';
 
@@ -22,7 +23,7 @@ export class StoreService {
     } catch (err) {
       console.warn('[StoreService] Fetch /api/stores failed, using local cache:', err);
     }
-    return INITIAL_STORES;
+    return DEMO_MODE ? INITIAL_STORES : [];
   }
 
   static async getStoreBySlug(slug: string): Promise<Store | null> {

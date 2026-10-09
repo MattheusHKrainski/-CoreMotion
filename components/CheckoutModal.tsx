@@ -125,7 +125,7 @@ export default function CheckoutModal() {
               <p className="text-xs text-zinc-400">
                 {step === 'cart' && `${cart.length} item(s) selecionado(s)`}
                 {step === 'shipping' && 'Informe onde você deseja receber seu equipamento'}
-                {step === 'payment' && 'Transação criptografada com custódia segura'}
+                {step === 'payment' && 'Ambiente de demonstração: nenhum pagamento real é processado'}
                 {step === 'success' && 'Seu pedido já está sendo preparado'}
               </p>
             </div>
@@ -496,7 +496,7 @@ export default function CheckoutModal() {
                 <span>{formatPrice(shippingCost)}</span>
               </div>
               <div className="flex justify-between text-white font-black text-sm pt-2 border-t border-zinc-800">
-                <span>Total com Custódia Protegida</span>
+                <span>Total do pedido</span>
                 <span className="text-red-400 font-black">{formatPrice(total)}</span>
               </div>
             </div>
@@ -542,7 +542,7 @@ export default function CheckoutModal() {
                 <span className="text-zinc-400">Status do Pagamento:</span>
                 <span className="text-red-400 font-bold inline-flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" />
-                  Retido em Custódia Segura
+                  Pagamento simulado
                 </span>
               </div>
               <div className="flex justify-between">

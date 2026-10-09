@@ -1,6 +1,10 @@
 import { getSupabaseClient } from './supabaseClient';
 import { CommunityPost } from '@/lib/types';
-import { INITIAL_COMMUNITY_POSTS } from '@/lib/initial-data';
+import { INITIAL_COMMUNITY_POSTS } from '@/fixtures/initial-data';
+import { DEMO_MODE } from '@/lib/demo-mode';
+
+/** Posts de demonstração: só com NEXT_PUBLIC_DEMO_MODE=true (C9). */
+const demoPosts = () => (DEMO_MODE ? INITIAL_COMMUNITY_POSTS : []);
 
 export class CommunityService {
   /** Denúncia: marca a publicação para moderação (RLS: usuário autenticado). */
@@ -27,7 +31,7 @@ export class CommunityService {
    */
   static async getPosts(): Promise<CommunityPost[]> {
     const sb = getSupabaseClient();
-    if (!sb) return INITIAL_COMMUNITY_POSTS;
+    if (!sb) return demoPosts();
 
     try {
       const { data, error } = await sb
@@ -36,12 +40,12 @@ export class CommunityService {
         .order('created_at', { ascending: false });
 
       if (error || !data || data.length === 0) {
-        return INITIAL_COMMUNITY_POSTS;
+        return demoPosts();
       }
 
       return data.map(this.mapDbPostToModel);
     } catch {
-      return INITIAL_COMMUNITY_POSTS;
+      return demoPosts();
     }
   }
 

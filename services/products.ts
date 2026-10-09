@@ -1,5 +1,6 @@
 import { Product, ProductCondition, ProductType } from '@/lib/types';
-import { INITIAL_PRODUCTS } from '@/lib/initial-data';
+import { INITIAL_PRODUCTS } from '@/fixtures/initial-data';
+import { DEMO_MODE } from '@/lib/demo-mode';
 import { authedFetch } from '@/lib/auth-fetch';
 import { isSupabaseConfigured } from './supabaseClient';
 
@@ -49,7 +50,8 @@ export class ProductService {
       console.warn('[ProductService] Fetch from /api/products failed, using local cache:', err);
     }
 
-    return this.applyLocalFilters(INITIAL_PRODUCTS, filters);
+    // C9: dados de demonstração só com NEXT_PUBLIC_DEMO_MODE=true; sem isso, catálogo vazio.
+    return DEMO_MODE ? this.applyLocalFilters(INITIAL_PRODUCTS, filters) : [];
   }
 
   /**

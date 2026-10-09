@@ -108,7 +108,7 @@ Preencha `.env.local`:
 
 > `.env.local` **nunca** deve ser versionado. A chave `service_role` **não** é usada por este projeto e não deve ser colocada no navegador.
 
-Sem as variáveis do Supabase, o aplicativo funciona em **modo demonstração**: dados locais, sem persistência e com controles de simulação de papel na barra lateral.
+Sem as variáveis do Supabase, o aplicativo **não carrega dados** e o login fica indisponível. Para ver a demonstração com dados fictícios de `fixtures/`, defina `NEXT_PUBLIC_DEMO_MODE=true` em `.env.local` (desligado por padrão).
 
 ### 3. Criar o banco de dados
 
@@ -138,7 +138,7 @@ npm run start      # o Next.js exibe um aviso sobre a saída "standalone", mas o
 
 ### 6. Dados de demonstração (opcional)
 
-Os scripts em `scripts/seed-*.mjs` preenchem o catálogo para desenvolvimento. Os scripts `seed-catalog.mjs` e `seed-rich-catalog.mjs` **apagam** a tabela de produtos antes de inserir os dados; leia o cabeçalho de cada script antes de executá-lo.
+Os dados fictícios ficam em `fixtures/` e só aparecem com `NEXT_PUBLIC_DEMO_MODE=true`. Os scripts `scripts/seed-*.mjs` preenchem o catálogo do banco para desenvolvimento. Os scripts `seed-catalog.mjs` e `seed-rich-catalog.mjs` **apagam** a tabela de produtos e só rodam com `CONFIRM_DESTRUCTIVE_SEED=SIM`.
 
 ---
 
@@ -219,8 +219,8 @@ Medidas implementadas nesta versão:
 - Não há testes automatizados de interface (ponta a ponta). A interface foi verificada por tipos, lint, build e pelo teste de fumaça das rotas.
 - A interface não tem tela para editar anúncios já publicados.
 - Os esquemas Zod em `lib/schemas/` ainda não são usados pelas rotas; a validação atual está em `lib/api-utils.ts`.
-- A conexão do servidor com o PostgreSQL aceita certificado sem verificação (`rejectUnauthorized: false`). Em produção de alto risco, configure a verificação do certificado.
-- Sem a configuração do Supabase, o aplicativo mostra controles de demonstração (troca de papel e perfis de teste).
+- A conexão do servidor com o PostgreSQL verifica o certificado (`rejectUnauthorized: true`). Se o pooler usar uma CA própria, informe o certificado em `DATABASE_SSL_CA`.
+- Sem a configuração do Supabase e sem `NEXT_PUBLIC_DEMO_MODE=true`, o login e o cadastro ficam indisponíveis (nenhuma sessão local é criada).
 
 ---
 

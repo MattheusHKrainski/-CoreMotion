@@ -139,4 +139,4 @@ Na linha de base, as falhas mais graves permitiam que um atleta se tornasse admi
 
 - **Senha do banco**: a senha que esteve no código do repositório deve ser redefinida no Supabase (*Project Settings › Database › Reset database password*). Use a nova URI apenas no `.env.local`.
 - **Backups**: mantenha backups automáticos ativos no projeto Supabase antes de executar scripts de dados.
-- **Certificado**: a conexão do servidor aceita certificado sem verificação (`rejectUnauthorized: false`). Em produção de alto risco, configure o certificado CA do projeto.
+- **Certificado**: a conexão do servidor verifica o certificado do PostgreSQL (`rejectUnauthorized: true`). Se o pooler usar uma CA própria (ex.: a do Supabase), informe o certificado em `DATABASE_SSL_CA`.
