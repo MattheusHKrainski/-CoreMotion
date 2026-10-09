@@ -165,8 +165,10 @@ export class CommunityService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- linha crua do banco; tipada na correção de pedidos/comunidade
   private static mapDbPostToModel(dbRow: any): CommunityPost {
     const rawComments = Array.isArray(dbRow.comments) ? dbRow.comments : [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- comentários crus do JSONB; tipados na correção de comunidade
     const comments = rawComments.map((c: any) => ({
       id: c.id || `c-${Math.random()}`,
       author_name: c.author_name || c.user_name || 'Atleta',

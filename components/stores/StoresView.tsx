@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { Store, Product } from '@/lib/types';
+import { Product } from '@/lib/types';
 import ProductCard from '@/components/marketplace/ProductCard';
 import {
   Store as StoreIcon,
@@ -10,7 +10,6 @@ import {
   PlusCircle,
   MapPin,
   Search,
-  ExternalLink,
   ArrowLeft,
   FileCheck,
   CheckCircle2,

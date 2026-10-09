@@ -25,7 +25,6 @@ export default function AuthModal() {
     signInWithGoogle,
     loginAsMasterAdmin,
     switchRole,
-    addToast,
   } = useCoreMotiom();
 
   const [email, setEmail] = useState('');

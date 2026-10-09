@@ -11,7 +11,7 @@ import {
   ROLE_LABELS,
 } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
-import { UserRole, Product, Order } from '@/lib/types';
+import { UserRole } from '@/lib/types';
 import {
   ShieldCheck,
   Store,
@@ -19,14 +19,12 @@ import {
   Package,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Database,
   Trash2,
   DollarSign,
   Users,
   Search,
   Lock,
-  ArrowRight,
   TrendingUp,
   Activity,
   Award,
@@ -34,11 +32,7 @@ import {
   X,
   RefreshCw,
   Ban,
-  Check,
   Truck,
-  CreditCard,
-  Layers,
-  FileText,
   CheckCheck,
 } from 'lucide-react';
 
@@ -46,8 +40,6 @@ export default function AdminDashboard() {
   const {
     user,
     setActiveView,
-    setAuthModalMode,
-    setAuthModalOpen,
     stores,
     products,
     allUsers,
@@ -67,7 +59,6 @@ export default function AdminDashboard() {
     adminDeleteCommunityPost,
     loginAsMasterAdmin,
     setSupabaseConfigOpen,
-    isSupabaseLive,
     addToast,
   } = useCoreMotiom();
 

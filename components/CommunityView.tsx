@@ -9,7 +9,6 @@ import {
   Send,
   Share2,
   Filter,
-  Sparkles,
   Flag,
 } from 'lucide-react';
 

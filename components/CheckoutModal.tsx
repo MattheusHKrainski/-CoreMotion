@@ -15,7 +15,6 @@ import {
   Trash2,
   Copy,
   Check,
-  ShieldCheck,
 } from 'lucide-react';
 
 export default function CheckoutModal() {
@@ -44,7 +43,7 @@ export default function CheckoutModal() {
   const [address, setAddress] = useState('Av. Paulista, 1000');
   const [city, setCity] = useState('São Paulo');
   const [state, setState] = useState('SP');
-  const [shippingCost, setShippingCost] = useState(24.9);
+  const [shippingCost] = useState(24.9);
 
   // Credit Card Form State
   const [cardNumber, setCardNumber] = useState('');

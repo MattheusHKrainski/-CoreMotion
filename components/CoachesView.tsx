@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   X,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 
 export default function CoachesView() {

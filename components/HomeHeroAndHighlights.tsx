@@ -11,14 +11,11 @@ import {
   ChevronLeft,
   PlusCircle,
   ShoppingBag,
-  Zap,
   Lock,
   CheckCircle2,
   Users,
   Layers,
-  Sparkles,
   Flame,
-  Activity,
 } from 'lucide-react';
 
 interface HomeHeroAndHighlightsProps {

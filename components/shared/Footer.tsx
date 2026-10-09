@@ -7,8 +7,6 @@ import {
   Truck,
   RotateCcw,
   Lock,
-  ArrowUpRight,
-  Sparkles,
 } from 'lucide-react';
 
 export default function Footer() {

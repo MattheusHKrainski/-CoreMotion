@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './supabaseClient';
-import { Order, PaymentMethod, ShippingAddress, OrderStatus } from '@/lib/types';
+import { CartItem, Order, PaymentMethod, ShippingAddress, OrderStatus } from '@/lib/types';
 
 export class OrderService {
   /**
@@ -8,7 +8,7 @@ export class OrderService {
   static async createOrder(orderPayload: {
     userId?: string;
     userEmail: string;
-    items: any[];
+    items: CartItem[];
     subtotal: number;
     shippingFee: number;
     discount?: number;
@@ -198,6 +198,7 @@ export class OrderService {
   /**
    * Maps Database order row to Client Order model.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- linha crua do banco; tipada na correção de pedidos/comunidade
   private static mapDbOrderToModel(dbRow: any): Order {
     return {
       id: String(dbRow.id),

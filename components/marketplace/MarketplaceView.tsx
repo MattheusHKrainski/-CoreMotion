@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product, ProductCondition } from '@/lib/types';
 import ProductCard from './ProductCard';
@@ -13,7 +13,6 @@ import {
   Search,
   X,
   PlusCircle,
-  Sparkles,
   Layers,
   ChevronDown,
   Check,

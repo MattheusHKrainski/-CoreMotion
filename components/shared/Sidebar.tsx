@@ -16,15 +16,11 @@ import {
   Compass,
   Menu,
   X,
-  ChevronRight,
   LogOut,
   SlidersHorizontal,
   Layers,
   Database,
   CheckCircle2,
-  Package,
-  Activity,
-  Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -48,7 +44,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setSearchQuery,
     logout,
     switchRole,
-    isSupabaseLive,
     setSupabaseConfigOpen,
     addToast,
     stores,

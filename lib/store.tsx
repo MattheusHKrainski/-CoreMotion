@@ -31,7 +31,6 @@ import {
   canSuspendTarget,
   hasCapability,
   isAdminRole,
-  isMasterAdminEmail,
 } from './permissions';
 import {
   AuthService,
@@ -185,7 +184,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [news] = useState<NewsArticle[]>(INITIAL_NEWS);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [, setIsHydrated] = useState(false);
 
   // Toast system
   const addToast = useCallback((title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
