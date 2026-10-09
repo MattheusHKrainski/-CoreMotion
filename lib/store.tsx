@@ -1,5 +1,6 @@
 'use client';
 
+import { calculateCheckoutTotals, ShippingMethod } from './checkout';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import {
   UserProfile,
@@ -97,7 +98,7 @@ interface CoreMotiomContextType {
   adminSyncSupabase: () => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
   loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  signUpWithEmail: (email: string, pass: string, name: string, role?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  signUpWithEmail: (email: string, pass: string, name: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (newRole: UserRole) => void;
@@ -205,6 +206,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
     // Listen to OAuth messages from popup window
     const handleOAuthMessage = async (event: MessageEvent) => {
+      // Só aceita mensagens da própria aplicação (popup de OAuth no mesmo origin).
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
         const sb = getSupabase();
         if (sb) {
@@ -216,6 +219,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
               name: u.user_metadata?.name || u.user_metadata?.full_name || email.split('@')[0],
               avatar_url: u.user_metadata?.avatar_url,
             });
+            if (!profile) return;
             setUser(profile);
             setAllUsers((prev) => {
               const exists = prev.some((p) => p.email.toLowerCase() === email.toLowerCase());
@@ -292,6 +296,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
               name: u.user_metadata?.name || email.split('@')[0],
               avatar_url: u.user_metadata?.avatar_url,
             });
+            if (!profile) return;
             setUser(profile);
           }
         }).catch(() => {
@@ -306,6 +311,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
               name: u.user_metadata?.name || email.split('@')[0],
               avatar_url: u.user_metadata?.avatar_url,
             });
+            if (!profile) return;
             setUser(profile);
           } else if (event === 'SIGNED_OUT' && isMounted) {
             setUser(null);
@@ -652,10 +658,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = async (
     email: string,
     pass: string,
-    name: string,
-    desiredRole: UserRole = 'user'
+    name: string
   ): Promise<{ success: boolean; error?: string }> => {
-    const res = await AuthService.signUpWithEmail(email, pass, name, desiredRole);
+    const res = await AuthService.signUpWithEmail(email, pass, name);
     if (res.success && res.data) {
       setUser(res.data);
       setAllUsers((prev) => [res.data!, ...prev]);
@@ -753,55 +758,34 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Checkout & Order creation
   const createOrder = async (data: {
     address: ShippingAddress;
-    shippingMethod: 'pac' | 'sedex' | 'express';
+    shippingMethod: ShippingMethod;
     paymentMethod: PaymentMethod;
   }): Promise<Order> => {
-    const shippingCosts: Record<string, number> = {
-      pac: 24.9,
-      sedex: 42.5,
-      express: 58.0,
-    };
-    const shippingFee = shippingCosts[data.shippingMethod] || 25.0;
-    const subtotal = cartTotal;
-    const total = subtotal + shippingFee;
+    // Totais seguem lib/checkout.ts; o banco recalcula o pedido ao gravar.
+    const totals = calculateCheckoutTotals(
+      cartTotal,
+      data.shippingMethod,
+      data.paymentMethod === 'pix' ? 'pix' : data.paymentMethod === 'boleto' ? 'boleto' : 'credit_card'
+    );
 
     const res = await OrderService.createOrder({
       userId: user?.id,
       userEmail: user?.email || data.address.phone,
       items: [...cart],
-      subtotal,
-      shippingFee,
-      discount: 0,
-      total,
+      subtotal: totals.subtotal,
+      shippingFee: totals.shippingFee,
+      discount: totals.discount,
+      total: totals.total,
       paymentMethod: data.paymentMethod,
       shippingAddress: data.address,
       shippingMethod: data.shippingMethod,
     });
 
-    const fallbackOrderId = `ORD-${Date.now().toString().slice(-6)}`;
-    const fallbackPix = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2, 15)}520400005303986540${total.toFixed(2)}5802BR5916COREMOTIOM BRASIL6009SAO PAULO62070503***6304${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-    const newOrder: Order = (res.success && res.data) ? res.data : {
-      id: fallbackOrderId,
-      user_id: user?.id || 'guest-user',
-      user_email: user?.email || data.address.phone,
-      items: [...cart],
-      subtotal,
-      shipping_fee: shippingFee,
-      discount: 0,
-      total,
-      payment_method: data.paymentMethod,
-      payment_status: data.paymentMethod === 'pix' ? 'pending' : 'paid',
-      pix_code: fallbackPix,
-      pix_qr_url: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fallbackPix)}`,
-      pix_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-      shipping_address: data.address,
-      shipping_method: data.shippingMethod,
-      order_status: data.paymentMethod === 'pix' ? 'pending_payment' : 'preparing',
-      tracking_code: `CM${Math.floor(100000000 + Math.random() * 900000000)}BR`,
-      created_at: new Date().toISOString(),
-    };
-
+    // C8: sem confirmação do servidor não existe pedido nem pagamento; o carrinho é mantido.
+    if (!res.success || !res.data) {
+      throw new Error(res.error || 'Não foi possível registrar o pedido. Tente novamente.');
+    }
+    const newOrder = res.data;
     setOrders((prev) => [newOrder, ...prev]);
     clearCart();
     return newOrder;

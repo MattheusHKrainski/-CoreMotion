@@ -1,5 +1,6 @@
 'use client';
 
+import { calculateCheckoutTotals } from '@/lib/checkout';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import {
@@ -43,7 +44,6 @@ export default function CheckoutModal() {
   const [address, setAddress] = useState('Av. Paulista, 1000');
   const [city, setCity] = useState('São Paulo');
   const [state, setState] = useState('SP');
-  const [shippingCost] = useState(24.9);
 
   // Credit Card Form State
   const [cardNumber, setCardNumber] = useState('');
@@ -55,8 +55,11 @@ export default function CheckoutModal() {
   if (!isCheckoutOpen) return null;
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  const discount = paymentMethod === 'pix' ? subtotal * 0.05 : 0;
-  const total = subtotal - discount + (cart.length > 0 ? shippingCost : 0);
+  // Mesma regra do servidor (lib/checkout.ts): PIX com 5% de desconto; frete PAC.
+  const checkoutTotals = calculateCheckoutTotals(subtotal, 'pac', paymentMethod);
+  const shippingCost = cart.length > 0 ? checkoutTotals.shippingFee : 0;
+  const discount = checkoutTotals.discount;
+  const total = checkoutTotals.subtotal - discount + shippingCost;
 
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -94,8 +97,9 @@ export default function CheckoutModal() {
       setCompletedOrderId(order.id);
       setStep('success');
       clearCart();
-    } catch {
-      // ignore
+    } catch (err) {
+      // C8: falha do servidor é mostrada; nenhum pedido aparece como concluído.
+      addToast('Pedido não concluído', err instanceof Error ? err.message : 'Tente novamente.', 'error');
     } finally {
       setIsProcessing(false);
     }

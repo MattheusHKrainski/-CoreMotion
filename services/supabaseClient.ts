@@ -8,9 +8,13 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const isSupabaseConfigured = Boolean(
-  supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 15
-);
+/** HTTPS é obrigatório; HTTP só é aceito para loopback (desenvolvimento local e testes). */
+function isAllowedSupabaseUrl(url: string): boolean {
+  if (url.startsWith('https://')) return true;
+  return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(url);
+}
+
+export const isSupabaseConfigured = Boolean(isAllowedSupabaseUrl(supabaseUrl) && supabaseAnonKey.length > 15);
 
 let browserClient: SupabaseClient | null = null;
 

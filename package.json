@@ -10,7 +10,8 @@
     "type-check": "tsc --noEmit",
     "ci": "npm run lint && npm run type-check && npm run build",
     "clean": "next clean",
-    "test:db": "npm test --prefix database/tests"
+    "test:db": "npm test --prefix database/tests",
+    "test:unit": "node --import tsx --test tests/unit/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

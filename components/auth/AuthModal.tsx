@@ -3,7 +3,6 @@ import { isSupabaseConfigured } from '@/services/supabaseClient';
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { UserRole } from '@/lib/types';
 import {
   X,
   Mail,
@@ -30,7 +29,6 @@ export default function AuthModal() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [desiredRole, setDesiredRole] = useState<UserRole>('user');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
@@ -90,7 +88,7 @@ export default function AuthModal() {
           setLoading(false);
           return;
         }
-        const res = await signUpWithEmail(email, password, name, desiredRole);
+        const res = await signUpWithEmail(email, password, name);
         if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
         } else {
@@ -260,38 +258,6 @@ export default function AuthModal() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">
-                    Tipo de Conta
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setDesiredRole('user')}
-                      className={`p-3 rounded-2xl border flex flex-col items-start gap-1 text-left transition-all ${
-                        desiredRole === 'user'
-                          ? 'border-red-500 bg-red-600/10 text-white shadow-sm'
-                          : 'border-zinc-800 bg-zinc-900 text-zinc-400'
-                      }`}
-                    >
-                      <span className="font-bold text-white">Atleta C2C</span>
-                      <span className="text-[10px] text-zinc-400">Comprar e vender desapego</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDesiredRole('seller')}
-                      className={`p-3 rounded-2xl border flex flex-col items-start gap-1 text-left transition-all ${
-                        desiredRole === 'seller'
-                          ? 'border-red-500 bg-red-600/10 text-white shadow-sm'
-                          : 'border-zinc-800 bg-zinc-900 text-zinc-400'
-                      }`}
-                    >
-                      <span className="font-bold text-white">Lojista B2C</span>
-                      <span className="text-[10px] text-zinc-400">Cadastrar loja oficial</span>
-                    </button>
-                  </div>
-                </div>
               </>
             )}
 

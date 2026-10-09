@@ -1,9 +1,10 @@
 import pg from 'pg';
 import fs from 'fs';
+import { pgSsl } from './lib/pg-ssl.mjs';
 
 const client = new pg.Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: pgSsl(),
 });
 
 await client.connect();

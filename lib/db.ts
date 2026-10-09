@@ -11,6 +11,15 @@ const { Pool } = pg;
  */
 let poolInstance: pg.Pool | null = null;
 
+/**
+ * TLS com verificação do certificado. Se o pooler usar uma CA própria (ex.: a do Supabase),
+ * informe o certificado em DATABASE_SSL_CA. Sem ela, vale a CA padrão do sistema.
+ */
+function buildSslOptions(): pg.PoolConfig['ssl'] {
+  const ca = (process.env.DATABASE_SSL_CA || '').trim();
+  return ca ? { ca, rejectUnauthorized: true } : { rejectUnauthorized: true };
+}
+
 function getDbPool(): pg.Pool | null {
   const connectionString = (process.env.DATABASE_URL || '').trim();
   if (!connectionString) {
@@ -20,7 +29,7 @@ function getDbPool(): pg.Pool | null {
   if (!poolInstance) {
     poolInstance = new Pool({
       connectionString,
-      ssl: { rejectUnauthorized: false },
+      ssl: buildSslOptions(),
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 8000,

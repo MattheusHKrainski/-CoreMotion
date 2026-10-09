@@ -31,7 +31,7 @@ export default function AuthCallbackPage() {
                 type: 'OAUTH_AUTH_SUCCESS',
                 user: data.session.user,
               },
-              '*'
+              window.location.origin
             );
             setTimeout(() => {
               window.close();
@@ -52,7 +52,7 @@ export default function AuthCallbackPage() {
                     type: 'OAUTH_AUTH_SUCCESS',
                     user: retry.data.session.user,
                   },
-                  '*'
+                  window.location.origin
                 );
                 window.close();
               } else {
@@ -74,7 +74,7 @@ export default function AuthCallbackPage() {
               type: 'OAUTH_AUTH_ERROR',
               error: msg,
             },
-            '*'
+            window.location.origin
           );
         }
       }

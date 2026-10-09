@@ -4,16 +4,17 @@ import {
   deleteProductInDb,
   getProductByIdFromDb,
   getProductOwnerId,
+  getProductStatus,
   getProductsFromDb,
   getProfileById,
   getStoreForSale,
-  MODERATOR_PRODUCT_FIELDS,
   OWNER_EDITABLE_PRODUCT_FIELDS,
   updateProductInDb,
 } from '@/lib/db-queries';
 import { hasCapability, isStaffRole } from '@/lib/permissions';
 import { errorResponse, requireAuth } from '@/lib/server-auth';
-import { num, PRODUCT_CONDITIONS, PRODUCT_STATUSES, readJson, str, strArray } from '@/lib/api-utils';
+import { readJson, str } from '@/lib/api-utils';
+import { productCreateSchema, productUpdateSchema } from '@/lib/schemas/product.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -89,21 +90,12 @@ export async function POST(req: NextRequest) {
   const allowed = productType === 'b2c' ? hasCapability(actor.role, 'store.manage_own') : hasCapability(actor.role, 'listings.create');
   if (!allowed) return errorResponse('Seu papel não pode publicar este tipo de anúncio.', 403);
 
-  const title = str(body.title, 150);
-  const description = str(body.description, 5000);
-  const price = num(body.price);
-  const category = str(body.category, 60);
-  const sport = str(body.sport, 60);
-  const condition = str(body.condition, 30);
-  if (title.length < 3 || description.length < 10 || !category || !sport) {
-    return errorResponse('Preencha título, descrição, categoria e modalidade.', 400);
+  const parsed = productCreateSchema.safeParse({ ...body, product_type: productType });
+  if (!parsed.success) {
+    return errorResponse(parsed.error.issues[0]?.message || 'Dados do anúncio inválidos.', 400);
   }
-  if (price === null || price <= 0 || price > 1_000_000) {
-    return errorResponse('Preço inválido.', 400);
-  }
-  if (!(PRODUCT_CONDITIONS as readonly string[]).includes(condition)) {
-    return errorResponse('Condição do produto inválida.', 400);
-  }
+  const input = parsed.data;
+  const { title, description, price, category, sport, condition } = input;
 
   // Nome e selo da loja são lidos do banco, nunca do corpo da requisição (o selo não pode ser forjado).
   let storeId: string | null = null;
@@ -129,23 +121,23 @@ export async function POST(req: NextRequest) {
         title,
         description,
         price,
-        original_price: num(body.original_price),
+        original_price: input.original_price ?? null,
         category,
         sport,
         condition,
         product_type: productType,
-        images: strArray(body.images, 8, 2048),
+        images: input.images,
         seller_name: profile?.name || actor.email.split('@')[0],
         seller_avatar: profile?.avatar_url || null,
         store_id: storeId,
         store_name: storeName,
         is_verified_store: storeVerified,
-        stock: Math.max(1, Math.min(9999, Math.trunc(num(body.stock) ?? 1))),
-        location: str(body.location, 120) || null,
-        shipping_available: body.shipping_available !== false,
+        stock: input.stock,
+        location: input.location || null,
+        shipping_available: input.shipping_available,
         status: 'active',
-        brand: str(body.brand, 80) || null,
-        tags: strArray(body.tags, 10, 40),
+        brand: input.brand || null,
+        tags: input.tags,
       },
       actor.userId
     );
@@ -171,44 +163,31 @@ export async function PATCH(req: NextRequest) {
   if (ownerId !== actor.userId && !moderator) {
     return errorResponse('Você não pode alterar este anúncio.', 403);
   }
+  // C3: anúncio suspenso pela moderação só volta a ser ativado pela equipe.
+  const currentStatus = await getProductStatus(id);
+  if (currentStatus === 'suspended' && !moderator) {
+    return errorResponse('Anúncio suspenso pela moderação. Somente a equipe pode reativá-lo.', 403);
+  }
 
   const body = (await readJson<Record<string, unknown>>(req)) || {};
+  const parsed = productUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return errorResponse(parsed.error.issues[0]?.message || 'Dados do anúncio inválidos.', 400);
+  }
+  const data = parsed.data;
   const fields: Record<string, unknown> = {};
   for (const key of OWNER_EDITABLE_PRODUCT_FIELDS) {
-    if (body[key] === undefined) continue;
-    if (key === 'title') fields.title = str(body.title, 150);
-    else if (key === 'description') fields.description = str(body.description, 5000);
-    else if (key === 'price') fields.price = num(body.price);
-    else if (key === 'original_price') fields.original_price = num(body.original_price);
-    else if (key === 'stock') fields.stock = Math.max(0, Math.min(9999, Math.trunc(num(body.stock) ?? 0)));
-    else if (key === 'location') fields.location = str(body.location, 120) || null;
-    else if (key === 'shipping_available') fields.shipping_available = Boolean(body.shipping_available);
-    else if (key === 'brand') fields.brand = str(body.brand, 80) || null;
-    else if (key === 'tags') fields.tags = strArray(body.tags, 10, 40);
-    else if (key === 'images') fields.images = strArray(body.images, 8, 2048);
-    else if (key === 'condition') {
-      const c = str(body.condition, 30);
-      if ((PRODUCT_CONDITIONS as readonly string[]).includes(c)) fields.condition = c;
-    }
+    const value = (data as Record<string, unknown>)[key];
+    if (value !== undefined) fields[key] = value;
   }
 
-  if (body.status !== undefined) {
-    const status = str(body.status, 20);
-    if (!(PRODUCT_STATUSES as readonly string[]).includes(status)) {
-      return errorResponse('Status inválido.', 400);
-    }
+  if (data.status !== undefined) {
     // Vendedor: active/draft/sold. Moderador: qualquer status (inclui suspended).
     const ownerStatuses = ['active', 'draft', 'sold'];
-    if (moderator || ownerStatuses.includes(status)) {
-      if ((MODERATOR_PRODUCT_FIELDS as readonly string[]).includes('status')) fields.status = status;
+    if (moderator || ownerStatuses.includes(data.status)) {
+      fields.status = data.status;
     } else {
       return errorResponse('Apenas moderadores podem suspender anúncios.', 403);
-    }
-  }
-
-  for (const key of ['price', 'original_price'] as const) {
-    if (key in fields && fields[key] !== null && (typeof fields[key] !== 'number' || (fields[key] as number) <= 0)) {
-      return errorResponse('Preço inválido.', 400);
     }
   }
 

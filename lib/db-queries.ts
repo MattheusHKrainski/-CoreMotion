@@ -288,6 +288,14 @@ export async function getProductByIdFromDb(id: string): Promise<Product | null> 
   return rows.length > 0 ? mapDbProductToModel(rows[0]) : null;
 }
 
+export async function getProductStatus(id: string): Promise<string | null> {
+  const rows = await queryDb<{ status: string | null }>(
+    `SELECT status FROM public.products WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+  return rows.length > 0 ? rows[0].status : null;
+}
+
 export async function getProductOwnerId(id: string): Promise<string | null> {
   const rows = await queryDb<{ seller_id: string | null }>(
     `SELECT seller_id FROM public.products WHERE id = $1 LIMIT 1`,
@@ -375,8 +383,6 @@ export const OWNER_EDITABLE_PRODUCT_FIELDS = [
   'condition',
 ] as const;
 
-/** Campos que somente moderadores (admin/supervisor) podem alterar. */
-export const MODERATOR_PRODUCT_FIELDS = ['status'] as const;
 
 export async function updateProductInDb(id: string, fields: Record<string, unknown>): Promise<Product | null> {
   const sets: string[] = [];
@@ -429,7 +435,7 @@ interface DbStoreRow {
   updated_at: Date | string;
 }
 
-function mapDbStoreToModel(row: DbStoreRow): Store {
+function mapDbStoreToModel(row: DbStoreRow, opts: { includeDocs?: boolean } = {}): Store {
   return {
     id: row.id,
     owner_id: row.owner_id ? String(row.owner_id) : '',
@@ -442,7 +448,8 @@ function mapDbStoreToModel(row: DbStoreRow): Store {
     is_verified: Boolean(row.is_verified),
     verification_status: (row.verification_status as Store['verification_status']) || 'none',
     verification_requested_at: row.verification_requested_at ? toIso(row.verification_requested_at) : undefined,
-    verification_docs: (row.verification_docs as Store['verification_docs']) || undefined,
+    // C6: documentos de verificação saem só para a equipe (a vitrine pública não os recebe).
+    verification_docs: opts.includeDocs ? (row.verification_docs as Store['verification_docs']) || undefined : undefined,
     contact_email: row.contact_email,
     contact_phone: row.contact_phone || undefined,
     location: row.location || 'São Paulo, SP',
@@ -453,14 +460,14 @@ function mapDbStoreToModel(row: DbStoreRow): Store {
   };
 }
 
-export async function getStoresFromDb(): Promise<Store[]> {
+export async function getStoresFromDb(opts: { includeDocs?: boolean } = {}): Promise<Store[]> {
   const rows = await queryDb<DbStoreRow>(`SELECT * FROM public.stores ORDER BY is_verified DESC, name ASC`);
-  return rows.map(mapDbStoreToModel);
+  return rows.map((row) => mapDbStoreToModel(row, opts));
 }
 
-export async function getStoreBySlugFromDb(slug: string): Promise<Store | null> {
+export async function getStoreBySlugFromDb(slug: string, opts: { includeDocs?: boolean } = {}): Promise<Store | null> {
   const rows = await queryDb<DbStoreRow>(`SELECT * FROM public.stores WHERE slug = $1 LIMIT 1`, [slug]);
-  return rows.length > 0 ? mapDbStoreToModel(rows[0]) : null;
+  return rows.length > 0 ? mapDbStoreToModel(rows[0], opts) : null;
 }
 
 export async function getStoreById(id: string): Promise<Store | null> {
