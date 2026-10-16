@@ -21,15 +21,15 @@ OUT = Path(__file__).resolve().parent
 CM = 1 / 2.54  # polegadas por centímetro
 plt.rcParams["font.family"] = "DejaVu Sans"
 
-fig = plt.figure(figsize=(16 * CM, 16 * CM), dpi=300)
+fig = plt.figure(figsize=(16 * CM, 19 * CM), dpi=300)
 ax = fig.add_axes([0, 0, 1, 1])
 ax.set_xlim(0, 10)
-ax.set_ylim(0, 9.6)
+ax.set_ylim(0, 11.2)
 ax.axis("off")
 
 # Fronteira do sistema
-ax.add_patch(Rectangle((2.2, 0.9), 6.3, 8.1, fill=False, lw=0.9, ec="#222222"))
-ax.text(5.35, 9.25, "Sistema CoreMotiom", ha="center", va="center", fontsize=9, fontweight="bold")
+ax.add_patch(Rectangle((2.2, 0.9), 6.3, 9.3, fill=False, lw=0.9, ec="#222222"))
+ax.text(5.35, 10.45, "Sistema CoreMotiom", ha="center", va="center", fontsize=9, fontweight="bold")
 
 OVAL_H, FS = 0.56, 7.2
 LEFT_CX, RIGHT_CX = 3.55, 6.6
@@ -74,16 +74,16 @@ def generalization(child_point, parent_point):
 
 
 # Atores de uso geral (à esquerda)
-visitante = actor(0.9, 8.3, "Visitante")
-atleta = actor(0.9, 5.2, "Atleta", label_pos="above")
-lojista = actor(0.9, 2.2, "Lojista")
+visitante = actor(0.9, 9.0, "Visitante")
+atleta = actor(0.9, 5.4, "Atleta", label_pos="above")
+lojista = actor(0.9, 2.4, "Lojista")
 
 # Atores de gestão (à direita)
-supervisor = actor(9.1, 5.6, "Supervisor", label_pos="above")
-administrador = actor(9.1, 2.4, "Administrador")
+supervisor = actor(9.1, 5.9, "Supervisor", label_pos="above")
+administrador = actor(9.1, 2.6, "Administrador")
 
 # Casos de uso da coluna esquerda (uso geral), de cima para baixo
-ys_left = [8.2 - i * 0.66 for i in range(11)]
+ys_left = [9.3 - i * 0.80 for i in range(11)]
 left_labels = [
     "UC01 Navegar no catálogo\ne na comunidade",
     "UC02 Cadastrar-se e entrar",
@@ -101,7 +101,7 @@ uc_left = [use_case(LEFT_CX, y, lbl, LEFT_W) for y, lbl in zip(ys_left, left_lab
 L = {i + 1: uc_left[i] for i in range(len(uc_left))}  # L[1] = UC01 ...
 
 # Casos de uso da coluna direita (gestão)
-ys_right = [8.0 - i * 1.0 for i in range(7)]
+ys_right = [9.0 - i * 1.25 for i in range(7)]
 right_labels = [
     "UC12 Aprovar ou reprovar\nverificação de loja",
     "UC13 Moderar publicações\ndenunciadas",
@@ -129,12 +129,12 @@ for n in (17, 18):
     link(hand(administrador, "left"), R[n]["right"])
 
 # Generalizações: Lojista é um Atleta; Administrador é um Supervisor
-generalization((0.9, 2.38), (0.9, 4.25))   # cabeça do lojista -> pés do atleta
-generalization((9.1, 2.60), (9.1, 4.65))         # cabeça do administrador -> pés do supervisor
+generalization((0.9, 2.58), (0.9, 4.45))   # cabeça do lojista -> pés do atleta
+generalization((9.1, 2.80), (9.1, 4.85))         # cabeça do administrador -> pés do supervisor
 
 # Nota explicativa
 ax.text(
-    0.2, 0.55,
+    0.2, 0.45,
     "Supervisor e Administrador também realizam UC01, UC03, UC06 e UC07 (matriz de permissões).\n"
     "Administrador herda os casos de uso do Supervisor. Lojista herda os casos de uso do Atleta.",
     ha="left", va="center", fontsize=5.8, color="#333333", linespacing=1.3,
