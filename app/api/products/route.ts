@@ -7,7 +7,6 @@ import {
   getProductStatus,
   getProductsFromDb,
   getProfileById,
-  getStoreForSale,
   OWNER_EDITABLE_PRODUCT_FIELDS,
   updateProductInDb,
 } from '@/lib/db-queries';
@@ -26,7 +25,6 @@ function readFilters(sp: URLSearchParams) {
     sport: sp.get('sport') || undefined,
     condition: sp.get('condition') || undefined,
     product_type: sp.get('product_type') || undefined,
-    store_id: sp.get('store_id') || undefined,
     seller_id: sp.get('seller_id') || undefined,
     search: sp.get('search') || undefined,
     minPrice,
@@ -45,7 +43,7 @@ export async function GET(req: NextRequest) {
     const id = sp.get('id');
     if (id) {
       const product = await getProductByIdFromDb(id);
-      if (!product) return errorResponse('Produto não encontrado.', 404);
+      if (!product || product.product_type !== 'c2c') return errorResponse('Anúncio não encontrado.', 404);
       if (product.status !== 'active') {
         const auth = await requireAuth(req);
         if (!auth.ok) return auth.response;
@@ -56,7 +54,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, product });
     }
 
-    const filters = readFilters(sp);
+    const filters = { ...readFilters(sp), product_type: 'c2c' };
     if (filters.status && filters.status !== 'active') {
       const auth = await requireAuth(req);
       if (!auth.ok) return auth.response;
@@ -76,7 +74,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * Cria anúncio. O vendedor é sempre o usuário autenticado (o campo seller_id do corpo é ignorado).
- * Atletas publicam apenas C2C; B2C exige papel de lojista ou administrador e loja própria.
+ * O catálogo interno aceita somente anúncios C2C; B2C é uma vitrine de ofertas externas.
  */
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
@@ -86,33 +84,19 @@ export async function POST(req: NextRequest) {
   const body = await readJson<Record<string, unknown>>(req);
   if (!body) return errorResponse('Corpo da requisição inválido.', 400);
 
-  const productType = body.product_type === 'b2c' ? 'b2c' : 'c2c';
-  const allowed = productType === 'b2c' ? hasCapability(actor.role, 'store.manage_own') : hasCapability(actor.role, 'listings.create');
-  if (!allowed) return errorResponse('Seu papel não pode publicar este tipo de anúncio.', 403);
+  if (body.product_type !== undefined && body.product_type !== 'c2c') {
+    return errorResponse('Somente anúncios C2C podem ser publicados no catálogo interno.', 400);
+  }
+  if (!hasCapability(actor.role, 'listings.create')) {
+    return errorResponse('Seu papel não pode publicar anúncios.', 403);
+  }
 
-  const parsed = productCreateSchema.safeParse({ ...body, product_type: productType });
+  const parsed = productCreateSchema.safeParse({ ...body, product_type: 'c2c' });
   if (!parsed.success) {
     return errorResponse(parsed.error.issues[0]?.message || 'Dados do anúncio inválidos.', 400);
   }
   const input = parsed.data;
   const { title, description, price, category, sport, condition } = input;
-
-  // Nome e selo da loja são lidos do banco, nunca do corpo da requisição (o selo não pode ser forjado).
-  let storeId: string | null = null;
-  let storeName: string | null = null;
-  let storeVerified = false;
-  if (productType === 'b2c') {
-    const requestedStoreId = str(body.store_id, 64);
-    if (!requestedStoreId) return errorResponse('Anúncios B2C precisam de uma loja.', 400);
-    const store = await getStoreForSale(requestedStoreId);
-    if (!store) return errorResponse('Loja não encontrada.', 404);
-    if (store.ownerId !== actor.userId && actor.role !== 'admin') {
-      return errorResponse('Você só pode anunciar pela sua própria loja.', 403);
-    }
-    storeId = requestedStoreId;
-    storeName = store.name;
-    storeVerified = store.isVerified;
-  }
 
   try {
     const profile = await getProfileById(actor.userId);
@@ -125,13 +109,10 @@ export async function POST(req: NextRequest) {
         category,
         sport,
         condition,
-        product_type: productType,
+        product_type: 'c2c',
         images: input.images,
         seller_name: profile?.name || actor.email.split('@')[0],
         seller_avatar: profile?.avatar_url || null,
-        store_id: storeId,
-        store_name: storeName,
-        is_verified_store: storeVerified,
         stock: input.stock,
         location: input.location || null,
         shipping_available: input.shipping_available,

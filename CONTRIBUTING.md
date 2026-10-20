@@ -78,8 +78,7 @@ git push origin feature/minha-feature
 components/
 ├── ui/           # Primitivas shadcn/ui (Button, Dialog, Badge, Input, Card, Tabs, Form, etc.)
 ├── auth/         # Telas e modais de login, cadastro, recuperação de conta
-├── marketplace/  # Cards de produtos, filtros técnicos, vitrine esportiva
-├── stores/       # Painel do lojista, verificação com CNPJ, catálogo oficial
+├── marketplace/  # Vitrine B2C simulada e catálogo de anúncios C2C
 ├── admin/        # Auditoria administrativa, moderação e métricas
 └── shared/       # Header, Footer, EmptyStates, Skeletons
 ```

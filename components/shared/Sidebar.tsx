@@ -11,7 +11,6 @@ import {
   User,
   PlusCircle,
   ShieldCheck,
-  Store as StoreIcon,
   Users,
   Compass,
   Menu,
@@ -44,7 +43,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     logout,
     switchRole,
     addToast,
-    stores,
   } = useCoreMotiom();
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -82,13 +80,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       icon: ShoppingBag,
     },
     {
-      id: 'stores',
-      label: 'Lojas Oficiais',
-      description: `${stores.length} Lojas Parceiras`,
-      icon: StoreIcon,
-      badge: `${stores.length}`,
-    },
-    {
       id: 'sell',
       label: 'Vender C2C',
       description: 'Anuncie seus Equipamentos',
@@ -113,7 +104,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           {
             id: 'admin' as const,
             label: 'Painel Admin',
-            description: 'Gestão, Lojas & Usuários',
+            description: 'Gestão, anúncios e usuários',
             icon: ShieldCheck,
             badge: 'ADMIN',
             highlight: true,
@@ -205,7 +196,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   setActiveView('marketplace');
                 }
               }}
-              placeholder="Buscar produtos, marcas..."
+              placeholder="Buscar ofertas, anúncios ou categorias..."
               className="w-full pl-9 pr-12 py-2 bg-zinc-900/90 hover:bg-zinc-900 text-xs text-white placeholder-zinc-500 rounded-xl border border-zinc-800 focus:border-red-500/60 focus:bg-zinc-950 focus:outline-none transition-all shadow-inner"
             />
             <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
@@ -426,7 +417,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   </>
                 ) : role === 'seller' ? (
                   <>
-                    <StoreIcon className="w-2.5 h-2.5" />
+                    <Layers className="w-2.5 h-2.5" />
                     <span>{ROLE_LABELS.seller}</span>
                   </>
                 ) : (
