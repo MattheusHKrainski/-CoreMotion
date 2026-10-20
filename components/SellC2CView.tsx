@@ -460,7 +460,7 @@ export default function SellC2CView() {
       {activeTab === 'active' && (
         <div className="space-y-4">
           {myListings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {myListings.map((p) => (
                 <div key={p.id} className="bg-zinc-900/60 rounded-3xl border border-zinc-800/80 p-5 flex flex-col justify-between space-y-3 shadow-lg">
                   <div className="flex gap-3.5">

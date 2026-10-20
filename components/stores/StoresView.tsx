@@ -195,7 +195,7 @@ export default function StoresView({ onSelectProduct }: StoresViewProps) {
           </div>
 
           {storeProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
               {storeProducts.map((prod) => (
                 <ProductCard
                   key={prod.id}

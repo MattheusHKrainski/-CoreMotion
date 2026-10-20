@@ -54,7 +54,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   // Papel vem sempre da conta autenticada (banco) ou do perfil de demonstração.
   const userIsAdmin = user?.role === 'admin';
   const userIsStaff = isStaffRole(user?.role);
-  const showDemoSwitcher = !isSupabaseConfigured;
+  const showDemoSwitcher = !isSupabaseConfigured && userIsStaff;
 
   // Calculate cart subtotal
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);

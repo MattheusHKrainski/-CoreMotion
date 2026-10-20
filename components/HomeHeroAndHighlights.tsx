@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import { isStaffRole } from '@/lib/permissions';
 import { Product } from '@/lib/types';
 import ProductCard from '@/components/marketplace/ProductCard';
 import {
@@ -13,8 +14,6 @@ import {
   ShoppingBag,
   Lock,
   CheckCircle2,
-  Users,
-  Layers,
   Flame,
 } from 'lucide-react';
 
@@ -24,6 +23,7 @@ interface HomeHeroAndHighlightsProps {
 
 export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHighlightsProps) {
   const {
+    user,
     products,
     stores,
     setActiveView,
@@ -32,6 +32,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
     isVisitor,
     setAuthModalOpen,
   } = useCoreMotiom();
+
+  const showTechnicalDetails = isStaffRole(user?.role);
 
   // Active filter state for the Bento Grid showcase
   const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -119,8 +121,41 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
   return (
     <div className="space-y-12 sm:space-y-16 pb-20 pt-4 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
       
+      {/* Apresentação institucional antes do conteúdo existente. */}
+      <section
+        aria-labelledby="about-coremotiom-title"
+        className="relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 px-6 py-10 sm:p-12"
+      >
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
+        <div className="relative max-w-3xl space-y-5">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">
+            Conheça a CoreMotiom
+          </p>
+          <h1 id="about-coremotiom-title" className="text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
+            Conectamos pessoas que vivem o esporte.
+          </h1>
+          <p className="text-base leading-relaxed text-zinc-300 sm:text-lg">
+            Somos uma plataforma que aproxima atletas, lojas e profissionais do
+            universo esportivo. Reunimos equipamentos, serviços e uma comunidade
+            para apoiar quem quer se movimentar e evoluir.
+          </p>
+          <p className="text-sm leading-relaxed text-zinc-400 sm:text-base">
+            Aqui você pode comprar e vender equipamentos, conhecer lojas,
+            encontrar treinadores e trocar experiências. Tudo em um só lugar,
+            para fazer parte da sua jornada no esporte.
+          </p>
+          <a
+            href="#explore-coremotiom"
+            className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400"
+          >
+            Conheça a plataforma
+            <ArrowRight aria-hidden="true" className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
+
       {/* 1. HERO SECTION IMERSIVO (CARD AMPLO ARREDONDADO COM GRADIENTE ESCURO & LUZ DIFUSA VERMELHA) */}
-      <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-950 via-[#0E1017] to-black border border-zinc-800/80 shadow-2xl shadow-black/80 transition-all duration-500">
+      <section id="explore-coremotiom" className="scroll-mt-6 relative rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-950 via-[#0E1017] to-black border border-zinc-800/80 shadow-2xl shadow-black/80 transition-all duration-500">
         
         {/* Subtle diffuse red ambient light */}
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
@@ -139,9 +174,9 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
               </div>
 
               {/* Title with Architectural Typography */}
-              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.15] drop-shadow-sm">
+              <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.15] drop-shadow-sm">
                 {slide.title}
-              </h1>
+              </h2>
 
               {/* Subtitle */}
               <p className="text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed">
@@ -174,6 +209,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
               </div>
 
               {/* Technical Trust Indicators */}
+              {showTechnicalDetails && (
               <div className="pt-6 border-t border-zinc-800/80 grid grid-cols-3 gap-3 text-xs">
                 <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Garantia</span>
@@ -191,6 +227,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
                   <span className="text-[10px] text-red-400">Reviews & Dicas</span>
                 </div>
               </div>
+              )}
 
             </div>
 
@@ -396,7 +433,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 xl:grid-cols-3 gap-3">
               {filteredProducts.slice(0, 6).map((product) => (
                 <ProductCard
                   key={product.id}
@@ -480,7 +517,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
             </button>
           </div>
 
-          {/* Widget 2: Protocolo de Fluxo C2C simulado */}
+          {showTechnicalDetails && (
           <div className="p-5 rounded-3xl bg-gradient-to-br from-zinc-950 via-[#10131B] to-black border border-zinc-800/80 shadow-xl space-y-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-full bg-red-500/15 text-red-400">
@@ -532,55 +569,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
             </div>
           </div>
 
-          {/* Widget 3: Comunidade Esportiva & Reviews */}
-          <div className="p-5 rounded-3xl bg-zinc-900/60 border border-zinc-800/80 shadow-xl space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-red-500/15 text-red-400">
-                <Layers className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-extrabold text-xs text-white">Comunidade de Atletas</h4>
-                <p className="text-[10px] text-zinc-400">Fórum & Reviews Técnicos</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Troque experiências sobre calçados, provas e equipamentos com atletas experientes e treinadores.
-            </p>
-
-            <button
-              onClick={() => setActiveView('community')}
-              className="w-full py-2.5 rounded-full bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 hover:text-white text-xs font-semibold tracking-wide border border-zinc-700/60 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <ArrowRight className="w-3.5 h-3.5 text-red-400" />
-              <span>Acessar Comunidade</span>
-            </button>
-          </div>
-
-          {/* Widget 4: Treinadores Credenciados */}
-          <div className="p-5 rounded-3xl bg-zinc-900/60 border border-zinc-800/80 shadow-xl space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-red-500/15 text-red-400">
-                <Users className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-extrabold text-xs text-white">Treinadores & Assessorias</h4>
-                <p className="text-[10px] text-zinc-400">Consultoria e Periodização</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Encontre treinadores credenciados para ajustar sua mecânica de corrida e planilhas de maratona e triatlo.
-            </p>
-
-            <button
-              onClick={() => setActiveView('coaches')}
-              className="w-full py-2.5 rounded-full bg-zinc-800/80 hover:bg-zinc-800 text-zinc-200 hover:text-white text-xs font-semibold tracking-wide border border-zinc-700/60 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <span>Ver Treinadores</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          )}
 
         </div>
 
