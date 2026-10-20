@@ -19,7 +19,6 @@ import {
   LogOut,
   SlidersHorizontal,
   Layers,
-  Database,
   CheckCircle2,
 } from 'lucide-react';
 
@@ -44,7 +43,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setSearchQuery,
     logout,
     switchRole,
-    setSupabaseConfigOpen,
     addToast,
     stores,
   } = useCoreMotiom();
@@ -56,7 +54,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   // Papel vem sempre da conta autenticada (banco) ou do perfil de demonstração.
   const userIsAdmin = user?.role === 'admin';
   const userIsStaff = isStaffRole(user?.role);
-  const showDemoSwitcher = !isSupabaseConfigured;
+  const showDemoSwitcher = !isSupabaseConfigured && userIsStaff;
 
   // Calculate cart subtotal
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
@@ -189,27 +187,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               <X className="w-5 h-5" />
             </button>
           )}
-        </div>
-
-        {/* System & DB Status Pill */}
-        <div className="px-2">
-          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-zinc-300 font-semibold">Sistema Online</span>
-            </div>
-            <button
-              onClick={() => setSupabaseConfigOpen(true)}
-              className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-emerald-400 transition-colors"
-              title="Status do Banco Supabase"
-            >
-              <Database className="w-3 h-3 text-emerald-400" />
-              <span>PostgreSQL</span>
-            </button>
-          </div>
         </div>
 
         {/* Global Instant Search Box */}

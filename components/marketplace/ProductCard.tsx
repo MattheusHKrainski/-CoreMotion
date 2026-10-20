@@ -51,7 +51,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
       {/* Image Container with Floating Pill Badges */}
       <div
         onClick={() => onSelect && onSelect(product)}
-        className="relative aspect-square w-full bg-zinc-950/80 overflow-hidden cursor-pointer"
+        className="relative aspect-[5/4] w-full bg-zinc-950/80 overflow-hidden cursor-pointer"
       >
         <img
           src={product.images[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80'}
@@ -63,7 +63,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
         />
 
         {/* Top Badges (Pills) */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+        <div className="absolute top-2 left-2 flex flex-wrap gap-1.5 z-10">
           {isB2C ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-zinc-950/90 text-red-400 text-[10px] font-semibold tracking-wide uppercase border border-red-500/30 backdrop-blur-md">
               <ShieldCheck className="w-3 h-3 text-red-500" />
@@ -91,7 +91,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
               toggleFavorite(product.id);
             }
           }}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-10 ${
+          className={`absolute top-2 right-2 p-2 rounded-full backdrop-blur-md transition-all z-10 ${
             isFav
               ? 'bg-red-600 text-white shadow-lg shadow-red-950/50'
               : 'bg-zinc-950/70 text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800'
@@ -110,7 +110,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
       </div>
 
       {/* Product Information */}
-      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+      <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
         <div>
           {/* Category & Sport Tag */}
           <div className="flex items-center justify-between text-[11px] text-zinc-500 mb-1.5 font-medium tracking-wide uppercase">
@@ -128,7 +128,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
           </h4>
 
           {/* Seller / Store info */}
-          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 mt-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 mt-2">
             {product.store_name ? (
               <span className="font-medium text-zinc-300 flex items-center gap-1 truncate">
                 {product.store_name}

@@ -1,3 +1,4 @@
+import { CATALOG_PRODUCTS, CATALOG_STORES } from './catalog';
 import { Product, Store, Coach, Athlete, NewsArticle, CommunityPost, UserProfile } from '@/lib/types';
 
 export const INITIAL_USERS: UserProfile[] = [
@@ -46,6 +47,7 @@ export const INITIAL_USERS: UserProfile[] = [
 ];
 
 export const INITIAL_STORES: Store[] = [
+  ...CATALOG_STORES,
   {
     "id": "d2b5d694-85ae-41c8-bc49-fdcc25ddd9e3",
     "owner_id": "seller-pro-1",
@@ -1183,10 +1185,12 @@ export const INITIAL_STORES: Store[] = [
 ];
 
 export const INITIAL_PRODUCTS: Product[] = [
+  ...CATALOG_PRODUCTS,
+
   {
     "id": "dbae5971-5bf9-4182-af25-34fc66d60d87",
-    "title": "Tênis Marca Demo Air Force 1 '07 Branco Clássico",
-    "description": "O clássico do basquete e do streetwear mundial. Cabedal em couro legítimo branco imaculado com costuras reforçadas, perfurações no bico para respirabilidade, amortecimento Marca Demo Air encapsulado para conforto prolongado e solado de borracha aderente com ponto de giro clássico.",
+    "title": "Tênis casual branco",
+    "description": "Tênis casual branco. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 799.9,
     "original_price": 899.9,
     "category": "Calçados",
@@ -1194,10 +1198,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/Marca Demo-air-force-1.jpg",
-      "/products/Marca Demo-air-force-1-front.jpg",
-      "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&q=80",
-      "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&q=80"
+      "/products/nike-air-force-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Flagship Store Brasil",
@@ -1220,14 +1221,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Couro",
       "Branco"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 318
   },
   {
     "id": "2faf993c-9558-4a85-a5b2-d3a98afe4e97",
-    "title": "Tênis Marca Demo Samba OG Preto & Branco",
-    "description": "Nascido nos campos de futebol de salão e consagrado como o maior ícone urbano atual. Confeccionado em couro premium macio na cor preta, sobreposição em camurça T-toe na biqueira, as inconfundíveis 3 listras serrilhadas em couro branco e tradicional sola de borracha natural gum.",
+    "title": "Tênis Adidas Samba OG preto",
+    "description": "Tênis Adidas Samba OG preto. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 699.9,
     "original_price": 749.9,
     "category": "Calçados",
@@ -1235,10 +1236,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/Marca Demo-samba-og.jpg",
-      "/products/Marca Demo-samba-og-side.jpg",
-      "https://images.unsplash.com/photo-1582588678413-dbf45f4823e9?w=800&q=80",
-      "https://images.unsplash.com/photo-1518002171953-a080ee817e1f?w=800&q=80"
+      "/products/adidas-samba-og.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Originals & Adizero Lab",
@@ -1261,14 +1259,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Originals",
       "Camurça"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 245
   },
   {
     "id": "77ee1886-3e03-4a60-a0d5-81c0eaa60f7b",
-    "title": "Tênis Marca Demo Old Skool Core Preto & Branco",
-    "description": "O lendário modelo de skate com a primeira aparição da icônica sidestripe da Marca Demo. Cabedal de alta durabilidade em lona e camurça preta resistente ao atrito, biqueiras reforçadas para suportar o uso diário, colarinho acolchoado para apoio e a original sola waffle de borracha.",
+    "title": "Tênis Vans Old Skool vinho",
+    "description": "Tênis Vans Old Skool vinho. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 399.9,
     "original_price": 449.9,
     "category": "Calçados",
@@ -1276,9 +1274,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/Marca Demo-old-skool-1.jpg",
-      "/products/Marca Demo-old-skool-2.jpg",
-      "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800&q=80"
+      "/products/vans-old-skool-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Pro & Casual",
@@ -1301,14 +1297,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Lona",
       "Waffle"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 194
   },
   {
     "id": "f6bd268b-d5c4-4208-a61d-0ebf22de7640",
-    "title": "Tênis Marca Demo Suede Classic XXI Preto & Branco",
-    "description": "Referência histórica no breakdance e na cultura hip-hop desde 1968. Cabedal 100% em camurça premium macia na tonalidade preta profunda, palmilha confortável acolchoada, detalhe lateral Formstrip Marca Demo em branco e entressola texturizada de borracha durável.",
+    "title": "Tênis casual verde-oliva",
+    "description": "Tênis casual verde-oliva. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 429.9,
     "original_price": 499.9,
     "category": "Calçados",
@@ -1316,9 +1312,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/Marca Demo-suede-1.jpg",
-      "/products/Marca Demo-suede-2.jpg",
-      "https://images.unsplash.com/photo-1539185441755-769473a23570?w=800&q=80"
+      "/products/puma-suede-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Running & Sportstyle Brasil",
@@ -1341,14 +1335,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Camurça",
       "Clássico"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 112
   },
   {
     "id": "93cfd6c1-b7f2-4bdb-a496-0e1cff4e91eb",
-    "title": "Tênis Marca Demo Japan S Branco & Marinho",
-    "description": "Inspirado na herança das quadras de basquete de 1981 da Marca Demo. Silhueta de cano baixo repaginada para o dia a dia casual com cabedal macio em couro sintético limpo, listras tigradas Marca Demo contrastantes em azul marinho e entressola cupsole modificada para excelente leveza.",
+    "title": "Tênis de corrida branco e vermelho",
+    "description": "Tênis de corrida branco e vermelho. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 329.9,
     "original_price": 449.9,
     "category": "Calçados",
@@ -1356,9 +1350,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "seminovo",
     "product_type": "c2c",
     "images": [
-      "/products/Marca Demo-japan-s-1.jpg",
-      "/products/Marca Demo-japan-s-2.jpg",
-      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&q=80"
+      "/products/asics-japan-s-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Lucas 'Sprint' Mendes",
@@ -1381,14 +1373,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Couro",
       "Seminovo"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 28
   },
   {
     "id": "373091a9-9637-4a0f-a554-358cc7a166f9",
-    "title": "Tênis Marca Demo Free RN Flyknit Crimson/Vermelho",
-    "description": "Cabedal ultraleve em malha Flyknit respirável na vibrante tonalidade Crimson Red com o icônico swoosh branco. A entressola revolucionária com padrão tri-star expande-se e contrai-se em todas as direções para acompanhar a flexão natural dos pés, proporcionando amortecimento elástico e liberdade absoluta.",
+    "title": "Tênis Nike de corrida vermelho",
+    "description": "Tênis Nike de corrida vermelho. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 649.9,
     "original_price": 799.9,
     "category": "Calçados",
@@ -1396,10 +1388,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/Marca Demo-pegasus-1.jpg",
-      "/products/Marca Demo-pegasus-2.jpg",
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80",
-      "https://images.unsplash.com/photo-1514989940723-e8e51635b782?w=800&q=80"
+      "/products/nike-pegasus-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Flagship Store Brasil",
@@ -1423,13 +1412,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Flexível",
       "Leveza"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 270
   },
   {
     "id": "8928ab93-3ecc-4ebd-a570-feb51e906289",
-    "title": "Tênis Marca Demo Air Zoom Pegasus 40 Preto & Branco",
+    "title": "Tênis de corrida preto e branco",
     "description": "O modelo de treino diário mais confiável do atletismo em sua clássica colorway sóbria preta com swoosh branco. Duas cápsulas Zoom Air (antepé e calcanhar) associadas à entressola em espuma Marca Demo React para amortecimento ágil e durabilidade extrema em rodagens de longa distância.",
     "price": 699.9,
     "original_price": 899.9,
@@ -1464,14 +1453,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Zoom Air",
       "Preto"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 410
   },
   {
     "id": "73ef2108-7e13-4c0e-a923-ddad6ea69297",
-    "title": "Tênis Marca Demo Corre 3 Grafite & Laranja",
-    "description": "O tênis de corrida 100% desenvolvido e produzido no Brasil mais aclamado pelos corredores. Pesa apenas 210g com tecnologia Oxitec em monofilamento que não absorve água, entressola Eleva Pro com máxima impulsão e durabilidade, e sola Gripper antiderrapante com borracha compacta de alta tração.",
+    "title": "Tênis Olympikus Corre 3 grafite",
+    "description": "Tênis Olympikus Corre 3 grafite. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 449.9,
     "original_price": 499.9,
     "category": "Calçados",
@@ -1479,10 +1468,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/Marca Demo-corre-3.jpg",
-      "/products/Marca Demo-corre-3-sole.jpg",
-      "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&q=80",
-      "https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=800&q=80"
+      "/products/olympikus-corre-3.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Flagship Brasil",
@@ -1506,14 +1492,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Oxitec",
       "Nacional"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 512
   },
   {
     "id": "f058a366-a857-4cdf-a06d-020f577979ee",
-    "title": "Tênis Marca Demo Gel-Nimbus 26 Azul Marinho & Branco",
-    "description": "A mais alta expressão de amortecimento e conforto para rodagens longas e maratonas. Incorpora a tecnologia PureGEL no calcanhar que é 65% mais macia que o gel tradicional, entressola FF BLAST PLUS ECO super responsiva e cabedal em malha macia engineered knit de ajuste envolvente.",
+    "title": "Tênis esportivo branco",
+    "description": "Tênis esportivo branco. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 1199.9,
     "original_price": 1299.9,
     "category": "Calçados",
@@ -1521,9 +1507,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/Marca Demo-gel-nimbus-1.jpg",
-      "/products/Marca Demo-gel-nimbus-2.jpg",
-      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&q=80"
+      "/products/asics-gel-nimbus-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Flagship Store Brasil",
@@ -1546,14 +1530,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "PureGEL",
       "Longão"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 5,
     "reviews_count": 198
   },
   {
     "id": "e81a1d5d-c0ea-4928-a3c6-fc6159e84ad4",
-    "title": "Tênis Marca Demo Ultraboost Light Preto Carbono",
-    "description": "Equipado com a nova geração da espuma Light BOOST, 30% mais leve que o Boost tradicional para retorno inesgotável de energia a cada passada. Cabedal PRIMEKNIT+ que abraça os pés com precisão cirúrgica e solado Continental com aderência extrema em piso seco ou molhado.",
+    "title": "Tênis casual branco com detalhe preto",
+    "description": "Tênis casual branco com detalhe preto. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 599.9,
     "original_price": 1199.9,
     "category": "Calçados",
@@ -1561,9 +1545,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "seminovo",
     "product_type": "c2c",
     "images": [
-      "/products/Marca Demo-ultraboost-1.jpg",
-      "/products/Marca Demo-ultraboost-2.jpg",
-      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&q=80"
+      "/products/adidas-ultraboost-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marina Costa (Maratonista RJ)",
@@ -1586,13 +1568,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Primeknit",
       "Light Boost"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 36
   },
   {
     "id": "1506d63f-3b3f-48d8-a07f-bc857119094f",
-    "title": "Tênis Marca Demo 574 Core Cinza Clássico",
+    "title": "Tênis casual cinza",
     "description": "O mais icônico modelo da Marca Demo em camurça premium cinza chumbo com inserções de malha respirável mesh. Entressola com amortecimento ENCAP que une uma borda de poliuretano durável a um núcleo macio em EVA, proporcionando suporte anatômico o dia todo.",
     "price": 549.9,
     "original_price": 649.9,
@@ -1626,13 +1608,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Cinza",
       "ENCAP"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 167
   },
   {
     "id": "05ee4e91-e488-4e53-a6fe-cc5431ffb7bc",
-    "title": "Tênis Converse Chuck Taylor All Star Preto Cano Alto",
+    "title": "Tênis Converse All Star cano alto",
     "description": "A lenda atemporal criada em 1917. Cabedal em lona de algodão robusta na cor preta, patch lateral com o selo clássico All Star no tornozelo, ilhoses de metal prateado e a tradicional sola de borracha vulcanizada com padrão diamante de tração.",
     "price": 329.9,
     "original_price": 379.9,
@@ -1672,8 +1654,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "156b42cc-132a-4411-aed2-dc1fb089f449",
-    "title": "Jaqueta Corta-Vento Esportiva Repelente à Água Preta",
-    "description": "Jaqueta corta-vento ultraleve confeccionada em tecido ripstop resistente a rajadas de vento e respingos de chuva fina. Possui capuz ergonômico com cordão de ajuste, fechamento frontal por zíper reforçado, punhos elásticos ajustáveis e detalhes refletivos discretos de segurança.",
+    "title": "Jaqueta corta-vento preta",
+    "description": "Jaqueta corta-vento preta. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 299.9,
     "original_price": 379.9,
     "category": "Vestuário",
@@ -1681,9 +1663,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/jaqueta-corta-vento.jpg",
-      "/products/jaqueta-corta-vento-back.jpg",
-      "https://images.unsplash.com/photo-1544441893-675973e31985?w=800&q=80"
+      "/products/jaqueta-corta-vento.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Lifestyle & Run",
@@ -1706,14 +1686,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Corrida",
       "Capuz"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 154
   },
   {
     "id": "278c5ddd-1c2b-4302-adee-eb9c2bbee28d",
-    "title": "Camiseta Dry-Fit Básica de Treino Masculina Preta",
-    "description": "A peça essencial para academia, esteira ou treinos ao ar livre. Tecido em microfibra 100% poliéster tecnológico com gerenciamento térmico Dri-FIT que dispersa a umidade e evapora o suor com agilidade. Costuras planas antifricção que evitam assaduras na pele.",
+    "title": "Camiseta de treino preta",
+    "description": "Camiseta de treino preta. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 119.9,
     "original_price": 149.9,
     "category": "Vestuário",
@@ -1721,9 +1701,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/dry-fit-shirt-1.jpg",
-      "/products/dry-fit-shirt-2.jpg",
-      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&q=80"
+      "/products/camiseta-treino-preta.png"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Pro & Casual",
@@ -1746,14 +1724,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Academia",
       "Respirável"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 310
   },
   {
     "id": "2f44a2ab-fdf6-4af3-a024-91715522d012",
-    "title": "Moletom Esportivo com Capuz e Bolso Canguru Cinza Mescla",
-    "description": "Moletom unissex flanelado de alto padrão em mescla de algodão sustentável e poliéster térmico. Interior macio que retém o calor nos dias frios, capuz duplo forrado com cordão regulador, bolso canguru frontal amplo e barras caneladas em ribana resistente.",
+    "title": "Moletom com capuz cinza",
+    "description": "Moletom com capuz cinza. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 279.9,
     "original_price": 349.9,
     "category": "Vestuário",
@@ -1761,9 +1739,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/moletom-hoodie-1.jpg",
-      "/products/moletom-hoodie-2.jpg",
-      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&q=80"
+      "/products/moletom-cinza-capuz.png"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Originals & Adizero Lab",
@@ -1786,14 +1762,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Casual",
       "Algodão"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 142
   },
   {
     "id": "1920d446-0cf1-4ed2-ae77-ba4704bb9934",
-    "title": "Bermuda de Compressão com Bolso Lateral para Celular",
-    "description": "Desenvolvida para alta sustentação muscular e prevenção de fadiga em tiros e treinos intensos. Tecido anatômico com compressão graduada, costuras ergonômicas que não sobem na coxa e bolso lateral profundo que mantém o smartphone 100% estável sem chacoalhar durante a corrida.",
+    "title": "Bermuda de compressão preta",
+    "description": "Bermuda de compressão preta. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 149.9,
     "original_price": 189.9,
     "category": "Vestuário",
@@ -1801,9 +1777,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/bermuda-compressao-1.jpg",
-      "/products/bermuda-compressao-2.jpg",
-      "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=800&q=80"
+      "/products/bermuda-compressao-preta.png"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Brasil",
@@ -1826,14 +1800,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Corrida",
       "Bolso Celular"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 165
   },
   {
     "id": "ac78341c-df09-40bf-a8c4-3c569ff19f20",
-    "title": "Camisa Oficial de Futebol Torcedor Brasil 2024 Amarela",
-    "description": "Manto sagrado da Seleção Brasileira de Futebol modelo torcedor oficial. Tecido tecnológico respirável com tecnologia de microperfurações para excelente ventilação nos dias de calor, escudo bordado no peito em alta definição, gola V canelada e padrão texturizado sutil.",
+    "title": "Camiseta de futebol Brasil 2024",
+    "description": "Camiseta amarela com detalhes verdes para torcer pelo Brasil. Imagem ilustrativa; sem certificação de licenciamento oficial.",
     "price": 349.9,
     "original_price": 399.9,
     "category": "Vestuário",
@@ -1841,9 +1815,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/camisa-futebol-1.jpg",
-      "/products/camisa-futebol-2.jpg",
-      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80"
+      "/products/brasil-camisa-amarela.png"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Pro & Casual",
@@ -1866,13 +1838,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Seleção",
       "Oficial"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 380
   },
   {
     "id": "4b6e7ffe-512e-4593-aff1-7b94186792c2",
-    "title": "Regata Dry-Fit Cavada Masculina Treino & Musculação Grafite",
+    "title": "Regata de treino grafite",
     "description": "Regata cavada com recortes anatômicos pensada para treinos de alta sudorese e musculação pesada. Tecido tecnológico HeatGear que dispersa o suor instantaneamente, cavas amplas para mobilidade total das escápulas e acabamento com costuras reforçadas antifricção.",
     "price": 89.9,
     "original_price": 119.9,
@@ -1906,13 +1878,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Musculação",
       "Grafite"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 140
   },
   {
     "id": "e287d710-9f8f-4d17-a5a8-3ee560b158ea",
-    "title": "Kit 3 Pares Meia Cano Alto Antiderrapante Esportiva Branca",
+    "title": "Kit de 3 pares de meias esportivas",
     "description": "Meias técnicas de cano alto equipadas com pastilhas de silicone antiderrapante na planta do pé que travam a meia dentro da chuteira ou tênis, eliminando bolhas e escorregamentos. Malha respirável com compressão no arco plantar e reforço acolchoado no calcanhar.",
     "price": 79.9,
     "original_price": 99.9,
@@ -1952,7 +1924,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "24f161c7-c83e-4bd6-a0ef-10e8bf2ab37c",
-    "title": "Calça Legging Esportiva Feminina Cós Alto Anatômica Preta",
+    "title": "Legging esportiva preta",
     "description": "Legging de alta compressão em poliamida nobre com elastano de toque aveludado e zero transparência em agachamentos profundos (squat-proof). Cós anatômico largo de 10cm com dupla camada elástica que modela a cintura sem enrolar durante a corrida e os saltos.",
     "price": 189.9,
     "original_price": 249.9,
@@ -1986,13 +1958,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Treino",
       "Feminino"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 220
   },
   {
     "id": "7849bdd0-0d55-43b1-a5e7-0c329e3c82ba",
-    "title": "Top Esportivo com Bojo Removível e Alta Sustentação Preto",
+    "title": "Top esportivo preto",
     "description": "Top esportivo de suporte firme com faixa elástica inferior reforçada e alças largas acolchoadas. Desenvolvido para reduzir o impacto e a oscilação em corridas de rua e treinos de cross training. Costas em formato nadador com tecido de malha respirável para troca de calor.",
     "price": 139.9,
     "original_price": 179.9,
@@ -2026,13 +1998,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Marca Demo",
       "Fitness"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 175
   },
   {
     "id": "05f9562d-a60b-4460-aa24-d343fc833f45",
-    "title": "Corda de Pular Crossfit Speed Rope Rolamento Duplo Aço",
+    "title": "Corda de pular em aço",
     "description": "Corda de velocidade de alta performance com sistema de giro 360° em rolamento esferado duplo. Cabo de aço trançado de 3 metros revestido em PVC de alta resistência com chave de aperto para ajuste rápido de altura. Manoplas em alumínio recartilhado antiderrapante.",
     "price": 69.9,
     "original_price": 89.9,
@@ -2072,7 +2044,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "4056f35b-a87a-4aa5-a8ad-1a3527d6c1f9",
-    "title": "Kit 5 Faixas Elásticas Mini Bands Látex Treino Funcional",
+    "title": "Kit de 5 mini bands",
     "description": "Kit completo com 5 níveis de resistência progressiva (Ultra Leve, Leve, Médio, Forte e Ultra Forte). 100% látex natural de alta elasticidade e durabilidade para ativação de glúteos, fortalecimento articular, fisioterapia e aquecimento esportivo. Acompanha bolsa de transporte.",
     "price": 49.9,
     "original_price": 69.9,
@@ -2111,7 +2083,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "7e6c8ccf-937b-4b80-a3a5-8b2d71733414",
-    "title": "Colchonete Tapete de Yoga e Pilates Antiderrapante 10mm com Alça",
+    "title": "Tapete de yoga e pilates",
     "description": "Tapete espesso de 10mm em espuma de alta densidade NBR ecológica e impermeável. Amortecimento superior que protege coluna, joelhos e cotovelos durante exercícios no solo. Textura dupla face estriada antiderrapante e alça elástica para transporte prático.",
     "price": 99.9,
     "original_price": 139.9,
@@ -2145,13 +2117,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Tapete",
       "Antiderrapante"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 195
   },
   {
     "id": "81ebd17a-f450-4b2e-af86-ac9875e19e14",
-    "title": "Par de Halteres Sextavados Emborrachados Ferro Fundido 5kg Preto",
+    "title": "Par de halteres de 5 kg",
     "description": "Par de dumbbells sextavados de 5kg cada (total 10kg). Núcleo em ferro fundido de precisão revestido com grossa camada de borracha virgem injetada que não descasca e protege pisos e superfícies. Design hexagonal antirolamento e pegada ergonômica cromada.",
     "price": 179.9,
     "original_price": 229.9,
@@ -2191,7 +2163,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "b73e7a62-e5a8-416f-a3f1-9df1fb05c8a2",
-    "title": "Colete Mochila de Hidratação para Corrida e Trail 5L com Refil 1.5L",
+    "title": "Mochila de hidratação para corrida",
     "description": "Colete de hidratação ultraleve de ajuste anatômico SensiFit que elimina qualquer balanço ou ricochete nas passadas. Acompanha bolsa de água de 1.5L com mangueira térmica e válvula antimordida, bolsos frontais para soft flasks e tecidos de malha 3D respirável.",
     "price": 349.9,
     "original_price": 429.9,
@@ -2225,13 +2197,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Corrida",
       "Refil"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 168
   },
   {
     "id": "bce090c0-582a-4c2b-a691-ede42481303d",
-    "title": "Rolo de Liberação Miofascial Foam Roller Texturizado para Recuperação",
+    "title": "Rolo de liberação miofascial",
     "description": "Rolo de massagem profunda 33x14cm com relevos e ranhuras em formato de dedos e ponta dos nós musculares. Indicado para aquecimento pré-treino e soltura de contraturas musculares e nós pós-treino intenso. Núcleo rígido em PVC que suporta até 180kg.",
     "price": 89.9,
     "original_price": 119.9,
@@ -2270,7 +2242,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "a12465bd-cceb-4ad2-af59-64e427d95b6b",
-    "title": "Kit Fita de Suspensão Treinamento Funcional com Mosquetão e Âncora",
+    "title": "Fita de suspensão para treino",
     "description": "Equipamento profissional para treinamento suspenso usando o próprio peso corporal. Fitas de nylon de alta densidade com costura militar reforçada que suportam até 400kg, manoplas anatômicas com apoio para pés e âncora de porta acolchoada para treinar em casa ou no parque.",
     "price": 139.9,
     "original_price": 189.9,
@@ -2309,7 +2281,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "71aab8ac-9c24-4b9d-ad69-011dc51bdad6",
-    "title": "Relógio GPS Multiesportivo Marca Demo Forerunner 55 Monitor Cardíaco Preto",
+    "title": "Relógio esportivo com GPS",
     "description": "Relógio inteligente para corredores com GPS integrado, monitor cardíaco de pulso Marca Demo Elevate, estimativa de VO2 Max, sugestões diárias de treinos e métricas de cadência e ritmo. Autonomia de até 2 semanas em modo smartwatch e 20 horas em GPS contínuo.",
     "price": 1399.9,
     "original_price": 1699.9,
@@ -2343,14 +2315,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Cardíaco",
       "Corrida"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 5,
     "reviews_count": 312
   },
   {
     "id": "44cf73f5-85c5-4d05-a25b-0b228e163882",
-    "title": "Smartband Relógio Inteligente Fitness Monitor Cardíaco & Sono",
-    "description": "Pulseira inteligente com tela colorida AMOLED de 1.62 polegadas de alta resolução com brilho ajustável automático. Monitora batimentos cardíacos 24h por segundo, saturação de oxigênio no sangue (SpO2), índice de estresse, sono REM e suporta mais de 150 modos esportivos com bateria que dura até 16 dias.",
+    "title": "Pulseira fitness com monitor cardíaco",
+    "description": "Pulseira fitness com monitor cardíaco. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 249.9,
     "original_price": 319.9,
     "category": "Tecnologia & Wearables",
@@ -2358,9 +2330,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/smartband-fitness-1.jpg",
-      "/products/smartband-fitness-2.jpg",
-      "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=800&q=80"
+      "/products/smartband-fitness-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Pulse Peak Tech",
@@ -2388,7 +2358,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "a23e024e-824d-403e-ae11-d2af18190055",
-    "title": "Fones de Ouvido Bluetooth Esportivos à Prova de Suor IPX7 com Gancho",
+    "title": "Fones Bluetooth esportivos",
     "description": "Fones esportivos sem fio com ganchos auriculares flexíveis de silicone que garantem fixação absoluta durante tiros de velocidade. Certificação à prova de suor e respingos pesados IPX7, graves encorpados BassUp e 32 horas de reprodução total com o estojo de recarga rápida.",
     "price": 199.9,
     "original_price": 269.9,
@@ -2427,7 +2397,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "68a02ef1-d612-4cc5-a2e3-ed015e630ec8",
-    "title": "Sensor e Cinta Cardíaca Peitoral Bluetooth e ANT+ Marca Demo H10 Preto",
+    "title": "Cinta de frequência cardíaca",
     "description": "O padrão ouro da indústria esportiva em precisão eletrocardiográfica de batimentos cardíacos. Conectividade simultânea dual Bluetooth e ANT+ com relógios Marca Demo, Marca Demo, esteiras e aplicativos móveis Marca Demo e Zwift. Cinta elástica Pro macia e lavável com eletrodos de alta condução.",
     "price": 549.9,
     "original_price": 649.9,
@@ -2461,13 +2431,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Bluetooth",
       "ANT+"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 5,
     "reviews_count": 180
   },
   {
     "id": "40fd4ce4-0153-4a6d-a197-2268b19c5c96",
-    "title": "Ciclocomputador GPS Wireless com Altímetro e Suporte para Guidão de Bike",
+    "title": "Ciclocomputador com GPS",
     "description": "Ciclocomputador para ciclismo de estrada e mountain bike com tela antirreflexo de 2.5 polegadas, sincronização automática com Marca Demo, altimetria barométrica em tempo real, cálculo de ganho de elevação e 40 horas de bateria recarregável com navegação por rota.",
     "price": 489.9,
     "original_price": 599.9,
@@ -2507,8 +2477,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "a0eee120-e924-49d5-a3e7-b4a877ec60e0",
-    "title": "Mochila Esportiva Resistente à Água 28L com Porta-Notebook Preta",
-    "description": "A mochila definitiva para quem sai do trabalho direto para os treinos. Capacidade de 28 litros com tecido de poliéster 600D resistente à água, compartimento independente acolchoado para notebook de até 15.6\", bolso inferior ventilado para calçados e alças de ombro ergonômicas com tecido mesh respirável.",
+    "title": "Mochila esportiva preta",
+    "description": "Mochila esportiva preta. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 299.9,
     "original_price": 379.9,
     "category": "Acessórios",
@@ -2516,9 +2486,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/mochila-esportiva.jpg",
-      "/products/mochila-esportiva-straps.jpg",
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=80"
+      "/products/mochila-esportiva.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Flagship Morumbi",
@@ -2541,14 +2509,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Treino",
       "Dia a Dia"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.9,
     "reviews_count": 220
   },
   {
     "id": "a5aea6d8-9e74-4b10-aef7-d2a690b9211d",
-    "title": "Boné Esportivo Aba Curva Dry Aerobill Preto",
-    "description": "Boné técnico construído com tecnologia Marca Demo AeroBill que combina respirabilidade avançada com conforto antissuor. Perfurações cortadas a laser nas laterais e traseira aumentam a circulação do ar nos treinos sob sol intenso. Fecho traseiro ajustável por fita aderente.",
+    "title": "Boné esportivo branco",
+    "description": "Boné esportivo branco. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 129.9,
     "original_price": 159.9,
     "category": "Acessórios",
@@ -2556,9 +2524,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/bone-aerobill-1.jpg",
-      "/products/bone-aerobill-2.jpg",
-      "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&q=80"
+      "/products/bone-aerobill-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Top Run Curitiba",
@@ -2581,14 +2547,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Aerobill",
       "Proteção Solar"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 180
   },
   {
     "id": "1101dacf-6e41-488a-ac4d-93db8c0f0e22",
-    "title": "Garrafa Térmica Esportiva em Inox 750ml com Tampa Bico Rápido",
-    "description": "Garrafa térmica com isolamento a vácuo em parede dupla de aço inoxidável 18/8. Mantém a bebida gelada por até 24 horas consecutivas (ou com gelo por 36h). Conta com tampa Flip-Straw de canudo retrátil antivazamento acionável com uma mão e alça rígida para transporte na academia.",
+    "title": "Garrafa térmica verde",
+    "description": "Garrafa térmica verde. Consulte os tamanhos, a disponibilidade e os detalhes com o anunciante.",
     "price": 189.9,
     "original_price": 239.9,
     "category": "Acessórios",
@@ -2596,9 +2562,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     "condition": "novo",
     "product_type": "b2c",
     "images": [
-      "/products/garrafa-termica-1.jpg",
-      "/products/garrafa-termica-2.jpg",
-      "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&q=80"
+      "/products/garrafa-termica-1.jpg"
     ],
     "seller_id": null,
     "seller_name": "Marca Demo Lifestyle & Run",
@@ -2627,7 +2591,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     "id": "39ece138-f8cb-4ff7-a623-ac2a46142895",
-    "title": "Cinto Pochete de Corrida Slim Impermeável com Saída para Fone Preto",
+    "title": "Pochete de corrida",
     "description": "Pochete ultrafina estilo cinto de corrida que acomoda celulares de até 6.8 polegadas, chaves e géis de carboidrato sem pular na cintura. Zíper termosselado impermeável, faixa refletiva 360° de alta visibilidade noturna e fecho micrométrico com elástico reforçado ajustável.",
     "price": 59.9,
     "original_price": 79.9,
@@ -2661,13 +2625,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Celular",
       "Refletivo"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 160
   },
   {
     "id": "88bf826e-b8f5-4c21-a51b-83e0fcbc724d",
-    "title": "Viseira Esportiva Aberta Ultraleve Secagem Rápida Corrida Branca",
+    "title": "Viseira de corrida branca",
     "description": "Viseira técnica com topo aberto para dissipação térmica imediata em maratonas e treinos sob sol intenso. Faixa interna atoalhada com tecnologia de absorção do suor que impede que gotas escorram nos olhos. Fecho elástico de velcro ajustável e aba curva protetora.",
     "price": 89.9,
     "original_price": 119.9,
@@ -2701,10 +2665,11 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Marca Demo",
       "Branca"
     ],
-    "brand": "Marca Demo",
+    "brand": "Não informada",
     "rating": 4.8,
     "reviews_count": 115
   }
+
 ];
 
 export const INITIAL_COACHES: Coach[] = [

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import { isStaffRole } from '@/lib/permissions';
 import {
   ShieldCheck,
   Truck,
@@ -10,14 +11,15 @@ import {
 } from 'lucide-react';
 
 export default function Footer() {
-  const { setActiveView } = useCoreMotiom();
+  const { setActiveView, user } = useCoreMotiom();
+  const showTechnicalDetails = isStaffRole(user?.role);
 
   return (
     <footer className="bg-zinc-950 text-zinc-400 border-t border-zinc-800/80 mt-20">
       {/* Value Proposition Bar in Capsule Bento Layout */}
       <div className="border-b border-zinc-800/80 bg-zinc-900/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${showTechnicalDetails ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 sm:gap-6`}>
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
               <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
                 <ShieldCheck className="w-5 h-5" />
@@ -30,6 +32,7 @@ export default function Footer() {
               </div>
             </div>
 
+            {showTechnicalDetails && (
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
               <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
                 <Lock className="w-5 h-5" />
@@ -41,6 +44,7 @@ export default function Footer() {
                 </p>
               </div>
             </div>
+            )}
 
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
               <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
@@ -85,13 +89,15 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-              Ecossistema esportivo de demonstração: marketplace, lojas e comunidade (fluxos simulados).</p>
+              Conectamos atletas, lojas e profissionais em um só lugar: equipamentos, serviços e comunidade para sua jornada no esporte.</p>
+            {showTechnicalDetails && (
             <div className="flex items-center gap-3 pt-2">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-300 bg-zinc-900/90 px-3 py-1 rounded-full border border-zinc-800">
                 <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
                 Segurança Supabase Auth & PostgreSQL
               </span>
             </div>
+            )}
           </div>
 
           {/* Col 1 */}
@@ -121,7 +127,7 @@ export default function Footer() {
           <div>
             <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Segurança & Legal</h5>
             <ul className="space-y-2 text-xs">
-              <li><span className="hover:text-white cursor-pointer transition-colors">Fluxo simulado</span></li>
+              {showTechnicalDetails && <li><span>Fluxo simulado</span></li>}
               <li><span className="hover:text-white cursor-pointer transition-colors">Diretrizes de Verificação de Lojas</span></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Canal de Atendimento ao Atleta</span></li>
             </ul>
@@ -131,6 +137,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-zinc-800/80 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
           <p>© {new Date().getFullYear()} CoreMotiom Sports Technologies. Todos os direitos reservados.</p>
+          {showTechnicalDetails && (
           <div className="flex items-center gap-3">
             <span>Dark High-Performance Mode</span>
             <span>•</span>
@@ -138,6 +145,7 @@ export default function Footer() {
             <span>•</span>
             <span>PostgreSQL & Supabase Connected</span>
           </div>
+          )}
         </div>
       </div>
     </footer>
