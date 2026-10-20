@@ -10,7 +10,7 @@ export const CATALOG_STORES: Store[] = [
   description: 'Equipamentos, calçados e roupas para acompanhar sua rotina esportiva.',
   logo_url: '/products/adidas-ultraboost-1.jpg',
   banner_url: '/products/jaqueta-corta-vento.jpg',
-  is_verified: true, verification_status: 'verified',
+  is_verified: false, verification_status: 'none',
   contact_email: `${slug}@exemplo.test`, location: 'Curitiba, PR',
   rating: 4.8, sales_count: 0, products_count: 0,
   created_at: '2026-10-19T12:00:00Z',
@@ -39,8 +39,8 @@ export const CATALOG_PRODUCTS: Product[] = items.flatMap(([title, category, spor
     id: `20000000-0000-4000-8000-${String(index * 2 + variant + 1).padStart(12, '0')}`,
     title: type === 'c2c' ? `${title} — seminovo` : title,
     description: type === 'c2c'
-      ? `${title} em ótimo estado de conservação. Consulte os detalhes e combine a entrega com o anunciante.`
-      : `${title} para sua rotina de ${sport.toLowerCase()}. Confira disponibilidade e detalhes com a loja.`,
+      ? `Anúncio demonstrativo de ${title.toLowerCase()}; condição, disponibilidade e entrega não foram verificadas.`
+      : `Item demonstrativo para ${sport.toLowerCase()}; descrição, disponibilidade e estoque são ilustrativos.`,
     price: type === 'c2c' ? Math.round(price * 60) / 100 : price,
     category, sport, condition: type === 'b2c' ? 'novo' : 'usado_excelente',
     product_type: type, images: [`/products/${image}`],
@@ -48,7 +48,7 @@ export const CATALOG_PRODUCTS: Product[] = items.flatMap(([title, category, spor
     seller_name: type === 'b2c' ? store.name : index % 2 === 0 ? 'Carlos Eduardo Ramos' : 'Marina Duarte',
     store_id: type === 'b2c' ? store.id : null,
     store_name: type === 'b2c' ? store.name : null,
-    is_verified_store: type === 'b2c', stock: type === 'b2c' ? 12 : 1,
+    is_verified_store: false, stock: type === 'b2c' ? 12 : 1,
     location: 'Curitiba, PR', shipping_available: true, status: 'active',
     created_at: '2026-10-19T12:00:00Z', tags: [category, sport],
   }));

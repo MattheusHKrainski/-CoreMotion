@@ -165,10 +165,10 @@ export default function AuthModal() {
                 type="button"
                 onClick={() => handleQuickLogin('seller')}
                 className="p-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white font-semibold transition-all border border-zinc-800 text-center flex flex-col items-center gap-0.5"
-                title="Entrar imediatamente como Lojista Oficial"
+                title="Entrar imediatamente como anunciante C2C demonstrativo"
               >
-                <span className="text-[11px] font-bold text-amber-400">🛍️ Lojista Pro</span>
-                <span className="text-[9px] text-zinc-400">Motiom Lab</span>
+                <span className="text-[11px] font-bold text-amber-400">📦 Anunciante demo</span>
+                <span className="text-[9px] text-zinc-400">Anúncios C2C de demonstração</span>
               </button>
               <button
                 type="button"

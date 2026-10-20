@@ -2,7 +2,8 @@
  * Testes de autorização do banco (RLS, triggers e privilégios).
  *
  * Executa em PostgreSQL em memória (PGlite) o esquema inicial e as migrações
- * 20261008000000_roles_hierarchy_and_security.sql e 20261009000000_security_fixes.sql,
+ * 20261008000000_roles_hierarchy_and_security.sql, 20261009000000_security_fixes.sql
+ * e 20261020000000_retire_store_b2c_marketplace.sql,
  * com um "shim" mínimo do Supabase Auth
  * (schema auth, funções auth.uid()/auth.role()/auth.jwt() e roles anon/authenticated).
  * Cada cenário assume um papel real do PostgreSQL com um JWT, como faz o PostgREST.
@@ -21,6 +22,8 @@ const migrationsDir = resolve(here, '../../supabase/migrations');
 const INITIAL = resolve(migrationsDir, '20250101000000_coremotiom_initial_schema.sql');
 const HARDENING = resolve(migrationsDir, '20261008000000_roles_hierarchy_and_security.sql');
 const SECURITY_FIXES = resolve(migrationsDir, '20261009000000_security_fixes.sql');
+const RETIREMENT = resolve(migrationsDir, '20261020000000_retire_store_b2c_marketplace.sql');
+const BASELINE_MODE = process.env.BASELINE === '1';
 
 const AUTH_SHIM = `
   CREATE ROLE anon NOLOGIN;
@@ -45,6 +48,8 @@ const AUTH_SHIM = `
 
 const results = [];
 let db;
+let legacyStoreId = null;
+let legacyB2cId = null;
 
 /** Executa SQL como um papel do PostgreSQL com as claims do JWT informadas. */
 async function run(role, claims, sql, params = []) {
@@ -88,9 +93,28 @@ async function main() {
   );
   await db.exec(initialSql);
   // BASELINE=1 executa somente o esquema inicial (linha de base, para comparação antes/depois).
-  if (process.env.BASELINE !== '1') {
+  if (!BASELINE_MODE) {
     await db.exec(readFileSync(HARDENING, 'utf8'));
     await db.exec(readFileSync(SECURITY_FIXES, 'utf8'));
+
+    // Dados criados pela versão anterior: a nova migração deve preservá-los,
+    // mas removê-los dos fluxos públicos e impedir novos usos B2C.
+    const legacyStore = await db.query(
+      `INSERT INTO public.stores (name, slug, category, contact_email, cnpj, verification_status, is_verified, verification_docs)
+       VALUES ('Loja legada de teste', 'loja-legada-teste', 'Equipamentos', 'legado@exemplo.test', '00000000000000', 'none', false,
+               '{"cnpj":"00000000000000"}'::jsonb)
+       RETURNING id`
+    );
+    legacyStoreId = legacyStore.rows[0].id;
+    const legacyProduct = await db.query(
+      `INSERT INTO public.products (title, description, price, category, sport, seller_name, product_type, status, store_id, is_verified_store)
+       VALUES ('Produto B2C legado de teste', 'Registro preservado apenas para compatibilidade', 100, 'Equipamentos', 'Corrida', 'Loja legada', 'b2c', 'active', $1, false)
+       RETURNING id`,
+      [legacyStoreId]
+    );
+    legacyB2cId = legacyProduct.rows[0].id;
+
+    await db.exec(readFileSync(RETIREMENT, 'utf8'));
   }
 
   // Contas de teste. Cada cadastro dispara handle_new_user, como o Supabase Auth faz.
@@ -179,8 +203,49 @@ async function main() {
 
   const b2c = await run('authenticated', claims('a1'),
     `INSERT INTO public.products (title, description, price, category, sport, seller_name, seller_id, product_type, status)
-     VALUES ('Produto de loja', 'Produto de loja oficial', 99, 'Equipamentos', 'Corrida', 'Loja', $1, 'b2c', 'active')`, [id.a1]);
-  check('Atleta NÃO publica anúncio B2C (somente lojista)', !b2c.ok && /lojistas/i.test(b2c.error || ''));
+     VALUES ('Anúncio B2C', 'Oferta externa não publicável como anúncio', 99, 'Equipamentos', 'Corrida', 'Atleta', $1, 'b2c', 'active')`, [id.a1]);
+  check('Atleta não publica anúncio B2C', !b2c.ok);
+
+  if (!BASELINE_MODE) {
+    const legacySellerB2c = await run('authenticated', claims('seller'),
+      `INSERT INTO public.products (title, description, price, category, sport, seller_name, seller_id, product_type, status)
+       VALUES ('Novo anúncio B2C', 'Tentativa pelo papel seller legado', 99, 'Equipamentos', 'Corrida', 'Anunciante', $1, 'b2c', 'active')`, [id.seller]);
+    check('Papel seller legado também não publica novos anúncios B2C', !legacySellerB2c.ok && /B2C/i.test(legacySellerB2c.error || ''));
+
+    const directB2c = await run('postgres', {},
+      `INSERT INTO public.products (title, description, price, category, sport, seller_name, product_type, status)
+       VALUES ('Novo anúncio B2C direto', 'Tentativa de escrita direta no banco', 99, 'Equipamentos', 'Corrida', 'Anunciante', 'b2c', 'active')`);
+    check('Banco rejeita novas linhas B2C mesmo fora da API', !directB2c.ok && /B2C/i.test(directB2c.error || ''));
+    const directB2cUpdate = await run('postgres', {}, `UPDATE public.products SET product_type = 'b2c' WHERE id = $1`, [c2cId]);
+    check('Banco impede converter anúncio C2C em B2C', !directB2cUpdate.ok && /B2C/i.test(directB2cUpdate.error || ''));
+
+    const legacyProductRow = await state(`SELECT product_type, store_id FROM public.products WHERE id = $1`, [legacyB2cId]);
+    check('Registros B2C e vínculo de loja legados são preservados', legacyProductRow.product_type === 'b2c' && legacyProductRow.store_id === legacyStoreId);
+    const anonLegacyProduct = await run('anon', {}, `SELECT id FROM public.products WHERE id = $1`, [legacyB2cId]);
+    check('Visitante não recebe anúncios B2C legados pela API pública', anonLegacyProduct.ok && anonLegacyProduct.rows.length === 0);
+    const sellerLegacyProduct = await run('authenticated', claims('seller'), `SELECT id FROM public.products WHERE id = $1`, [legacyB2cId]);
+    check('Papel seller não consulta anúncios B2C legados', sellerLegacyProduct.ok && sellerLegacyProduct.rows.length === 0);
+    const legacyProductUpdate = await run('authenticated', claims('seller'), `UPDATE public.products SET status = 'draft' WHERE id = $1`, [legacyB2cId]);
+    check('Papel seller não altera anúncio B2C legado', legacyProductUpdate.ok && legacyProductUpdate.affected === 0);
+    const legacyProductDelete = await run('authenticated', claims('seller'), `DELETE FROM public.products WHERE id = $1`, [legacyB2cId]);
+    check('Papel seller não exclui anúncio B2C legado', legacyProductDelete.ok && legacyProductDelete.affected === 0);
+
+    const legacyB2cOrder = await run('authenticated', claims('a1'),
+      `INSERT INTO public.orders (user_id, user_email, items, subtotal, shipping_fee, discount, total, payment_method, shipping_method)
+       VALUES ($1, 'carlos@atleta.com', $2::jsonb, 100, 24.90, 0, 124.90, 'pix', 'pac')`,
+      [id.a1, JSON.stringify([{ product: { id: legacyB2cId }, quantity: 1 }])]);
+    check('Checkout bloqueia pedidos de anúncios B2C legados', !legacyB2cOrder.ok && /C2C/i.test(legacyB2cOrder.error || ''));
+
+    const legacyStoreRow = await state(`SELECT cnpj FROM public.stores WHERE id = $1`, [legacyStoreId]);
+    check('Dados estruturais legados da loja permanecem no banco', legacyStoreRow.cnpj === '00000000000000');
+    const anonStores = await run('anon', {}, `SELECT id FROM public.stores`);
+    check('Tabela legada de lojas não é acessível a visitantes', !anonStores.ok);
+    const sellerStores = await run('authenticated', claims('seller'), `SELECT id FROM public.stores`);
+    check('Tabela legada de lojas não é acessível via sessão autenticada', !sellerStores.ok);
+    const storeWrite = await run('authenticated', claims('seller'),
+      `INSERT INTO public.stores (name, slug, category, contact_email) VALUES ('Nova loja', 'nova-loja', 'Equipamentos', 'nova@exemplo.test')`);
+    check('Sessões autenticadas não criam novos perfis de loja', !storeWrite.ok);
+  }
 
   await run('authenticated', claims('a1'), `UPDATE public.products SET status = 'suspended' WHERE id = $1`, [c2cId]);
   check('Dono não se autossuspende (moderação é exclusiva de staff)',
@@ -192,28 +257,7 @@ async function main() {
   const anonHidden = await run('anon', {}, `SELECT id FROM public.products WHERE id = $1`, [c2cId]);
   check('Anônimo não vê anúncio suspenso', anonHidden.ok && anonHidden.rows.length === 0);
 
-  // ------------------------------------------------------------------ 5. Lojas
-  const store = await run('authenticated', claims('seller'),
-    `INSERT INTO public.stores (owner_id, name, slug, category, contact_email, verification_status, is_verified)
-     VALUES ($1, 'Loja Teste', 'loja-teste', 'Equipamentos', 'loja@atleta.com', 'verified', true)
-     RETURNING id, verification_status, is_verified`, [id.seller]);
-  check('Lojista cria loja sem se autoverificar', store.ok && store.rows[0].verification_status === 'none' && store.rows[0].is_verified === false, store.error || '');
-  const storeId = store.rows[0]?.id;
-
-  await run('authenticated', claims('seller'), `UPDATE public.stores SET verification_status = 'verified', is_verified = true WHERE id = $1`, [storeId]);
-  check('Lojista NÃO aprova a própria verificação',
-    (await state(`SELECT verification_status FROM public.stores WHERE id = $1`, [storeId])).verification_status === 'none');
-
-  await run('authenticated', claims('seller'), `UPDATE public.stores SET verification_status = 'pending' WHERE id = $1`, [storeId]);
-  check('Lojista solicita verificação (pending)',
-    (await state(`SELECT verification_status FROM public.stores WHERE id = $1`, [storeId])).verification_status === 'pending');
-
-  await run('authenticated', claims('sup'), `UPDATE public.stores SET verification_status = 'verified', is_verified = true WHERE id = $1`, [storeId]);
-  check('Supervisor aprova a verificação da loja',
-    (await state(`SELECT verification_status FROM public.stores WHERE id = $1`, [storeId])).verification_status === 'verified');
-
-  const storeForeign = await run('authenticated', claims('a1'), `UPDATE public.stores SET contact_email = 'x@x.com' WHERE id = $1`, [storeId]);
-  check('Atleta não altera loja de terceiros (RLS)', storeForeign.ok && storeForeign.affected === 0);
+  // Store profiles are legacy data; current access is covered by the retirement checks above.
 
   // ------------------------------------------------------------------ 6. Pedidos
   const order = await run('authenticated', claims('a2'),
@@ -314,20 +358,12 @@ async function main() {
     (await state(`SELECT count(*)::int AS n FROM public.profiles WHERE id = $1`, [id.a2])).n === 0);
 
   // ------------------------------------------------ Regressões (migração 20261009000000)
-  // Preparo como superusuário (sem JWT): os triggers de proteção só se aplicam a chamadas autenticadas.
-  const regStoreIns = await sys(
-    `INSERT INTO public.stores (owner_id, name, slug, category, contact_email, verification_status, is_verified, verification_docs)
-     VALUES ($1, 'Loja Regressão', 'loja-regressao', 'Calçados', 'contato@loja-regressao.test', 'verified', true,
-             '{"cnpj":"00000000000191","company_name":"Empresa Teste LTDA"}'::jsonb)
+  // Anúncio C2C de teste para as verificações de status e cálculo do pedido.
+  const regProdIns = await sys(
+    `INSERT INTO public.products (title, description, price, category, sport, seller_name, seller_id, product_type, status)
+     VALUES ('Anúncio C2C regressão', 'Anúncio usado nos testes de regressão', 100.00, 'Calçados', 'Corrida', 'Atleta', $1, 'c2c', 'active')
      RETURNING id`,
     [id.seller]
-  );
-  const regStoreId = regStoreIns.rows[0].id;
-  const regProdIns = await sys(
-    `INSERT INTO public.products (title, description, price, category, sport, seller_name, seller_id, product_type, status, store_id, is_verified_store)
-     VALUES ('Tênis regressão', 'Anúncio usado nos testes de regressão', 100.00, 'Calçados', 'Corrida', 'Loja', $1, 'b2c', 'active', $2, true)
-     RETURNING id`,
-    [id.seller, regStoreId]
   );
   const regProdId = regProdIns.rows[0].id;
 
@@ -381,18 +417,7 @@ async function main() {
   check('E3 não autor acrescenta um comentário',
     regAppendOne.ok && Number((await state(`SELECT jsonb_array_length(comments) AS n FROM public.community_posts WHERE id = $1`, [regPostId])).n) === 2);
 
-  // E4 / C6: documentos de verificação são privados; a vitrine continua pública.
-  const regAnonDocs = await run('anon', {}, `SELECT verification_docs FROM public.stores`);
-  check('E4 anônimo não lê verification_docs', !regAnonDocs.ok);
-  const regAuthDocs = await run('authenticated', claims('a1'), `SELECT verification_docs FROM public.stores WHERE id = $1`, [regStoreId]);
-  check('E4 usuário comum não lê verification_docs de outra loja', !regAuthDocs.ok);
-  const regAnonShowcase = await run('anon', {}, `SELECT name, verification_status FROM public.stores LIMIT 1`);
-  check('E4 anônimo continua lendo a vitrine das lojas', regAnonShowcase.ok);
-
-  // Selo de loja: o anúncio acompanha a verificação da loja.
-  await sys(`UPDATE public.stores SET is_verified = false WHERE id = $1`, [regStoreId]);
-  check('Selo do anúncio acompanha a verificação da loja',
-    (await state(`SELECT is_verified_store FROM public.products WHERE id = $1`, [regProdId])).is_verified_store === false);
+  // Store verification and badges are retired from the app; schema/data stay in place.
 
   // ------------------------------------------------------------------ Relatório
   const width = Math.max(...results.map((r) => r.name.length));

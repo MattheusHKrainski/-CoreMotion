@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { CommunityPost } from '@/lib/types';
+import { DEMO_MODE } from '@/lib/demo-mode';
 import {
   MessageSquare,
   Heart,
@@ -100,6 +101,12 @@ export default function CommunityView() {
           Compartilhe percepções reais sobre tênis com placa de carbono, ritmos de prova e periodização de treinos.
         </p>
       </div>
+
+      {DEMO_MODE && (
+        <p role="note" className="rounded-2xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed text-amber-100/90">
+          Esta demonstração pode exibir publicações de exemplo fictícias. Relatos, equipamentos e resultados não são verificados pela plataforma.
+        </p>
+      )}
 
       {/* Create Post Card */}
       <div className="bg-zinc-900/60 rounded-3xl border border-zinc-800/80 p-5 sm:p-6 shadow-xl space-y-4 text-xs">

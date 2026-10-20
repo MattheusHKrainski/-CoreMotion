@@ -3,16 +3,15 @@
 import React, { useState } from 'react';
 import { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
+import { DEMO_MODE } from '@/lib/demo-mode';
 import {
   X,
-  ShieldCheck,
   ShoppingBag,
   Heart,
   Truck,
   MapPin,
   Zap,
   Share2,
-  Store,
   ChevronLeft,
   ChevronRight,
   Camera,
@@ -21,10 +20,9 @@ import {
 interface ProductDetailModalProps {
   product: Product | null;
   onClose: () => void;
-  onOpenStore?: (storeId: string) => void;
 }
 
-export default function ProductDetailModal({ product, onClose, onOpenStore }: ProductDetailModalProps) {
+export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
   const {
     addToCart,
     setCheckoutOpen,
@@ -40,7 +38,7 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
   const [cep, setCep] = useState('');
   const [shippingCalculated, setShippingCalculated] = useState(false);
 
-  if (!product) return null;
+  if (!product || product.product_type !== 'c2c') return null;
 
   const isFav = favorites.includes(product.id);
   const galleryImages = product.images && product.images.length > 0
@@ -65,7 +63,7 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
     e.preventDefault();
     if (cep.length >= 8) {
       setShippingCalculated(true);
-      addToast('Frete Calculado', 'Opções de envio disponíveis para seu endereço.', 'info');
+      addToast('Simulação de frete', 'Valores e prazos ilustrativos; não há integração com transportadoras.', 'info');
     }
   };
 
@@ -184,16 +182,13 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                 <span>Ângulo {selectedImgIndex + 1}/{galleryImages.length}</span>
               </div>
 
-              {/* Verified badge or C2C tag */}
               <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                {product.is_verified_store ? (
-                  <div className="bg-red-600/90 text-white border border-red-500/50 px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-sm">
-                    <ShieldCheck className="w-4 h-4 text-white" />
-                    <span>Loja Oficial Verificada</span>
-                  </div>
-                ) : (
-                  <div className="bg-[#12151C]/90 text-[#E5E7EB] border border-[#232836] px-2.5 py-1 rounded-md text-xs font-semibold backdrop-blur-sm shadow-md">
-                    <span>Venda entre Atletas (C2C)</span>
+                <div className="rounded-md border border-[#232836] bg-[#12151C]/90 px-2.5 py-1 text-xs font-semibold text-[#E5E7EB] shadow-md backdrop-blur-sm">
+                  Anúncio entre atletas (C2C)
+                </div>
+                {DEMO_MODE && (
+                  <div className="rounded-md border border-amber-700/50 bg-amber-950/90 px-2.5 py-1 text-xs font-semibold text-amber-200 shadow-md backdrop-blur-sm">
+                    Dados de demonstração
                   </div>
                 )}
               </div>
@@ -246,41 +241,20 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
             )}
 
             {/* Seller info card */}
-            <div className="p-4 rounded-xl bg-[#0E1017] border border-[#232836] space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[#9CA3AF]">Vendido e Entregue por:</span>
-                {product.store_id && (
-                  <button
-                    onClick={() => {
-                      if (product.store_id && onOpenStore) onOpenStore(product.store_id);
-                    }}
-                    className="text-red-400 font-semibold hover:underline flex items-center gap-1"
-                  >
-                    <Store className="w-3.5 h-3.5" />
-                    <span>Ver Loja</span>
-                  </button>
-                )}
-              </div>
+            <div className="space-y-2 rounded-xl border border-[#232836] bg-[#0E1017] p-4 text-xs">
+              <span className="text-[#9CA3AF]">Anunciante C2C:</span>
               <div className="flex items-center gap-3 pt-1">
-                <div className="w-10 h-10 rounded-full bg-[#181B22] border border-[#232836] overflow-hidden flex items-center justify-center font-bold text-white">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#232836] bg-[#181B22] font-bold text-white">
                   {product.seller_avatar ? (
-                    <img src={product.seller_avatar} alt="" className="w-full h-full object-cover" />
+                    <img src={product.seller_avatar} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <span>{product.seller_name.charAt(0)}</span>
                   )}
                 </div>
                 <div>
-                  <h5 className="font-bold text-white flex items-center gap-1.5">
-                    {product.store_name || product.seller_name}
-                    {product.is_verified_store && (
-                      <span className="text-red-400 text-[11px] font-semibold flex items-center gap-1">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        Verificado
-                      </span>
-                    )}
-                  </h5>
-                  <p className="text-[11px] text-[#9CA3AF] flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-[#6B7280]" />
+                  <h5 className="font-bold text-white">{product.seller_name}</h5>
+                  <p className="flex items-center gap-1 text-[11px] text-[#9CA3AF]">
+                    <MapPin className="h-3 w-3 text-[#6B7280]" />
                     {product.location || 'Brasil'}
                   </p>
                 </div>
@@ -316,12 +290,15 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                   {formatPrice(product.price)}
                 </div>
                 <p className="text-xs text-[#9CA3AF] mt-1">
-                  ou 12x de {formatPrice(product.price / 12)} sem juros no cartão
+                  ou 12x de {formatPrice(product.price / 12)} no cartão (simulação)
                 </p>
                 <div className="mt-2 text-xs text-red-400 font-semibold flex items-center gap-1">
                   <Zap className="w-3.5 h-3.5" />
-                  <span>5% de desconto à vista no PIX</span>
+                  <span>5% de desconto no PIX (simulação)</span>
                 </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-amber-200/80">
+                  Valores, parcelamento e desconto são demonstrativos; nenhum pagamento real é processado nesta versão.
+                </p>
               </div>
 
               {/* Size Selector if shoes / apparel */}
@@ -383,14 +360,20 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                 <p className="text-xs text-[#D1D5DB] leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
+                <p className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[10px] leading-relaxed text-amber-200/80">
+                  Marca, características, condição e disponibilidade são informações do anunciante e podem ser demonstrativas. A plataforma não verifica vínculo com marcas, procedência, autenticidade, garantia, estoque ou condição física do item.
+                </p>
               </div>
 
               {/* Shipping Estimator */}
               <div className="pt-3 border-t border-[#232836]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-2 flex items-center gap-1.5">
                   <Truck className="w-3.5 h-3.5 text-red-400" />
-                  Calcular Frete e Prazo
+                  Simular frete e prazo
                 </h4>
+                <p className="text-[10px] text-amber-200/80 mb-2">
+                  Valores e prazos abaixo são ilustrativos; não há integração com transportadoras nem envio real.
+                </p>
                 <form onSubmit={handleCalculateShipping} className="flex gap-2">
                   <input
                     type="text"
@@ -410,12 +393,12 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                 {shippingCalculated && (
                   <div className="mt-2.5 p-3 rounded-lg bg-[#0E1017] border border-[#232836] space-y-1.5 text-xs">
                     <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>SEDEX Express (1-2 dias úteis)</span>
-                      <span className="font-semibold text-white">R$ 42,50</span>
+                      <span>SEDEX (prazo ilustrativo: 1-2 dias)</span>
+                      <span className="font-semibold text-white">R$ 42,50 (demo)</span>
                     </div>
                     <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>PAC Padrão (4-6 dias úteis)</span>
-                      <span className="font-semibold text-white">R$ 24,90</span>
+                      <span>PAC (prazo ilustrativo: 4-6 dias)</span>
+                      <span className="font-semibold text-white">R$ 24,90 (demo)</span>
                     </div>
                   </div>
                 )}

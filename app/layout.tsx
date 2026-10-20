@@ -4,16 +4,16 @@ import { CoreMotiomProvider } from '@/lib/store';
 
 export const metadata: Metadata = {
   title: 'CoreMotiom — Marketplace & Plataforma Esportiva',
-  description: 'Marketplace esportivo de demonstração: lojas, venda entre atletas (C2C) e comunidade.',
+  description: 'Marketplace esportivo demonstrativo: ofertas externas B2C, anúncios entre atletas (C2C) e comunidade.',
   openGraph: {
     title: 'CoreMotiom — Marketplace & Plataforma Esportiva',
-    description: 'Marketplace esportivo de demonstração: lojas, venda entre atletas (C2C) e comunidade.',
+    description: 'Marketplace esportivo demonstrativo: ofertas externas B2C, anúncios entre atletas (C2C) e comunidade.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'CoreMotiom — Marketplace & Plataforma Esportiva',
-    description: 'Marketplace esportivo de demonstração: lojas, venda entre atletas (C2C) e comunidade.',
+    description: 'Marketplace esportivo demonstrativo: ofertas externas B2C, anúncios entre atletas (C2C) e comunidade.',
   },
 };
 

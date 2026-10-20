@@ -3,7 +3,7 @@ import { CartItem, Order, PaymentMethod, ShippingAddress, OrderStatus } from '@/
 
 export class OrderService {
   /**
-   * Creates a new order in Supabase with PIX code generation & escrow custody.
+   * Creates a demonstrative order record. No payment gateway, valid PIX payload, escrow, or carrier is integrated.
    */
   static async createOrder(orderPayload: {
     userId?: string;
@@ -17,10 +17,14 @@ export class OrderService {
     shippingAddress: ShippingAddress;
     shippingMethod: 'pac' | 'sedex' | 'express';
   }): Promise<{ success: boolean; data?: Order; error?: string }> {
+    if (orderPayload.items.some((item) => item.product.product_type !== 'c2c')) {
+      return { success: false, error: 'O checkout interno aceita apenas anúncios C2C entre atletas.' };
+    }
+
     const sb = getSupabaseClient();
     const pixCode =
       orderPayload.paymentMethod === 'pix'
-        ? `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2, 15)}520400005303986540${orderPayload.total.toFixed(2)}5802BR5925COREMOTIOM PLATAFORMA6009SAO PAULO62070503***6304`
+        ? `COREMOTIOM-DEMO-PIX-NAO-PAGAR-${Date.now()}-${orderPayload.total.toFixed(2)}`
         : undefined;
 
     const initialStatus: OrderStatus = 'pending_payment';

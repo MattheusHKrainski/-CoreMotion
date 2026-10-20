@@ -37,7 +37,6 @@ import {
 import {
   AuthService,
   ProductService,
-  StoreService,
   OrderService,
   CommunityService,
   testSupabaseConnection,
@@ -54,7 +53,6 @@ interface Toast {
 type ActiveView =
   | 'home'
   | 'marketplace'
-  | 'stores'
   | 'sell'
   | 'coaches'
   | 'community'
@@ -67,16 +65,12 @@ interface CoreMotiomContextType {
   setActiveView: (view: ActiveView) => void;
   selectedProduct: Product | null;
   setSelectedProduct: (p: Product | null) => void;
-  selectedStore: Store | null;
-  setSelectedStore: (s: Store | null) => void;
   isAuthModalOpen: boolean;
   setAuthModalOpen: (open: boolean) => void;
   authModalMode: 'login' | 'register' | 'forgot' | 'switch';
   setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch') => void;
   isCheckoutOpen: boolean;
   setCheckoutOpen: (open: boolean) => void;
-  isCreateStoreModalOpen: boolean;
-  setCreateStoreModalOpen: (open: boolean) => void;
   isSupabaseConfigOpen: boolean;
   setSupabaseConfigOpen: (open: boolean) => void;
   searchQuery: string;
@@ -127,12 +121,6 @@ interface CoreMotiomContextType {
   updateProduct: (id: string, data: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
 
-  // Stores & Official Verification
-  stores: Store[];
-  createStore: (storeData: Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | 'products_count' | 'is_verified' | 'verification_status'>) => Promise<Store>;
-  requestStoreVerification: (storeId: string, docs: NonNullable<Store['verification_docs']>) => Promise<void>;
-  adminVerifyStore: (storeId: string, approve: boolean, notes?: string) => Promise<void>;
-
   // Community
   communityPosts: CommunityPost[];
   createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string }) => void;
@@ -164,11 +152,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Navigation & views
   const [activeView, setActiveView] = useState<ActiveView>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
-  const [isCreateStoreModalOpen, setCreateStoreModalOpen] = useState(false);
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -176,7 +162,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
   const [allUsers, setAllUsers] = useState<UserProfile[]>(DEMO_MODE ? INITIAL_USERS : []);
-  const [products, setProducts] = useState<Product[]>(DEMO_MODE ? INITIAL_PRODUCTS : []);
+  const [products, setProducts] = useState<Product[]>(DEMO_MODE ? INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c') : []);
   const [stores, setStores] = useState<Store[]>(DEMO_MODE ? INITIAL_STORES : []);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -249,7 +235,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (saved && isMounted) {
           const parsed = JSON.parse(saved);
           if (parsed.orders) setOrders(parsed.orders);
-          if (parsed.cart) setCart(parsed.cart);
+          if (Array.isArray(parsed.cart)) setCart(parsed.cart.filter((item: CartItem) => item?.product?.product_type === 'c2c'));
+          if (Array.isArray(parsed.stores)) setStores(parsed.stores);
           if (parsed.favorites) setFavorites(parsed.favorites);
           if (parsed.user) setUser(parsed.user);
         }
@@ -258,20 +245,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         const conn = await testSupabaseConnection();
         if (isMounted) setIsSupabaseLive(conn.connected);
 
-        // Load live products, stores, community posts and database registered users
-        const [liveProducts, liveStores, livePosts, usersRes] = await Promise.all([
+        // Load C2C products, community posts and database-registered users.
+        const [liveProducts, livePosts, usersRes] = await Promise.all([
           ProductService.getProducts(),
-          StoreService.getStores(),
           CommunityService.getPosts(),
           fetch('/api/users?include_internal=true').then((r) => r.json()).catch(() => null),
         ]);
 
         if (isMounted) {
           if (liveProducts && liveProducts.length > 0) {
-            setProducts(liveProducts);
-          }
-          if (liveStores && liveStores.length > 0) {
-            setStores(liveStores);
+            setProducts(liveProducts.filter((product) => product.product_type === 'c2c'));
           }
           if (livePosts && livePosts.length > 0) {
             setCommunityPosts(livePosts);
@@ -376,7 +359,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const demoProfiles: Record<Exclude<UserRole, 'visitor'>, UserProfile> = {
       admin: {
         id: 'usr-admin-mattheus',
-        email: 'mattheusxmljz@gmail.com',
+        email: 'admin.demo@exemplo.test',
         name: 'Mattheus (Super Admin)',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'admin',
@@ -387,11 +370,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       seller: {
         id: 'seller-pro-1',
-        email: 'contato@motiompro.com.br',
-        name: 'Motiom Pro Lab (Lojista Oficial)',
+        email: 'anunciante.c2c.demo@exemplo.test',
+        name: 'Anunciante demonstrativo',
         avatar_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&q=80',
         role: 'seller',
-        store_id: 'store-1',
         city: 'São Paulo',
         state: 'SP',
         sport_interests: ['Alta Performance', 'Corrida'],
@@ -399,7 +381,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       supervisor: {
         id: 'usr-supervisor-demo',
-        email: 'supervisor@coremotiom.com',
+        email: 'supervisor.demo@exemplo.test',
         name: 'Supervisor de Moderação (demo)',
         avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
         role: 'supervisor',
@@ -410,7 +392,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       user: {
         id: 'user-c2c-1',
-        email: 'carlos.ramos@atleta.com',
+        email: 'atleta.demo.01@exemplo.test',
         name: 'Carlos Eduardo Ramos',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'user',
@@ -425,7 +407,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setUser(targetProfile);
     addToast(
       'Perfil Atualizado',
-      `Agora você está operando com permissões de ${newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Lojista' : 'Atleta'}.`,
+      `Agora você está operando com permissões de ${newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Anunciante C2C' : 'Atleta'}.`,
       'success'
     );
   }, [addToast]);
@@ -601,21 +583,20 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   const adminSyncSupabase = useCallback(async () => {
     try {
-      const [liveProducts, liveStores, livePosts] = await Promise.all([
+      const [liveProducts, livePosts] = await Promise.all([
         ProductService.getProducts(),
-        StoreService.getStores(),
         CommunityService.getPosts(),
       ]);
-      if (liveProducts && liveProducts.length > 0) setProducts(liveProducts);
-      if (liveStores && liveStores.length > 0) setStores(liveStores);
+      const c2cProducts = liveProducts.filter((product) => product.product_type === 'c2c');
+      if (c2cProducts.length > 0) setProducts(c2cProducts);
       if (livePosts && livePosts.length > 0) setCommunityPosts(livePosts);
       setIsSupabaseLive(true);
       addToast(
         'Supabase Sincronizado',
-        `Carregados ${liveProducts?.length || 0} produtos e ${liveStores?.length || 0} lojas do banco de dados oficial.`,
+        `Carregados ${c2cProducts.length} anúncios C2C e ${livePosts?.length || 0} publicações da comunidade.`,
         'success'
       );
-      return { success: true, count: (liveProducts?.length || 0) + (liveStores?.length || 0) };
+      return { success: true, count: c2cProducts.length + (livePosts?.length || 0) };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Falha na sincronização com Supabase';
       addToast('Aviso de Sincronização', msg, 'info');
@@ -709,6 +690,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Cart operations
   const addToCart = (product: Product, quantity = 1, selected_size?: string) => {
+    if (product.product_type !== 'c2c') {
+      addToast('Oferta externa', 'Ofertas B2C ficam fora do carrinho e do checkout C2C.', 'info');
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id && item.selected_size === selected_size);
       if (existing) {
@@ -763,6 +748,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     shippingMethod: ShippingMethod;
     paymentMethod: PaymentMethod;
   }): Promise<Order> => {
+    if (cart.some((item) => item.product.product_type !== 'c2c')) {
+      throw new Error('O checkout demonstrativo está disponível somente para anúncios C2C.');
+    }
     // Totais seguem lib/checkout.ts; o banco recalcula o pedido ao gravar.
     const totals = calculateCheckoutTotals(
       cartTotal,
@@ -813,6 +801,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const createProduct = async (
     productData: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>
   ): Promise<Product> => {
+    if (productData.product_type !== 'c2c') {
+      const error = new Error('Produtos B2C são exibidos como ofertas externas e não podem ser publicados como anúncios internos.');
+      addToast('Tipo de anúncio indisponível', error.message, 'error');
+      throw error;
+    }
     const res = await ProductService.createProduct(productData, user?.id);
     const newProduct: Product = (res.success && res.data) ? res.data : {
       ...productData,
@@ -839,90 +832,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Produto Removido', 'O anúncio foi excluído.', 'info');
   };
 
-  // Stores & Verification
-  const createStore = async (
-    storeData: Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | 'products_count' | 'is_verified' | 'verification_status'>
-  ): Promise<Store> => {
-    const res = await StoreService.createStore(storeData);
-    const newStore: Store = (res.success && res.data) ? res.data : {
-      ...storeData,
-      id: `store-${Date.now()}`,
-      is_verified: false,
-      verification_status: 'none',
-      rating: 5.0,
-      sales_count: 0,
-      products_count: 0,
-      created_at: new Date().toISOString(),
-    };
-
-    setStores((prev) => [...prev, newStore]);
-    if (user) {
-      setUser((prev) => (prev ? { ...prev, store_id: newStore.id, role: 'seller' } : null));
-    }
-    addToast('Loja Criada!', `Sua loja "${newStore.name}" foi inaugurada no CoreMotiom.`, 'success');
-    return newStore;
-  };
-
-  const requestStoreVerification = async (storeId: string, docs: NonNullable<Store['verification_docs']>) => {
-    await StoreService.requestVerification(storeId, docs);
-    setStores((prev) =>
-      prev.map((s) =>
-        s.id === storeId
-          ? {
-              ...s,
-              verification_status: 'pending',
-              verification_requested_at: new Date().toISOString(),
-              verification_docs: docs,
-            }
-          : s
-      )
-    );
-    addToast(
-      'Solicitação Enviada',
-      'A documentação e o CNPJ são analisados manualmente pela equipe.',
-      'info'
-    );
-  };
-
-  const adminVerifyStore = async (storeId: string, approve: boolean, notes?: string) => {
-    if (!hasCapability(user?.role, 'stores.verify')) {
-      addToast(
-        'Acesso Negado',
-        'Apenas administradores e supervisores podem homologar lojas.',
-        'error'
-      );
-      return;
-    }
-    await StoreService.adminReviewStore(storeId, approve);
-    setStores((prev) =>
-      prev.map((s) =>
-        s.id === storeId
-          ? {
-              ...s,
-              is_verified: approve,
-              verification_status: approve ? 'verified' : 'rejected',
-              verification_docs: s.verification_docs
-                ? { ...s.verification_docs, notes }
-                : { notes },
-            }
-          : s
-      )
-    );
-
-    // Update products from this store to show verified store badge
-    if (approve) {
-      setProducts((prev) =>
-        prev.map((p) => (p.store_id === storeId ? { ...p, is_verified_store: true } : p))
-      );
-      addToast('Loja Verificada', 'Selo "Verificado" concedido à loja.', 'success');
-    } else {
-      setProducts((prev) =>
-        prev.map((p) => (p.store_id === storeId ? { ...p, is_verified_store: false } : p))
-      );
-      addToast('Verificação Recusada', 'A solicitação foi indeferida.', 'info');
-    }
-  };
-
   // Community
   const createCommunityPost = async (post: {
     title: string;
@@ -935,7 +844,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         ...post,
         author_name: user?.name || 'Atleta CoreMotiom',
         author_avatar: user?.avatar_url,
-        author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Loja Oficial' : 'Atleta',
+        author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Anunciante' : 'Atleta',
       },
       user?.id
     );
@@ -945,7 +854,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       author_id: user?.id || 'anon',
       author_name: user?.name || 'Atleta CoreMotiom',
       author_avatar: user?.avatar_url,
-      author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Loja Oficial' : 'Atleta',
+      author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Anunciante' : 'Atleta',
       category: post.category,
       title: post.title,
       content: post.content,
@@ -1026,16 +935,12 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         setActiveView,
         selectedProduct,
         setSelectedProduct,
-        selectedStore,
-        setSelectedStore,
         isAuthModalOpen,
         setAuthModalOpen,
         authModalMode,
         setAuthModalMode,
         isCheckoutOpen,
         setCheckoutOpen,
-        isCreateStoreModalOpen,
-        setCreateStoreModalOpen,
         isSupabaseConfigOpen,
         setSupabaseConfigOpen,
         searchQuery,
@@ -1075,10 +980,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         createProduct,
         updateProduct,
         deleteProduct,
-        stores,
-        createStore,
-        requestStoreVerification,
-        adminVerifyStore,
         communityPosts,
         createCommunityPost,
         likeCommunityPost,

@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   aplicativo:
-    name: Tipos, lint, build e teste de API
+    name: Tipos, lint, testes unitários, build e API
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -38,6 +38,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Testes unitários
+        run: npm run test:unit
 
       - name: Build de produção
         run: npm run build
