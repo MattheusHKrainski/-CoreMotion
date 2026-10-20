@@ -94,13 +94,19 @@ before(async () => {
 });
 
 after(async () => {
-  client?.getSupabaseClient()?.auth.stopAutoRefresh();
-  if (!server.listening) return;
-  await new Promise<void>((resolve) => {
-    server.close(() => resolve());
-    // Native fetch may leave an idle keep-alive socket open; close it so CI exits promptly.
-    server.closeAllConnections();
-  });
+  try {
+    client?.getSupabaseClient()?.auth.stopAutoRefresh();
+  } finally {
+    // O servidor precisa fechar mesmo se o cliente falhar: um servidor aberto
+    // mantém o processo de testes vivo e trava o CI até o timeout do job.
+    if (server.listening) {
+      await new Promise<void>((resolve) => {
+        server.close(() => resolve());
+        // O fetch nativo pode manter um socket keep-alive ocioso; feche-o para sair na hora.
+        server.closeAllConnections();
+      });
+    }
+  }
 });
 
 describe('AuthService: credenciais e sincronização (C1)', () => {
