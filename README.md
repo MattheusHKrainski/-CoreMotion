@@ -74,7 +74,7 @@ A matriz abaixo reflete `lib/permissions.ts` e as políticas atuais do banco. Of
 
 ### Pré-requisitos
 
-- Node.js 20 ou superior (versão usada no CI; o Next.js 15 aceita Node.js 18.18 ou superior) e npm.
+- Node.js 22 ou superior (versão usada no CI; o `@supabase/supabase-js` atual exige WebSocket nativo, disponível a partir do Node.js 22) e npm.
 - Um projeto no [Supabase](https://supabase.com) (plano gratuito é suficiente).
 
 ### 1. Obter o código e instalar as dependências
