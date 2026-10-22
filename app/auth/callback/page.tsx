@@ -107,7 +107,7 @@ export default function AuthCallbackPage() {
             </div>
             <h2 className="text-lg font-bold text-emerald-400">Autenticado com Sucesso!</h2>
             <p className="text-xs text-zinc-400">
-              Retornando ao CoreMotiom...
+              Retornando ao CoreMotion...
             </p>
           </>
         )}

@@ -1,9 +1,9 @@
 /**
- * Hierarquia de papéis e matriz de permissões do CoreMotiom.
+ * Hierarquia de papéis e matriz de permissões do CoreMotion.
  *
  * Hierarquia (do maior para o menor privilégio):
  *   admin      → Administrador: acesso total (papéis, exclusão de contas e moderação)
- *   supervisor → Supervisor: moderação de contas, anúncios, comunidade e registros demonstrativos.
+ *   supervisor → Supervisor: moderação de contas, anúncios, comunidade e pedidos.
  *                NÃO altera papéis, NÃO exclui contas, NÃO age sobre administradores.
  *   seller     → Anunciante legado: publica anúncios C2C, além das funções de atleta.
  *   user       → Atleta/Usuário: publica anúncios C2C e participa da comunidade.

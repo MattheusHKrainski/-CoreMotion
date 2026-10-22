@@ -8,32 +8,31 @@ import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
 import type { Order, UserProfile, UserRole } from '@/lib/types';
 import { LogOut, Save, ShieldCheck, UserCircle2 } from 'lucide-react';
 
-/** Descrição curta do que cada papel pode fazer (espelha lib/permissions.ts). */
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
-  user: 'Atleta: explora ofertas de demonstração, pode publicar equipamentos entre pessoas (C2C) e participa da comunidade.',
-  seller: 'Anunciante: publica equipamentos entre atletas (C2C) e participa da comunidade esportiva.',
+  user: 'Atleta: compra e anuncia equipamentos esportivos entre atletas (C2C), explora ofertas parceiras e participa da comunidade.',
+  seller: 'Anunciante: publica equipamentos esportivos entre atletas (C2C) e participa da comunidade esportiva.',
   supervisor:
-    'Supervisor: modera a comunidade, os anúncios e registros demonstrativos. Não altera papéis nem exclui contas.',
-  admin: 'Administrador: acesso total, incluindo alteração de papéis e exclusão de contas (contas-mestre são protegidas).',
+    'Supervisor: modera a comunidade, os anúncios e os pedidos da plataforma. Não altera papéis nem exclui contas.',
+  admin: 'Administrador: acesso total de gestão da plataforma, incluindo permissões de usuários, catálogo e pedidos.',
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
-  pending: 'Demonstrativo: pendente',
-  approved: 'Demonstrativo: aprovado',
-  paid: 'Demonstrativo: pago',
-  failed: 'Demonstrativo: falhou',
-  refunded: 'Demonstrativo: reembolsado',
-  cancelled: 'Demonstrativo: cancelado',
+  pending: 'Aguardando pagamento',
+  approved: 'Aprovado',
+  paid: 'Pago',
+  failed: 'Não autorizado',
+  refunded: 'Reembolsado',
+  cancelled: 'Cancelado',
 };
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending_payment: 'Checkout demonstrativo',
-  escrow_locked: 'Custódia simulada (sem retenção)',
-  preparing: 'Demonstrativo: em preparação',
-  shipped: 'Demonstrativo: enviado',
-  delivered: 'Demonstrativo: entregue',
-  completed: 'Demonstrativo: concluído',
-  cancelled: 'Demonstrativo: cancelado',
+  pending_payment: 'Aguardando pagamento',
+  escrow_locked: 'Pagamento protegido',
+  preparing: 'Em preparação',
+  shipped: 'Enviado',
+  delivered: 'Entregue',
+  completed: 'Concluído',
+  cancelled: 'Cancelado',
 };
 
 function formatCurrency(value: number): string {
@@ -68,7 +67,6 @@ export default function ProfileView() {
     );
   }
 
-  // Ao salvar, o store atualiza `user`; a chave muda e o formulário é recriado com os dados salvos.
   const formKey = [user.id, user.name, user.phone ?? '', user.city ?? '', user.state ?? ''].join('|');
 
   return (
@@ -101,8 +99,6 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
   const [error, setError] = useState<string | null>(null);
   const [remoteOrders, setRemoteOrders] = useState<Order[]>([]);
 
-  // Com Supabase, os pedidos vêm do banco (a RLS devolve apenas os do próprio comprador).
-  // Sem Supabase (demonstração), usa os pedidos mantidos pelo store.
   const userId = user.id;
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -141,7 +137,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">Meu perfil</h1>
-        <p className="text-sm text-zinc-400 mt-1">Dados da sua conta e papel no sistema.</p>
+        <p className="text-sm text-zinc-400 mt-1">Dados da sua conta, histórico de pedidos e preferências.</p>
       </div>
 
       {user.is_banned && (
@@ -185,12 +181,9 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
       </section>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
-        <h2 className="text-base font-bold text-white">Pedidos demonstrativos</h2>
-        <p className="text-xs text-amber-200/80">
-          Registros e status exibidos podem ser ilustrativos. Esta versão não processa pagamentos, não retém valores e não solicita envios.
-        </p>
+        <h2 className="text-base font-bold text-white">Meus pedidos</h2>
         {myOrders.length === 0 ? (
-          <p className="text-sm text-zinc-400">Não há registros demonstrativos associados à sua conta.</p>
+          <p className="text-sm text-zinc-400">Você ainda não realizou pedidos na plataforma.</p>
         ) : (
           <ul className="divide-y divide-zinc-800">
             {myOrders.map((order) => {

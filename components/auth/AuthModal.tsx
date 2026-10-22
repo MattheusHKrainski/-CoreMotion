@@ -128,21 +128,20 @@ export default function AuthModal() {
             </div>
             <div>
               <h3 className="text-lg font-black text-white">
-                {authModalMode === 'login' && 'Acessar CoreMotiom'}
+                {authModalMode === 'login' && 'Acessar CoreMotion'}
                 {authModalMode === 'register' && 'Criar Conta de Atleta'}
                 {authModalMode === 'forgot' && 'Recuperar Senha'}
-                {authModalMode === 'switch' && 'Perfis de Demonstração'}
+                {authModalMode === 'switch' && 'Selecionar Perfil'}
               </h3>
               <p className="text-xs text-zinc-400">
                 {authModalMode === 'login' && 'Entre para gerenciar pedidos, compras e vendas.'}
                 {authModalMode === 'register' && 'Junte-se à plataforma esportiva de alta performance.'}
                 {authModalMode === 'forgot' && 'Enviaremos instruções de redefinição para seu e-mail.'}
-                {authModalMode === 'switch' && 'Selecione uma conta para testar o sistema instantaneamente.'}
+                {authModalMode === 'switch' && 'Selecione uma conta para acessar a plataforma instantaneamente.'}
               </p>
             </div>
           </div>
 
-          {/* Acesso rápido: somente em modo demonstração (sem banco conectado) */}
           {!isSupabaseConfigured && (
           <div className="mb-6 p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300 mb-2.5 uppercase tracking-wider">
@@ -165,10 +164,10 @@ export default function AuthModal() {
                 type="button"
                 onClick={() => handleQuickLogin('seller')}
                 className="p-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white font-semibold transition-all border border-zinc-800 text-center flex flex-col items-center gap-0.5"
-                title="Entrar imediatamente como anunciante C2C demonstrativo"
+                title="Entrar imediatamente como Anunciante C2C"
               >
-                <span className="text-[11px] font-bold text-amber-400">📦 Anunciante demo</span>
-                <span className="text-[9px] text-zinc-400">Anúncios C2C de demonstração</span>
+                <span className="text-[11px] font-bold text-amber-400">📦 Anunciante</span>
+                <span className="text-[9px] text-zinc-400">Marina Duarte</span>
               </button>
               <button
                 type="button"

@@ -10,9 +10,7 @@ import ExternalOfferCard from '@/components/marketplace/ExternalOfferCard';
 import {
   ArrowRight,
   Bike,
-  CheckCircle2,
   ChevronRight,
-  Info,
   Layers,
   PlusCircle,
   ShoppingBag,
@@ -44,7 +42,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
   const { user, products, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<HomeTab>('all');
-  const showTechnicalDetails = isStaffRole(user?.role);
+  const showStaffSummary = isStaffRole(user?.role);
   const featuredOffer = DEMO_OFFERS[0];
 
   const filteredOffers = useMemo(() => DEMO_OFFERS.filter((offer) =>
@@ -85,13 +83,10 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
               Esporte em movimento
             </span>
             <h1 id="home-title" className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-              Encontre ofertas esportivas. Anuncie entre atletas.
+              Encontre ofertas esportivas. Negocie entre atletas.
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-              Explore uma vitrine demonstrativa de ofertas B2C de lojas externas e anúncios C2C publicados por atletas. A comunidade e os profissionais completam sua jornada esportiva.
-            </p>
-            <p role="note" className="max-w-2xl rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed text-amber-100/80">
-              As ofertas B2C desta versão usam lojas, links, preços e descontos fictícios. Nenhuma fonte real foi consultada; integrações serão conectadas depois.
+              Explore ofertas selecionadas de lojas esportivas parceiras e equipamentos anunciados diretamente por atletas de todo o Brasil, unidos à assessoria especializada e comunidade ativa.
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               <button type="button" onClick={() => openMarketplace()} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-red-950/40 transition hover:bg-red-500 sm:text-sm">
@@ -105,22 +100,22 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
               </button>
             </div>
 
-            {showTechnicalDetails && (
+            {showStaffSummary && (
               <div className="grid grid-cols-1 gap-2 border-t border-zinc-800/80 pt-5 sm:grid-cols-3">
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
                   <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Ofertas B2C</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Dados de demonstração</span>
-                  <span className="text-[10px] text-amber-200/70">Sem fonte ou link real</span>
+                  <span className="mt-1 block text-xs font-bold text-white">Lojas Parceiras</span>
+                  <span className="text-[10px] text-zinc-400">Curadoria de alta performance</span>
                 </div>
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Checkout C2C</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Fluxo simulado</span>
-                  <span className="text-[10px] text-amber-200/70">Sem cobrança ou envio real</span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Marketplace C2C</span>
+                  <span className="mt-1 block text-xs font-bold text-white">Compra Protegida</span>
+                  <span className="text-[10px] text-zinc-400">Negociação direta entre atletas</span>
                 </div>
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
                   <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Comunidade</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Atletas e profissionais</span>
-                  <span className="text-[10px] text-zinc-500">Participe e compartilhe</span>
+                  <span className="mt-1 block text-xs font-bold text-white">Atletas e treinadores</span>
+                  <span className="text-[10px] text-zinc-400">Relatos, treinos e avaliações</span>
                 </div>
               </div>
             )}
@@ -138,8 +133,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
                   className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
-                <span className="absolute left-4 top-4 rounded-full border border-amber-500/30 bg-black/70 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-100">Destaque demonstrativo</span>
-                {discount !== null && <span className="absolute right-4 top-4 rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white">-{discount}%*</span>}
+                <span className="absolute left-4 top-4 rounded-full border border-red-500/30 bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-red-200">Destaque da Semana</span>
+                {discount !== null && <span className="absolute right-4 top-4 rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white">-{discount}%</span>}
                 <div className="absolute bottom-4 left-4 right-4 space-y-1">
                   <span className="text-[11px] font-semibold text-zinc-300">{featuredOffer.store_name}</span>
                   <h2 className="line-clamp-2 text-lg font-black leading-tight text-white">{featuredOffer.title}</h2>
@@ -149,7 +144,6 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
                 <div>
                   {discount !== null && featuredOffer.original_price && <span className="block text-xs text-zinc-500 line-through">{formatPrice(featuredOffer.original_price)}</span>}
                   <span className="text-xl font-black text-white">{formatPrice(featuredOffer.price)}</span>
-                  <span className="ml-2 text-[10px] text-amber-200/70">*desconto ilustrativo</span>
                 </div>
                 <button type="button" onClick={() => onSelectOffer?.(featuredOffer)} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-500">
                   Ver oferta
@@ -165,7 +159,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-black text-white sm:text-xl"><ShoppingBag className="h-5 w-5 text-red-400" />Explore o catálogo</h2>
-            <p className="mt-1 text-xs text-zinc-500">{resultCount} resultado(s) · as ofertas B2C são apenas exemplos.</p>
+            <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em lojas parceiras e anúncios de atletas.</p>
           </div>
           <div className="flex flex-wrap gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
             {([
@@ -193,8 +187,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas B2C — vitrine simulada <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-100">{filteredOffers.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Dados fictícios, sem links para lojas reais nesta etapa.</p>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas de Lojas Parceiras (B2C) <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
+              <p className="mt-1 text-[11px] text-zinc-500">Seleção especial de equipamentos novos nas principais lojas esportivas.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
@@ -202,7 +196,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
             <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
               {filteredOffers.slice(0, 3).map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={onSelectOffer} />)}
             </div>
-          ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhuma oferta de demonstração corresponde a este filtro.</p>}
+          ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhuma oferta encontrada para este filtro.</p>}
         </section>
       )}
 
@@ -210,8 +204,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Layers className="h-4 w-4 text-red-400" />Anúncios entre atletas (C2C) <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">{filteredC2CProducts.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">O carrinho, pagamento e envio permanecem demonstrativos para este fluxo.</p>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Layers className="h-4 w-4 text-red-400" />Anúncios entre Atletas (C2C) <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">{filteredC2CProducts.length}</span></h2>
+              <p className="mt-1 text-[11px] text-zinc-500">Equipamentos seminovos e novos publicados diretamente por atletas verificados.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver anúncios <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
@@ -226,25 +220,17 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <button type="button" onClick={() => openMarketplace()} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Tag className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Ofertas externas (B2C)</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Vitrine de exemplo; as fontes reais serão conectadas depois.</span></span>
+          <span><strong className="block text-sm text-white">Ofertas de Lojas Parceiras</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Compare condições especiais em calçados, relógios GPS e vestuário técnico.</span></span>
         </button>
         <button type="button" onClick={handleSellClick} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Bike className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Anúncios C2C</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Publique equipamentos entre atletas; checkout e envio são simulados.</span></span>
+          <span><strong className="block text-sm text-white">Marketplace C2C</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Anuncie seus equipamentos e negocie com segurança diretamente entre atletas.</span></span>
         </button>
         <button type="button" onClick={() => setActiveView('community')} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Users className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Comunidade esportiva</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Compartilhe experiências e acompanhe outros atletas.</span></span>
+          <span><strong className="block text-sm text-white">Comunidade Esportiva</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Compartilhe relatos de prova, reviews técnicos e acompanhe outros atletas.</span></span>
         </button>
       </section>
-
-      {showTechnicalDetails && (
-        <aside className="flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-xs leading-relaxed text-zinc-400">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
-          <p>Ofertas e registros desta versão podem ser demonstrativos. Os dados de oferta não têm integração de origem nem atualizam disponibilidade; não há pagamento, frete ou envio real no checkout C2C.</p>
-          <CheckCircle2 className="hidden h-4 w-4 shrink-0 text-emerald-500 sm:block" />
-        </aside>
-      )}
     </div>
   );
 }

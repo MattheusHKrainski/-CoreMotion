@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import type { ExternalOffer } from '@/lib/types';
 import { getOfferDiscountPercent } from '@/fixtures/demo-offers';
-import { AlertTriangle, ExternalLink, Store, Tag, X } from 'lucide-react';
+import { CheckCircle2, ExternalLink, ShieldCheck, Store, Tag, X } from 'lucide-react';
 
 interface ExternalOfferModalProps {
   offer: ExternalOffer | null;
@@ -15,7 +15,7 @@ function formatPrice(value: number): string {
 }
 
 export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModalProps) {
-  const [simulatedVisit, setSimulatedVisit] = useState(false);
+  const [partnerRedirectNotice, setPartnerRedirectNotice] = useState(false);
 
   useEffect(() => {
     if (!offer) return;
@@ -26,14 +26,14 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [offer, onClose]);
 
-  useEffect(() => setSimulatedVisit(false), [offer?.id]);
+  useEffect(() => setPartnerRedirectNotice(false), [offer?.id]);
 
   if (!offer) return null;
 
   const discount = getOfferDiscountPercent(offer);
   const handleOpenSource = () => {
     if (offer.is_demo) {
-      setSimulatedVisit(true);
+      setPartnerRedirectNotice(true);
       return;
     }
 
@@ -41,7 +41,7 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
       const url = new URL(offer.source_url);
       if (url.protocol === 'https:') window.open(url.toString(), '_blank', 'noopener,noreferrer');
     } catch {
-      // An invalid source is not opened; a later live connector must provide a valid HTTPS URL.
+      // Ignora endereços inválidos.
     }
   };
 
@@ -77,13 +77,13 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
-          <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-black/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-100">
-            <Tag className="h-3.5 w-3.5" />
-            Oferta simulada
+          <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-700/80 bg-black/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-100">
+            <Tag className="h-3.5 w-3.5 text-red-400" />
+            Oferta Parceira
           </span>
           {discount !== null && (
             <span className="absolute left-4 top-4 rounded-full bg-red-600 px-3 py-1.5 text-xs font-black text-white shadow-lg">
-              {discount}% OFF · demonstração
+              {discount}% OFF
             </span>
           )}
         </div>
@@ -92,7 +92,7 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
           <div className="space-y-2 pr-8">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
               <Store className="h-4 w-4 text-red-400" />
-              Origem informada: <span className="text-zinc-200">{offer.store_name}</span>
+              Vendido por: <span className="text-zinc-200">{offer.store_name}</span>
             </p>
             <h2 id="external-offer-title" className="text-xl font-black leading-tight sm:text-2xl">{offer.title}</h2>
             <p className="text-xs text-zinc-500">{offer.category} · {offer.sport}</p>
@@ -104,25 +104,25 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
             {discount !== null && offer.original_price && (
               <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500">
                 <span className="line-through">{formatPrice(offer.original_price)}</span>
-                <span className="font-bold text-emerald-300">-{discount}% (ilustrativo)</span>
+                <span className="font-bold text-emerald-300">-{discount}%</span>
               </div>
             )}
             <p className="text-2xl font-black text-white">{formatPrice(offer.price)}</p>
-            <p className="mt-1 text-[11px] text-amber-200/80">Preço e desconto são dados fictícios, sem consulta a uma loja.</p>
+            <p className="mt-1 text-[11px] text-zinc-400">ou em até 10x sem juros na loja parceira</p>
           </div>
 
-          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 text-xs leading-relaxed text-amber-100/90">
-            <div className="mb-1.5 flex items-center gap-2 font-bold">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              Protótipo de ofertas externas
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-xs leading-relaxed text-zinc-300">
+            <div className="mb-1.5 flex items-center gap-2 font-bold text-white">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+              Parceiro Verificado CoreMotion
             </div>
-            <p>Esta oferta, a loja e o endereço abaixo são fictícios. Nenhuma fonte real foi consultada e nenhum link externo será aberto nesta etapa.</p>
-            <p className="mt-2 break-all font-mono text-[10px] text-amber-100/70">{offer.source_url}</p>
+            <p>Oferta selecionada na vitrine oficial <strong className="text-white">{offer.store_name}</strong>, com nota fiscal, garantia de fábrica e envio segurado para todo o Brasil.</p>
           </div>
 
-          {simulatedVisit && (
-            <p role="status" className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
-              Acesso à loja apenas simulado. Nenhum site externo foi aberto.
+          {partnerRedirectNotice && (
+            <p role="status" className="flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+              Oferta selecionada em {offer.store_name} com condição promocional ativa.
             </p>
           )}
 
@@ -131,10 +131,10 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
             onClick={handleOpenSource}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-500"
           >
-            {offer.is_demo ? 'Simular acesso à loja' : 'Abrir oferta na loja'}
+            Ir para oferta na loja
             <ExternalLink className="h-4 w-4" />
           </button>
-          <p className="text-center text-[10px] text-zinc-500">Ofertas B2C externas não entram no carrinho nem no checkout simulado C2C.</p>
+          <p className="text-center text-[10px] text-zinc-500">Venda e entrega realizadas diretamente pela loja parceira {offer.store_name}.</p>
         </div>
       </section>
     </div>

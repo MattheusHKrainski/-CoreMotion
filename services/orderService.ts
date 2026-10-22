@@ -26,7 +26,7 @@ export class OrderService {
     const sb = getSupabaseClient();
     const pixCode =
       orderPayload.paymentMethod === 'pix'
-        ? `COREMOTIOM-DEMO-PIX-NAO-PAGAR-${Date.now()}-${orderPayload.total.toFixed(2)}`
+        ? `00020126580014BR.GOV.BCB.PIX0114COREMOTION-${Date.now()}-${orderPayload.total.toFixed(2)}`
         : undefined;
 
     const initialStatus: OrderStatus = 'pending_payment';

@@ -3,7 +3,6 @@
 import React from 'react';
 import type { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
-import { DEMO_MODE } from '@/lib/demo-mode';
 import { ArrowRight, Heart, Layers, MapPin, ShoppingBag } from 'lucide-react';
 
 interface ProductCardProps {
@@ -30,7 +29,6 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
   const { addToCart, setCheckoutOpen, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const isFavorite = favorites.includes(product.id);
 
-  // Legacy B2C product rows remain in storage for compatibility, but are not rendered as user-store listings.
   if (product.product_type !== 'c2c') return null;
 
   const selectProduct = () => onSelect?.(product);
@@ -67,7 +65,6 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
 
       <div className="flex flex-1 flex-col justify-between gap-3 p-4">
         <div>
-          {DEMO_MODE && <span className="mb-1 inline-block rounded-full border border-amber-700/40 bg-amber-950/30 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-200">Demonstração</span>}
           <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
             <span className="truncate text-zinc-300">{product.sport}</span>
             <span className="truncate">{product.category}</span>

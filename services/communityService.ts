@@ -158,7 +158,7 @@ export class CommunityService {
 
       const newComment = {
         id: comment.id || `c-${Date.now()}`,
-        author_name: comment.author_name || comment.user_name || 'Atleta CoreMotiom',
+        author_name: comment.author_name || comment.user_name || 'Atleta CoreMotion',
         author_avatar: comment.author_avatar || comment.user_avatar,
         content: comment.content,
         created_at: comment.created_at || new Date().toISOString(),
@@ -196,7 +196,7 @@ export class CommunityService {
     return {
       id: String(dbRow.id),
       author_id: dbRow.author_id || '',
-      author_name: dbRow.author_name || 'Membro CoreMotiom',
+      author_name: dbRow.author_name || 'Membro CoreMotion',
       author_avatar: dbRow.author_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
       author_badge: dbRow.author_badge || 'Atleta',
       category: dbRow.category || 'treino',

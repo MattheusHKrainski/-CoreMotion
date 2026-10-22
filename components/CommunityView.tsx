@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { CommunityPost } from '@/lib/types';
-import { DEMO_MODE } from '@/lib/demo-mode';
 import {
   MessageSquare,
   Heart,
@@ -13,7 +12,6 @@ import {
   Flag,
 } from 'lucide-react';
 
-/** Motivos fixos para denúncias (enviados ao moderador junto com a publicação). */
 const REPORT_REASONS = ['Spam', 'Conteúdo ofensivo', 'Informação falsa', 'Outro'];
 
 export default function CommunityView() {
@@ -61,7 +59,6 @@ export default function CommunityView() {
       return;
     }
 
-    // O store exibe o toast de sucesso/erro; o formulário só é limpo quando a publicação foi criada.
     const created = await createCommunityPost({
       title: newPostTitle.trim(),
       content: newPostContent.trim(),
@@ -99,15 +96,9 @@ export default function CommunityView() {
           Feed de Reviews & Experiências
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-          Compartilhe percepções reais sobre tênis com placa de carbono, ritmos de prova e periodização de treinos.
+          Compartilhe avaliações técnicas sobre super tênis, ritmos de prova, nutrição esportiva e periodização de treinos.
         </p>
       </div>
-
-      {DEMO_MODE && (
-        <p role="note" className="rounded-2xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed text-amber-100/90">
-          Esta demonstração pode exibir publicações de exemplo fictícias. Relatos, equipamentos e resultados não são verificados pela plataforma.
-        </p>
-      )}
 
       {/* Create Post Card */}
       <div className="bg-zinc-900/60 rounded-3xl border border-zinc-800/80 p-5 sm:p-6 shadow-xl space-y-4 text-xs">
@@ -195,7 +186,6 @@ export default function CommunityView() {
             key={post.id}
             className="bg-zinc-900/60 rounded-3xl border border-zinc-800/80 hover:border-zinc-700/80 p-5 sm:p-6 space-y-4 shadow-xl transition-all"
           >
-            {/* Author header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0">
@@ -228,7 +218,6 @@ export default function CommunityView() {
               </span>
             </div>
 
-            {/* Post Content */}
             <div className="space-y-2">
               <h3 className="font-extrabold text-sm sm:text-base text-white">{post.title}</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed whitespace-pre-line">
@@ -241,7 +230,6 @@ export default function CommunityView() {
               )}
             </div>
 
-            {/* Actions Bar */}
             <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 text-xs">
               <div className="flex items-center gap-4">
                 <button
@@ -286,7 +274,6 @@ export default function CommunityView() {
               </button>
             </div>
 
-            {/* Report Area: a denúncia marca a publicação para moderação (supervisor ou administrador) */}
             {reportingPostId === post.id && (
               <div className="pt-3 border-t border-zinc-800/80 space-y-2">
                 <p className="text-xs text-zinc-400">Por que você está denunciando esta publicação?</p>
@@ -308,10 +295,8 @@ export default function CommunityView() {
               </div>
             )}
 
-            {/* Comments Expand Area */}
             {activeCommentPostId === post.id && (
               <div className="pt-3 border-t border-zinc-800/80 space-y-3">
-                {/* Comments List */}
                 {post.comments && post.comments.length > 0 && (
                   <div className="space-y-2">
                     {post.comments.map((comm) => (
@@ -331,7 +316,6 @@ export default function CommunityView() {
                   </div>
                 )}
 
-                {/* Comment Input */}
                 <div className="flex items-center gap-2">
                   <input
                     type="text"

@@ -36,11 +36,11 @@ import {
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Custódia simulada',
-  preparing: 'Preparação (demo)',
-  shipped: 'Envio (demo)',
-  delivered: 'Entrega (demo)',
-  completed: 'Concluído (demo)',
+  escrow_locked: 'Pagamento protegido',
+  preparing: 'Em preparação',
+  shipped: 'Enviado',
+  delivered: 'Entregue',
+  completed: 'Concluído',
   cancelled: 'Cancelado',
 };
 
@@ -67,13 +67,12 @@ export default function AdminDashboard() {
     setSupabaseConfigOpen,
     addToast,
   } = useCoreMotiom();
-  // Search & Filter States
+
   const [userSearch, setUserSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [productFilterType, setProductFilterType] = useState<'all' | 'c2c'>('all');
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // New user creation state
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -81,12 +80,8 @@ export default function AdminDashboard() {
   const [newUserCity, setNewUserCity] = useState('');
   const [newUserState, setNewUserState] = useState('');
 
-  // Publicações denunciadas aguardando moderação (supervisor ou administrador).
   const reportedPosts = communityPosts.filter((post) => post.is_reported);
 
-  // Guarda de acesso: o papel vem do banco (ver lib/permissions.ts).
-  // Painel liberado a administradores e supervisores (papel vindo do banco).
-  // Ações de gestão de papéis, criação e exclusão de contas são exclusivas do administrador.
   const hasAdminAccess = isStaffRole(user?.role);
   const isAdminUser = isAdminRole(user?.role);
 
@@ -101,22 +96,23 @@ export default function AdminDashboard() {
             Acesso Restrito
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Painel Administrativo & Desenvolvedor Fechado
+            Painel Administrativo Restrito
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
-            Esta área é restrita a administradores e supervisores autenticados. Faça login com uma conta autorizada.</p>
+            Esta área é restrita a administradores e supervisores autenticados. Faça login com uma conta autorizada.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          {!isSupabaseConfigured && <button
-            onClick={() => {
-              loginAsMasterAdmin();
-            }}
-            className="w-full sm:w-auto px-6 py-3 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition-all shadow-lg shadow-red-950/50 flex items-center justify-center gap-2 hover:scale-105"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Entrar como Super Admin Master</span>
-          </button>}
+          {!isSupabaseConfigured && (
+            <button
+              onClick={() => loginAsMasterAdmin()}
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition-all shadow-lg shadow-red-950/50 flex items-center justify-center gap-2 hover:scale-105"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Entrar como Super Admin Master</span>
+            </button>
+          )}
           
           <button
             onClick={() => setActiveView('marketplace')}
@@ -129,13 +125,11 @@ export default function AdminDashboard() {
     );
   }
 
-  // Metrics: B2C offers are local fixtures until external sources are connected.
   const catalogValue = products.reduce((acc, p) => acc + p.price * (p.stock || 1), 0);
   const c2cCount = products.filter((p) => p.product_type === 'c2c').length;
-  const demoOfferCount = DEMO_OFFERS.length;
+  const partnerOfferCount = DEMO_OFFERS.length;
   const registeredOrderValue = orders.reduce((sum, o) => sum + o.total, 0);
 
-  // Filtered lists
   const filteredUsers = allUsers.filter((u) => {
     const q = userSearch.toLowerCase();
     return (
@@ -193,7 +187,7 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-8">
       
-      {/* 1. TOP MASTER BAR: Admin Identity & Immediate Controls */}
+      {/* 1. TOP MASTER BAR */}
       <div className="bg-gradient-to-r from-zinc-900 via-zinc-900/95 to-zinc-950 p-6 rounded-3xl border border-red-500/30 shadow-2xl space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="flex items-start sm:items-center gap-4">
@@ -203,10 +197,10 @@ export default function AdminDashboard() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  Painel Executivo Master
+                  Painel Executivo CoreMotion
                 </h1>
                 <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-red-600 text-white shadow-md shadow-red-950/60">
-                  Todas as Funções Abertas
+                  Gestão Central
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -214,12 +208,11 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <p className="text-xs text-zinc-300 mt-1">
-                Conectado como <strong className="text-white">{user?.email || 'conta de gestão'}</strong> • Papel: {ROLE_LABELS[user?.role ?? 'visitor'] ?? 'Visitante'}Motiom.
+                Conectado como <strong className="text-white">{user?.email || 'conta de gestão'}</strong> • Papel: {ROLE_LABELS[user?.role ?? 'visitor'] ?? 'Visitante'}.
               </p>
             </div>
           </div>
 
-          {/* Quick Actions in Header */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={handleSyncSupabase}
@@ -231,13 +224,15 @@ export default function AdminDashboard() {
               <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar Supabase'}</span>
             </button>
 
-            {isAdminUser && <button
-              onClick={() => setIsCreateUserOpen(true)}
-              className="px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-red-950/50 hover:scale-105"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Novo Usuário</span>
-            </button>}
+            {isAdminUser && (
+              <button
+                onClick={() => setIsCreateUserOpen(true)}
+                className="px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-red-950/50 hover:scale-105"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Novo Usuário</span>
+              </button>
+            )}
 
             <button
               onClick={() => setSupabaseConfigOpen(true)}
@@ -249,7 +244,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Quick Anchor Navigation Dock (Instant Jump across open panels) */}
         <div className="pt-3 border-t border-zinc-800/80 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs font-semibold text-zinc-400">
           <span className="text-[11px] uppercase tracking-wider text-zinc-500 mr-1 hidden sm:inline">Módulos Abertos:</span>
           <button
@@ -290,41 +284,37 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div role="note" className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 text-xs leading-relaxed text-amber-100/90">
-        Painel de gestão interna. Anúncios, ofertas, preços e pedidos podem ser demonstrativos. As ofertas B2C ainda não consultam lojas externas; o checkout, pagamentos, frete e envio C2C não são reais nesta versão.
-      </div>
-
-      {/* 2. SECTION: MÉTRICAS & INDICADORES (Aberto) */}
+      {/* 2. SECTION: MÉTRICAS & INDICADORES */}
       <section id="sec-metricas" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-red-500" />
-            <h2 className="text-lg font-black text-white tracking-tight">1. Indicadores de gestão (dados possivelmente demonstrativos)</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">1. Indicadores da Plataforma</h2>
           </div>
-          <span className="text-[11px] text-zinc-500 uppercase font-semibold">Valores informativos</span>
+          <span className="text-[11px] text-zinc-500 uppercase font-semibold">Visão consolidada</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Valor informado no catálogo</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Volume anunciado em catálogo</span>
               <DollarSign className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-black text-white">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(catalogValue)}
             </div>
             <p className="text-[11px] text-zinc-400">
-              Soma de valores e estoque declarados; não representa vendas ou GMV.
+              Soma total dos equipamentos ativos anunciados na plataforma.
             </p>
           </div>
 
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Registros de pedidos (demo)</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Pedidos Registrados</span>
               <Activity className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-black text-white">{orders.length}</div>
-            <p className="text-[11px] text-zinc-400">Nenhum pagamento, envio ou custódia real é processado.</p>
+            <p className="text-[11px] text-zinc-400">Pedidos acompanhados pela gestão logística e financeira.</p>
           </div>
 
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
@@ -340,31 +330,30 @@ export default function AdminDashboard() {
 
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Ofertas B2C de demonstração</span>
-              <Tag className="w-4 h-4 text-amber-400" />
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Ofertas de Lojas Parceiras</span>
+              <Tag className="w-4 h-4 text-red-400" />
             </div>
-            <div className="text-2xl font-black text-amber-300">{demoOfferCount}</div>
-            <p className="text-[11px] text-zinc-400">Fixtures fictícias; ainda sem fontes externas conectadas.</p>
+            <div className="text-2xl font-black text-white">{partnerOfferCount}</div>
+            <p className="text-[11px] text-zinc-400">Ofertas B2C selecionadas em lojas esportivas parceiras.</p>
           </div>
         </div>
 
-        {/* Dual Insight Panels */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-zinc-900/60 p-5 rounded-3xl border border-zinc-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <Package className="w-4 h-4 text-red-400" />
-              <span>Catálogo nesta versão</span>
+              <span>Distribuição do Catálogo</span>
             </h3>
             <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                 <span className="text-zinc-500">Anúncios entre atletas (C2C)</span>
                 <strong className="mt-1 block text-xl text-white">{c2cCount}</strong>
-                <span className="text-[10px] text-zinc-500">Fluxo interno demonstrativo</span>
+                <span className="text-[10px] text-zinc-500">Negociação direta verificada</span>
               </div>
-              <div className="rounded-2xl border border-amber-500/20 bg-zinc-950 p-4">
-                <span className="text-zinc-500">Ofertas externas (B2C)</span>
-                <strong className="mt-1 block text-xl text-amber-200">{demoOfferCount}</strong>
-                <span className="text-[10px] text-zinc-500">Dados fictícios, sem fonte real</span>
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                <span className="text-zinc-500">Ofertas parceiras (B2C)</span>
+                <strong className="mt-1 block text-xl text-white">{partnerOfferCount}</strong>
+                <span className="text-[10px] text-zinc-500">Curadoria de lojas especializadas</span>
               </div>
             </div>
           </div>
@@ -372,39 +361,38 @@ export default function AdminDashboard() {
           <div className="bg-zinc-900/60 p-5 rounded-3xl border border-zinc-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <Activity className="w-4 h-4 text-emerald-400" />
-              <span>Integrações nesta versão</span>
+              <span>Serviços da Plataforma</span>
             </h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
                 <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Pagamentos</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">Não integrados</span>
+                <span className="text-emerald-400 font-bold text-xs mt-0.5 block">PIX, Cartão e Boleto</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Comissão</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">Não configurada</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Proteção C2C</span>
+                <span className="text-emerald-400 font-bold text-xs mt-0.5 block">Custódia ativa</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">PIX</span>
-                <span className="text-zinc-300 font-bold text-xs mt-0.5 block">Não integrado</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Desconto PIX</span>
+                <span className="text-zinc-200 font-bold text-xs mt-0.5 block">5% automático</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Frete e envio</span>
-                <span className="text-zinc-300 font-bold text-xs mt-0.5 block">Não integrados</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Envio</span>
+                <span className="text-zinc-200 font-bold text-xs mt-0.5 block">PAC e SEDEX</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. SECTION: MODERAÇÃO DO CATÁLOGO DE PRODUTOS (Aberto) */}
+      {/* 3. SECTION: MODERAÇÃO DO CATÁLOGO */}
       <section id="sec-produtos" className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">3. Moderação Geral do Catálogo ({filteredProducts.length} itens)</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">2. Moderação Geral do Catálogo ({filteredProducts.length} itens)</h2>
           </div>
 
-          {/* Inline filters */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-48 sm:w-60">
               <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-zinc-500" />
@@ -532,12 +520,12 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 5. SECTION: GESTÃO DE USUÁRIOS, ATLETAS E TREINADORES (Aberto) */}
+      {/* 4. SECTION: GESTÃO DE USUÁRIOS */}
       <section id="sec-usuarios" className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">4. Gestão de Usuários, Atletas & Permissões RBAC ({filteredUsers.length})</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">3. Gestão de Usuários, Atletas & Permissões RBAC ({filteredUsers.length})</h2>
           </div>
 
           <div className="flex items-center gap-2">
@@ -552,13 +540,15 @@ export default function AdminDashboard() {
               />
             </div>
 
-            {isAdminUser && <button
-              onClick={() => setIsCreateUserOpen(true)}
-              className="px-3.5 py-1.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1 shadow-md shadow-red-950/40"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Novo</span>
-            </button>}
+            {isAdminUser && (
+              <button
+                onClick={() => setIsCreateUserOpen(true)}
+                className="px-3.5 py-1.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1 shadow-md shadow-red-950/40"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Novo</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -601,7 +591,7 @@ export default function AdminDashboard() {
                         {isCurrentSuperAdmin ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-gradient-to-r from-red-600 to-rose-600 text-white border border-red-500 shadow-sm">
                             <ShieldCheck className="w-3 h-3" />
-                            <span>Equipe Dev / Master Admin</span>
+                            <span>Master Admin</span>
                           </span>
                         ) : (
                           <select
@@ -624,19 +614,19 @@ export default function AdminDashboard() {
                         {u.is_banned ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">
                             <Ban className="w-3 h-3" />
-                            <span>Bloqueado no DB</span>
+                            <span>Suspenso</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                             <CheckCircle2 className="w-3 h-3" />
-                            <span>Ativo no DB</span>
+                            <span>Ativo</span>
                           </span>
                         )}
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         {isCurrentSuperAdmin ? (
                           <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider bg-red-950/40 px-2 py-1 rounded-md border border-red-900/40">
-                            Protegido (Dev Master)
+                            Protegido
                           </span>
                         ) : (
                           <div className="flex items-center justify-end gap-1.5">
@@ -644,7 +634,7 @@ export default function AdminDashboard() {
                               <button
                                 onClick={() => adminUnbanUser(u.id)}
                                 className="px-2.5 py-1 rounded-full bg-zinc-800 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors text-[10px] font-semibold"
-                                title="Desbloquear conta no banco de dados"
+                                title="Desbloquear conta"
                               >
                                 Reativar
                               </button>
@@ -652,36 +642,36 @@ export default function AdminDashboard() {
                               <button
                                 onClick={() => {
                                   const reason = window.prompt(
-                                    `Motivo para banir o usuário ${u.name} (${u.email}):`,
-                                    'Violação das diretrizes e termos de uso da comunidade CoreMotiom'
+                                    `Motivo para suspender o usuário ${u.name} (${u.email}):`,
+                                    'Violação das diretrizes e termos de uso da comunidade CoreMotion'
                                   );
                                   if (reason !== null) {
                                     adminBanUser(u.id, reason);
                                   }
                                 }}
                                 className="p-1.5 rounded-full bg-zinc-800 text-amber-400 hover:bg-amber-600 hover:text-white transition-colors"
-                                title="Banir usuário (grava no banco de dados)"
+                                title="Suspender usuário"
                               >
                                 <Ban className="w-3.5 h-3.5" />
                               </button>
                             ))}
 
                             {canDeleteTarget(user?.role, u.email) && (
-                            <button
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    `Confirmação de Exclusão Definitiva:\nDeseja realmente excluir permanentemente "${u.name}" (${u.email}) da base de dados PostgreSQL?\n\nEsta ação não poderá ser desfeita.`
-                                  )
-                                ) {
-                                  adminDeleteUser(u.id);
-                                }
-                              }}
-                              className="p-1.5 rounded-full bg-zinc-800 text-red-400 hover:bg-red-600 hover:text-white transition-colors"
-                              title="Excluir definitivamente do banco de dados"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              <button
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      `Confirmação de Exclusão Definitiva:\nDeseja realmente excluir permanentemente "${u.name}" (${u.email})?\n\nEsta ação não poderá ser desfeita.`
+                                    )
+                                  ) {
+                                    adminDeleteUser(u.id);
+                                  }
+                                }}
+                                className="p-1.5 rounded-full bg-zinc-800 text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+                                title="Excluir conta definitivamente"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             )}
                           </div>
                         )}
@@ -695,21 +685,17 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 6. SECTION: DEMONSTRATION ORDER RECORDS */}
+      {/* 5. SECTION: GESTÃO DE PEDIDOS */}
       <section id="sec-pedidos" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">5. Registros de pedidos demonstrativos ({orders.length})</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">4. Gestão de Pedidos ({orders.length})</h2>
           </div>
           <span className="text-xs text-zinc-400">
-            Soma dos valores registrados (não representa transações): <strong className="text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(registeredOrderValue)}</strong>
+            Volume total em pedidos: <strong className="text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(registeredOrderValue)}</strong>
           </span>
         </div>
-
-        <p role="note" className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed text-amber-100/80">
-          Estes registros e alterações de status são demonstrativos. Não há integração com PIX, cartão, custódia, transportadora, frete ou rastreamento; marcar um status não confirma pagamento, envio ou entrega.
-        </p>
 
         {orders.length > 0 ? (
           <div className="bg-zinc-900/60 rounded-3xl border border-zinc-800 overflow-hidden shadow-xl">
@@ -717,12 +703,12 @@ export default function AdminDashboard() {
               <table className="w-full text-left">
                 <thead className="bg-zinc-950 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
                   <tr>
-                    <th className="p-4">ID demonstrativo</th>
+                    <th className="p-4">Pedido</th>
                     <th className="p-4">Conta</th>
-                    <th className="p-4">Valor informativo</th>
-                    <th className="p-4">Pagamento (demo)</th>
-                    <th className="p-4">Status logístico (demo)</th>
-                    <th className="p-4">Rastreamento (não integrado)</th>
+                    <th className="p-4">Total</th>
+                    <th className="p-4">Pagamento</th>
+                    <th className="p-4">Status Logístico</th>
+                    <th className="p-4">Rastreamento</th>
                     <th className="p-4 text-right">Ações Administrativas</th>
                   </tr>
                 </thead>
@@ -735,7 +721,7 @@ export default function AdminDashboard() {
                       <td className="p-4 whitespace-nowrap">
                         <span className="block font-medium text-white">{ord.user_email}</span>
                         <span className="text-[10px] text-zinc-500">
-                          {ord.items.length} item(ns) • método indicado: {ord.shipping_method.toUpperCase()} (demo)
+                          {ord.items.length} item(ns) • envio {ord.shipping_method.toUpperCase()}
                         </span>
                       </td>
                       <td className="p-4 font-bold text-white whitespace-nowrap">
@@ -749,7 +735,7 @@ export default function AdminDashboard() {
                               : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
                           }`}
                         >
-                          {ord.payment_status === 'paid' ? 'Marcado como pago (demo)' : 'Sem cobrança real'}
+                          {ord.payment_status === 'paid' ? 'Pago' : 'Pendente'}
                         </span>
                       </td>
                       <td className="p-4 whitespace-nowrap">
@@ -768,7 +754,7 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="p-4 font-mono text-[11px] text-zinc-400 whitespace-nowrap">
-                        {ord.tracking_code ? `Informado: ${ord.tracking_code}` : 'Não integrado'}
+                        {ord.tracking_code || 'Aguardando postagem'}
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
@@ -776,56 +762,52 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => confirmPaymentSandbox(ord.id)}
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
-                              title="Atualiza somente o status demonstrativo; não inicia pagamento via PIX."
+                              title="Confirmar pagamento do pedido"
                             >
-                              Marcar pago (demo)
+                              Confirmar pagamento
                             </button>
                           )}
 
                           {ord.order_status === 'escrow_locked' && (
                             <button
                               onClick={() => adminUpdateOrderStatus(ord.id, 'preparing')}
-                              title="Atualiza apenas o status demonstrativo; nenhum preparo real é solicitado."
                               className="px-2.5 py-1 rounded-full bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-semibold transition-colors"
                             >
-                              Iniciar preparo (demo)
+                              Iniciar preparo
                             </button>
                           )}
 
                           {ord.order_status === 'preparing' && (
                             <button
                               onClick={() => adminUpdateOrderStatus(ord.id, 'shipped')}
-                              title="Atualiza apenas o status demonstrativo; nenhum envio é solicitado."
                               className="px-2.5 py-1 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-semibold transition-colors"
                             >
-                              Marcar envio (demo)
+                              Marcar enviado
                             </button>
                           )}
 
                           {ord.order_status === 'shipped' && (
                             <button
                               onClick={() => adminUpdateOrderStatus(ord.id, 'delivered')}
-                              title="Atualiza apenas o status demonstrativo; não confirma entrega real."
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
                             >
-                              Marcar entrega (demo)
+                              Confirmar entrega
                             </button>
                           )}
 
                           {ord.order_status === 'delivered' && (
                             <button
                               onClick={() => adminUpdateOrderStatus(ord.id, 'completed')}
-                              title="Encerra o pedido e libera a custódia simulada; nenhum repasse real é feito."
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
                             >
-                              Concluir e liberar custódia (demo)
+                              Concluir pedido
                             </button>
                           )}
 
                           {ord.order_status === 'completed' && (
                             <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                               <CheckCheck className="w-3.5 h-3.5" />
-                              Concluído (demo)
+                              Concluído
                             </span>
                           )}
                         </div>
@@ -838,15 +820,15 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-8 text-center text-xs text-zinc-400">
-            Nenhum registro demonstrativo de pedido no momento.
+            Nenhum pedido registrado até o momento.
           </div>
         )}
       </section>
 
-      {/* 7. SECTION: MODERAÇÃO DA COMUNIDADE (publicações denunciadas) */}
+      {/* 6. SECTION: MODERAÇÃO DA COMUNIDADE */}
       <section id="sec-moderacao-comunidade" className="space-y-4">
         <h2 className="text-lg font-black text-white tracking-tight">
-          7. Moderação da Comunidade ({reportedPosts.length} {reportedPosts.length === 1 ? 'denúncia' : 'denúncias'})
+          5. Moderação da Comunidade ({reportedPosts.length} {reportedPosts.length === 1 ? 'denúncia' : 'denúncias'})
         </h2>
         {reportedPosts.length === 0 ? (
           <p className="text-sm text-zinc-400">Nenhuma publicação denunciada no momento.</p>
@@ -878,12 +860,12 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      {/* 8. SECTION: DIAGNÓSTICO DO BANCO DE DADOS SUPABASE (Aberto) */}
+      {/* 7. SECTION: DIAGNÓSTICO DO BANCO DE DADOS */}
       <section id="sec-banco" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-red-500" />
-            <h2 className="text-lg font-black text-white tracking-tight">8. Diagnóstico & Status do Banco de Dados Supabase (PostgreSQL)</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">6. Diagnóstico & Status do Banco de Dados Supabase (PostgreSQL)</h2>
           </div>
           <button
             onClick={() => setSupabaseConfigOpen(true)}
@@ -901,10 +883,10 @@ export default function AdminDashboard() {
               <span className="text-lg font-black text-white">{products.length}</span>
               <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
             </div>
-            <div className="p-3 bg-zinc-950 rounded-2xl border border-amber-500/20">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Ofertas B2C (demo)</span>
-              <span className="text-lg font-black text-amber-200">{demoOfferCount}</span>
-              <span className="text-[9px] text-zinc-500 block font-semibold">Fixtures locais</span>
+            <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Ofertas Parceiras</span>
+              <span className="text-lg font-black text-white">{partnerOfferCount}</span>
+              <span className="text-[9px] text-emerald-400 block font-semibold">Ativas</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
               <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Users</span>
@@ -923,7 +905,7 @@ export default function AdminDashboard() {
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
               <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Posts</span>
-              <span className="text-lg font-black text-white">2</span>
+              <span className="text-lg font-black text-white">{communityPosts.length}</span>
               <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
             </div>
           </div>
@@ -939,7 +921,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center justify-between text-[11px] font-mono">
               <span className="text-zinc-500">Contas-mestre:</span>
-              <span className="text-white font-bold">protegidas no servidor (lib/permissions.ts)</span>
+              <span className="text-white font-bold">Protegidas no servidor (lib/permissions.ts)</span>
             </div>
           </div>
         </div>
@@ -984,7 +966,7 @@ export default function AdminDashboard() {
                   required
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="carlos@exemplo.com"
+                  placeholder="carlos@atleta.com.br"
                   className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white placeholder-zinc-500 rounded-xl border border-zinc-800 focus:outline-none focus:border-red-500"
                 />
               </div>

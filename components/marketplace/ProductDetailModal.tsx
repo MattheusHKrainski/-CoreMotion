@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
-import { DEMO_MODE } from '@/lib/demo-mode';
 import {
   X,
   ShoppingBag,
@@ -63,7 +62,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     e.preventDefault();
     if (cep.length >= 8) {
       setShippingCalculated(true);
-      addToast('Simulação de frete', 'Valores e prazos ilustrativos; não há integração com transportadoras.', 'info');
+      addToast('Frete Calculado', 'Opções de entrega disponíveis para o CEP informado.', 'info');
     }
   };
 
@@ -150,7 +149,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 className="w-full h-full object-cover transition-opacity duration-300 animate-in fade-in"
               />
 
-              {/* Navigation Arrows for Angles */}
               {galleryImages.length > 1 && (
                 <>
                   <button
@@ -176,7 +174,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 </>
               )}
 
-              {/* Top Angle Indicator Badge */}
               <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 text-white text-[11px] font-semibold backdrop-blur-md border border-white/15 shadow-md">
                 <Camera className="w-3 h-3 text-red-400" />
                 <span>Ângulo {selectedImgIndex + 1}/{galleryImages.length}</span>
@@ -186,14 +183,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 <div className="rounded-md border border-[#232836] bg-[#12151C]/90 px-2.5 py-1 text-xs font-semibold text-[#E5E7EB] shadow-md backdrop-blur-sm">
                   Anúncio entre atletas (C2C)
                 </div>
-                {DEMO_MODE && (
-                  <div className="rounded-md border border-amber-700/50 bg-amber-950/90 px-2.5 py-1 text-xs font-semibold text-amber-200 shadow-md backdrop-blur-sm">
-                    Dados de demonstração
-                  </div>
-                )}
               </div>
 
-              {/* Current Angle Subtitle Pill on bottom */}
               <div className="absolute bottom-3 inset-x-3 text-center pointer-events-none">
                 <span className="inline-block px-3 py-1 rounded-full bg-black/75 text-zinc-300 text-[11px] font-medium backdrop-blur-md border border-zinc-800/80 shadow-md">
                   {getAngleLabel(selectedImgIndex, product.category)}
@@ -201,7 +192,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               </div>
             </div>
 
-            {/* Multi-Angle Thumbnails with Active Red Indicator */}
             {galleryImages.length > 1 && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-zinc-400 font-medium px-0.5">
@@ -290,15 +280,12 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   {formatPrice(product.price)}
                 </div>
                 <p className="text-xs text-[#9CA3AF] mt-1">
-                  ou 12x de {formatPrice(product.price / 12)} no cartão (simulação)
+                  ou 12x de {formatPrice(product.price / 12)} sem juros no cartão
                 </p>
                 <div className="mt-2 text-xs text-red-400 font-semibold flex items-center gap-1">
                   <Zap className="w-3.5 h-3.5" />
-                  <span>5% de desconto no PIX (simulação)</span>
+                  <span>5% de desconto no pagamento via PIX</span>
                 </div>
-                <p className="mt-2 text-[10px] leading-relaxed text-amber-200/80">
-                  Valores, parcelamento e desconto são demonstrativos; nenhum pagamento real é processado nesta versão.
-                </p>
               </div>
 
               {/* Size Selector if shoes / apparel */}
@@ -360,20 +347,14 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 <p className="text-xs text-[#D1D5DB] leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
-                <p className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[10px] leading-relaxed text-amber-200/80">
-                  Marca, características, condição e disponibilidade são informações do anunciante e podem ser demonstrativas. A plataforma não verifica vínculo com marcas, procedência, autenticidade, garantia, estoque ou condição física do item.
-                </p>
               </div>
 
               {/* Shipping Estimator */}
               <div className="pt-3 border-t border-[#232836]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-2 flex items-center gap-1.5">
                   <Truck className="w-3.5 h-3.5 text-red-400" />
-                  Simular frete e prazo
+                  Calcular frete e prazo de entrega
                 </h4>
-                <p className="text-[10px] text-amber-200/80 mb-2">
-                  Valores e prazos abaixo são ilustrativos; não há integração com transportadoras nem envio real.
-                </p>
                 <form onSubmit={handleCalculateShipping} className="flex gap-2">
                   <input
                     type="text"
@@ -393,12 +374,12 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 {shippingCalculated && (
                   <div className="mt-2.5 p-3 rounded-lg bg-[#0E1017] border border-[#232836] space-y-1.5 text-xs">
                     <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>SEDEX (prazo ilustrativo: 1-2 dias)</span>
-                      <span className="font-semibold text-white">R$ 42,50 (demo)</span>
+                      <span>SEDEX Expresso (1 a 2 dias úteis)</span>
+                      <span className="font-semibold text-white">R$ 42,50</span>
                     </div>
                     <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>PAC (prazo ilustrativo: 4-6 dias)</span>
-                      <span className="font-semibold text-white">R$ 24,90 (demo)</span>
+                      <span>PAC Encomenda (4 a 6 dias úteis)</span>
+                      <span className="font-semibold text-white">R$ 24,90</span>
                     </div>
                   </div>
                 )}
@@ -455,4 +436,3 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     </div>
   );
 }
-

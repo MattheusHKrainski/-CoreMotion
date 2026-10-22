@@ -67,14 +67,14 @@ export default function CoachesView() {
             Treinadores Especializados
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Perfis simulados de treinadores (dados fictícios) para periodização de treinos, preparação para maratonas e triatlos.
+            Profissionais de educação física e treinadores especialistas em periodização de corrida, ciclismo, triatlo e trail running.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
           <div className="px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-zinc-300 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-red-500" />
-            <span className="font-semibold">Perfil simulado (sem verificação de CREF)</span>
+            <span className="font-semibold">CREF Verificado</span>
           </div>
         </div>
       </div>

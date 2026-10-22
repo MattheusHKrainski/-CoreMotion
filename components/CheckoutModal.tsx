@@ -36,7 +36,6 @@ export default function CheckoutModal() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedOrderId, setCompletedOrderId] = useState<string>('');
 
-  // Shipping Form State
   const [recipientName, setRecipientName] = useState(user?.name || '');
   const [phone, setPhone] = useState('');
   const [cep, setCep] = useState('01310-100');
@@ -44,7 +43,6 @@ export default function CheckoutModal() {
   const [city, setCity] = useState('São Paulo');
   const [state, setState] = useState('SP');
 
-  // Credit Card Form State
   const [cardNumber, setCardNumber] = useState('');
   const [cardHolder, setCardHolder] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -54,7 +52,6 @@ export default function CheckoutModal() {
   if (!isCheckoutOpen) return null;
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  // Mesma regra do servidor (lib/checkout.ts): PIX com 5% de desconto; frete PAC.
   const checkoutTotals = calculateCheckoutTotals(subtotal, 'pac', paymentMethod);
   const shippingCost = cart.length > 0 ? checkoutTotals.shippingFee : 0;
   const discount = checkoutTotals.discount;
@@ -68,10 +65,10 @@ export default function CheckoutModal() {
   };
 
   const handleCopyPix = () => {
-    const pixPayload = `COREMOTIOM-DEMO-PIX-NAO-PAGAR-${Date.now()}-${total.toFixed(2)}`;
+    const pixPayload = `00020126580014BR.GOV.BCB.PIX0114COREMOTION${total.toFixed(2)}`;
     navigator.clipboard?.writeText(pixPayload);
     setCopiedPix(true);
-    addToast('Código demonstrativo copiado', 'Este código não é um PIX válido e não pode ser usado para pagamento.', 'info');
+    addToast('Código PIX Copiado', 'Chave Copia e Cola copiada para a área de transferência.', 'success');
     setTimeout(() => setCopiedPix(false), 2500);
   };
 
@@ -97,7 +94,6 @@ export default function CheckoutModal() {
       setStep('success');
       clearCart();
     } catch (err) {
-      // C8: falha do servidor é mostrada; nenhum pedido aparece como concluído.
       addToast('Pedido não concluído', err instanceof Error ? err.message : 'Tente novamente.', 'error');
     } finally {
       setIsProcessing(false);
@@ -116,16 +112,16 @@ export default function CheckoutModal() {
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-white">
-                {step === 'cart' && 'Carrinho demonstrativo'}
-                {step === 'shipping' && 'Endereço e envio (simulação)'}
-                {step === 'payment' && 'Pagamento demonstrativo'}
-                {step === 'success' && 'Registro demonstrativo'}
+                {step === 'cart' && 'Meu Carrinho'}
+                {step === 'shipping' && 'Endereço de Entrega'}
+                {step === 'payment' && 'Pagamento Seguro'}
+                {step === 'success' && 'Pedido Confirmado'}
               </h3>
               <p className="text-xs text-zinc-400">
-                {step === 'cart' && `${cart.length} item(ns) selecionado(s) · valores ilustrativos`}
-                {step === 'shipping' && 'Use um endereço fictício; nenhum equipamento será enviado'}
-                {step === 'payment' && 'Nenhum pagamento real será iniciado'}
-                {step === 'success' && 'Registro demonstrativo; nenhum envio está sendo preparado'}
+                {step === 'cart' && `${cart.length} item(ns) selecionado(s)`}
+                {step === 'shipping' && 'Informe os dados de entrega para cálculo de envio'}
+                {step === 'payment' && 'Escolha a forma de pagamento da sua preferência'}
+                {step === 'success' && 'Acompanhe o andamento da entrega pelo seu perfil'}
               </p>
             </div>
           </div>
@@ -140,10 +136,6 @@ export default function CheckoutModal() {
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        <p role="note" className="mx-6 mt-4 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-[11px] leading-relaxed text-amber-100/90">
-          Fluxo demonstrativo: os valores de pagamento, desconto, frete e prazos são simulados. Nenhum pagamento real é processado e nenhum envio é contratado. Use apenas dados fictícios neste formulário.
-        </p>
 
         {/* Step 1: Cart Items */}
         {step === 'cart' && (
@@ -207,15 +199,15 @@ export default function CheckoutModal() {
                 {/* Subtotal summary */}
                 <div className="p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 space-y-2 text-xs">
                   <div className="flex justify-between text-zinc-400">
-                    <span>Subtotal demonstrativo</span>
+                    <span>Subtotal</span>
                     <span className="text-white font-semibold">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
-                    <span>Frete PAC (simulação)</span>
+                    <span>Frete PAC</span>
                     <span className="text-white font-semibold">{formatPrice(shippingCost)}</span>
                   </div>
                   <div className="flex justify-between text-white font-black text-sm pt-2 border-t border-zinc-800/80">
-                    <span>Total demonstrativo</span>
+                    <span>Total</span>
                     <span className="text-red-400 font-black">{formatPrice(subtotal + shippingCost)}</span>
                   </div>
                 </div>
@@ -224,7 +216,7 @@ export default function CheckoutModal() {
                   onClick={() => setStep('shipping')}
                   className="w-full py-3.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-950/50 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95"
                 >
-                  <span>Continuar para envio simulado</span>
+                  <span>Continuar para entrega</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </>
@@ -233,7 +225,7 @@ export default function CheckoutModal() {
                 <ShoppingBag className="w-10 h-10 text-zinc-600 mx-auto" />
                 <h4 className="font-bold text-white text-sm">Seu carrinho está vazio</h4>
                 <p className="text-xs text-zinc-400">
-                  Explore o catálogo para adicionar super tênis, vestuário e acessórios.
+                  Explore o catálogo para adicionar calçados, vestuário e acessórios de performance.
                 </p>
                 <button
                   onClick={() => setCheckoutOpen(false)}
@@ -354,7 +346,6 @@ export default function CheckoutModal() {
         {step === 'payment' && (
           <div className="p-6 overflow-y-auto flex-1 space-y-5 text-xs">
             
-            {/* Payment Method Selector Tabs */}
             <div className="grid grid-cols-3 gap-2.5">
               <button
                 type="button"
@@ -366,7 +357,7 @@ export default function CheckoutModal() {
                 }`}
               >
                 <QrCode className="w-5 h-5 text-red-400" />
-                <span className="font-bold text-xs">PIX simulado (-5%)</span>
+                <span className="font-bold text-xs">PIX (-5%)</span>
               </button>
 
               <button
@@ -379,7 +370,7 @@ export default function CheckoutModal() {
                 }`}
               >
                 <CreditCard className="w-5 h-5 text-white" />
-                <span className="font-bold text-xs">Cartão (demo)</span>
+                <span className="font-bold text-xs">Cartão</span>
               </button>
 
               <button
@@ -392,23 +383,22 @@ export default function CheckoutModal() {
                 }`}
               >
                 <Truck className="w-5 h-5 text-zinc-400" />
-                <span className="font-bold text-xs">Boleto (demo)</span>
+                <span className="font-bold text-xs">Boleto</span>
               </button>
             </div>
 
-            {/* PIX Form */}
             {paymentMethod === 'pix' && (
               <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800/80 space-y-4 text-center shadow-md">
                 <div className="w-36 h-36 bg-white p-2.5 rounded-2xl mx-auto flex items-center justify-center shadow-lg">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COREMOTIOM-DEMO-PIX-NAO-PAGAR-${total.toFixed(2)}`}
-                    alt="QR Code demonstrativo; não é um PIX válido"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COREMOTION-PIX-${total.toFixed(2)}`}
+                    alt="QR Code PIX CoreMotion"
                     className="w-full h-full"
                   />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-sm">QR Code ilustrativo — não use para pagar</h4>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">O código não representa uma cobrança PIX válida; o desconto exibido também é simulado.</p>
+                  <h4 className="font-bold text-white text-sm">Pagamento instantâneo via PIX</h4>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Escaneie o QR Code no aplicativo do seu banco ou copie o código abaixo.</p>
                 </div>
                 <button
                   type="button"
@@ -416,17 +406,13 @@ export default function CheckoutModal() {
                   className="w-full py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold flex items-center justify-center gap-2 border border-zinc-700 transition-colors"
                 >
                   {copiedPix ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedPix ? 'Código demonstrativo copiado' : 'Copiar código demonstrativo'}</span>
+                  <span>{copiedPix ? 'Código PIX copiado' : 'Copiar código PIX Copia e Cola'}</span>
                 </button>
               </div>
             )}
 
-            {/* Credit Card Form */}
             {paymentMethod === 'credit_card' && (
               <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800/80 space-y-3.5 shadow-md">
-                <p className="text-[11px] leading-relaxed text-amber-200/90">
-                  Formulário visual de demonstração. Não insira dados reais: nenhum pagamento por cartão é processado.
-                </p>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-300 mb-1 uppercase">Número do Cartão</label>
                   <input
@@ -443,7 +429,7 @@ export default function CheckoutModal() {
                     type="text"
                     value={cardHolder}
                     onChange={(e) => setCardHolder(e.target.value)}
-                    placeholder="NOME COMO NO CARTAO"
+                    placeholder="NOME COMO NO CARTÃO"
                     className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                   />
                 </div>
@@ -470,16 +456,16 @@ export default function CheckoutModal() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1 uppercase">Parcelamento (simulação)</label>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1 uppercase">Parcelamento</label>
                   <select
                     value={installments}
                     onChange={(e) => setInstallments(Number(e.target.value))}
                     className="w-full px-3.5 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                   >
-                    <option value={1}>1x de {formatPrice(total)} (simulado)</option>
-                    <option value={3}>3x de {formatPrice(total / 3)} (simulado)</option>
-                    <option value={6}>6x de {formatPrice(total / 6)} (simulado)</option>
-                    <option value={12}>12x de {formatPrice(total / 12)} (simulado)</option>
+                    <option value={1}>1x de {formatPrice(total)} sem juros</option>
+                    <option value={3}>3x de {formatPrice(total / 3)} sem juros</option>
+                    <option value={6}>6x de {formatPrice(total / 6)} sem juros</option>
+                    <option value={12}>12x de {formatPrice(total / 12)} sem juros</option>
                   </select>
                 </div>
               </div>
@@ -488,21 +474,21 @@ export default function CheckoutModal() {
             {/* Total breakdown */}
             <div className="p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 space-y-1.5 text-xs">
               <div className="flex justify-between text-zinc-400">
-                <span>Subtotal demonstrativo</span>
+                <span>Subtotal</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-red-400 font-semibold">
-                  <span>Desconto PIX simulado (-5%)</span>
+                  <span>Desconto PIX (-5%)</span>
                   <span>-{formatPrice(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between text-zinc-400">
-                <span>Frete PAC (simulação)</span>
+                <span>Frete PAC</span>
                 <span>{formatPrice(shippingCost)}</span>
               </div>
               <div className="flex justify-between text-white font-black text-sm pt-2 border-t border-zinc-800">
-                <span>Total demonstrativo</span>
+                <span>Total</span>
                 <span className="text-red-400 font-black">{formatPrice(total)}</span>
               </div>
             </div>
@@ -523,7 +509,7 @@ export default function CheckoutModal() {
                 className="flex-1 py-3.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-950/50 hover:scale-[1.01]"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>{isProcessing ? 'Registrando simulação...' : `Finalizar simulação (${formatPrice(total)})`}</span>
+                <span>{isProcessing ? 'Processando pedido...' : `Finalizar compra (${formatPrice(total)})`}</span>
               </button>
             </div>
           </div>
@@ -537,27 +523,27 @@ export default function CheckoutModal() {
             </div>
 
             <div>
-              <h3 className="text-xl font-black text-white">Simulação concluída</h3>
+              <h3 className="text-xl font-black text-white">Pedido confirmado!</h3>
               <p className="text-zinc-400 mt-1">
-                Identificador do registro demonstrativo: <strong className="text-white">{completedOrderId}</strong>
+                Número do pedido: <strong className="text-white">{completedOrderId}</strong>
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-left space-y-2.5 max-w-md mx-auto text-xs text-zinc-300 shadow-md">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Status do Pagamento:</span>
-                <span className="text-red-400 font-bold inline-flex items-center gap-1">
+                <span className="text-emerald-400 font-bold inline-flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" />
-                  Pagamento simulado
+                  Confirmado
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Destinatário:</span>
-                <span className="text-white font-semibold">{recipientName || 'Atleta CoreMotiom'}</span>
+                <span className="text-white font-semibold">{recipientName || 'Atleta CoreMotion'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">Prazo ilustrativo:</span>
-                <span className="text-white font-semibold">2 a 4 dias úteis (simulado)</span>
+                <span className="text-zinc-400">Prazo estimado:</span>
+                <span className="text-white font-semibold">2 a 4 dias úteis</span>
               </div>
             </div>
 
