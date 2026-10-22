@@ -25,7 +25,7 @@ interface HomeHeroAndHighlightsProps {
 
 type HomeTab = 'all' | 'offers' | 'c2c';
 
-const QUICK_FILTERS = ['all', 'Corrida', 'Ciclismo', 'Triatlo', 'Calçados', 'Tecnologia & Wearables', 'Acessórios'];
+const QUICK_FILTERS = ['all', 'Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Musculação'];
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -83,10 +83,10 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
               Esporte em movimento
             </span>
             <h1 id="home-title" className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-              Encontre ofertas esportivas. Negocie entre atletas.
+              Tudo para o seu esporte em um só lugar.
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-              Explore ofertas selecionadas de lojas esportivas parceiras e equipamentos anunciados diretamente por atletas de todo o Brasil, unidos à assessoria especializada e comunidade ativa.
+              Do tatame às quadras, das pistas aos campos: encontre descontos nas melhores marcas, compre e venda equipamentos com garantia e treine com especialistas em Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida e mais.
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               <button type="button" onClick={() => openMarketplace()} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-red-950/40 transition hover:bg-red-500 sm:text-sm">
@@ -220,7 +220,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <button type="button" onClick={() => openMarketplace()} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Tag className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Economize nas Melhores Marcas</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Encontre descontos reais em tênis de placa, relógios GPS, ciclismo e vestuário.</span></span>
+          <span><strong className="block text-sm text-white">Economize nas Melhores Marcas</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Descontos em kimonos, bolas oficiais, raquetes, tênis de quadra, chuteiras e muito mais.</span></span>
         </button>
         <button type="button" onClick={handleSellClick} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Bike className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />

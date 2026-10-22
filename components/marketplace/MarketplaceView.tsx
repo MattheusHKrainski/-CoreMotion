@@ -29,8 +29,8 @@ type CatalogTab = 'all' | 'offers' | 'c2c';
 type SortBy = 'relevance' | 'price_asc' | 'price_desc' | 'discount_desc' | 'newest';
 
 const PAGE_SIZE = 12;
-const CATEGORIES = ['Calçados', 'Vestuário', 'Equipamentos', 'Tecnologia & Wearables', 'Acessórios'];
-const SPORTS = ['Corrida', 'Treino', 'Ciclismo', 'Triatlo', 'Trail Running', 'Natação', 'Futebol'];
+const CATEGORIES = ['Calçados', 'Vestuário', 'Artes Marciais', 'Equipamentos', 'Acessórios', 'Tecnologia & Wearables'];
+const SPORTS = ['Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Musculação', 'Natação', 'Ciclismo'];
 const CONDITIONS = [
   { id: 'novo', label: 'Novo (lacrado)' },
   { id: 'como_novo', label: 'Como novo' },
@@ -47,6 +47,7 @@ function matchesCategory(itemCategory: string, selectedCategory: string): boolea
   if (selectedCategory === 'all') return true;
   if (itemCategory === selectedCategory) return true;
   if (selectedCategory === 'Vestuário' && itemCategory === 'Roupas') return true;
+  if (selectedCategory === 'Artes Marciais' && itemCategory === 'Lutas') return true;
   if (selectedCategory === 'Tecnologia & Wearables' && ['Tecnologia', 'Wearables'].includes(itemCategory)) return true;
   return false;
 }

@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from '@/services/supabaseClient';
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import BrandMark from '@/components/shared/BrandMark';
 import {
   X,
   Mail,
@@ -123,9 +124,7 @@ export default function AuthModal() {
         <div className="p-6 sm:p-8">
           {/* Brand Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-red-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-red-950/50">
-              CM
-            </div>
+            <BrandMark className="w-10 h-10" />
             <div>
               <h3 className="text-lg font-black text-white">
                 {authModalMode === 'login' && 'Acessar CoreMotion'}

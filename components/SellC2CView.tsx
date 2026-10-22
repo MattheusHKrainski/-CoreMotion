@@ -211,7 +211,7 @@ export default function SellC2CView() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Tênis Vaporfly Next% 3 Tam 42 (Apenas 40km rodados)"
+                placeholder="Ex: Kimono Jiu-Jitsu A2, Raquete Wilson, Tênis de Basquete Tam 42..."
                 className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
               />
             </div>
@@ -227,10 +227,11 @@ export default function SellC2CView() {
                   className="w-full px-3.5 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                 >
                   <option value="Calçados">Calçados</option>
-                  <option value="Roupas">Roupas</option>
+                  <option value="Artes Marciais">Artes Marciais</option>
                   <option value="Equipamentos">Equipamentos</option>
-                  <option value="Tecnologia & Wearables">Tecnologia & Wearables</option>
+                  <option value="Vestuário">Vestuário</option>
                   <option value="Acessórios">Acessórios</option>
+                  <option value="Tecnologia & Wearables">Tecnologia & Wearables</option>
                 </select>
               </div>
 
@@ -243,12 +244,16 @@ export default function SellC2CView() {
                   onChange={(e) => setSport(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                 >
+                  <option value="Jiu-Jitsu">Jiu-Jitsu</option>
+                  <option value="Basquete">Basquete</option>
+                  <option value="Vôlei">Vôlei</option>
+                  <option value="Tênis">Tênis</option>
+                  <option value="Karatê">Karatê</option>
+                  <option value="Futebol">Futebol</option>
                   <option value="Corrida">Corrida</option>
-                  <option value="Triatlo">Triatlo</option>
-                  <option value="Ciclismo">Ciclismo</option>
-                  <option value="Trail Running">Trail Running</option>
-                  <option value="Crossfit & Funcional">Crossfit & Funcional</option>
+                  <option value="Musculação">Musculação</option>
                   <option value="Natação">Natação</option>
+                  <option value="Ciclismo">Ciclismo</option>
                 </select>
               </div>
 
