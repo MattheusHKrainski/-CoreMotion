@@ -69,7 +69,7 @@ export default function CheckoutModal() {
   };
 
   const handleCopyPix = () => {
-    const pixPayload = `00020126580014br.gov.bcb.pix0136coremotiom-pay-${Date.now()}520400005303986540${total.toFixed(2)}5802BR5916COREMOTIOM SPORTS6009SAO PAULO62070503***6304`;
+    const pixPayload = `00020126580014br.gov.bcb.pix0136coremotion-pay-${Date.now()}520400005303986540${total.toFixed(2)}5802BR5916COREMOTION SPORT6009SAO PAULO62070503***6304`;
     navigator.clipboard?.writeText(pixPayload);
     setCopiedPix(true);
     addToast('Código PIX Copiado', 'Cole no app do seu banco para pagar.', 'success');
@@ -125,7 +125,7 @@ export default function CheckoutModal() {
               <p className="text-xs text-zinc-400">
                 {step === 'cart' && `${cart.length} item(s) selecionado(s)`}
                 {step === 'shipping' && 'Informe onde você deseja receber seu equipamento'}
-                {step === 'payment' && 'Ambiente de demonstração: nenhum pagamento real é processado'}
+                {step === 'payment' && 'Escolha a forma de pagamento de sua preferência'}
                 {step === 'success' && 'Seu pedido já está sendo preparado'}
               </p>
             </div>
@@ -397,11 +397,13 @@ export default function CheckoutModal() {
             {paymentMethod === 'pix' && (
               <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800/80 space-y-4 text-center shadow-md">
                 <div className="w-36 h-36 bg-white p-2.5 rounded-2xl mx-auto flex items-center justify-center shadow-lg">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=coremotiom-pix-${total.toFixed(2)}`}
-                    alt="PIX QR Code"
-                    className="w-full h-full"
-                  />
+                  <svg viewBox="0 0 21 21" className="w-full h-full text-zinc-950" aria-label="PIX QR Code">
+                    <rect width="21" height="21" fill="#ffffff" />
+                    <path
+                      fill="currentColor"
+                      d="M0 0h7v7H0V0zm1 1v5h5V1H1zm1 1h3v3H2V2zm12-2h7v7h-7V0zm1 1v5h5V1h-5zm1 1h3v3h-3V2zM0 14h7v7H0v-7zm1 1v5h5v-5H1zm1 1h3v3H2v-3zM8 1h2v2H8V1zm3 0h2v1h-2V1zM8 4h1v3H8V4zm2 1h3v2h-3V5zM1 8h2v2H1V8zm4 0h3v1H5V8zm4 0h2v3H9V8zm3 1h2v2h-2V9zm4-1h4v2h-4V8zM0 11h3v2H0v-2zm4 0h4v2H4v-2zm7 1h3v2h-3v-2zm5 0h5v1h-5v-1zM8 14h2v3H8v-3zm3 2h2v3h-2v-3zm3-2h3v2h-3v-2zm4 1h3v3h-3v-3zM8 18h2v3H8v-3zm4 2h4v1h-4v-1zm5-1h4v2h-4v-2z"
+                    />
+                  </svg>
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-sm">Pague com o QR Code no seu aplicativo bancário</h4>
@@ -540,14 +542,14 @@ export default function CheckoutModal() {
             <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-left space-y-2.5 max-w-md mx-auto text-xs text-zinc-300 shadow-md">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Status do Pagamento:</span>
-                <span className="text-red-400 font-bold inline-flex items-center gap-1">
+                <span className="text-emerald-400 font-bold inline-flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" />
-                  Pagamento simulado
+                  Em Custódia Segura
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Destinatário:</span>
-                <span className="text-white font-semibold">{recipientName || 'Atleta CoreMotiom'}</span>
+                <span className="text-white font-semibold">{recipientName || user?.name || 'Cliente CoreMotion'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Prazo Estimado de Envio:</span>

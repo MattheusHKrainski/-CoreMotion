@@ -12,6 +12,7 @@ type StoreInput = Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | '
 export class StoreService {
   /** Documentos de verificação por loja: só a equipe recebe (a API recusa quem não é da equipe). */
   static async getVerificationDocs(): Promise<Record<string, NonNullable<Store['verification_docs']>>> {
+    if (!isSupabaseConfigured) return {};
     try {
       const res = await authedFetch('/api/stores?docs=1');
       if (!res.ok) return {};
@@ -28,6 +29,9 @@ export class StoreService {
 
   /** Lista lojas do banco (ou dados de demonstração quando o banco não está configurado). */
   static async getStores(): Promise<Store[]> {
+    if (!isSupabaseConfigured) {
+      return DEMO_MODE ? INITIAL_STORES : [];
+    }
     try {
       const res = await fetch('/api/stores');
       if (res.ok) {
@@ -57,6 +61,19 @@ export class StoreService {
 
   /** Cadastra a loja do usuário autenticado (o servidor define o dono). */
   static async createStore(storeData: StoreInput): Promise<{ success: boolean; data: Store } & Store> {
+    if (!isSupabaseConfigured) {
+      const fallbackStore: Store = {
+        ...storeData,
+        id: `store_${Date.now()}`,
+        rating: 5.0,
+        sales_count: 0,
+        products_count: 0,
+        is_verified: false,
+        verification_status: 'none',
+        created_at: new Date().toISOString(),
+      };
+      return { success: true, data: fallbackStore, ...fallbackStore };
+    }
     const res = await authedFetch('/api/stores', { method: 'POST', body: JSON.stringify(storeData) });
     const data = await res.json().catch(() => null);
     if (res.ok && data?.success && data.store) {
@@ -82,6 +99,7 @@ export class StoreService {
 
   /** O lojista envia os documentos e a loja passa ao status 'pending'. */
   static async requestVerification(storeId: string, docs: NonNullable<Store['verification_docs']>): Promise<void> {
+    if (!isSupabaseConfigured) return;
     const res = await authedFetch('/api/stores', {
       method: 'PATCH',
       body: JSON.stringify({ storeId, action: 'request_verification', docs }),
@@ -94,6 +112,7 @@ export class StoreService {
 
   /** Supervisor ou administrador aprova ('verified') ou reprova ('rejected') a loja. */
   static async adminVerifyStore(storeId: string, approve: boolean, notes?: string): Promise<void> {
+    if (!isSupabaseConfigured) return;
     const res = await authedFetch('/api/stores', {
       method: 'PATCH',
       body: JSON.stringify({ storeId, approve, notes }),

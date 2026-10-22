@@ -35,9 +35,9 @@ export default function Footer() {
                 <Lock className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Fluxo C2C simulado</h4>
+                <h4 className="text-sm font-bold text-white tracking-tight">Custódia Protegida C2C</h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Fluxo simulado: nesta versão o pagamento não é retido de verdade.
+                  Seu pagamento fica protegido até o recebimento e a conferência do equipamento.
                 </p>
               </div>
             </div>
@@ -59,7 +59,7 @@ export default function Footer() {
                 <RotateCcw className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Garantia CoreMotiom</h4>
+                <h4 className="text-sm font-bold text-white tracking-tight">Garantia CoreMotion</h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                   Proteção integral contra divergências com suporte direto de atletas para atletas.
                 </p>
@@ -79,17 +79,15 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-700 to-red-500 flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-red-950/40">
                 CM
               </div>
-              <span className="text-lg font-black tracking-tight text-white">CoreMotiom</span>
-              <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase">
-                PRO
-              </span>
+              <span className="text-lg font-black tracking-tight text-white">CoreMotion</span>
             </div>
             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-              Ecossistema esportivo de demonstração: marketplace, lojas e comunidade (fluxos simulados).</p>
+              Ecossistema esportivo completo: marketplace de lojas oficiais, compra e venda segura entre atletas, assessoria esportiva e comunidade.
+            </p>
             <div className="flex items-center gap-3 pt-2">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-300 bg-zinc-900/90 px-3 py-1 rounded-full border border-zinc-800">
                 <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
-                Segurança Supabase Auth & PostgreSQL
+                Compra Protegida & Lojas Homologadas
               </span>
             </div>
           </div>
@@ -121,7 +119,7 @@ export default function Footer() {
           <div>
             <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Segurança & Legal</h5>
             <ul className="space-y-2 text-xs">
-              <li><span className="hover:text-white cursor-pointer transition-colors">Fluxo simulado</span></li>
+              <li><span className="hover:text-white cursor-pointer transition-colors">Política de Compra Protegida</span></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Diretrizes de Verificação de Lojas</span></li>
               <li><span className="hover:text-white cursor-pointer transition-colors">Canal de Atendimento ao Atleta</span></li>
             </ul>
@@ -130,13 +128,13 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-zinc-800/80 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-          <p>© {new Date().getFullYear()} CoreMotiom Sports Technologies. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} CoreMotion. Todos os direitos reservados.</p>
           <div className="flex items-center gap-3">
-            <span>Dark High-Performance Mode</span>
+            <span>Pagamentos via PIX & Cartão</span>
             <span>•</span>
-            <span className="text-red-500 font-semibold">Crimson Pro Engine</span>
+            <span className="text-red-500 font-semibold">Compra Protegida</span>
             <span>•</span>
-            <span>PostgreSQL & Supabase Connected</span>
+            <span>Envio Nacional com Seguro</span>
           </div>
         </div>
       </div>

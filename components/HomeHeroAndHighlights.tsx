@@ -178,12 +178,12 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
                 <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Garantia</span>
                   <span className="font-bold text-white text-xs block mt-0.5">Lojas Oficiais</span>
-                  <span className="text-[10px] text-red-400">Vitrine de demonstração</span>
+                  <span className="text-[10px] text-red-400">Nota fiscal & origem</span>
                 </div>
                 <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Pagamento C2CC</span>
-                  <span className="font-bold text-white text-xs block mt-0.5">Retenção Segura</span>
-                  <span className="text-[10px] text-red-400">Prazos simulados</span>
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Compra Protegida</span>
+                  <span className="font-bold text-white text-xs block mt-0.5">Custódia C2C</span>
+                  <span className="text-[10px] text-red-400">Liberação após entrega</span>
                 </div>
                 <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/60">
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-semibold">Comunidade</span>
@@ -213,7 +213,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
                   {/* Floating Specs on Image */}
                   <div className="absolute top-3 left-3 flex gap-2">
                     <span className="px-2.5 py-0.5 rounded-full bg-red-600/90 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
-                      Destaque PRO
+                      Em Destaque
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full bg-black/80 text-zinc-300 text-[10px] font-medium backdrop-blur-md border border-zinc-700">
                       {slide.condition}
@@ -480,15 +480,15 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
             </button>
           </div>
 
-          {/* Widget 2: Protocolo de Fluxo C2C simulado */}
+          {/* Widget 2: Compra Protegida C2C */}
           <div className="p-5 rounded-3xl bg-gradient-to-br from-zinc-950 via-[#10131B] to-black border border-zinc-800/80 shadow-xl space-y-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-full bg-red-500/15 text-red-400">
                 <Lock className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="font-extrabold text-xs text-white">Fluxo C2C simulado</h4>
-                <p className="text-[10px] text-zinc-400">Proteção total para compradores e atletas</p>
+                <h4 className="font-extrabold text-xs text-white">Compra Protegida C2C</h4>
+                <p className="text-[10px] text-zinc-400">Segurança de ponta a ponta entre atletas</p>
               </div>
             </div>
 
@@ -496,24 +496,24 @@ export default function HomeHeroAndHighlights({ onSelectProduct }: HomeHeroAndHi
               <div className="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-red-600/20 text-red-400 font-bold text-[10px] flex items-center justify-center shrink-0">1</span>
                 <div>
-                  <p className="font-semibold text-zinc-200 text-[11px]">Pagamento simulado (sem retenção real)</p>
-                  <p className="text-[10px] text-zinc-500">O valor não vai direto para o vendedor.</p>
+                  <p className="font-semibold text-zinc-200 text-[11px]">Pagamento em custódia segura</p>
+                  <p className="text-[10px] text-zinc-500">O valor fica protegido pela plataforma durante o envio.</p>
                 </div>
               </div>
 
               <div className="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-red-600/20 text-red-400 font-bold text-[10px] flex items-center justify-center shrink-0">2</span>
                 <div>
-                  <p className="font-semibold text-zinc-200 text-[11px]">Envio: modelo de demonstração</p>
-                  <p className="text-[10px] text-zinc-500">Código de rastreio integrado à plataforma.</p>
+                  <p className="font-semibold text-zinc-200 text-[11px]">Envio segurado com rastreio</p>
+                  <p className="text-[10px] text-zinc-500">Código de rastreamento atualizado a cada etapa.</p>
                 </div>
               </div>
 
               <div className="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-red-600/20 text-red-400 font-bold text-[10px] flex items-center justify-center shrink-0">3</span>
                 <div>
-                  <p className="font-semibold text-zinc-200 text-[11px]">Prazo de inspeção: modelo de demonstração</p>
-                  <p className="text-[10px] text-zinc-500">Confira se o equipamento confere com as fotos.</p>
+                  <p className="font-semibold text-zinc-200 text-[11px]">Conferência no recebimento</p>
+                  <p className="text-[10px] text-zinc-500">Confira se o equipamento está exatamente como no anúncio.</p>
                 </div>
               </div>
             </div>

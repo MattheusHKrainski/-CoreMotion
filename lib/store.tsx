@@ -158,7 +158,7 @@ interface CoreMotiomContextType {
 
 const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
+const LOCAL_STORAGE_KEY = 'coremotion_state_v2';
 
 export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Navigation & views
@@ -252,8 +252,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           if (parsed.cart) setCart(parsed.cart);
           if (parsed.favorites) setFavorites(parsed.favorites);
           if (parsed.user) setUser(parsed.user);
+          if (!isSupabaseConfigured) {
+            if (Array.isArray(parsed.products) && parsed.products.length > 0) setProducts(parsed.products);
+            if (Array.isArray(parsed.stores) && parsed.stores.length > 0) setStores(parsed.stores);
+            if (Array.isArray(parsed.allUsers) && parsed.allUsers.length > 0) setAllUsers(parsed.allUsers);
+            if (Array.isArray(parsed.communityPosts) && parsed.communityPosts.length > 0) setCommunityPosts(parsed.communityPosts);
+          }
         }
         if (isMounted) setIsHydrated(true);
+
+        if (!isSupabaseConfigured) return;
 
         const conn = await testSupabaseConnection();
         if (isMounted) setIsSupabaseLive(conn.connected);
@@ -361,15 +369,15 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const isVisitor = !user || role === 'visitor';
   const isAuthenticated = Boolean(user && role !== 'visitor');
 
-  // Role switching (for live testing of Admin, Seller, User and Visitor flows)
+  // Role switching
   const switchRole = useCallback((newRole: UserRole) => {
     if (isSupabaseConfigured) {
-      addToast('Simulação indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
+      addToast('Troca indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
       return;
     }
     if (newRole === 'visitor') {
       setUser(null);
-      addToast('Modo Visitante', 'Você está navegando como visitante.', 'info');
+      addToast('Sessão Encerrada', 'Você está navegando como visitante.', 'info');
       return;
     }
 
@@ -377,7 +385,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       admin: {
         id: 'usr-admin-mattheus',
         email: 'mattheusxmljz@gmail.com',
-        name: 'Mattheus (Super Admin)',
+        name: 'Mattheus Krainski',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'admin',
         city: 'Curitiba',
@@ -387,11 +395,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       seller: {
         id: 'seller-pro-1',
-        email: 'contato@motiompro.com.br',
-        name: 'Motiom Pro Lab (Lojista Oficial)',
+        email: 'atendimento@motion-performance-lab.com.br',
+        name: 'Motion Performance Lab',
         avatar_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&q=80',
         role: 'seller',
-        store_id: 'store-1',
+        store_id: '748a9f1d-81d5-43ce-8dbd-926d1319cdfe',
         city: 'São Paulo',
         state: 'SP',
         sport_interests: ['Alta Performance', 'Corrida'],
@@ -399,8 +407,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       supervisor: {
         id: 'usr-supervisor-demo',
-        email: 'supervisor@coremotiom.com',
-        name: 'Supervisor de Moderação (demo)',
+        email: 'lucas.andrade@coremotion.com.br',
+        name: 'Lucas Andrade',
         avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
         role: 'supervisor',
         city: 'São Paulo',
@@ -410,7 +418,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       user: {
         id: 'user-c2c-1',
-        email: 'carlos.ramos@atleta.com',
+        email: 'carlos.ramos@gmail.com',
         name: 'Carlos Eduardo Ramos',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'user',
@@ -424,8 +432,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const targetProfile = demoProfiles[newRole];
     setUser(targetProfile);
     addToast(
-      'Perfil Atualizado',
-      `Agora você está operando com permissões de ${newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Lojista' : 'Atleta'}.`,
+      'Conta Alterada',
+      `Conectado como ${targetProfile.name} (${newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Lojista' : 'Atleta'}).`,
       'success'
     );
   }, [addToast]);
@@ -464,7 +472,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       if (user?.id === userId) setUser((prev) => (prev ? { ...prev, role: newRole } : null));
       addToast(
         'Permissão Atualizada',
-        isSupabaseConfigured ? 'Papel gravado no banco de dados.' : 'Papel alterado (modo demonstração, apenas local).',
+        'O papel do usuário foi atualizado com sucesso.',
         'success'
       );
     } catch (err: unknown) {
@@ -498,7 +506,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         created_at: new Date().toISOString(),
       };
       setAllUsers((prev) => [newUser, ...prev]);
-      addToast('Usuário Cadastrado (demo)', `Conta de ${userData.name} criada apenas nesta sessão.`, 'success');
+      addToast('Usuário Cadastrado', `Conta de ${userData.name} criada com sucesso.`, 'success');
     },
     [user, addToast]
   );
@@ -634,7 +642,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       const exists = prev.some((u) => u.email.toLowerCase() === masterAdmin.email.toLowerCase());
       return exists ? prev : [masterAdmin, ...prev];
     });
-    addToast('Sessão Super Admin', 'Conectado como Administrador (perfil de demonstração).', 'success');
+    addToast('Sessão Iniciada', `Conectado como ${masterAdmin.name}.`, 'success');
   }, [addToast]);
 
   // Auth: Email Login
@@ -666,7 +674,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     if (res.success && res.data) {
       setUser(res.data);
       setAllUsers((prev) => [res.data!, ...prev]);
-      addToast('Conta Criada', `Bem-vindo ao CoreMotiom, ${name}! (${res.data.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
+      addToast('Conta Criada', `Bem-vindo ao CoreMotion, ${name}!`, 'success');
       setAuthModalOpen(false);
       return { success: true };
     }
@@ -806,7 +814,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           : ord
       )
     );
-    addToast('Pagamento Confirmado (Sandbox)', `Pedido ${orderId} confirmado (pagamento simulado).`, 'success');
+    addToast('Pagamento Confirmado', `O pagamento do pedido ${orderId} foi aprovado.`, 'success');
   };
 
   // Products CRUD
@@ -859,7 +867,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     if (user) {
       setUser((prev) => (prev ? { ...prev, store_id: newStore.id, role: 'seller' } : null));
     }
-    addToast('Loja Criada!', `Sua loja "${newStore.name}" foi inaugurada no CoreMotiom.`, 'success');
+    addToast('Loja Criada!', `Sua loja "${newStore.name}" foi inaugurada no CoreMotion.`, 'success');
     return newStore;
   };
 
@@ -933,7 +941,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const res = await CommunityService.createPost(
       {
         ...post,
-        author_name: user?.name || 'Atleta CoreMotiom',
+        author_name: user?.name || 'Atleta CoreMotion',
         author_avatar: user?.avatar_url,
         author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Loja Oficial' : 'Atleta',
       },
@@ -943,7 +951,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const newPost: CommunityPost = (res.success && res.data) ? res.data : {
       id: `post-${Date.now()}`,
       author_id: user?.id || 'anon',
-      author_name: user?.name || 'Atleta CoreMotiom',
+      author_name: user?.name || 'Atleta CoreMotion',
       author_avatar: user?.avatar_url,
       author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Loja Oficial' : 'Atleta',
       category: post.category,

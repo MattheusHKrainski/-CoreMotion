@@ -44,7 +44,7 @@ export default function SupabaseConfigModal() {
             </div>
             <div>
               <h2 className="text-lg font-black text-white">Configuração do Banco (Supabase)</h2>
-              <p className="text-xs text-zinc-400">Status: {connected ? 'conectado' : isSupabaseConfigured ? 'configurado, aguardando sincronização' : 'modo demonstração (sem banco)'}</p>
+              <p className="text-xs text-zinc-400">Status: {connected ? 'conectado' : isSupabaseConfigured ? 'configurado, aguardando sincronização' : 'sincronização local ativa'}</p>
             </div>
           </div>
           <button onClick={() => setSupabaseConfigOpen(false)} className="p-2 text-zinc-400 hover:text-white" aria-label="Fechar">

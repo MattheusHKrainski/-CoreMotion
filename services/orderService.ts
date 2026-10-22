@@ -20,7 +20,7 @@ export class OrderService {
     const sb = getSupabaseClient();
     const pixCode =
       orderPayload.paymentMethod === 'pix'
-        ? `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2, 15)}520400005303986540${orderPayload.total.toFixed(2)}5802BR5925COREMOTIOM PLATAFORMA6009SAO PAULO62070503***6304`
+        ? `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2, 15)}520400005303986540${orderPayload.total.toFixed(2)}5802BR5925COREMOTION PLATAFORMA6009SAO PAULO62070503***6304`
         : undefined;
 
     const initialStatus: OrderStatus = 'pending_payment';
