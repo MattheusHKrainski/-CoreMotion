@@ -1,12 +1,12 @@
 /**
- * Hierarquia de papéis e matriz de permissões do CoreMotiom.
+ * Hierarquia de papéis e matriz de permissões do CoreMotion.
  *
  * Hierarquia (do maior para o menor privilégio):
- *   admin      → Administrador: acesso total (papéis, exclusão de contas, verificação de lojas, moderação)
- *   supervisor → Supervisor: moderação (suspender contas comuns, verificar lojas, moderar comunidade,
- *                gerenciar pedidos e produtos). NÃO altera papéis, NÃO exclui contas, NÃO age sobre administradores.
- *   seller     → Lojista: gerencia a própria loja e seus produtos B2C, além das funções de atleta.
- *   user       → Atleta/Usuário: compra, anuncia equipamentos C2C, publica na comunidade.
+ *   admin      → Administrador: acesso total (papéis, exclusão de contas e moderação)
+ *   supervisor → Supervisor: moderação de contas, anúncios, comunidade e pedidos.
+ *                NÃO altera papéis, NÃO exclui contas, NÃO age sobre administradores.
+ *   seller     → Anunciante legado: publica anúncios C2C, além das funções de atleta.
+ *   user       → Atleta/Usuário: publica anúncios C2C e participa da comunidade.
  *   visitor    → Visitante: navegação pública (sem login).
  *
  * Este módulo é puro (sem dependências de servidor/navegador) para poder ser usado
@@ -21,7 +21,6 @@ const MASTER_ADMIN_EMAILS: readonly string[] = [
   'operacaoamd@gmail.com',
   'professorchines2026@gmail.com',
   'admin@coremotiom.com',
-  'admin@coremotion.com',
 ];
 
 export function isMasterAdminEmail(email?: string | null): boolean {
@@ -32,7 +31,7 @@ export function isMasterAdminEmail(email?: string | null): boolean {
 export const ROLE_LABELS: Record<UserRole, string> = {
   visitor: 'Visitante',
   user: 'Atleta',
-  seller: 'Lojista',
+  seller: 'Anunciante C2C',
   supervisor: 'Supervisor',
   admin: 'Administrador',
 };
@@ -42,26 +41,22 @@ type Capability =
   | 'listings.create' // anunciar equipamento C2C
   | 'orders.place' // comprar
   | 'community.post' // publicar, comentar, curtir e denunciar
-  | 'store.create' // solicitar/criar loja
-  | 'store.manage_own' // gerenciar a própria loja e produtos B2C
   | 'community.moderate' // remover publicações denunciadas
   | 'users.view' // listar contas
   | 'users.suspend' // suspender/reativar contas (não administradores)
   | 'users.change_role' // alterar papéis
   | 'users.delete' // excluir contas
-  | 'stores.verify' // aprovar/reprovar verificação de loja
   | 'products.moderate' // suspender/reativar produtos e excluir anúncios de terceiros
   | 'orders.manage'; // alterar status e confirmar pagamentos de pedidos
 
-const ATHLETE_CAPS: Capability[] = ['listings.create', 'orders.place', 'community.post', 'store.create'];
-const SELLER_CAPS: Capability[] = [...ATHLETE_CAPS, 'store.manage_own'];
+const ATHLETE_CAPS: Capability[] = ['listings.create', 'orders.place', 'community.post'];
+const SELLER_CAPS: Capability[] = [...ATHLETE_CAPS];
 const SUPERVISOR_CAPS: Capability[] = [
   'orders.place',
   'community.post',
   'community.moderate',
   'users.view',
   'users.suspend',
-  'stores.verify',
   'products.moderate',
   'orders.manage',
 ];
@@ -98,7 +93,7 @@ export function isStaffRole(role?: UserRole | null): boolean {
  * Um ator pode suspender/reativar um alvo?
  * - Ninguém age sobre contas-mestre.
  * - Administradores agem sobre qualquer conta (exceto mestre).
- * - Supervisores agem apenas sobre atletas e lojistas.
+ * - Supervisores agem apenas sobre atletas e anunciantes.
  */
 export function canSuspendTarget(actorRole: UserRole | null | undefined, targetRole: UserRole, targetEmail?: string | null): boolean {
   if (isMasterAdminEmail(targetEmail)) return false;

@@ -2,140 +2,69 @@
 
 import React from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import {
-  ShieldCheck,
-  Truck,
-  RotateCcw,
-  Lock,
-} from 'lucide-react';
+import BrandMark from '@/components/shared/BrandMark';
 
 export default function Footer() {
-  const { setActiveView } = useCoreMotiom();
+  const { setActiveView, setSearchQuery } = useCoreMotiom();
+
+  const openSport = (sport?: string) => {
+    setSearchQuery(sport || '');
+    setActiveView('marketplace');
+  };
 
   return (
     <footer className="bg-zinc-950 text-zinc-400 border-t border-zinc-800/80 mt-20">
-      {/* Value Proposition Bar in Capsule Bento Layout */}
-      <div className="border-b border-zinc-800/80 bg-zinc-900/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
-              <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Lojas Oficiais Verificadas</h4>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Selo oficial concedido mediante validação jurídica, nota fiscal e procedência.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
-              <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
-                <Lock className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Custódia Protegida C2C</h4>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Seu pagamento fica protegido até o recebimento e a conferência do equipamento.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
-              <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
-                <Truck className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Logística com Rastreio</h4>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Envios com seguro e acompanhamento ponto a ponto em todo o território nacional.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
-              <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
-                <RotateCcw className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Garantia CoreMotion</h4>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Proteção integral contra divergências com suporte direto de atletas para atletas.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer Links */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:gap-12">
-          
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-700 to-red-500 flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-red-950/40">
-                CM
-              </div>
+              <BrandMark className="w-8 h-8" />
               <span className="text-lg font-black tracking-tight text-white">CoreMotion</span>
             </div>
             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-              Ecossistema esportivo completo: marketplace de lojas oficiais, compra e venda segura entre atletas, assessoria esportiva e comunidade.
+              Seu ponto de encontro no esporte: ofertas das melhores marcas, compra e venda segura de equipamentos, treinadores especializados e comunidade para Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida e muito mais.
             </p>
-            <div className="flex items-center gap-3 pt-2">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-300 bg-zinc-900/90 px-3 py-1 rounded-full border border-zinc-800">
-                <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
-                Compra Protegida & Lojas Homologadas
-              </span>
-            </div>
           </div>
 
           {/* Col 1 */}
           <div>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Marketplace</h5>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Esportes</h5>
             <ul className="space-y-2 text-xs">
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Super Tênis com Placa</button></li>
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Relógios GPS & Wearables</button></li>
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Ciclismo & Rodas de Carbono</button></li>
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Triatlo & Wetsuits</button></li>
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Anúncios de Atletas C2C</button></li>
+              <li><button onClick={() => openSport('Jiu-Jitsu')} className="hover:text-white transition-colors">Jiu-Jitsu & Karatê</button></li>
+              <li><button onClick={() => openSport('Basquete')} className="hover:text-white transition-colors">Basquete & Vôlei</button></li>
+              <li><button onClick={() => openSport('Tênis')} className="hover:text-white transition-colors">Tênis & Raquetes</button></li>
+              <li><button onClick={() => openSport('Futebol')} className="hover:text-white transition-colors">Futebol & Chuteiras</button></li>
+              <li><button onClick={() => openSport('Corrida')} className="hover:text-white transition-colors">Corrida & Musculação</button></li>
             </ul>
           </div>
 
           {/* Col 2 */}
           <div>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Plataforma</h5>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Para Você</h5>
             <ul className="space-y-2 text-xs">
-              <li><button onClick={() => setActiveView('stores')} className="hover:text-white transition-colors">Lojas Verificadas</button></li>
-              <li><button onClick={() => setActiveView('sell')} className="hover:text-white transition-colors">Anunciar Equipamento C2C</button></li>
-              <li><button onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Treinadores Certificados</button></li>
-              <li><button onClick={() => setActiveView('community')} className="hover:text-white transition-colors">Comunidade de Atletas</button></li>
+              <li><button onClick={() => openSport()} className="hover:text-white transition-colors">Ofertas do Dia</button></li>
+              <li><button onClick={() => setActiveView('sell')} className="hover:text-white transition-colors">Vender meu Equipamento</button></li>
+              <li><button onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Encontrar Treinador</button></li>
+              <li><button onClick={() => setActiveView('community')} className="hover:text-white transition-colors">Comunidade Esportiva</button></li>
             </ul>
           </div>
 
           {/* Col 3 */}
           <div>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Segurança & Legal</h5>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Ajuda & Segurança</h5>
             <ul className="space-y-2 text-xs">
-              <li><span className="hover:text-white cursor-pointer transition-colors">Política de Compra Protegida</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Diretrizes de Verificação de Lojas</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Canal de Atendimento ao Atleta</span></li>
+              <li><span>Central de Ajuda</span></li>
+              <li><span>Compra 100% Garantida</span></li>
+              <li><span>Trocas, Devoluções e Privacidade</span></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="border-t border-zinc-800/80 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-          <p>© {new Date().getFullYear()} CoreMotion. Todos os direitos reservados.</p>
-          <div className="flex items-center gap-3">
-            <span>Pagamentos via PIX & Cartão</span>
-            <span>•</span>
-            <span className="text-red-500 font-semibold">Compra Protegida</span>
-            <span>•</span>
-            <span>Envio Nacional com Seguro</span>
-          </div>
+          <p>© {new Date().getFullYear()} CoreMotion · Todos os direitos reservados.</p>
+          <p>Feito para quem vive o esporte todos os dias.</p>
         </div>
       </div>
     </footer>

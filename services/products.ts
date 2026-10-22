@@ -1,7 +1,7 @@
 import { Product, ProductCondition, ProductType } from '@/lib/types';
 import { INITIAL_PRODUCTS } from '@/fixtures/initial-data';
 import { DEMO_MODE } from '@/lib/demo-mode';
-import { authedFetch } from '@/lib/auth-fetch';
+import { authedFetch, readResult, type ApiResult } from '@/lib/auth-fetch';
 import { isSupabaseConfigured } from './supabaseClient';
 
 interface ProductFilters {
@@ -13,12 +13,11 @@ interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   status?: string;
-  store_id?: string;
   seller_id?: string;
 }
 
 /**
- * Modular service for B2C and official partner products.
+ * Service for C2C athlete listings; B2C offers use the separate external-offer feed.
  */
 export class ProductService {
   /**
@@ -26,8 +25,8 @@ export class ProductService {
    * Gracefully falls back to local products if offline.
    */
   static async getProducts(filters?: ProductFilters): Promise<Product[]> {
-    if (!isSupabaseConfigured) {
-      return DEMO_MODE ? this.applyLocalFilters(INITIAL_PRODUCTS, filters) : [];
+    if (!isSupabaseConfigured && DEMO_MODE) {
+      return this.applyLocalFilters(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'), filters);
     }
 
     try {
@@ -36,18 +35,18 @@ export class ProductService {
       if (filters?.sport) params.set('sport', filters.sport);
       if (filters?.condition) params.set('condition', filters.condition);
       if (filters?.product_type) params.set('product_type', filters.product_type);
-      if (filters?.store_id) params.set('store_id', filters.store_id);
       if (filters?.seller_id) params.set('seller_id', filters.seller_id);
       if (filters?.search) params.set('search', filters.search);
       if (filters?.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
       if (filters?.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
       if (filters?.status) params.set('status', filters.status);
 
-      const res = await fetch(`/api/products?${params.toString()}`);
+      // authedFetch envia o token quando há sessão: necessário para status != 'active'.
+      const res = await authedFetch(`/api/products?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-          return data.products as Product[];
+        if (data.success && Array.isArray(data.products) && (data.products.length > 0 || isSupabaseConfigured)) {
+          return (data.products as Product[]).filter((product) => product.product_type === 'c2c');
         }
       }
     } catch (err) {
@@ -55,7 +54,7 @@ export class ProductService {
     }
 
     // C9: dados de demonstração só com NEXT_PUBLIC_DEMO_MODE=true; sem isso, catálogo vazio.
-    return DEMO_MODE ? this.applyLocalFilters(INITIAL_PRODUCTS, filters) : [];
+    return DEMO_MODE ? this.applyLocalFilters(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'), filters) : [];
   }
 
   /**
@@ -66,7 +65,7 @@ export class ProductService {
       const products = await this.getProducts();
       return products.find((p) => p.id === id) || null;
     } catch {
-      return INITIAL_PRODUCTS.find((p) => p.id === id) || null;
+      return INITIAL_PRODUCTS.find((p) => p.id === id && p.product_type === 'c2c') || null;
     }
   }
 
@@ -77,18 +76,9 @@ export class ProductService {
     product: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>,
     sellerId?: string
   ): Promise<{ success: boolean; data: Product } & Product> {
-    if (!isSupabaseConfigured) {
-      const fallbackProd: Product = {
-        ...product,
-        id: `prod_${Date.now()}`,
-        created_at: new Date().toISOString(),
-        views: 0,
-        likes_count: 0,
-        seller_id: sellerId || product.seller_id || 'system',
-      };
-      return { success: true, data: fallbackProd, ...fallbackProd };
+    if (product.product_type !== 'c2c') {
+      throw new Error('Somente anúncios C2C podem ser publicados no catálogo interno.');
     }
-
     // O servidor define o vendedor a partir do token da sessão (sellerId é apenas informativo).
     const res = await authedFetch('/api/products', {
       method: 'POST',
@@ -118,29 +108,30 @@ export class ProductService {
   /**
    * Updates an existing product.
    */
-  static async updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
-    if (!isSupabaseConfigured) return true;
+  static async updateProduct(
+    id: string,
+    updates: Partial<Product>
+  ): Promise<ApiResult & { product?: Product }> {
     try {
       const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, {
         method: 'PATCH',
         body: JSON.stringify(updates),
       });
-      return res.ok;
+      return await readResult<{ product: Product }>(res, 'Não foi possível atualizar o anúncio.');
     } catch {
-      return false;
+      return { success: false, error: 'Não foi possível conectar ao servidor.' };
     }
   }
 
   /**
    * Deletes a product.
    */
-  static async deleteProduct(id: string): Promise<boolean> {
-    if (!isSupabaseConfigured) return true;
+  static async deleteProduct(id: string): Promise<ApiResult> {
     try {
       const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-      return res.ok;
+      return await readResult(res, 'Não foi possível excluir o anúncio.');
     } catch {
-      return false;
+      return { success: false, error: 'Não foi possível conectar ao servidor.' };
     }
   }
 
@@ -156,7 +147,6 @@ export class ProductService {
       if (filters.sport && filters.sport !== 'all' && filters.sport !== 'Todos' && p.sport !== filters.sport) return false;
       if (filters.condition && p.condition !== filters.condition) return false;
       if (filters.product_type && p.product_type !== filters.product_type) return false;
-      if (filters.store_id && p.store_id !== filters.store_id) return false;
       if (filters.seller_id && p.seller_id !== filters.seller_id) return false;
       if (filters.minPrice !== undefined && p.price < filters.minPrice) return false;
       if (filters.maxPrice !== undefined && p.price > filters.maxPrice) return false;

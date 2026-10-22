@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import BrandMark from '@/components/shared/BrandMark';
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -86,16 +87,14 @@ export default function AuthCallbackPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6 font-sans">
       <div className="max-w-md w-full bg-zinc-900/90 border border-zinc-800 rounded-3xl p-8 text-center shadow-2xl space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-red-600 flex items-center justify-center font-black text-white text-lg mx-auto shadow-lg shadow-red-950/60">
-          CM
-        </div>
+        <BrandMark className="w-12 h-12 mx-auto" />
 
         {status === 'loading' && (
           <>
             <div className="w-8 h-8 border-3 border-red-500 border-t-transparent rounded-full animate-spin mx-auto" />
             <h2 className="text-lg font-bold text-white">Autenticando com Google...</h2>
             <p className="text-xs text-zinc-400">
-              Validando suas credenciais. Esta janela fechará automaticamente.
+              Validando credenciais com o Supabase. Esta janela fechará automaticamente.
             </p>
           </>
         )}

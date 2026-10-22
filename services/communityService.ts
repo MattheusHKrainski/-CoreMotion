@@ -6,16 +6,21 @@ import { DEMO_MODE } from '@/lib/demo-mode';
 /** Posts de demonstração: só com NEXT_PUBLIC_DEMO_MODE=true (C9). */
 const demoPosts = () => (DEMO_MODE ? INITIAL_COMMUNITY_POSTS : []);
 
+const POST_NOT_FOUND = 'Publicação não encontrada ou sem permissão para alterá-la.';
+
 export class CommunityService {
   /** Denúncia: marca a publicação para moderação (RLS: usuário autenticado). */
   static async reportPost(postId: string, reason: string): Promise<{ success: boolean; error?: string }> {
     const sb = getSupabaseClient();
     if (!sb) return { success: true };
-    const { error } = await sb
+    const { data, error } = await sb
       .from('community_posts')
       .update({ is_reported: true, report_reason: reason.slice(0, 300) })
-      .eq('id', postId);
-    return error ? { success: false, error: error.message } : { success: true };
+      .eq('id', postId)
+      .select('id');
+    if (error) return { success: false, error: error.message };
+    if (!data || data.length === 0) return { success: false, error: POST_NOT_FOUND };
+    return { success: true };
   }
 
   /** Remoção por moderação (RLS: autor da publicação, administrador ou supervisor). */
@@ -99,25 +104,29 @@ export class CommunityService {
   /**
    * Likes a post.
    */
-  static async likePost(postId: string): Promise<void> {
+  static async likePost(postId: string): Promise<{ success: boolean; error?: string; likes_count?: number }> {
     const sb = getSupabaseClient();
-    if (!sb) return;
+    if (!sb) return { success: true };
 
     try {
-      const { data } = await sb
+      const { data: current, error: readError } = await sb
         .from('community_posts')
         .select('likes_count')
         .eq('id', postId)
         .single();
+      if (readError || !current) return { success: false, error: readError?.message || POST_NOT_FOUND };
 
-      if (data) {
-        await sb
-          .from('community_posts')
-          .update({ likes_count: (data.likes_count || 0) + 1 })
-          .eq('id', postId);
-      }
-    } catch {
-      // ignore
+      const likes = (current.likes_count || 0) + 1;
+      const { data, error } = await sb
+        .from('community_posts')
+        .update({ likes_count: likes })
+        .eq('id', postId)
+        .select('id');
+      if (error) return { success: false, error: error.message };
+      if (!data || data.length === 0) return { success: false, error: POST_NOT_FOUND };
+      return { success: true, likes_count: likes };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
 
@@ -135,37 +144,40 @@ export class CommunityService {
       id?: string;
       created_at?: string;
     }
-  ): Promise<void> {
+  ): Promise<{ success: boolean; error?: string }> {
     const sb = getSupabaseClient();
-    if (!sb) return;
+    if (!sb) return { success: true };
 
     try {
-      const { data } = await sb
+      const { data: current, error: readError } = await sb
         .from('community_posts')
         .select('comments, comments_count')
         .eq('id', postId)
         .single();
+      if (readError || !current) return { success: false, error: readError?.message || POST_NOT_FOUND };
 
-      if (data) {
-        const newComment = {
-          id: comment.id || `c-${Date.now()}`,
-          author_name: comment.author_name || comment.user_name || 'Atleta CoreMotion',
-          author_avatar: comment.author_avatar || comment.user_avatar,
-          content: comment.content,
-          created_at: comment.created_at || new Date().toISOString(),
-        };
+      const newComment = {
+        id: comment.id || `c-${Date.now()}`,
+        author_name: comment.author_name || comment.user_name || 'Atleta CoreMotion',
+        author_avatar: comment.author_avatar || comment.user_avatar,
+        content: comment.content,
+        created_at: comment.created_at || new Date().toISOString(),
+      };
+      const existingComments = Array.isArray(current.comments) ? current.comments : [];
 
-        const existingComments = Array.isArray(data.comments) ? data.comments : [];
-        await sb
-          .from('community_posts')
-          .update({
-            comments: [...existingComments, newComment],
-            comments_count: (data.comments_count || 0) + 1,
-          })
-          .eq('id', postId);
-      }
-    } catch {
-      // ignore
+      const { data, error } = await sb
+        .from('community_posts')
+        .update({
+          comments: [...existingComments, newComment],
+          comments_count: (current.comments_count || 0) + 1,
+        })
+        .eq('id', postId)
+        .select('id');
+      if (error) return { success: false, error: error.message };
+      if (!data || data.length === 0) return { success: false, error: POST_NOT_FOUND };
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
 

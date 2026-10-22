@@ -4,16 +4,16 @@ import { CoreMotiomProvider } from '@/lib/store';
 
 export const metadata: Metadata = {
   title: 'CoreMotion — Marketplace & Plataforma Esportiva',
-  description: 'Marketplace esportivo de alta performance: lojas oficiais verificadas, venda entre atletas e comunidade.',
+  description: 'Marketplace esportivo completo: ofertas selecionadas de lojas parceiras (B2C), compra e venda entre atletas (C2C), treinadores certificados e comunidade.',
   openGraph: {
     title: 'CoreMotion — Marketplace & Plataforma Esportiva',
-    description: 'Marketplace esportivo de alta performance: lojas oficiais verificadas, venda entre atletas e comunidade.',
+    description: 'Marketplace esportivo completo: ofertas selecionadas de lojas parceiras (B2C), compra e venda entre atletas (C2C), treinadores certificados e comunidade.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'CoreMotion — Marketplace & Plataforma Esportiva',
-    description: 'Marketplace esportivo de alta performance: lojas oficiais verificadas, venda entre atletas e comunidade.',
+    description: 'Marketplace esportivo completo: ofertas selecionadas de lojas parceiras (B2C), compra e venda entre atletas (C2C), treinadores certificados e comunidade.',
   },
 };
 
