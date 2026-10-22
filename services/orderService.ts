@@ -1,6 +1,8 @@
 import { getSupabaseClient } from './supabaseClient';
 import { CartItem, Order, PaymentMethod, ShippingAddress, OrderStatus } from '@/lib/types';
 
+const NO_ROWS_ERROR = 'Pedido não encontrado ou sem permissão para alterá-lo.';
+
 export class OrderService {
   /**
    * Creates a demonstrative order record. No payment gateway, valid PIX payload, escrow, or carrier is integrated.
@@ -112,9 +114,6 @@ export class OrderService {
   }
 
   /**
-   * Admin: retrieves all platform orders for financial custody overview.
-   */
-  /**
    * Pedidos do próprio comprador. O filtro por user_id é uma camada extra: a RLS
    * (orders_select) já restringe as linhas ao dono do pedido e ao staff.
    */
@@ -136,6 +135,7 @@ export class OrderService {
     }
   }
 
+  /** Admin/supervisor: todos os pedidos da plataforma (a RLS libera apenas para staff). */
   static async getAllOrdersAdmin(): Promise<Order[]> {
     const sb = getSupabaseClient();
     if (!sb) return [];
@@ -161,16 +161,19 @@ export class OrderService {
     if (!sb) return { success: true };
 
     try {
-      const { error } = await sb
+      const { data, error } = await sb
         .from('orders')
         .update({
           payment_status: 'paid',
           order_status: 'escrow_locked',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select('id');
 
       if (error) return { success: false, error: error.message };
+      // A RLS não gera erro quando bloqueia: sem linhas afetadas, nada foi alterado.
+      if (!data || data.length === 0) return { success: false, error: NO_ROWS_ERROR };
       return { success: true };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -195,8 +198,14 @@ export class OrderService {
     };
     if (paymentStatus) patch.payment_status = paymentStatus;
 
-    const { error } = await sb.from('orders').update(patch).eq('id', orderId);
-    return error ? { success: false, error: error.message } : { success: true };
+    try {
+      const { data, error } = await sb.from('orders').update(patch).eq('id', orderId).select('id');
+      if (error) return { success: false, error: error.message };
+      if (!data || data.length === 0) return { success: false, error: NO_ROWS_ERROR };
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
   }
 
   /**

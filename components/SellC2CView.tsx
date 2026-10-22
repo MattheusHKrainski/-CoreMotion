@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { ProductCondition } from '@/lib/types';
+import { Product, ProductCondition } from '@/lib/types';
 import {
   PlusCircle,
   Tag,
@@ -16,6 +16,13 @@ import {
   Camera,
   Layers,
 } from 'lucide-react';
+
+const LISTING_STATUS_LABEL: Record<Product['status'], string> = {
+  active: 'Ativo',
+  draft: 'Rascunho',
+  sold: 'Vendido',
+  suspended: 'Suspenso pela moderação',
+};
 
 export default function SellC2CView() {
   const {
@@ -45,9 +52,7 @@ export default function SellC2CView() {
   const [loading, setLoading] = useState(false);
 
   // My listings
-  const myListings = products.filter(
-    (p) => p.seller_id === user?.id || (user?.role === 'user' && p.product_type === 'c2c')
-  );
+  const myListings = products.filter((p) => p.seller_id === user?.id);
 
 
   const handleAddImage = () => {
@@ -63,23 +68,42 @@ export default function SellC2CView() {
 
   const handlePublishListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !price) {
-      addToast('Campos Obrigatórios', 'Preencha título e preço do anúncio.', 'error');
+    // Mesmas regras do servidor (productCreateSchema), para o erro aparecer antes do envio.
+    const priceValue = parseFloat(price.replace(',', '.'));
+    const originalValue = originalPrice ? parseFloat(originalPrice.replace(',', '.')) : undefined;
+    if (title.trim().length < 3) {
+      addToast('Título inválido', 'O título precisa ter pelo menos 3 caracteres.', 'error');
+      return;
+    }
+    if (description.trim().length < 10) {
+      addToast('Descrição curta', 'Descreva o produto com pelo menos 10 caracteres.', 'error');
+      return;
+    }
+    if (!Number.isFinite(priceValue) || priceValue <= 0) {
+      addToast('Preço inválido', 'Informe um preço maior que zero.', 'error');
+      return;
+    }
+    if (originalValue !== undefined && (!Number.isFinite(originalValue) || originalValue <= 0)) {
+      addToast('Preço original inválido', 'Informe um valor válido ou deixe o campo vazio.', 'error');
+      return;
+    }
+    if (imageGallery.length === 0) {
+      addToast('Foto obrigatória', 'Adicione pelo menos uma foto do produto.', 'error');
       return;
     }
 
     setLoading(true);
     try {
       await createProduct({
-        title,
-        description,
-        price: parseFloat(price.replace(',', '.')),
-        original_price: originalPrice ? parseFloat(originalPrice.replace(',', '.')) : undefined,
+        title: title.trim(),
+        description: description.trim(),
+        price: priceValue,
+        original_price: originalValue,
         category,
         sport,
         condition,
         product_type: 'c2c',
-        images: imageGallery.length > 0 ? imageGallery : ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'],
+        images: imageGallery,
         seller_id: user?.id || 'user-c2c',
         seller_name: user?.name || 'Atleta CoreMotiom',
         seller_avatar: user?.avatar_url,
@@ -90,14 +114,14 @@ export default function SellC2CView() {
         tags: [sport, category, 'Anúncio entre atletas (C2C)'],
       });
 
-      // Reset form & view active listings
+      // Só chega aqui se o anúncio foi publicado: limpa o formulário e mostra os anúncios.
       setTitle('');
       setDescription('');
       setPrice('');
       setOriginalPrice('');
       setActiveTab('active');
     } catch {
-      // ignore
+      // O store já exibiu o erro; o formulário permanece preenchido para nova tentativa.
     } finally {
       setLoading(false);
     }
@@ -421,8 +445,16 @@ export default function SellC2CView() {
                       <p className="text-sm font-extrabold text-red-400">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)}
                       </p>
-                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] font-semibold border border-zinc-700">
-                        Ativo
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          p.status === 'active'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : p.status === 'suspended'
+                            ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                            : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                        }`}
+                      >
+                        {LISTING_STATUS_LABEL[p.status]}
                       </span>
                     </div>
                   </div>

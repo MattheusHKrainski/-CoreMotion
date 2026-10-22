@@ -12,7 +12,7 @@ import {
 } from '@/lib/db-queries';
 import { hasCapability, isStaffRole } from '@/lib/permissions';
 import { errorResponse, requireAuth } from '@/lib/server-auth';
-import { readJson, str } from '@/lib/api-utils';
+import { PRODUCT_STATUSES, readJson, str } from '@/lib/api-utils';
 import { productCreateSchema, productUpdateSchema } from '@/lib/schemas/product.schema';
 
 export const dynamic = 'force-dynamic';
@@ -55,6 +55,9 @@ export async function GET(req: NextRequest) {
     }
 
     const filters = { ...readFilters(sp), product_type: 'c2c' };
+    if (filters.status && filters.status !== 'all' && !(PRODUCT_STATUSES as readonly string[]).includes(filters.status)) {
+      return errorResponse('Status de anúncio inválido.', 400);
+    }
     if (filters.status && filters.status !== 'active') {
       const auth = await requireAuth(req);
       if (!auth.ok) return auth.response;

@@ -49,7 +49,7 @@ export default function CommunityView() {
     return true;
   });
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isVisitor) {
       setAuthModalOpen(true);
@@ -61,18 +61,19 @@ export default function CommunityView() {
       return;
     }
 
-    createCommunityPost({
-      title: newPostTitle,
-      content: newPostContent,
+    // O store exibe o toast de sucesso/erro; o formulário só é limpo quando a publicação foi criada.
+    const created = await createCommunityPost({
+      title: newPostTitle.trim(),
+      content: newPostContent.trim(),
       category: newPostCategory,
     });
-
-    setNewPostTitle('');
-    setNewPostContent('');
-    addToast('Post Publicado', 'Seu relato já está no feed da comunidade.', 'success');
+    if (created) {
+      setNewPostTitle('');
+      setNewPostContent('');
+    }
   };
 
-  const handleSendComment = (postId: string) => {
+  const handleSendComment = async (postId: string) => {
     if (isVisitor) {
       setAuthModalOpen(true);
       return;
@@ -80,7 +81,7 @@ export default function CommunityView() {
 
     if (!commentText.trim()) return;
 
-    addCommunityComment(postId, commentText);
+    await addCommunityComment(postId, commentText.trim());
     setCommentText('');
     setActiveCommentPostId(null);
   };

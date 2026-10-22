@@ -145,10 +145,12 @@ describe('AuthService: credenciais e sincronização (C1)', () => {
     assert.match(res.error ?? '', /Já existe uma conta/);
   });
 
-  it('getProfileOrCreate devolve null quando o perfil não pode ser sincronizado', async () => {
+  it('getProfileOrCreate falha (sem perfil) quando o perfil não pode ser sincronizado', async () => {
     syncMode = 'down';
     try {
-      assert.equal(await auth.AuthService.getProfileOrCreate(USER_ID, 'carlos@atleta.com'), null);
+      const res = await auth.AuthService.getProfileOrCreate(USER_ID, 'carlos@atleta.com');
+      assert.equal(res.success, false);
+      assert.equal(res.data, undefined);
     } finally {
       syncMode = 'ok';
     }
