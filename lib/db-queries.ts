@@ -71,7 +71,8 @@ export async function listProfiles(): Promise<UserProfile[]> {
 /**
  * Cria ou atualiza o perfil do usuário autenticado. O papel NÃO é recebido do cliente:
  * novos perfis nascem como 'user' (ou 'admin' para contas-mestre) e papéis existentes
- * são preservados.
+ * são preservados. Dados já preenchidos (nome, avatar, telefone, cidade) nunca são
+ * sobrescritos pelo login: edições do usuário no perfil prevalecem.
  */
 export async function upsertOwnProfile(input: {
   id: string;
@@ -92,11 +93,11 @@ export async function upsertOwnProfile(input: {
      VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'São Paulo'), COALESCE($8, 'SP'), $9, NOW(), NOW())
      ON CONFLICT (id) DO UPDATE SET
        email = EXCLUDED.email,
-       name = COALESCE(NULLIF($3, ''), public.profiles.name),
-       avatar_url = COALESCE($4, public.profiles.avatar_url),
-       phone = COALESCE($5, public.profiles.phone),
-       city = COALESCE($7, public.profiles.city),
-       state = COALESCE($8, public.profiles.state),
+       name = COALESCE(NULLIF(public.profiles.name, ''), EXCLUDED.name),
+       avatar_url = COALESCE(public.profiles.avatar_url, EXCLUDED.avatar_url),
+       phone = COALESCE(public.profiles.phone, EXCLUDED.phone),
+       city = COALESCE(public.profiles.city, EXCLUDED.city),
+       state = COALESCE(public.profiles.state, EXCLUDED.state),
        role = CASE WHEN public.is_master_email(EXCLUDED.email) THEN 'admin' ELSE public.profiles.role END,
        updated_at = NOW()
      RETURNING *`,
@@ -256,8 +257,9 @@ export async function getProductsFromDb(filters?: ProductFilters): Promise<Produ
     conditions.push(sql.replace('?', `$${params.length}`));
   };
 
-  // Por padrão só anúncios ativos aparecem; o chamador pode pedir outro status (ex.: o próprio vendedor).
-  add('status = ?', filters?.status || 'active');
+  // Por padrão só anúncios ativos aparecem; o chamador pode pedir outro status ou 'all' (sem filtro).
+  const status = filters?.status || 'active';
+  if (status !== 'all') add('status = ?', status);
 
   if (filters?.product_type) add('product_type = ?', filters.product_type);
   if (filters?.category && filters.category !== 'all' && filters.category !== 'Todos') add('category = ?', filters.category);
@@ -273,7 +275,7 @@ export async function getProductsFromDb(filters?: ProductFilters): Promise<Produ
     conditions.push(`(title ILIKE ${p} OR description ILIKE ${p} OR category ILIKE ${p} OR sport ILIKE ${p})`);
   }
 
-  const whereClause = `WHERE ${conditions.join(' AND ')}`;
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   const rows = await queryDb<DbProductRow>(
     `SELECT * FROM public.products ${whereClause} ORDER BY created_at DESC`,
     params

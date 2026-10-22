@@ -1,7 +1,7 @@
 import { Product, ProductCondition, ProductType } from '@/lib/types';
 import { INITIAL_PRODUCTS } from '@/fixtures/initial-data';
 import { DEMO_MODE } from '@/lib/demo-mode';
-import { authedFetch } from '@/lib/auth-fetch';
+import { authedFetch, readResult, type ApiResult } from '@/lib/auth-fetch';
 import { isSupabaseConfigured } from './supabaseClient';
 
 interface ProductFilters {
@@ -37,10 +37,11 @@ export class ProductService {
       if (filters?.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
       if (filters?.status) params.set('status', filters.status);
 
-      const res = await fetch(`/api/products?${params.toString()}`);
+      // authedFetch envia o token quando há sessão: necessário para status != 'active'.
+      const res = await authedFetch(`/api/products?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+        if (data.success && Array.isArray(data.products) && (data.products.length > 0 || isSupabaseConfigured)) {
           return (data.products as Product[]).filter((product) => product.product_type === 'c2c');
         }
       }
@@ -103,27 +104,30 @@ export class ProductService {
   /**
    * Updates an existing product.
    */
-  static async updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
+  static async updateProduct(
+    id: string,
+    updates: Partial<Product>
+  ): Promise<ApiResult & { product?: Product }> {
     try {
       const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, {
         method: 'PATCH',
         body: JSON.stringify(updates),
       });
-      return res.ok;
+      return await readResult<{ product: Product }>(res, 'Não foi possível atualizar o anúncio.');
     } catch {
-      return false;
+      return { success: false, error: 'Não foi possível conectar ao servidor.' };
     }
   }
 
   /**
    * Deletes a product.
    */
-  static async deleteProduct(id: string): Promise<boolean> {
+  static async deleteProduct(id: string): Promise<ApiResult> {
     try {
       const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-      return res.ok;
+      return await readResult(res, 'Não foi possível excluir o anúncio.');
     } catch {
-      return false;
+      return { success: false, error: 'Não foi possível conectar ao servidor.' };
     }
   }
 

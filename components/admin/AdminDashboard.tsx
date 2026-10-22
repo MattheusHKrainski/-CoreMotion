@@ -11,7 +11,7 @@ import {
   ROLE_LABELS,
 } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
-import { UserRole } from '@/lib/types';
+import { OrderStatus, UserRole } from '@/lib/types';
 import { DEMO_OFFERS } from '@/fixtures/demo-offers';
 import {
   ShieldCheck,
@@ -33,6 +33,16 @@ import {
   Tag,
   CheckCheck,
 } from 'lucide-react';
+
+const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  pending_payment: 'Aguardando pagamento',
+  escrow_locked: 'Custódia simulada',
+  preparing: 'Preparação (demo)',
+  shipped: 'Envio (demo)',
+  delivered: 'Entrega (demo)',
+  completed: 'Concluído (demo)',
+  cancelled: 'Cancelado',
+};
 
 export default function AdminDashboard() {
   const {
@@ -483,7 +493,7 @@ export default function AdminDashboard() {
                               : 'bg-zinc-500'
                           }`}
                         ></span>
-                        {p.status === 'active' ? 'Ativo' : p.status === 'suspended' ? 'Suspenso' : 'Vendido'}
+                        {p.status === 'active' ? 'Ativo' : p.status === 'suspended' ? 'Suspenso' : p.status === 'draft' ? 'Rascunho' : 'Vendido'}
                       </span>
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
@@ -745,22 +755,16 @@ export default function AdminDashboard() {
                       <td className="p-4 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                            ord.order_status === 'delivered'
+                            ord.order_status === 'delivered' || ord.order_status === 'completed'
                               ? 'bg-emerald-500/15 text-emerald-400'
                               : ord.order_status === 'shipped'
                               ? 'bg-blue-500/15 text-blue-400'
+                              : ord.order_status === 'cancelled'
+                              ? 'bg-red-500/15 text-red-400'
                               : 'bg-zinc-800 text-zinc-300'
                           }`}
                         >
-                          {ord.order_status === 'pending_payment'
-                            ? 'Checkout demonstrativo'
-                            : ord.order_status === 'preparing'
-                            ? 'Preparação (demo)'
-                            : ord.order_status === 'shipped'
-                            ? 'Envio (demo)'
-                            : ord.order_status === 'delivered'
-                            ? 'Entrega (demo)'
-                            : `Demo: ${ord.order_status}`}
+                          {ORDER_STATUS_LABEL[ord.order_status]}
                         </span>
                       </td>
                       <td className="p-4 font-mono text-[11px] text-zinc-400 whitespace-nowrap">
@@ -768,7 +772,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {ord.payment_status !== 'paid' && (
+                          {ord.order_status === 'pending_payment' && ord.payment_status !== 'paid' && (
                             <button
                               onClick={() => confirmPaymentSandbox(ord.id)}
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
@@ -777,7 +781,17 @@ export default function AdminDashboard() {
                               Marcar pago (demo)
                             </button>
                           )}
-                          
+
+                          {ord.order_status === 'escrow_locked' && (
+                            <button
+                              onClick={() => adminUpdateOrderStatus(ord.id, 'preparing')}
+                              title="Atualiza apenas o status demonstrativo; nenhum preparo real é solicitado."
+                              className="px-2.5 py-1 rounded-full bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-semibold transition-colors"
+                            >
+                              Iniciar preparo (demo)
+                            </button>
+                          )}
+
                           {ord.order_status === 'preparing' && (
                             <button
                               onClick={() => adminUpdateOrderStatus(ord.id, 'shipped')}
@@ -799,9 +813,19 @@ export default function AdminDashboard() {
                           )}
 
                           {ord.order_status === 'delivered' && (
+                            <button
+                              onClick={() => adminUpdateOrderStatus(ord.id, 'completed')}
+                              title="Encerra o pedido e libera a custódia simulada; nenhum repasse real é feito."
+                              className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
+                            >
+                              Concluir e liberar custódia (demo)
+                            </button>
+                          )}
+
+                          {ord.order_status === 'completed' && (
                             <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                               <CheckCheck className="w-3.5 h-3.5" />
-                              Status demonstrativo
+                              Concluído (demo)
                             </span>
                           )}
                         </div>
