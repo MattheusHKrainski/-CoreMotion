@@ -9,8 +9,8 @@ import type { Order, UserProfile, UserRole } from '@/lib/types';
 import { LogOut, Save, ShieldCheck, UserCircle2 } from 'lucide-react';
 
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
-  user: 'Atleta: compra e anuncia equipamentos esportivos entre atletas (C2C), explora ofertas parceiras e participa da comunidade.',
-  seller: 'Anunciante: publica equipamentos esportivos entre atletas (C2C) e participa da comunidade esportiva.',
+  user: 'Atleta: compra com garantia, anuncia seus próprios equipamentos, aproveita descontos em lojas parceiras e participa da comunidade.',
+  seller: 'Vendedor Verificado: anuncia equipamentos esportivos com Compra Garantida e participa da comunidade.',
   supervisor:
     'Supervisor: modera a comunidade, os anúncios e os pedidos da plataforma. Não altera papéis nem exclui contas.',
   admin: 'Administrador: acesso total de gestão da plataforma, incluindo permissões de usuários, catálogo e pedidos.',

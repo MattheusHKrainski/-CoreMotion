@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import BrandMark from '@/components/shared/BrandMark';
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -86,9 +87,7 @@ export default function AuthCallbackPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6 font-sans">
       <div className="max-w-md w-full bg-zinc-900/90 border border-zinc-800 rounded-3xl p-8 text-center shadow-2xl space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-red-600 flex items-center justify-center font-black text-white text-lg mx-auto shadow-lg shadow-red-950/60">
-          CM
-        </div>
+        <BrandMark className="w-12 h-12 mx-auto" />
 
         {status === 'loading' && (
           <>

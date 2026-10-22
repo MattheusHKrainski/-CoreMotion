@@ -25,7 +25,7 @@ interface HomeHeroAndHighlightsProps {
 
 type HomeTab = 'all' | 'offers' | 'c2c';
 
-const QUICK_FILTERS = ['all', 'Corrida', 'Ciclismo', 'Triatlo', 'Calçados', 'Tecnologia & Wearables', 'Acessórios'];
+const QUICK_FILTERS = ['all', 'Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Musculação'];
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -83,10 +83,10 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
               Esporte em movimento
             </span>
             <h1 id="home-title" className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-              Encontre ofertas esportivas. Negocie entre atletas.
+              Tudo para o seu esporte em um só lugar.
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-              Explore ofertas selecionadas de lojas esportivas parceiras e equipamentos anunciados diretamente por atletas de todo o Brasil, unidos à assessoria especializada e comunidade ativa.
+              Do tatame às quadras, das pistas aos campos: encontre descontos nas melhores marcas, compre e venda equipamentos com garantia e treine com especialistas em Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida e mais.
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               <button type="button" onClick={() => openMarketplace()} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-red-950/40 transition hover:bg-red-500 sm:text-sm">
@@ -96,21 +96,21 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
               </button>
               <button type="button" onClick={handleSellClick} className="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/80 px-6 py-3 text-xs font-semibold text-zinc-200 transition hover:border-red-500/40 hover:bg-zinc-800 hover:text-white sm:text-sm">
                 <PlusCircle className="h-4 w-4 text-red-400" />
-                Anunciar equipamento C2C
+                Vender meu equipamento
               </button>
             </div>
 
             {showStaffSummary && (
               <div className="grid grid-cols-1 gap-2 border-t border-zinc-800/80 pt-5 sm:grid-cols-3">
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Ofertas B2C</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Lojas Parceiras</span>
-                  <span className="text-[10px] text-zinc-400">Curadoria de alta performance</span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Lojas Parceiras</span>
+                  <span className="mt-1 block text-xs font-bold text-white">Grandes Marcas</span>
+                  <span className="text-[10px] text-zinc-400">Descontos selecionados em novos</span>
                 </div>
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Marketplace C2C</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Compra Protegida</span>
-                  <span className="text-[10px] text-zinc-400">Negociação direta entre atletas</span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Entre Atletas</span>
+                  <span className="mt-1 block text-xs font-bold text-white">Compra 100% Garantida</span>
+                  <span className="text-[10px] text-zinc-400">Novos e seminovos revisados</span>
                 </div>
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
                   <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Comunidade</span>
@@ -164,8 +164,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
           <div className="flex flex-wrap gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
             {([
               { id: 'all', label: 'Tudo' },
-              { id: 'offers', label: 'Ofertas B2C' },
-              { id: 'c2c', label: 'Anúncios C2C' },
+              { id: 'offers', label: 'Lojas Parceiras' },
+              { id: 'c2c', label: 'De Atletas' },
             ] as const).map((tab) => (
               <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`rounded-full px-3 py-1.5 font-semibold transition ${activeTab === tab.id ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
                 {tab.label}
@@ -187,8 +187,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas de Lojas Parceiras (B2C) <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Seleção especial de equipamentos novos nas principais lojas esportivas.</p>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas em Destaque nas Lojas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
+              <p className="mt-1 text-[11px] text-zinc-500">Equipamentos novos com desconto nas principais lojas esportivas parceiras.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
@@ -204,31 +204,31 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Layers className="h-4 w-4 text-red-400" />Anúncios entre Atletas (C2C) <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">{filteredC2CProducts.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Equipamentos seminovos e novos publicados diretamente por atletas verificados.</p>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Layers className="h-4 w-4 text-red-400" />Equipamentos de Atletas <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">{filteredC2CProducts.length}</span></h2>
+              <p className="mt-1 text-[11px] text-zinc-500">Seminovos e novos bem cuidados anunciados por atletas, com Compra 100% Garantida.</p>
             </div>
-            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver anúncios <ChevronRight className="h-3.5 w-3.5" /></button>
+            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver todos <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
           {filteredC2CProducts.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
               {filteredC2CProducts.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onSelect={onSelectProduct} />)}
             </div>
-          ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhum anúncio C2C corresponde a este filtro.</p>}
+          ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhum equipamento encontrado para este filtro.</p>}
         </section>
       )}
 
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <button type="button" onClick={() => openMarketplace()} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Tag className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Ofertas de Lojas Parceiras</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Compare condições especiais em calçados, relógios GPS e vestuário técnico.</span></span>
+          <span><strong className="block text-sm text-white">Economize nas Melhores Marcas</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Descontos em kimonos, bolas oficiais, raquetes, tênis de quadra, chuteiras e muito mais.</span></span>
         </button>
         <button type="button" onClick={handleSellClick} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Bike className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Marketplace C2C</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Anuncie seus equipamentos e negocie com segurança diretamente entre atletas.</span></span>
+          <span><strong className="block text-sm text-white">Venda seu Equipamento Parado</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Anuncie em poucos cliques e receba com total segurança de atletas de todo o país.</span></span>
         </button>
         <button type="button" onClick={() => setActiveView('community')} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Users className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Comunidade Esportiva</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Compartilhe relatos de prova, reviews técnicos e acompanhe outros atletas.</span></span>
+          <span><strong className="block text-sm text-white">Comunidade de Atletas</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Veja opiniões sinceras sobre equipamentos, relatos de prova e dicas de treino.</span></span>
         </button>
       </section>
     </div>

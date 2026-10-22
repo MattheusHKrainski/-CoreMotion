@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
+import BrandMark from '@/components/shared/BrandMark';
 import {
   Search,
   ShoppingBag,
@@ -78,7 +79,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     },
     {
       id: 'sell',
-      label: 'Vender C2C',
+      label: 'Quero Vender',
       description: 'Anuncie seus Equipamentos',
       icon: PlusCircle,
       badge: 'Anunciar',
@@ -146,9 +147,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             className="flex items-center gap-2.5 group focus:outline-none text-left"
             title="CoreMotion"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-700 via-red-600 to-red-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-red-950/50 group-hover:scale-105 transition-transform shrink-0">
-              CM
-            </div>
+            <BrandMark className="w-9 h-9 group-hover:scale-105 transition-transform" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-white group-hover:text-red-400 transition-colors">
@@ -156,7 +155,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400 font-medium leading-none mt-0.5">
-                Hub de Alta Performance
+                Tudo para o Seu Esporte
               </p>
             </div>
           </button>
@@ -188,7 +187,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   setActiveView('marketplace');
                 }
               }}
-              placeholder="Buscar ofertas, anúncios ou categorias..."
+              placeholder="Buscar kimono, tênis, raquete, bola..."
               className="w-full pl-9 pr-12 py-2 bg-zinc-900/90 hover:bg-zinc-900 text-xs text-white placeholder-zinc-500 rounded-xl border border-zinc-800 focus:border-red-500/60 focus:bg-zinc-950 focus:outline-none transition-all shadow-inner"
             />
             <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
@@ -482,9 +481,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-2 group focus:outline-none"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-red-700 to-red-500 flex items-center justify-center text-white font-black text-xs shadow-md">
-              CM
-            </div>
+            <BrandMark className="w-7 h-7" />
             <span className="font-extrabold text-sm tracking-tight text-white">
               CoreMotion
             </span>

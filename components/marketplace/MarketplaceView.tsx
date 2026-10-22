@@ -29,8 +29,8 @@ type CatalogTab = 'all' | 'offers' | 'c2c';
 type SortBy = 'relevance' | 'price_asc' | 'price_desc' | 'discount_desc' | 'newest';
 
 const PAGE_SIZE = 12;
-const CATEGORIES = ['Calçados', 'Vestuário', 'Equipamentos', 'Tecnologia & Wearables', 'Acessórios'];
-const SPORTS = ['Corrida', 'Treino', 'Ciclismo', 'Triatlo', 'Trail Running', 'Natação', 'Futebol'];
+const CATEGORIES = ['Calçados', 'Vestuário', 'Artes Marciais', 'Equipamentos', 'Acessórios', 'Tecnologia & Wearables'];
+const SPORTS = ['Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Musculação', 'Natação', 'Ciclismo'];
 const CONDITIONS = [
   { id: 'novo', label: 'Novo (lacrado)' },
   { id: 'como_novo', label: 'Como novo' },
@@ -47,6 +47,7 @@ function matchesCategory(itemCategory: string, selectedCategory: string): boolea
   if (selectedCategory === 'all') return true;
   if (itemCategory === selectedCategory) return true;
   if (selectedCategory === 'Vestuário' && itemCategory === 'Roupas') return true;
+  if (selectedCategory === 'Artes Marciais' && itemCategory === 'Lutas') return true;
   if (selectedCategory === 'Tecnologia & Wearables' && ['Tecnologia', 'Wearables'].includes(itemCategory)) return true;
   return false;
 }
@@ -151,9 +152,9 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <ShoppingBag className="h-3.5 w-3.5" />
             <span>Catálogo esportivo</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Ofertas B2C e anúncios C2C</h1>
+          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Equipamentos e Ofertas Esportivas</h1>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-400 sm:text-sm">
-            Compare ofertas selecionadas em lojas esportivas parceiras e equipamentos anunciados diretamente por atletas de todo o Brasil.
+            Encontre descontos nas melhores lojas esportivas ou compre equipamentos novos e seminovos direto de outros atletas com Compra Garantida.
           </p>
         </div>
         <button
@@ -162,7 +163,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
           className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-red-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-red-950/40 transition hover:bg-red-500"
         >
           <PlusCircle className="h-4 w-4" />
-          Anunciar equipamento C2C
+          Vender meu equipamento
         </button>
       </header>
 
@@ -170,8 +171,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         <div className="flex w-full items-center gap-1.5 overflow-x-auto text-xs scrollbar-none sm:w-auto">
           {([
             { id: 'all', label: `Tudo (${filteredOffers.length + filteredC2CProducts.length})`, icon: ShoppingBag },
-            { id: 'offers', label: `Ofertas B2C (${filteredOffers.length})`, icon: Tag },
-            { id: 'c2c', label: `Entre atletas C2C (${filteredC2CProducts.length})`, icon: Layers },
+            { id: 'offers', label: `Lojas Parceiras (${filteredOffers.length})`, icon: Tag },
+            { id: 'c2c', label: `De Atletas (${filteredC2CProducts.length})`, icon: Layers },
           ] as const).map((tab) => {
             const Icon = tab.icon;
             return (
@@ -232,8 +233,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             </div>
 
             <label className="block rounded-2xl border border-zinc-800/80 bg-zinc-950/70 p-3 text-xs text-white">
-              <span className="flex items-center gap-2 font-semibold"><input type="checkbox" checked={onlyDiscounted} onChange={(event) => setOnlyDiscounted(event.target.checked)} className="rounded border-zinc-700 bg-zinc-900 text-red-600 focus:ring-red-500" />Somente ofertas B2C com desconto</span>
-              <span className="mt-1.5 block pl-6 text-[10px] leading-relaxed text-zinc-500">Exibe ofertas de lojas parceiras com preço promocional ativo.</span>
+              <span className="flex items-center gap-2 font-semibold"><input type="checkbox" checked={onlyDiscounted} onChange={(event) => setOnlyDiscounted(event.target.checked)} className="rounded border-zinc-700 bg-zinc-900 text-red-600 focus:ring-red-500" />Apenas itens em promoção</span>
+              <span className="mt-1.5 block pl-6 text-[10px] leading-relaxed text-zinc-500">Mostra ofertas com desconto especial ativo nas lojas parceiras.</span>
             </label>
 
             <div>
@@ -254,8 +255,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
             {selectedTab !== 'offers' && (
               <div>
-                <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Condição C2C</h3>
-                <p className="mb-2 text-[10px] text-zinc-600">Este filtro se aplica somente a anúncios entre atletas.</p>
+                <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Estado de conservação</h3>
+                <p className="mb-2 text-[10px] text-zinc-600">Filtra equipamentos anunciados por outros atletas.</p>
                 <div className="space-y-1 text-xs">
                   <button type="button" onClick={() => setSelectedCondition('all')} className={`w-full rounded-full px-3 py-1.5 text-left ${selectedCondition === 'all' ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}>Todas as condições</button>
                   {CONDITIONS.map((condition) => <button key={condition.id} type="button" onClick={() => setSelectedCondition(condition.id)} className={`w-full rounded-full px-3 py-1.5 text-left ${selectedCondition === condition.id ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}>{condition.label}</button>)}
@@ -267,7 +268,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
         <div className="space-y-7 md:col-span-3">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-800/60 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-400">
-            <span>{displayedCount} resultado(s) · {hasOffers ? `${filteredOffers.length} ofertas B2C` : ''}{hasOffers && hasC2C ? ' + ' : ''}{hasC2C ? `${filteredC2CProducts.length} anúncios C2C` : ''}</span>
+            <span>{displayedCount} resultado(s) · {hasOffers ? `${filteredOffers.length} em lojas parceiras` : ''}{hasOffers && hasC2C ? ' + ' : ''}{hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}</span>
             {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
           </div>
 
@@ -284,8 +285,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                 <section aria-labelledby="partner-offers-title" className="space-y-4">
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
-                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas de Lojas Parceiras <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Curadoria de calçados, relógios GPS e vestuário técnico em lojas especializadas.</p>
+                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas em Lojas Parceiras <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
+                      <p className="mt-1 text-[11px] text-zinc-500">Produtos originais com desconto nas principais lojas esportivas.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
@@ -298,8 +299,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                 <section aria-labelledby="c2c-listings-title" className="space-y-4">
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
-                      <h2 id="c2c-listings-title" className="flex items-center gap-2 text-base font-black text-white"><Layers className="h-4 w-4 text-red-400" />Anúncios entre atletas (C2C) <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">{filteredC2CProducts.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Equipamentos publicados diretamente por atletas com envio para todo o Brasil.</p>
+                      <h2 id="c2c-listings-title" className="flex items-center gap-2 text-base font-black text-white"><Layers className="h-4 w-4 text-red-400" />Equipamentos de Atletas <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">{filteredC2CProducts.length}</span></h2>
+                      <p className="mt-1 text-[11px] text-zinc-500">Novos e seminovos anunciados por atletas com envio para todo o Brasil e Compra Garantida.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
@@ -308,13 +309,13 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   {visibleCount < filteredC2CProducts.length && (
                     <div className="flex justify-center border-t border-zinc-800/80 pt-5">
                       <button type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg shadow-red-950/30 transition hover:bg-red-500">
-                        Carregar mais anúncios ({Math.min(PAGE_SIZE, filteredC2CProducts.length - visibleCount)})
+                        Carregar mais equipamentos ({Math.min(PAGE_SIZE, filteredC2CProducts.length - visibleCount)})
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </div>
                   )}
                   {visibleCount >= filteredC2CProducts.length && filteredC2CProducts.length > PAGE_SIZE && (
-                    <p className="flex items-center justify-center gap-2 border-t border-zinc-800/80 pt-5 text-xs text-zinc-400"><Check className="h-4 w-4 text-emerald-400" />Todos os anúncios C2C foram exibidos.</p>
+                    <p className="flex items-center justify-center gap-2 border-t border-zinc-800/80 pt-5 text-xs text-zinc-400"><Check className="h-4 w-4 text-emerald-400" />Todos os equipamentos foram exibidos.</p>
                   )}
                 </section>
               )}

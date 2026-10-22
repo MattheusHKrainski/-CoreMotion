@@ -3,7 +3,7 @@
 import React from 'react';
 import type { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
-import { ArrowRight, Heart, Layers, MapPin, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Heart, MapPin, ShieldCheck, ShoppingBag } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -43,8 +43,8 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
           className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
         <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-zinc-700/80 bg-zinc-950/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-200 backdrop-blur">
-          <Layers className="h-3 w-3 text-zinc-400" />
-          Entre atletas · C2C
+          <ShieldCheck className="h-3 w-3 text-emerald-400" />
+          Compra Garantida
         </span>
         <span className="absolute bottom-3 left-3 rounded-full border border-zinc-700/70 bg-black/80 px-2.5 py-1 text-[10px] font-medium text-zinc-200 backdrop-blur">{getConditionLabel(product.condition)}</span>
         {product.original_price && product.original_price > product.price && (
@@ -73,7 +73,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
             {product.title}
           </button>
           <div className="mt-2 flex items-center gap-1.5 text-[11px] text-zinc-400">
-            <span className="truncate">Anunciante: {product.seller_name}</span>
+            <span className="truncate">Vendido por {product.seller_name}</span>
             {product.location && <><span className="text-zinc-700">·</span><span className="flex shrink-0 items-center gap-0.5 text-[10px] text-zinc-500"><MapPin className="h-2.5 w-2.5" />{product.location}</span></>}
           </div>
         </div>

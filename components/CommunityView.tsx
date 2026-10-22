@@ -35,11 +35,11 @@ export default function CommunityView() {
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
 
   const categories: { label: string; value: CommunityPost['category'] }[] = [
-    { label: 'Equipamentos & Tênis', value: 'equipamento' },
-    { label: 'Dicas de Treino & Planilhas', value: 'treino' },
-    { label: 'Eventos & Provas', value: 'evento' },
-    { label: 'Dúvidas Técnicas', value: 'duvida' },
-    { label: 'Conquistas & Recordes', value: 'conquista' },
+    { label: 'Equipamentos & Reviews', value: 'equipamento' },
+    { label: 'Treinos & Técnica', value: 'treino' },
+    { label: 'Campeonatos & Jogos', value: 'evento' },
+    { label: 'Dúvidas da Galera', value: 'duvida' },
+    { label: 'Graduações & Conquistas', value: 'conquista' },
   ];
 
   const filteredPosts = communityPosts.filter((p) => {
@@ -93,10 +93,10 @@ export default function CommunityView() {
           <span>Comunidade & Feed de Atletas</span>
         </div>
         <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-          Feed de Reviews & Experiências
+          Comunidade Esportiva
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-          Compartilhe avaliações técnicas sobre super tênis, ritmos de prova, nutrição esportiva e periodização de treinos.
+          Troque experiências sobre Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida, equipamentos e rotinas de treino.
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export default function CommunityView() {
         <form onSubmit={handleCreatePost} className="space-y-3">
           <input
             type="text"
-            placeholder="Título do seu relato (Ex: Testei o Vaporfly 3 nos 21k de SP)"
+            placeholder="Título do post (Ex: Qual melhor kimono trançado custo-benefício? / Dicas de saque no Tênis)"
             value={newPostTitle}
             onChange={(e) => setNewPostTitle(e.target.value)}
             className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"

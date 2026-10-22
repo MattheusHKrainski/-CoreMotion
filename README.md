@@ -1,4 +1,4 @@
-# CoreMotiom
+# CoreMotion
 
 Marketplace esportivo demonstrativo com uma **vitrine B2C de ofertas externas simuladas**, **anúncios entre atletas** (C2C), **comunidade**, **checkout e envio demonstrativos** e **painel de gestão**. As ofertas B2C usam dados fictícios; lojas, links, preços e descontos reais ainda não estão conectados.
 
@@ -13,7 +13,7 @@ Trabalho de Conclusão de Curso (TCC) desenvolvido pela equipe da disciplina, co
 | Código-fonte completo (frontend, API e banco) | Repositório: https://github.com/MattheusHKrainski/-CoreMotion |
 | Documentação do aplicativo | Este README e [`database/README.md`](database/README.md) |
 | Scripts de banco de dados | [`supabase/migrations/`](supabase/migrations/) e [`database/`](database/) |
-| Documento do TCC (ABNT) | [`docs/tcc/TCC-CoreMotiom-ABNT.docx`](docs/tcc/TCC-CoreMotiom-ABNT.docx) |
+| Documento do TCC (ABNT) | [`docs/tcc/TCC-CoreMotion-ABNT.docx`](docs/tcc/TCC-CoreMotion-ABNT.docx) |
 | Diagrama de casos de uso (escopo original do TCC) | [`docs/diagramas/caso-de-uso.png`](docs/diagramas/caso-de-uso.png) |
 | Validação (plano e resultados) | [`docs/validacao/`](docs/validacao/) |
 | Roteiro da apresentação | [`docs/apresentacao/roteiro-slides.md`](docs/apresentacao/roteiro-slides.md) |

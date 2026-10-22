@@ -181,7 +181,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
               <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                 <div className="rounded-md border border-[#232836] bg-[#12151C]/90 px-2.5 py-1 text-xs font-semibold text-[#E5E7EB] shadow-md backdrop-blur-sm">
-                  Anúncio entre atletas (C2C)
+                  Compra 100% Garantida
                 </div>
               </div>
 
@@ -232,7 +232,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
             {/* Seller info card */}
             <div className="space-y-2 rounded-xl border border-[#232836] bg-[#0E1017] p-4 text-xs">
-              <span className="text-[#9CA3AF]">Anunciante C2C:</span>
+              <span className="text-[#9CA3AF]">Vendido por:</span>
               <div className="flex items-center gap-3 pt-1">
                 <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#232836] bg-[#181B22] font-bold text-white">
                   {product.seller_avatar ? (

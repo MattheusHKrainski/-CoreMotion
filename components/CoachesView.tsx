@@ -22,11 +22,14 @@ export default function CoachesView() {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'consultation' | 'season'>('monthly');
 
   const sportsList = [
+    'Jiu-Jitsu',
+    'Basquete',
+    'Karatê',
+    'Vôlei',
+    'Tênis',
+    'Futebol',
+    'Musculação',
     'Corrida',
-    'Maratona',
-    'Triatlo',
-    'Ciclismo',
-    'Trail Running',
   ];
 
   const filteredCoaches = coaches.filter((c) => {
@@ -61,20 +64,20 @@ export default function CoachesView() {
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-wider mb-1.5">
             <Users className="w-3.5 h-3.5" />
-            <span>Assessoria Esportiva & Performance</span>
+            <span>Aulas, Treinos & Evolução Técnica</span>
           </div>
           <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-            Treinadores Especializados
+            Treinadores e Mestres Especializados
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Profissionais de educação física e treinadores especialistas em periodização de corrida, ciclismo, triatlo e trail running.
+            Encontre treinadores, senseis e professores certificados em Jiu-Jitsu, Basquete, Karatê, Vôlei, Tênis, Futebol, Musculação e Corrida.
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
           <div className="px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-zinc-300 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-red-500" />
-            <span className="font-semibold">CREF Verificado</span>
+            <span className="font-semibold">Profissionais Verificados</span>
           </div>
         </div>
       </div>
@@ -279,12 +282,12 @@ export default function CoachesView() {
 
                 <div>
                   <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                    Objetivo Principal (Prova / Meta)
+                    Objetivo Principal
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Ex: Sub-3h na Maratona de Berlim ou Primeiro 70.3"
+                    placeholder="Ex: Evoluir guarda no Jiu-Jitsu, melhorar arremesso no Basquete, saque no Tênis..."
                     className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                   />
                 </div>
