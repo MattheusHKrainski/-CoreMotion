@@ -25,6 +25,10 @@ export class ProductService {
    * Gracefully falls back to local products if offline.
    */
   static async getProducts(filters?: ProductFilters): Promise<Product[]> {
+    if (!isSupabaseConfigured && DEMO_MODE) {
+      return this.applyLocalFilters(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'), filters);
+    }
+
     try {
       const params = new URLSearchParams();
       if (filters?.category) params.set('category', filters.category);

@@ -78,7 +78,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     },
     {
       id: 'sell',
-      label: 'Vender C2C',
+      label: 'Quero Vender',
       description: 'Anuncie seus Equipamentos',
       icon: PlusCircle,
       badge: 'Anunciar',

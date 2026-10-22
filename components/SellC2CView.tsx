@@ -107,7 +107,7 @@ export default function SellC2CView() {
         location,
         shipping_available: shippingAvailable,
         status: 'active',
-        tags: [sport, category, 'Anúncio entre atletas (C2C)'],
+        tags: [sport, category, 'Compra Garantida'],
       });
 
       setTitle('');
@@ -130,13 +130,13 @@ export default function SellC2CView() {
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-wider mb-1.5">
             <Tag className="w-3.5 h-3.5" />
-            <span>Anúncios entre atletas (C2C)</span>
+            <span>Venda com Segurança</span>
           </div>
           <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-            Central de Vendas C2C
+            Quero Vender meu Equipamento
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Publique seus equipamentos seminovos ou novos diretamente para milhares de atletas em todo o Brasil.
+            Publique seus equipamentos novos ou seminovos em poucos minutos e venda com Compra Garantida para atletas de todo o Brasil.
           </p>
         </div>
       </div>
