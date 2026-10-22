@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { ProductCondition } from '@/lib/types';
+import { Product, ProductCondition } from '@/lib/types';
 import {
   PlusCircle,
   Tag,
@@ -12,15 +12,21 @@ import {
   Trash2,
   Sparkles,
   TrendingUp,
-  ShieldCheck,
+  Info,
   Camera,
   Layers,
 } from 'lucide-react';
 
+const LISTING_STATUS_LABEL: Record<Product['status'], string> = {
+  active: 'Ativo',
+  draft: 'Rascunho',
+  sold: 'Vendido',
+  suspended: 'Suspenso pela moderação',
+};
+
 export default function SellC2CView() {
   const {
     products,
-    stores,
     createProduct,
     deleteProduct,
     user,
@@ -46,17 +52,8 @@ export default function SellC2CView() {
   const [loading, setLoading] = useState(false);
 
   // My listings
-  const myListings = products.filter(
-    (p) => p.seller_id === user?.id || (user?.role === 'user' && p.product_type === 'c2c')
-  );
+  const myListings = products.filter((p) => p.seller_id === user?.id);
 
-  // Lojista (ou administrador com loja) pode anunciar pela própria loja (B2C).
-  const myStore = user
-    ? stores.find((s) => s.id === user.store_id) ?? stores.find((s) => s.owner_id === user.id)
-    : undefined;
-  const canSellB2C = Boolean(myStore) && (user?.role === 'seller' || user?.role === 'admin');
-  const [saleType, setSaleType] = useState<'c2c' | 'b2c'>('c2c');
-  const effectiveSaleType: 'c2c' | 'b2c' = canSellB2C && saleType === 'b2c' ? 'b2c' : 'c2c';
 
   const handleAddImage = () => {
     if (imageUrl.trim() && !imageGallery.includes(imageUrl.trim())) {
@@ -71,26 +68,42 @@ export default function SellC2CView() {
 
   const handlePublishListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !price) {
-      addToast('Campos Obrigatórios', 'Preencha título e preço do anúncio.', 'error');
+    // Mesmas regras do servidor (productCreateSchema), para o erro aparecer antes do envio.
+    const priceValue = parseFloat(price.replace(',', '.'));
+    const originalValue = originalPrice ? parseFloat(originalPrice.replace(',', '.')) : undefined;
+    if (title.trim().length < 3) {
+      addToast('Título inválido', 'O título precisa ter pelo menos 3 caracteres.', 'error');
+      return;
+    }
+    if (description.trim().length < 10) {
+      addToast('Descrição curta', 'Descreva o produto com pelo menos 10 caracteres.', 'error');
+      return;
+    }
+    if (!Number.isFinite(priceValue) || priceValue <= 0) {
+      addToast('Preço inválido', 'Informe um preço maior que zero.', 'error');
+      return;
+    }
+    if (originalValue !== undefined && (!Number.isFinite(originalValue) || originalValue <= 0)) {
+      addToast('Preço original inválido', 'Informe um valor válido ou deixe o campo vazio.', 'error');
+      return;
+    }
+    if (imageGallery.length === 0) {
+      addToast('Foto obrigatória', 'Adicione pelo menos uma foto do produto.', 'error');
       return;
     }
 
     setLoading(true);
     try {
       await createProduct({
-        title,
-        description,
-        price: parseFloat(price.replace(',', '.')),
-        original_price: originalPrice ? parseFloat(originalPrice.replace(',', '.')) : undefined,
+        title: title.trim(),
+        description: description.trim(),
+        price: priceValue,
+        original_price: originalValue,
         category,
         sport,
         condition,
-        product_type: effectiveSaleType,
-        store_id: effectiveSaleType === 'b2c' ? myStore?.id : undefined,
-        store_name: effectiveSaleType === 'b2c' ? myStore?.name : undefined,
-        is_verified_store: effectiveSaleType === 'b2c' ? Boolean(myStore?.is_verified) : false,
-        images: imageGallery.length > 0 ? imageGallery : ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'],
+        product_type: 'c2c',
+        images: imageGallery,
         seller_id: user?.id || 'user-c2c',
         seller_name: user?.name || 'Atleta CoreMotiom',
         seller_avatar: user?.avatar_url,
@@ -98,17 +111,17 @@ export default function SellC2CView() {
         location,
         shipping_available: shippingAvailable,
         status: 'active',
-        tags: effectiveSaleType === 'b2c' ? [sport, category, 'Loja Oficial'] : [sport, category, 'Venda Direta C2C'],
+        tags: [sport, category, 'Anúncio entre atletas (C2C)'],
       });
 
-      // Reset form & view active listings
+      // Só chega aqui se o anúncio foi publicado: limpa o formulário e mostra os anúncios.
       setTitle('');
       setDescription('');
       setPrice('');
       setOriginalPrice('');
       setActiveTab('active');
     } catch {
-      // ignore
+      // O store já exibiu o erro; o formulário permanece preenchido para nova tentativa.
     } finally {
       setLoading(false);
     }
@@ -122,13 +135,13 @@ export default function SellC2CView() {
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-wider mb-1.5">
             <Tag className="w-3.5 h-3.5" />
-            <span>Intermediação Segura entre Atletas</span>
+            <span>Anúncios entre atletas (C2C)</span>
           </div>
           <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
             Central de Vendas C2C
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Anuncie seus equipamentos seminovos. Pagamentos e envios são simulados nesta versão.
+            Anúncios e valores podem ser demonstrativos. O checkout pode registrar pedidos de demonstração, mas não há cobrança real nem contratação ou envio de produtos.
           </p>
         </div>
       </div>
@@ -194,45 +207,6 @@ export default function SellC2CView() {
               <Layers className="w-4 h-4 text-red-400" />
               <span>Especificações Técnicas do Equipamento</span>
             </h3>
-
-            {canSellB2C && myStore && (
-              <div>
-                <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Tipo de venda *
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSaleType('c2c')}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
-                      effectiveSaleType === 'c2c'
-                        ? 'bg-red-600 border-red-500 text-white'
-                        : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-600'
-                    }`}
-                  >
-                    Entre atletas (C2C)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSaleType('b2c')}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
-                      effectiveSaleType === 'b2c'
-                        ? 'bg-red-600 border-red-500 text-white'
-                        : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-600'
-                    }`}
-                  >
-                    Loja oficial: {myStore.name} (B2C)
-                  </button>
-                </div>
-                <p className="text-[11px] text-zinc-500 mt-1.5">
-                  {effectiveSaleType === 'b2c'
-                    ? myStore.is_verified
-                      ? 'Sua loja está verificada: o anúncio exibe o selo de loja verificada.'
-                      : 'Sua loja ainda não está verificada: o anúncio não exibe o selo.'
-                    : 'Venda direta entre atletas (fluxo simulado).'}
-                </p>
-              </div>
-            )}
 
             <div>
               <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
@@ -304,7 +278,7 @@ export default function SellC2CView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Preço de Venda (R$) *
+                  Valor informado (R$) *
                 </label>
                 <input
                   type="text"
@@ -318,7 +292,7 @@ export default function SellC2CView() {
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Preço Original Pago (R$)
+                  Preço original informado (R$)
                 </label>
                 <input
                   type="text"
@@ -388,7 +362,7 @@ export default function SellC2CView() {
             <div className="pt-4 border-t border-zinc-800/80 space-y-3">
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Localização de Envio (Cidade / UF)
+                  Localização informada (Cidade / UF)
                 </label>
                 <input
                   type="text"
@@ -407,7 +381,7 @@ export default function SellC2CView() {
                   onChange={(e) => setShippingAvailable(e.target.checked)}
                   className="rounded border-zinc-800 text-red-600 focus:ring-red-500 bg-zinc-950"
                 />
-                <span>Aceito envio com frete calculado e seguro nacional</span>
+                <span>Envio declarado pelo anunciante (apenas simulação; sem frete ou rastreamento integrado)</span>
               </label>
             </div>
 
@@ -435,7 +409,7 @@ export default function SellC2CView() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-red-400 font-bold">2.</span>
-                  <span>Informe a quilometragem real para conferir autoridade ao anúncio.</span>
+                  <span>Descreva quilometragem e condição com clareza; a plataforma não valida o estado do produto.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-red-400 font-bold">3.</span>
@@ -446,11 +420,12 @@ export default function SellC2CView() {
 
             <div className="p-5 rounded-3xl bg-red-600/10 border border-red-500/20 space-y-2">
               <h4 className="font-bold text-red-400 text-xs flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4" />
+                <Info className="w-4 h-4" />
                 <span>Fluxo simulado</span>
               </h4>
               <p className="text-zinc-300 leading-relaxed text-xs">
-                Nesta versão, o pagamento é simulado e não há retenção real.</p>
+                O checkout pode registrar pedidos demonstrativos, mas não há pagamento PIX/cartão real, custódia, retenção de saldo, contratação de frete ou rastreamento nesta versão.
+              </p>
             </div>
           </div>
         </div>
@@ -460,7 +435,7 @@ export default function SellC2CView() {
       {activeTab === 'active' && (
         <div className="space-y-4">
           {myListings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {myListings.map((p) => (
                 <div key={p.id} className="bg-zinc-900/60 rounded-3xl border border-zinc-800/80 p-5 flex flex-col justify-between space-y-3 shadow-lg">
                   <div className="flex gap-3.5">
@@ -470,8 +445,16 @@ export default function SellC2CView() {
                       <p className="text-sm font-extrabold text-red-400">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)}
                       </p>
-                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] font-semibold border border-zinc-700">
-                        Ativo
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          p.status === 'active'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : p.status === 'suspended'
+                            ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                            : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                        }`}
+                      >
+                        {LISTING_STATUS_LABEL[p.status]}
                       </span>
                     </div>
                   </div>
@@ -511,8 +494,8 @@ export default function SellC2CView() {
       {activeTab === 'sales' && (
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-10 text-center text-xs text-zinc-400 space-y-2">
           <TrendingUp className="w-8 h-8 text-red-400 mx-auto" />
-          <h4 className="font-bold text-white text-sm">Histórico de Vendas</h4>
-          <p>Quando outros atletas adquirirem seus produtos, os dados de envio e liberação de saldo aparecerão aqui.</p>
+          <h4 className="font-bold text-white text-sm">Atividade de vendas simuladas</h4>
+          <p>Não há vendas reais: o checkout pode registrar pedidos demonstrativos, sem pagamento, frete, envio ou liberação de saldo integrados.</p>
         </div>
       )}
 

@@ -17,6 +17,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<sua-chave-anon>
 const MIGRATION_ORDER = [
   'supabase/migrations/20250101000000_coremotiom_initial_schema.sql',
   'supabase/migrations/20261008000000_roles_hierarchy_and_security.sql',
+  'supabase/migrations/20261009000000_security_fixes.sql',
+  'supabase/migrations/20261020000000_retire_store_b2c_marketplace.sql',
 ];
 
 export default function SupabaseConfigModal() {
@@ -75,7 +77,7 @@ export default function SupabaseConfigModal() {
         <section className="space-y-2">
           <h3 className="text-sm font-bold text-white flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-red-400" /> 3. Papéis</h3>
           <p className="text-xs text-zinc-400">
-            Os papéis (Administrador, Supervisor, Lojista, Atleta) são gravados em <code className="text-zinc-200">public.profiles.role</code>. A conta-mestre é promovida a administrador automaticamente ao se cadastrar.
+            Os papéis (Administrador, Supervisor e Atleta) são gravados em <code className="text-zinc-200">public.profiles.role</code>. Contas com o papel legado <code className="text-zinc-200">seller</code> podem anunciar apenas entre atletas (C2C); não há criação de perfil de loja. A conta-mestre é promovida a administrador automaticamente ao se cadastrar.
           </p>
         </section>
       </div>

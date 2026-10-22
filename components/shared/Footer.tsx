@@ -3,10 +3,10 @@
 import React from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import {
-  ShieldCheck,
+  Tag,
   Truck,
-  RotateCcw,
-  Lock,
+  CreditCard,
+  Info,
 } from 'lucide-react';
 
 export default function Footer() {
@@ -14,30 +14,30 @@ export default function Footer() {
 
   return (
     <footer className="bg-zinc-950 text-zinc-400 border-t border-zinc-800/80 mt-20">
-      {/* Value Proposition Bar in Capsule Bento Layout */}
+      {/* Publicly visible status of the marketplace in this version. */}
       <div className="border-b border-zinc-800/80 bg-zinc-900/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
               <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
-                <ShieldCheck className="w-5 h-5" />
+                <Tag className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Lojas Oficiais Verificadas</h4>
+                <h4 className="text-sm font-bold text-white tracking-tight">Ofertas B2C externas</h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Selo oficial concedido mediante validação jurídica, nota fiscal e procedência.
+                  Lojas, links, preços e descontos são fictícios nesta etapa; fontes reais serão conectadas depois.
                 </p>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
               <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
-                <Lock className="w-5 h-5" />
+                <CreditCard className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Fluxo C2C simulado</h4>
+                <h4 className="text-sm font-bold text-white tracking-tight">Checkout demonstrativo</h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Fluxo simulado: nesta versão o pagamento não é retido de verdade.
+                  O checkout pode registrar pedidos demonstrativos. PIX, cartão, boleto, parcelamento e custódia não têm integração real nem cobram valores.
                 </p>
               </div>
             </div>
@@ -47,21 +47,21 @@ export default function Footer() {
                 <Truck className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Logística com Rastreio</h4>
+                <h4 className="text-sm font-bold text-white tracking-tight">Frete e envio simulados</h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Envios com seguro e acompanhamento ponto a ponto em todo o território nacional.
+                  Os valores de frete são ilustrativos; não há contratação de transportadora, rastreamento ou confirmação de entrega.
                 </p>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex items-start gap-3.5">
               <div className="p-2.5 rounded-full bg-red-600/10 text-red-400 border border-red-500/20 shrink-0">
-                <RotateCcw className="w-5 h-5" />
+                <Info className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white tracking-tight">Garantia CoreMotiom</h4>
+                <h4 className="text-sm font-bold text-white tracking-tight">Dados demonstrativos</h4>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Proteção integral contra divergências com suporte direto de atletas para atletas.
+                  Anúncios e valores podem ser ilustrativos. A plataforma não verifica autenticidade, procedência ou garantia.
                 </p>
               </div>
             </div>
@@ -81,27 +81,22 @@ export default function Footer() {
               </div>
               <span className="text-lg font-black tracking-tight text-white">CoreMotiom</span>
               <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase">
-                PRO
+                DEMO
               </span>
             </div>
             <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-              Ecossistema esportivo de demonstração: marketplace, lojas e comunidade (fluxos simulados).</p>
-            <div className="flex items-center gap-3 pt-2">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-300 bg-zinc-900/90 px-3 py-1 rounded-full border border-zinc-800">
-                <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
-                Segurança Supabase Auth & PostgreSQL
-              </span>
-            </div>
+              Vitrine demonstrativa de ofertas esportivas, anúncios entre atletas (C2C) e comunidade. Checkout, pagamentos e envio não são reais nesta versão.
+            </p>
           </div>
 
           {/* Col 1 */}
           <div>
             <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Marketplace</h5>
             <ul className="space-y-2 text-xs">
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Super Tênis com Placa</button></li>
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Relógios GPS & Wearables</button></li>
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Ciclismo & Rodas de Carbono</button></li>
-              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Triatlo & Wetsuits</button></li>
+              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Ofertas de corrida</button></li>
+              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Tecnologia & Wearables</button></li>
+              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Ciclismo & acessórios</button></li>
+              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Triatlo & natação</button></li>
               <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Anúncios de Atletas C2C</button></li>
             </ul>
           </div>
@@ -110,34 +105,28 @@ export default function Footer() {
           <div>
             <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Plataforma</h5>
             <ul className="space-y-2 text-xs">
-              <li><button onClick={() => setActiveView('stores')} className="hover:text-white transition-colors">Lojas Verificadas</button></li>
+              <li><button onClick={() => setActiveView('marketplace')} className="hover:text-white transition-colors">Buscar ofertas B2C</button></li>
               <li><button onClick={() => setActiveView('sell')} className="hover:text-white transition-colors">Anunciar Equipamento C2C</button></li>
-              <li><button onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Treinadores Certificados</button></li>
+              <li><button onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Treinadores</button></li>
               <li><button onClick={() => setActiveView('community')} className="hover:text-white transition-colors">Comunidade de Atletas</button></li>
             </ul>
           </div>
 
           {/* Col 3 */}
           <div>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Segurança & Legal</h5>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-white mb-3.5">Informações</h5>
             <ul className="space-y-2 text-xs">
-              <li><span className="hover:text-white cursor-pointer transition-colors">Fluxo simulado</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Diretrizes de Verificação de Lojas</span></li>
-              <li><span className="hover:text-white cursor-pointer transition-colors">Canal de Atendimento ao Atleta</span></li>
+              <li><span>Ofertas, links e preços demonstrativos</span></li>
+              <li><span>Checkout e envio C2C demonstrativos</span></li>
+              <li><span>Sem validação externa de autenticidade ou procedência</span></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="border-t border-zinc-800/80 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-          <p>© {new Date().getFullYear()} CoreMotiom Sports Technologies. Todos os direitos reservados.</p>
-          <div className="flex items-center gap-3">
-            <span>Dark High-Performance Mode</span>
-            <span>•</span>
-            <span className="text-red-500 font-semibold">Crimson Pro Engine</span>
-            <span>•</span>
-            <span>PostgreSQL & Supabase Connected</span>
-          </div>
+          <p>© {new Date().getFullYear()} CoreMotiom · Projeto demonstrativo.</p>
+          <p>Confira as informações com o anunciante; os dados podem ser demonstrativos.</p>
         </div>
       </div>
     </footer>

@@ -22,6 +22,22 @@ export type ProductCondition = 'novo' | 'como_novo' | 'seminovo' | 'usado_excele
 
 export type ProductType = 'b2c' | 'c2c';
 
+/** Oferta externa B2C; os primeiros registros são explicitamente simulados. */
+export interface ExternalOffer {
+  id: string;
+  title: string;
+  description: string;
+  store_name: string;
+  category: string;
+  sport: string;
+  price: number;
+  original_price?: number;
+  image_url: string;
+  source_url: string;
+  is_demo: boolean;
+  created_at: string;
+}
+
 export interface Product {
   id: string;
   title: string;

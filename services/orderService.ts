@@ -1,9 +1,11 @@
 import { getSupabaseClient } from './supabaseClient';
 import { CartItem, Order, PaymentMethod, ShippingAddress, OrderStatus } from '@/lib/types';
 
+const NO_ROWS_ERROR = 'Pedido não encontrado ou sem permissão para alterá-lo.';
+
 export class OrderService {
   /**
-   * Creates a new order in Supabase with PIX code generation & escrow custody.
+   * Creates a demonstrative order record. No payment gateway, valid PIX payload, escrow, or carrier is integrated.
    */
   static async createOrder(orderPayload: {
     userId?: string;
@@ -17,10 +19,14 @@ export class OrderService {
     shippingAddress: ShippingAddress;
     shippingMethod: 'pac' | 'sedex' | 'express';
   }): Promise<{ success: boolean; data?: Order; error?: string }> {
+    if (orderPayload.items.some((item) => item.product.product_type !== 'c2c')) {
+      return { success: false, error: 'O checkout interno aceita apenas anúncios C2C entre atletas.' };
+    }
+
     const sb = getSupabaseClient();
     const pixCode =
       orderPayload.paymentMethod === 'pix'
-        ? `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2, 15)}520400005303986540${orderPayload.total.toFixed(2)}5802BR5925COREMOTIOM PLATAFORMA6009SAO PAULO62070503***6304`
+        ? `COREMOTIOM-DEMO-PIX-NAO-PAGAR-${Date.now()}-${orderPayload.total.toFixed(2)}`
         : undefined;
 
     const initialStatus: OrderStatus = 'pending_payment';
@@ -108,9 +114,6 @@ export class OrderService {
   }
 
   /**
-   * Admin: retrieves all platform orders for financial custody overview.
-   */
-  /**
    * Pedidos do próprio comprador. O filtro por user_id é uma camada extra: a RLS
    * (orders_select) já restringe as linhas ao dono do pedido e ao staff.
    */
@@ -132,6 +135,7 @@ export class OrderService {
     }
   }
 
+  /** Admin/supervisor: todos os pedidos da plataforma (a RLS libera apenas para staff). */
   static async getAllOrdersAdmin(): Promise<Order[]> {
     const sb = getSupabaseClient();
     if (!sb) return [];
@@ -157,16 +161,19 @@ export class OrderService {
     if (!sb) return { success: true };
 
     try {
-      const { error } = await sb
+      const { data, error } = await sb
         .from('orders')
         .update({
           payment_status: 'paid',
           order_status: 'escrow_locked',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select('id');
 
       if (error) return { success: false, error: error.message };
+      // A RLS não gera erro quando bloqueia: sem linhas afetadas, nada foi alterado.
+      if (!data || data.length === 0) return { success: false, error: NO_ROWS_ERROR };
       return { success: true };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -191,8 +198,14 @@ export class OrderService {
     };
     if (paymentStatus) patch.payment_status = paymentStatus;
 
-    const { error } = await sb.from('orders').update(patch).eq('id', orderId);
-    return error ? { success: false, error: error.message } : { success: true };
+    try {
+      const { data, error } = await sb.from('orders').update(patch).eq('id', orderId).select('id');
+      if (error) return { success: false, error: error.message };
+      if (!data || data.length === 0) return { success: false, error: NO_ROWS_ERROR };
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
   }
 
   /**

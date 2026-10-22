@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import {
   canDeleteTarget,
@@ -11,16 +11,12 @@ import {
   ROLE_LABELS,
 } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
-import { StoreService } from '@/services/stores';
-import type { Store as StoreModel } from '@/lib/types';
-import { UserRole } from '@/lib/types';
+import { OrderStatus, UserRole } from '@/lib/types';
+import { DEMO_OFFERS } from '@/fixtures/demo-offers';
 import {
   ShieldCheck,
-  Store,
-  Store as StoreIcon,
   Package,
   CheckCircle2,
-  XCircle,
   Database,
   Trash2,
   DollarSign,
@@ -29,20 +25,29 @@ import {
   Lock,
   TrendingUp,
   Activity,
-  Award,
   UserPlus,
   X,
   RefreshCw,
   Ban,
   Truck,
+  Tag,
   CheckCheck,
 } from 'lucide-react';
+
+const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  pending_payment: 'Aguardando pagamento',
+  escrow_locked: 'Custódia simulada',
+  preparing: 'Preparação (demo)',
+  shipped: 'Envio (demo)',
+  delivered: 'Entrega (demo)',
+  completed: 'Concluído (demo)',
+  cancelled: 'Cancelado',
+};
 
 export default function AdminDashboard() {
   const {
     user,
     setActiveView,
-    stores,
     products,
     allUsers,
     orders,
@@ -51,7 +56,6 @@ export default function AdminDashboard() {
     adminDeleteUser,
     adminBanUser,
     adminUnbanUser,
-    adminVerifyStore,
     deleteProduct,
     adminToggleProductStatus,
     adminUpdateOrderStatus,
@@ -63,16 +67,10 @@ export default function AdminDashboard() {
     setSupabaseConfigOpen,
     addToast,
   } = useCoreMotiom();
-  // C6: documentos de verificação chegam só para a equipe (rota autenticada).
-  const [storeDocs, setStoreDocs] = useState<Record<string, NonNullable<StoreModel['verification_docs']>>>({});
-  useEffect(() => {
-    StoreService.getVerificationDocs().then(setStoreDocs);
-  }, []);
-
   // Search & Filter States
   const [userSearch, setUserSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
-  const [productFilterType, setProductFilterType] = useState<'all' | 'b2c' | 'c2c'>('all');
+  const [productFilterType, setProductFilterType] = useState<'all' | 'c2c'>('all');
   const [isSyncing, setIsSyncing] = useState(false);
 
   // New user creation state
@@ -131,18 +129,11 @@ export default function AdminDashboard() {
     );
   }
 
-  // Pending store verifications
-  const pendingStores = stores.filter(
-    (s) => s.verification_status === 'pending' || (!s.is_verified && s.id === 'store-new')
-  );
-
-  // Metrics
-  const totalGMV = products.reduce((acc, p) => acc + p.price * (p.stock || 1), 0);
-  const estimatedCustodyRevenue = totalGMV * 0.045; // 4.5% custody & guarantee commission
-  const verifiedStoresCount = stores.filter((s) => s.is_verified).length;
+  // Metrics: B2C offers are local fixtures until external sources are connected.
+  const catalogValue = products.reduce((acc, p) => acc + p.price * (p.stock || 1), 0);
   const c2cCount = products.filter((p) => p.product_type === 'c2c').length;
-  const b2cCount = products.filter((p) => p.product_type === 'b2c').length;
-  const totalOrdersAmount = orders.reduce((sum, o) => sum + o.total, 0);
+  const demoOfferCount = DEMO_OFFERS.length;
+  const registeredOrderValue = orders.reduce((sum, o) => sum + o.total, 0);
 
   // Filtered lists
   const filteredUsers = allUsers.filter((u) => {
@@ -160,10 +151,9 @@ export default function AdminDashboard() {
     const matchesSearch =
       p.title.toLowerCase().includes(q) ||
       p.sport.toLowerCase().includes(q) ||
-      (p.store_name || p.seller_name || '').toLowerCase().includes(q);
-    const matchesType =
-      productFilterType === 'all' ? true : p.product_type === productFilterType;
-    return matchesSearch && matchesType;
+      p.seller_name.toLowerCase().includes(q);
+    const matchesType = productFilterType === 'all' || p.product_type === 'c2c';
+    return p.product_type === 'c2c' && matchesSearch && matchesType;
   });
 
   const handleCreateUserSubmit = (e: React.FormEvent) => {
@@ -235,7 +225,7 @@ export default function AdminDashboard() {
               onClick={handleSyncSupabase}
               disabled={isSyncing}
               className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-semibold flex items-center gap-2 transition-all shadow-md active:scale-95 disabled:opacity-50"
-              title="Sincronizar produtos, lojas e usuários com o banco de dados Supabase"
+              title="Sincronizar anúncios C2C e publicações com o banco de dados Supabase"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-red-400 ${isSyncing ? 'animate-spin' : ''}`} />
               <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar Supabase'}</span>
@@ -270,13 +260,6 @@ export default function AdminDashboard() {
             <span>Métricas & Ecossistema</span>
           </button>
           <button
-            onClick={() => scrollToSection('sec-auditoria')}
-            className="px-3 py-1.5 rounded-full bg-zinc-800/70 hover:bg-zinc-700 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1.5"
-          >
-            <Award className="w-3.5 h-3.5 text-amber-400" />
-            <span>Auditoria de Lojas ({pendingStores.length})</span>
-          </button>
-          <button
             onClick={() => scrollToSection('sec-produtos')}
             className="px-3 py-1.5 rounded-full bg-zinc-800/70 hover:bg-zinc-700 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1.5"
           >
@@ -298,13 +281,6 @@ export default function AdminDashboard() {
             <span>Pedidos ({orders.length})</span>
           </button>
           <button
-            onClick={() => scrollToSection('sec-lojas')}
-            className="px-3 py-1.5 rounded-full bg-zinc-800/70 hover:bg-zinc-700 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1.5"
-          >
-            <Store className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Lojas Oficiais ({stores.length})</span>
-          </button>
-          <button
             onClick={() => scrollToSection('sec-banco')}
             className="px-3 py-1.5 rounded-full bg-zinc-800/70 hover:bg-zinc-700 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1.5"
           >
@@ -314,45 +290,43 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      <div role="note" className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 text-xs leading-relaxed text-amber-100/90">
+        Painel de gestão interna. Anúncios, ofertas, preços e pedidos podem ser demonstrativos. As ofertas B2C ainda não consultam lojas externas; o checkout, pagamentos, frete e envio C2C não são reais nesta versão.
+      </div>
+
       {/* 2. SECTION: MÉTRICAS & INDICADORES (Aberto) */}
       <section id="sec-metricas" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-red-500" />
-            <h2 className="text-lg font-black text-white tracking-tight">1. Indicadores em Tempo Real & Métricas Financeiras</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">1. Indicadores de gestão (dados possivelmente demonstrativos)</h2>
           </div>
-          <span className="text-[11px] text-zinc-500 uppercase font-semibold">Atualização Contínua</span>
+          <span className="text-[11px] text-zinc-500 uppercase font-semibold">Valores informativos</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* GMV */}
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Catálogo (GMV)</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Valor informado no catálogo</span>
               <DollarSign className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-black text-white">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalGMV)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(catalogValue)}
             </div>
-            <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
-              <TrendingUp className="w-3.5 h-3.5" />
-              {products.length} itens ativos no catálogo
+            <p className="text-[11px] text-zinc-400">
+              Soma de valores e estoque declarados; não representa vendas ou GMV.
             </p>
           </div>
 
-          {/* Custody revenue */}
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Taxa simulada (demonstração)</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Registros de pedidos (demo)</span>
               <Activity className="w-4 h-4 text-red-400" />
             </div>
-            <div className="text-2xl font-black text-white">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(estimatedCustodyRevenue)}
-            </div>
-            <p className="text-[11px] text-zinc-400">Garantia e antifraude CoreMotiom</p>
+            <div className="text-2xl font-black text-white">{orders.length}</div>
+            <p className="text-[11px] text-zinc-400">Nenhum pagamento, envio ou custódia real é processado.</p>
           </div>
 
-          {/* Users */}
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
               <span className="font-semibold uppercase text-[10px] tracking-wider">Usuários & Atletas</span>
@@ -360,20 +334,17 @@ export default function AdminDashboard() {
             </div>
             <div className="text-2xl font-black text-white">{allUsers.length}</div>
             <p className="text-[11px] text-zinc-400">
-              {allUsers.filter((u) => u.role === 'admin').length} admins • {allUsers.filter((u) => u.role === 'seller').length} lojistas • {allUsers.filter((u) => u.role === 'user').length} atletas
+              {allUsers.filter((u) => u.role === 'admin').length} admins • {allUsers.filter((u) => u.role === 'seller').length} anunciantes • {allUsers.filter((u) => u.role === 'user').length} atletas
             </p>
           </div>
 
-          {/* Stores */}
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Lojas Auditadas</span>
-              <Award className="w-4 h-4 text-amber-400" />
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Ofertas B2C de demonstração</span>
+              <Tag className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="text-2xl font-black text-amber-400">{verifiedStoresCount} / {stores.length}</div>
-            <p className="text-[11px] text-zinc-400">
-              {pendingStores.length} pendentes de aprovação de CNPJ
-            </p>
+            <div className="text-2xl font-black text-amber-300">{demoOfferCount}</div>
+            <p className="text-[11px] text-zinc-400">Fixtures fictícias; ainda sem fontes externas conectadas.</p>
           </div>
         </div>
 
@@ -382,230 +353,45 @@ export default function AdminDashboard() {
           <div className="bg-zinc-900/60 p-5 rounded-3xl border border-zinc-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <Package className="w-4 h-4 text-red-400" />
-              <span>Distribuição do Catálogo Esportivo</span>
+              <span>Catálogo nesta versão</span>
             </h3>
-            <div className="space-y-3 text-xs">
-              <div>
-                <div className="flex justify-between text-zinc-300 mb-1">
-                  <span>Atletas C2C (Desapego de Alta Performance)</span>
-                  <span className="font-bold text-white">{c2cCount} anúncios ({products.length > 0 ? Math.round((c2cCount / products.length) * 100) : 0}%)</span>
-                </div>
-                <div className="w-full bg-zinc-950 h-2.5 rounded-full overflow-hidden border border-zinc-800">
-                  <div className="bg-red-600 h-full rounded-full" style={{ width: `${products.length > 0 ? (c2cCount / products.length) * 100 : 0}%` }}></div>
-                </div>
+            <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                <span className="text-zinc-500">Anúncios entre atletas (C2C)</span>
+                <strong className="mt-1 block text-xl text-white">{c2cCount}</strong>
+                <span className="text-[10px] text-zinc-500">Fluxo interno demonstrativo</span>
               </div>
-
-              <div>
-                <div className="flex justify-between text-zinc-300 mb-1">
-                  <span>Lojas Oficiais B2C (Marcas Verificadas)</span>
-                  <span className="font-bold text-white">{b2cCount} produtos ({products.length > 0 ? Math.round((b2cCount / products.length) * 100) : 0}%)</span>
-                </div>
-                <div className="w-full bg-zinc-950 h-2.5 rounded-full overflow-hidden border border-zinc-800">
-                  <div className="bg-blue-600 h-full rounded-full" style={{ width: `${products.length > 0 ? (b2cCount / products.length) * 100 : 0}%` }}></div>
-                </div>
+              <div className="rounded-2xl border border-amber-500/20 bg-zinc-950 p-4">
+                <span className="text-zinc-500">Ofertas externas (B2C)</span>
+                <strong className="mt-1 block text-xl text-amber-200">{demoOfferCount}</strong>
+                <span className="text-[10px] text-zinc-500">Dados fictícios, sem fonte real</span>
               </div>
             </div>
           </div>
 
           <div className="bg-zinc-900/60 p-5 rounded-3xl border border-zinc-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Fluxo simulado</span>
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span>Integrações nesta versão</span>
             </h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Prazo de Liberação</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">Prazo simulado</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Pagamentos</span>
+                <span className="text-white font-bold text-xs mt-0.5 block">Não integrados</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Taxa simulada</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">4.5% (simulado)</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Comissão</span>
+                <span className="text-white font-bold text-xs mt-0.5 block">Não configurada</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Pagamentos PIX</span>
-                <span className="text-emerald-400 font-bold text-xs mt-0.5 block">Instantâneo</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">PIX</span>
+                <span className="text-zinc-300 font-bold text-xs mt-0.5 block">Não integrado</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Disputas Abertas</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">0 ativas</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Frete e envio</span>
+                <span className="text-zinc-300 font-bold text-xs mt-0.5 block">Não integrados</span>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. SECTION: AUDITORIA & VERIFICAÇÃO DE LOJAS (Aberto) */}
-      <section id="sec-auditoria" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">2. Central de Homologação & Auditoria de Lojas B2C</h2>
-          </div>
-          <span className="text-xs text-zinc-400">
-            {pendingStores.length} loja(s) aguardando homologação de CNPJ
-          </span>
-        </div>
-
-        {pendingStores.length > 0 ? (
-          <div className="space-y-3">
-            {pendingStores.map((store) => (
-              <div
-                key={store.id}
-                className="bg-zinc-900/80 rounded-3xl border border-amber-500/30 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl"
-              >
-                <div className="flex items-center gap-4">
-                  <img
-                    src={store.logo_url}
-                    alt=""
-                    className="w-14 h-14 rounded-2xl object-cover border border-zinc-800 bg-zinc-950"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-white">{store.name}</h4>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                        Pendente de Aprovação
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-400">{store.category} • {store.location}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
-                      <span>CNPJ: <strong className="text-zinc-200">{(storeDocs[store.id] ?? store.verification_docs)?.cnpj || 'não informado'}</strong></span>
-                      <span>•</span>
-                      <span>Razão Social: <strong className="text-zinc-200">{(storeDocs[store.id] ?? store.verification_docs)?.company_name || 'não informado'}</strong></span>
-                      <span>•</span>
-                      <span>E-mail: {store.contact_email}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => adminVerifyStore(store.id, false, 'Documentação pendente ou inconsistente')}
-                    className="px-4 py-2 rounded-full bg-zinc-800 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-semibold transition-colors flex items-center gap-1.5 border border-zinc-700"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>Recusar</span>
-                  </button>
-
-                  <button
-                    onClick={() => adminVerifyStore(store.id, true)}
-                    className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950/40 hover:scale-105"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Aprovar Selo Oficial Verificado</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-8 text-center text-xs text-zinc-400 flex flex-col items-center justify-center gap-2">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-            <h4 className="font-bold text-white text-sm">Fila de Homologação Limpa</h4>
-            <p>Todas as lojas ativas já possuem conformidade auditada e selos oficiais concedidos.</p>
-          </div>
-        )}
-      </section>
-
-      {/* 2.1 SECTION: REDE DE LOJISTAS CREDENCIADAS & POLÍTICA LGPD DE SIGILO FINANCEIRO */}
-      <section id="sec-lojistas" className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <StoreIcon className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">
-              2.1 Rede de Lojistas Credenciadas ({stores.length} Lojas)
-            </h2>
-          </div>
-          <span className="text-xs text-zinc-400">
-            {verifiedStoresCount} lojas verificadas com selo oficial
-          </span>
-        </div>
-
-        {/* Banner de Conformidade LGPD & Sigilo Comercial */}
-        <div className="p-4 rounded-2xl bg-zinc-900/90 border border-blue-500/30 text-xs text-zinc-300 space-y-1.5 shadow-lg backdrop-blur-sm">
-          <div className="flex items-center gap-2 text-blue-400 font-bold uppercase tracking-wider text-[11px]">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Dados de demonstração (fictícios)</span>
-          </div>
-          <p className="text-zinc-400 leading-relaxed">
-            Em conformidade com as diretrizes regulatórias e de sigilo comercial, os demonstrativos financeiros, lucros líquidos, extratos bancários e margens de venda de cada lojista parceiro são <strong className="text-zinc-200">estritamente restritos ao titular da loja</strong>. Contas administrativas e de desenvolvimento não têm acesso a essas informações privadas das lojas parceiras.
-          </p>
-        </div>
-
-        {/* Stores Catalog Grid in Admin */}
-        <div className="bg-zinc-900/60 rounded-3xl border border-zinc-800 overflow-hidden shadow-xl">
-          <div className="overflow-x-auto text-xs">
-            <table className="w-full text-left">
-              <thead className="bg-zinc-950 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
-                <tr>
-                  <th className="p-4">Loja Parceira</th>
-                  <th className="p-4">Segmento</th>
-                  <th className="p-4">Localização & CNPJ</th>
-                  <th className="p-4">Catálogo Ativo</th>
-                  <th className="p-4">Avaliação</th>
-                  <th className="p-4">Demonstrativo Financeiro</th>
-                  <th className="p-4 text-right">Status do Selo</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
-                {stores.map((s) => (
-                  <tr key={s.id} className="hover:bg-zinc-800/30 transition-colors">
-                    <td className="p-4 flex items-center gap-3">
-                      <img
-                        src={s.logo_url}
-                        alt=""
-                        className="w-10 h-10 rounded-xl object-cover border border-zinc-800 bg-zinc-950 shrink-0"
-                      />
-                      <div>
-                        <span className="font-bold text-white block">{s.name}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">ID: {s.id}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700">
-                        {s.category}
-                      </span>
-                    </td>
-                    <td className="p-4 whitespace-nowrap text-zinc-400">
-                      <div className="text-zinc-200 font-medium">{s.location}</div>
-                      <div className="text-[10px] text-zinc-500">
-                        CNPJ: {(storeDocs[s.id] ?? s.verification_docs)?.cnpj || 'não informado'}
-                      </div>
-                    </td>
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="font-bold text-white">{s.products_count || 0} produtos</span>
-                      <span className="text-[10px] text-zinc-500 block">no marketplace</span>
-                    </td>
-                    <td className="p-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1 text-amber-400 font-bold">
-                        <span>★</span>
-                        <span>{s.rating.toFixed(2)}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-950 text-zinc-400 border border-zinc-800">
-                        <Lock className="w-3 h-3 text-blue-400" />
-                        <span>Dados fictícios</span>
-                      </span>
-                    </td>
-                    <td className="p-4 text-right whitespace-nowrap">
-                      {s.is_verified ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Verificada</span>
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => adminVerifyStore(s.id, true)}
-                          className="px-2.5 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[10px] font-bold transition-colors"
-                        >
-                          Conceder Selo
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       </section>
@@ -636,19 +422,13 @@ export default function AdminDashboard() {
                 onClick={() => setProductFilterType('all')}
                 className={`px-3 py-1 rounded-full transition-colors ${productFilterType === 'all' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}
               >
-                Todos ({products.length})
-              </button>
-              <button
-                onClick={() => setProductFilterType('b2c')}
-                className={`px-3 py-1 rounded-full transition-colors ${productFilterType === 'b2c' ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:text-white'}`}
-              >
-                Lojas B2C ({b2cCount})
+                Todos C2C ({c2cCount})
               </button>
               <button
                 onClick={() => setProductFilterType('c2c')}
                 className={`px-3 py-1 rounded-full transition-colors ${productFilterType === 'c2c' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}
               >
-                Atletas C2C ({c2cCount})
+                Anúncios C2C ({c2cCount})
               </button>
             </div>
           </div>
@@ -661,7 +441,7 @@ export default function AdminDashboard() {
                 <tr>
                   <th className="p-4">Produto</th>
                   <th className="p-4">Tipo</th>
-                  <th className="p-4">Vendedor / Loja</th>
+                  <th className="p-4">Anunciante C2C</th>
                   <th className="p-4">Preço</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-right">Ações Imediatas</th>
@@ -684,18 +464,12 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                     <td className="p-4 whitespace-nowrap">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          p.product_type === 'b2c'
-                            ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
-                            : 'bg-red-500/15 text-red-400 border border-red-500/20'
-                        }`}
-                      >
-                        {p.product_type === 'b2c' ? 'Loja B2C' : 'Atleta C2C'}
+                      <span className="rounded-full border border-red-500/20 bg-red-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
+                        Atleta C2C
                       </span>
                     </td>
                     <td className="p-4 whitespace-nowrap">
-                      <span className="text-white font-medium">{p.store_name || p.seller_name}</span>
+                      <span className="text-white font-medium">{p.seller_name}</span>
                     </td>
                     <td className="p-4 font-bold text-white whitespace-nowrap">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)}
@@ -719,7 +493,7 @@ export default function AdminDashboard() {
                               : 'bg-zinc-500'
                           }`}
                         ></span>
-                        {p.status === 'active' ? 'Ativo' : p.status === 'suspended' ? 'Suspenso' : 'Vendido'}
+                        {p.status === 'active' ? 'Ativo' : p.status === 'suspended' ? 'Suspenso' : p.status === 'draft' ? 'Rascunho' : 'Vendido'}
                       </span>
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
@@ -921,17 +695,21 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 6. SECTION: GESTÃO DE PEDIDOS & CUSTÓDIA ESCROW (Aberto) */}
+      {/* 6. SECTION: DEMONSTRATION ORDER RECORDS */}
       <section id="sec-pedidos" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">5. Pedidos e Transações ({orders.length})</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">5. Registros de pedidos demonstrativos ({orders.length})</h2>
           </div>
           <span className="text-xs text-zinc-400">
-            Volume em transações: <strong className="text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalOrdersAmount)}</strong>
+            Soma dos valores registrados (não representa transações): <strong className="text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(registeredOrderValue)}</strong>
           </span>
         </div>
+
+        <p role="note" className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs leading-relaxed text-amber-100/80">
+          Estes registros e alterações de status são demonstrativos. Não há integração com PIX, cartão, custódia, transportadora, frete ou rastreamento; marcar um status não confirma pagamento, envio ou entrega.
+        </p>
 
         {orders.length > 0 ? (
           <div className="bg-zinc-900/60 rounded-3xl border border-zinc-800 overflow-hidden shadow-xl">
@@ -939,12 +717,12 @@ export default function AdminDashboard() {
               <table className="w-full text-left">
                 <thead className="bg-zinc-950 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
                   <tr>
-                    <th className="p-4">ID Pedido</th>
-                    <th className="p-4">Comprador</th>
-                    <th className="p-4">Valor Total</th>
-                    <th className="p-4">Pagamento</th>
-                    <th className="p-4">Status da Entrega</th>
-                    <th className="p-4">Rastreio</th>
+                    <th className="p-4">ID demonstrativo</th>
+                    <th className="p-4">Conta</th>
+                    <th className="p-4">Valor informativo</th>
+                    <th className="p-4">Pagamento (demo)</th>
+                    <th className="p-4">Status logístico (demo)</th>
+                    <th className="p-4">Rastreamento (não integrado)</th>
                     <th className="p-4 text-right">Ações Administrativas</th>
                   </tr>
                 </thead>
@@ -957,7 +735,7 @@ export default function AdminDashboard() {
                       <td className="p-4 whitespace-nowrap">
                         <span className="block font-medium text-white">{ord.user_email}</span>
                         <span className="text-[10px] text-zinc-500">
-                          {ord.items.length} item(ns) • {ord.shipping_method.toUpperCase()}
+                          {ord.items.length} item(ns) • método indicado: {ord.shipping_method.toUpperCase()} (demo)
                         </span>
                       </td>
                       <td className="p-4 font-bold text-white whitespace-nowrap">
@@ -971,67 +749,83 @@ export default function AdminDashboard() {
                               : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
                           }`}
                         >
-                          {ord.payment_status === 'paid' ? 'PIX Aprovado' : 'Aguardando PIX'}
+                          {ord.payment_status === 'paid' ? 'Marcado como pago (demo)' : 'Sem cobrança real'}
                         </span>
                       </td>
                       <td className="p-4 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                            ord.order_status === 'delivered'
+                            ord.order_status === 'delivered' || ord.order_status === 'completed'
                               ? 'bg-emerald-500/15 text-emerald-400'
                               : ord.order_status === 'shipped'
                               ? 'bg-blue-500/15 text-blue-400'
+                              : ord.order_status === 'cancelled'
+                              ? 'bg-red-500/15 text-red-400'
                               : 'bg-zinc-800 text-zinc-300'
                           }`}
                         >
-                          {ord.order_status === 'pending_payment'
-                            ? 'Pendente'
-                            : ord.order_status === 'preparing'
-                            ? 'Em Separação'
-                            : ord.order_status === 'shipped'
-                            ? 'Em Transporte'
-                            : ord.order_status === 'delivered'
-                            ? 'Entregue'
-                            : ord.order_status}
+                          {ORDER_STATUS_LABEL[ord.order_status]}
                         </span>
                       </td>
                       <td className="p-4 font-mono text-[11px] text-zinc-400 whitespace-nowrap">
-                        {ord.tracking_code || 'Aguardando envio'}
+                        {ord.tracking_code ? `Informado: ${ord.tracking_code}` : 'Não integrado'}
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {ord.payment_status !== 'paid' && (
+                          {ord.order_status === 'pending_payment' && ord.payment_status !== 'paid' && (
                             <button
                               onClick={() => confirmPaymentSandbox(ord.id)}
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
-                              title="Simular aprovação do PIX"
+                              title="Atualiza somente o status demonstrativo; não inicia pagamento via PIX."
                             >
-                              Aprovar PIX
+                              Marcar pago (demo)
                             </button>
                           )}
-                          
+
+                          {ord.order_status === 'escrow_locked' && (
+                            <button
+                              onClick={() => adminUpdateOrderStatus(ord.id, 'preparing')}
+                              title="Atualiza apenas o status demonstrativo; nenhum preparo real é solicitado."
+                              className="px-2.5 py-1 rounded-full bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-semibold transition-colors"
+                            >
+                              Iniciar preparo (demo)
+                            </button>
+                          )}
+
                           {ord.order_status === 'preparing' && (
                             <button
                               onClick={() => adminUpdateOrderStatus(ord.id, 'shipped')}
+                              title="Atualiza apenas o status demonstrativo; nenhum envio é solicitado."
                               className="px-2.5 py-1 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-semibold transition-colors"
                             >
-                              Marcar Enviado
+                              Marcar envio (demo)
                             </button>
                           )}
 
                           {ord.order_status === 'shipped' && (
                             <button
                               onClick={() => adminUpdateOrderStatus(ord.id, 'delivered')}
+                              title="Atualiza apenas o status demonstrativo; não confirma entrega real."
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
                             >
-                              Marcar Entregue
+                              Marcar entrega (demo)
                             </button>
                           )}
 
                           {ord.order_status === 'delivered' && (
+                            <button
+                              onClick={() => adminUpdateOrderStatus(ord.id, 'completed')}
+                              title="Encerra o pedido e libera a custódia simulada; nenhum repasse real é feito."
+                              className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
+                            >
+                              Concluir e liberar custódia (demo)
+                            </button>
+                          )}
+
+                          {ord.order_status === 'completed' && (
                             <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                               <CheckCheck className="w-3.5 h-3.5" />
-                              Pagamento simulado
+                              Concluído (demo)
                             </span>
                           )}
                         </div>
@@ -1044,65 +838,9 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-8 text-center text-xs text-zinc-400">
-            Nenhum pedido registrado no momento.
+            Nenhum registro demonstrativo de pedido no momento.
           </div>
         )}
-      </section>
-
-      {/* 7. SECTION: LOJAS OFICIAIS CADASTRADAS (Aberto) */}
-      <section id="sec-lojas" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-lg font-black text-white tracking-tight">6. Lojas Parceiras Oficiais B2C ({stores.length})</h2>
-          </div>
-          <span className="text-xs text-zinc-400">
-            {verifiedStoresCount} lojas verificadas com selo
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stores.map((s) => (
-            <div
-              key={s.id}
-              className="bg-zinc-900/70 p-5 rounded-3xl border border-zinc-800 space-y-3 shadow-xl hover:border-zinc-700 transition-colors flex flex-col justify-between"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={s.logo_url}
-                    alt=""
-                    className="w-12 h-12 rounded-2xl object-cover border border-zinc-800 bg-zinc-950 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <h4 className="font-bold text-xs text-white flex items-center gap-1.5 truncate">
-                      {s.name}
-                      {s.is_verified && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                    </h4>
-                    <span className="text-[10px] text-zinc-400 block truncate">{s.category}</span>
-                  </div>
-                </div>
-                <p className="text-[11px] text-zinc-400 line-clamp-2">{s.description}</p>
-              </div>
-
-              <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[11px]">
-                <span className={s.is_verified ? 'text-emerald-400 font-semibold' : 'text-zinc-500'}>
-                  {s.is_verified ? 'Selo Verificado' : 'Aguardando'}
-                </span>
-                <button
-                  onClick={() => adminVerifyStore(s.id, !s.is_verified)}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors ${
-                    s.is_verified
-                      ? 'bg-zinc-800 hover:bg-amber-500/20 text-zinc-400 hover:text-amber-300'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                  }`}
-                >
-                  {s.is_verified ? 'Revogar Selo' : 'Conceder Selo'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
 
       {/* 7. SECTION: MODERAÇÃO DA COMUNIDADE (publicações denunciadas) */}
@@ -1163,10 +901,10 @@ export default function AdminDashboard() {
               <span className="text-lg font-black text-white">{products.length}</span>
               <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
             </div>
-            <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Stores</span>
-              <span className="text-lg font-black text-white">{stores.length}</span>
-              <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
+            <div className="p-3 bg-zinc-950 rounded-2xl border border-amber-500/20">
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Ofertas B2C (demo)</span>
+              <span className="text-lg font-black text-amber-200">{demoOfferCount}</span>
+              <span className="text-[9px] text-zinc-500 block font-semibold">Fixtures locais</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
               <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Users</span>
@@ -1192,8 +930,8 @@ export default function AdminDashboard() {
 
           <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800/80 text-xs text-zinc-400 space-y-1">
             <div className="flex items-center justify-between text-[11px] font-mono">
-              <span className="text-zinc-500">PostgreSQL Host:</span>
-              <span className="text-zinc-300">aws-0-sa-east-1.pooler.supabase.com (Porta 5432 / 6543)</span>
+              <span className="text-zinc-500">Conexão PostgreSQL:</span>
+              <span className="text-zinc-300">Gerenciada pela configuração do ambiente</span>
             </div>
             <div className="flex items-center justify-between text-[11px] font-mono">
               <span className="text-zinc-500">Row Level Security (RLS):</span>
@@ -1283,7 +1021,7 @@ export default function AdminDashboard() {
                   className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:outline-none focus:border-red-500"
                 >
                   <option value="user">Usuário Atleta (C2C)</option>
-                  <option value="seller">Lojista Oficial Parceiro (B2C)</option>
+                  <option value="seller">Anunciante C2C</option>
                   <option value="admin">Administrador Auxiliar</option>
                 </select>
               </div>

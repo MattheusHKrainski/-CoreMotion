@@ -6,34 +6,34 @@ import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
 import type { Order, UserProfile, UserRole } from '@/lib/types';
-import { LogOut, Save, ShieldCheck, Store, UserCircle2 } from 'lucide-react';
+import { LogOut, Save, ShieldCheck, UserCircle2 } from 'lucide-react';
 
 /** Descrição curta do que cada papel pode fazer (espelha lib/permissions.ts). */
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
-  user: 'Atleta: compra produtos, anuncia equipamentos entre atletas e participa da comunidade. Para vender como loja oficial, crie uma loja na seção Lojas.',
-  seller: 'Lojista: gerencia a própria loja e os produtos oficiais, além das funções de atleta.',
+  user: 'Atleta: explora ofertas de demonstração, pode publicar equipamentos entre pessoas (C2C) e participa da comunidade.',
+  seller: 'Anunciante: publica equipamentos entre atletas (C2C) e participa da comunidade esportiva.',
   supervisor:
-    'Supervisor: modera a comunidade e os anúncios, gerencia pedidos, verifica lojas e suspende atletas e lojistas. Não altera papéis nem exclui contas.',
+    'Supervisor: modera a comunidade, os anúncios e registros demonstrativos. Não altera papéis nem exclui contas.',
   admin: 'Administrador: acesso total, incluindo alteração de papéis e exclusão de contas (contas-mestre são protegidas).',
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
-  pending: 'Aguardando pagamento',
-  approved: 'Aprovado',
-  paid: 'Pago',
-  failed: 'Falhou',
-  refunded: 'Reembolsado',
-  cancelled: 'Cancelado',
+  pending: 'Demonstrativo: pendente',
+  approved: 'Demonstrativo: aprovado',
+  paid: 'Demonstrativo: pago',
+  failed: 'Demonstrativo: falhou',
+  refunded: 'Demonstrativo: reembolsado',
+  cancelled: 'Demonstrativo: cancelado',
 };
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Pagamento simulado',
-  preparing: 'Em preparação',
-  shipped: 'Enviado',
-  delivered: 'Entregue',
-  completed: 'Concluído',
-  cancelled: 'Cancelado',
+  pending_payment: 'Checkout demonstrativo',
+  escrow_locked: 'Custódia simulada (sem retenção)',
+  preparing: 'Demonstrativo: em preparação',
+  shipped: 'Demonstrativo: enviado',
+  delivered: 'Demonstrativo: entregue',
+  completed: 'Demonstrativo: concluído',
+  cancelled: 'Demonstrativo: cancelado',
 };
 
 function formatCurrency(value: number): string {
@@ -75,9 +75,8 @@ export default function ProfileView() {
     <ProfileContent
       key={formKey}
       user={user}
-      storeOrders={orders}
+      orders={orders}
       onSave={updateUserProfile}
-      onOpenStores={() => setActiveView('stores')}
       onOpenAdmin={() => setActiveView('admin')}
       onLogout={() => logout()}
     />
@@ -86,14 +85,13 @@ export default function ProfileView() {
 
 interface ProfileContentProps {
   user: UserProfile;
-  storeOrders: Order[];
+  orders: Order[];
   onSave: (data: Partial<UserProfile>) => void;
-  onOpenStores: () => void;
   onOpenAdmin: () => void;
   onLogout: () => void;
 }
 
-function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, onLogout }: ProfileContentProps) {
+function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: ProfileContentProps) {
   const [form, setForm] = useState({
     name: user.name ?? '',
     phone: user.phone ?? '',
@@ -117,7 +115,7 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
     };
   }, [userId]);
 
-  const myOrders = isSupabaseConfigured ? remoteOrders : storeOrders.filter((o) => o.user_id === userId);
+  const myOrders = isSupabaseConfigured ? remoteOrders : orders.filter((o) => o.user_id === userId);
 
   const role = (user.role === 'visitor' ? 'user' : user.role) as Exclude<UserRole, 'visitor'>;
   const roleLabel = ROLE_LABELS[user.role] ?? 'Atleta';
@@ -173,16 +171,6 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
         <p className="mt-4 text-sm text-zinc-300 leading-relaxed">{roleDescription}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {(user.role === 'seller' || user.role === 'admin') && (
-            <button
-              type="button"
-              onClick={onOpenStores}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold"
-            >
-              <Store className="w-4 h-4" aria-hidden="true" />
-              Minha loja
-            </button>
-          )}
           {isStaffRole(user.role) && (
             <button
               type="button"
@@ -197,9 +185,12 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
       </section>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
-        <h2 className="text-base font-bold text-white">Meus pedidos</h2>
+        <h2 className="text-base font-bold text-white">Pedidos demonstrativos</h2>
+        <p className="text-xs text-amber-200/80">
+          Registros e status exibidos podem ser ilustrativos. Esta versão não processa pagamentos, não retém valores e não solicita envios.
+        </p>
         {myOrders.length === 0 ? (
-          <p className="text-sm text-zinc-400">Você ainda não fez pedidos. Eles aparecem aqui depois da finalização da compra.</p>
+          <p className="text-sm text-zinc-400">Não há registros demonstrativos associados à sua conta.</p>
         ) : (
           <ul className="divide-y divide-zinc-800">
             {myOrders.map((order) => {
