@@ -8,7 +8,7 @@
 
 ## Slide 1: Capa
 
-- Título: **CoreMotiom**: marketplace esportivo com lojas oficiais e venda entre atletas
+- Título: **CoreMotiom**: marketplace esportivo com ofertas B2C demonstrativas e venda entre atletas
 - Curso, disciplina, professor, data
 - Equipe: nomes em ordem numérica (ver slide 2)
 
@@ -26,13 +26,13 @@ Cada integrante aparece com **foto**, **nome** e **papel no Scrum e no projeto**
 
 ## Slide 3: Problema e justificativa
 
-- Atletas e lojas de artigos esportivos precisam de um canal único para compra oficial e venda entre pessoas.
-- Marketplaces exigem controle de acesso correto: quem pode anunciar, moderar, verificar lojas e alterar papéis.
+- A experiência atual combina uma vitrine B2C demonstrativa de ofertas externas com anúncios C2C entre atletas.
+- Ofertas, lojas, preços, descontos e endereços são fictícios nesta etapa; não há scraping nem fonte real conectada. Perfis de loja de usuários e revisão de CNPJ foram retirados da aplicação.
 
 ## Slide 4: Objetivos
 
 - **Geral**: desenvolver e disponibilizar um marketplace esportivo com hierarquia de papéis.
-- **Específicos**: catálogo B2C e C2C, lojas com selo de verificação, compra com pagamento simulado, comunidade com moderação, painel de gestão e controle de acesso no banco.
+- **Específicos**: vitrine B2C simulada, anúncios C2C, checkout e envio demonstrativos, comunidade com moderação, painel de gestão e controle de acesso no banco.
 
 ## Slide 5: Metodologia (Scrum)
 
@@ -41,13 +41,13 @@ Cada integrante aparece com **foto**, **nome** e **papel no Scrum e no projeto**
 
 ## Slide 6: Requisitos e casos de uso
 
-- Diagrama de casos de uso (`docs/diagramas/caso-de-uso.png`): 18 casos de uso, 5 atores.
-- Atores de uso geral: Visitante, Atleta e Lojista. Atores de gestão: Supervisor e Administrador.
+- Atores da versão atual: Visitante, Atleta, Anunciante C2C (papel `seller` legado), Supervisor e Administrador.
+- O diagrama de casos de uso em `docs/diagramas/caso-de-uso.png` documenta o escopo original do TCC e ainda contém perfis de loja/revisão; não deve ser apresentado como descrição da implementação atual.
 
 ## Slide 7: Hierarquia de papéis
 
-- **Administrador** > **Supervisor** > **Lojista** > **Atleta** > **Visitante**.
-- Supervisor modera, gerencia pedidos e verifica lojas; não altera papéis nem exclui contas.
+- **Administrador** > **Supervisor**. Atleta e Anunciante C2C têm as mesmas permissões de anúncio C2C; `seller` é mantido apenas por compatibilidade.
+- Supervisor modera anúncios C2C e comunidade e gerencia pedidos demonstrativos; não publica anúncios, não altera papéis nem exclui contas. Não há fluxo de loja ou revisão de CNPJ.
 - Administrador tem todas as capacidades, exceto sobre contas-mestre.
 - Matriz completa no README (seção *Papéis e permissões*).
 
@@ -60,31 +60,32 @@ Cada integrante aparece com **foto**, **nome** e **papel no Scrum e no projeto**
 
 ## Slide 9: Segurança: achados e correções
 
-- Linha de base (esquema inicial): **29 de 47** cenários de autorização reprovados.
-- Principais falhas corrigidas: escalonamento de papel, leitura anônima de perfis, pedido marcado como pago pelo cliente, `TRUNCATE` por usuários autenticados.
-- Esquema endurecido: **47 de 47** aprovados.
-- Rotas de escrita da API: **22 de 22** verificações de 401 (sem token e com token forjado).
+- Linha de base de 2026-10-08 (esquema inicial): **29 de 47** cenários de autorização reprovados.
+- Principais correções: escalonamento de papel, leitura anônima de perfis, pedido marcado como pago pelo cliente e `TRUNCATE` por usuários autenticados.
+- Versão atual: **62 de 62** cenários aprovados, incluindo bloqueio de novos anúncios B2C, preservação/ocultação de dados legados e checkout C2C-only.
+- Rotas protegidas atuais da API: **14 de 14** verificações de 401 (sem token e com token forjado).
 - Credencial que estava no código foi removida; a senha do banco deve ser redefinida no Supabase antes da publicação.
 
 ## Slide 10: Demonstração (roteiro)
 
-1. Entrar como atleta; navegar no catálogo e filtrar por modalidade.
-2. Comprar um produto com PIX; abrir *Perfil › Meus pedidos*.
+1. Abrir a vitrine B2C; mostrar o aviso de dados fictícios e usar **Ver oferta** sem abrir um site externo.
+2. Navegar pelos anúncios C2C, filtrar por modalidade e percorrer o checkout demonstrativo com PIX e frete simulado; abrir *Perfil › Meus pedidos*.
 3. Denunciar uma publicação na comunidade.
-4. Entrar como supervisor; confirmar o pagamento do pedido e remover a publicação denunciada em *Moderação da Comunidade*.
+4. Entrar como supervisor; marcar o pagamento apenas como simulado e remover a publicação denunciada em *Moderação da Comunidade*.
 5. Mostrar que, como supervisor, o campo de papel aparece desabilitado na aba de usuários.
 6. Entrar como administrador; alterar o papel de uma conta; mostrar que as contas-mestre aparecem com selo de equipe, sem campo de papel.
 
 ## Slide 11: Testes e validação
 
 - Verificação de tipos, lint e build aprovados.
-- Testes de autorização do banco: 47 de 47.
-- Teste de fumaça de API: 22 de 22.
+- Testes unitários: 12 de 12; autorização do banco: 62 de 62.
+- Teste de fumaça de API: 14 de 14.
 - CI no GitHub Actions a cada *pull request*.
 
 ## Slide 12: Limitações e trabalhos futuros
 
-- Pagamentos simulados: integrar gateway financeiro real.
+- B2C sem fontes reais: conectar fontes e links reais somente numa etapa futura, com autorização e testes.
+- Pagamentos e frete simulados: integrar gateway e transportadora somente em uma versão futura, após configuração e testes reais.
 - Testes ponta a ponta de interface (Playwright).
 - Treinadores com dados estáticos: migrar para tabela no banco.
 

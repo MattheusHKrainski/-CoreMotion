@@ -6,29 +6,28 @@ import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
 import type { Order, UserProfile, UserRole } from '@/lib/types';
-import { LogOut, Save, ShieldCheck, Store, UserCircle2 } from 'lucide-react';
+import { LogOut, Save, ShieldCheck, UserCircle2 } from 'lucide-react';
 
-/** Descrição curta do que cada papel pode fazer (espelha lib/permissions.ts). */
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
-  user: 'Atleta: compra produtos, anuncia equipamentos entre atletas e participa da comunidade. Para vender como loja oficial, crie uma loja na seção Lojas.',
-  seller: 'Lojista: gerencia a própria loja e os produtos oficiais, além das funções de atleta.',
+  user: 'Atleta: compra com garantia, anuncia seus próprios equipamentos, aproveita descontos em lojas parceiras e participa da comunidade.',
+  seller: 'Vendedor Verificado: anuncia equipamentos esportivos com Compra Garantida e participa da comunidade.',
   supervisor:
-    'Supervisor: modera a comunidade e os anúncios, gerencia pedidos, verifica lojas e suspende atletas e lojistas. Não altera papéis nem exclui contas.',
-  admin: 'Administrador: acesso total, incluindo alteração de papéis e exclusão de contas (contas-mestre são protegidas).',
+    'Supervisor: modera a comunidade, os anúncios e os pedidos da plataforma. Não altera papéis nem exclui contas.',
+  admin: 'Administrador: acesso total de gestão da plataforma, incluindo permissões de usuários, catálogo e pedidos.',
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
   pending: 'Aguardando pagamento',
   approved: 'Aprovado',
   paid: 'Pago',
-  failed: 'Falhou',
+  failed: 'Não autorizado',
   refunded: 'Reembolsado',
   cancelled: 'Cancelado',
 };
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Pagamento simulado',
+  escrow_locked: 'Pagamento protegido',
   preparing: 'Em preparação',
   shipped: 'Enviado',
   delivered: 'Entregue',
@@ -68,16 +67,14 @@ export default function ProfileView() {
     );
   }
 
-  // Ao salvar, o store atualiza `user`; a chave muda e o formulário é recriado com os dados salvos.
   const formKey = [user.id, user.name, user.phone ?? '', user.city ?? '', user.state ?? ''].join('|');
 
   return (
     <ProfileContent
       key={formKey}
       user={user}
-      storeOrders={orders}
+      orders={orders}
       onSave={updateUserProfile}
-      onOpenStores={() => setActiveView('stores')}
       onOpenAdmin={() => setActiveView('admin')}
       onLogout={() => logout()}
     />
@@ -86,14 +83,13 @@ export default function ProfileView() {
 
 interface ProfileContentProps {
   user: UserProfile;
-  storeOrders: Order[];
+  orders: Order[];
   onSave: (data: Partial<UserProfile>) => void;
-  onOpenStores: () => void;
   onOpenAdmin: () => void;
   onLogout: () => void;
 }
 
-function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, onLogout }: ProfileContentProps) {
+function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: ProfileContentProps) {
   const [form, setForm] = useState({
     name: user.name ?? '',
     phone: user.phone ?? '',
@@ -103,8 +99,6 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
   const [error, setError] = useState<string | null>(null);
   const [remoteOrders, setRemoteOrders] = useState<Order[]>([]);
 
-  // Com Supabase, os pedidos vêm do banco (a RLS devolve apenas os do próprio comprador).
-  // Sem Supabase (demonstração), usa os pedidos mantidos pelo store.
   const userId = user.id;
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -117,7 +111,7 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
     };
   }, [userId]);
 
-  const myOrders = isSupabaseConfigured ? remoteOrders : storeOrders.filter((o) => o.user_id === userId);
+  const myOrders = isSupabaseConfigured ? remoteOrders : orders.filter((o) => o.user_id === userId);
 
   const role = (user.role === 'visitor' ? 'user' : user.role) as Exclude<UserRole, 'visitor'>;
   const roleLabel = ROLE_LABELS[user.role] ?? 'Atleta';
@@ -143,7 +137,7 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">Meu perfil</h1>
-        <p className="text-sm text-zinc-400 mt-1">Dados da sua conta e papel no sistema.</p>
+        <p className="text-sm text-zinc-400 mt-1">Dados da sua conta, histórico de pedidos e preferências.</p>
       </div>
 
       {user.is_banned && (
@@ -173,16 +167,6 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
         <p className="mt-4 text-sm text-zinc-300 leading-relaxed">{roleDescription}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {(user.role === 'seller' || user.role === 'admin') && (
-            <button
-              type="button"
-              onClick={onOpenStores}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold"
-            >
-              <Store className="w-4 h-4" aria-hidden="true" />
-              Minha loja
-            </button>
-          )}
           {isStaffRole(user.role) && (
             <button
               type="button"
@@ -199,7 +183,7 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
         <h2 className="text-base font-bold text-white">Meus pedidos</h2>
         {myOrders.length === 0 ? (
-          <p className="text-sm text-zinc-400">Você ainda não fez pedidos. Eles aparecem aqui depois da finalização da compra.</p>
+          <p className="text-sm text-zinc-400">Você ainda não realizou pedidos na plataforma.</p>
         ) : (
           <ul className="divide-y divide-zinc-800">
             {myOrders.map((order) => {
