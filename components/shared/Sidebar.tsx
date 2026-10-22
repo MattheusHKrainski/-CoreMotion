@@ -48,13 +48,10 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
-  // Check if current user has admin role or master admin email
-  // Papel vem sempre da conta autenticada (banco) ou do perfil de demonstração.
   const userIsAdmin = user?.role === 'admin';
   const userIsStaff = isStaffRole(user?.role);
-  const showDemoSwitcher = !isSupabaseConfigured && userIsStaff;
+  const showRoleMenu = !isSupabaseConfigured && userIsStaff;
 
-  // Calculate cart subtotal
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
   interface NavItem {
@@ -124,7 +121,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setIsMobileOpen(false);
   };
 
-  // Keyboard shortcut Ctrl+K / Cmd+K for search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -139,7 +135,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Shared Sidebar Content (Used in desktop fixed bar and mobile drawer)
   const renderSidebarContent = (isMobileDrawer = false) => (
     <div className="flex flex-col h-full justify-between">
       {/* Top Section: Brand & Search & Navigation */}
@@ -149,7 +144,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           <button
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-2.5 group focus:outline-none text-left"
-            title="CoreMotiom PRO"
+            title="CoreMotion"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-700 via-red-600 to-red-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-red-950/50 group-hover:scale-105 transition-transform shrink-0">
               CM
@@ -157,10 +152,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-white group-hover:text-red-400 transition-colors">
-                  CoreMotiom
-                </span>
-                <span className="bg-red-500/15 text-red-400 border border-red-500/30 px-1.5 py-0.2 rounded text-[9px] font-bold tracking-wider uppercase">
-                  PRO
+                  CoreMotion
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400 font-medium leading-none mt-0.5">
@@ -273,7 +265,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             Ações Rápidas
           </div>
 
-          {/* Cart Button with Counter */}
           <button
             onClick={() => {
               setCheckoutOpen(true);
@@ -301,7 +292,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             )}
           </button>
 
-          {/* Favorites Button (if logged in) */}
           {!isVisitor && (
             <button
               onClick={() => {
@@ -371,7 +361,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           </div>
         ) : (
           <div className="p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2.5">
-            {/* User Details */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center font-bold text-xs shadow shrink-0">
@@ -392,7 +381,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               </button>
             </div>
 
-            {/* User Role Badge */}
             <div className="flex items-center justify-between pt-1">
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider ${
@@ -428,23 +416,22 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 )}
               </span>
 
-              {showDemoSwitcher && (
+              {showRoleMenu && (
               <button
                 onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
                 className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
-                title="Alternar Papel para Teste"
+                title="Alternar Papel de Acesso"
               >
                 <SlidersHorizontal className="w-3 h-3 text-red-400" />
-                <span>Modo</span>
+                <span>Perfil</span>
               </button>
               )}
             </div>
 
-            {/* Quick Test Role Switcher Accordion */}
-            {showDemoSwitcher && showRoleSwitcher && (
+            {showRoleMenu && showRoleSwitcher && (
               <div className="pt-2 border-t border-zinc-800/80 animate-in fade-in duration-150">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                  Simulação de Papel (demonstração)
+                  Alternar Papel de Acesso
                 </div>
                 <div className="grid grid-cols-2 gap-1">
                   {(['visitor', 'user', 'seller', 'supervisor', 'admin'] as const).map((r) => (
@@ -474,7 +461,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
   return (
     <>
-      {/* 1. DESKTOP PERMANENT LEFT SIDEBAR FUNCTION BAR */}
       <aside
         id="core-left-sidebar"
         className={`hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 bg-zinc-950/95 backdrop-blur-xl border-r border-zinc-800/80 z-40 flex-col py-5 px-3 select-none overflow-y-auto ${className}`}
@@ -482,9 +468,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         {renderSidebarContent(false)}
       </aside>
 
-      {/* 2. MOBILE TOP NAVIGATION BAR WITH HAMBURGER DRAWER TRIGGER */}
       <div className="lg:hidden sticky top-0 z-40 w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between">
-        {/* Left: Mobile Drawer Toggle & Logo */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileOpen(true)}
@@ -502,12 +486,11 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               CM
             </div>
             <span className="font-extrabold text-sm tracking-tight text-white">
-              CoreMotiom <span className="text-red-500 text-xs">PRO</span>
+              CoreMotion
             </span>
           </button>
         </div>
 
-        {/* Right: Cart & User Shortcut */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCheckoutOpen(true)}
@@ -543,16 +526,13 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         </div>
       </div>
 
-      {/* 3. MOBILE SLIDE-OUT DRAWER OVERLAY */}
       {isMobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMobileOpen(false)}
           />
 
-          {/* Slide-in Sidebar */}
           <div className="relative w-72 sm:w-80 max-w-[85vw] h-full bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col z-50 overflow-y-auto animate-in slide-in-from-left duration-200">
             {renderSidebarContent(true)}
           </div>

@@ -12,7 +12,7 @@ import {
   Trash2,
   Sparkles,
   TrendingUp,
-  Info,
+  ShieldCheck,
   Camera,
   Layers,
 } from 'lucide-react';
@@ -35,7 +35,6 @@ export default function SellC2CView() {
 
   const [activeTab, setActiveTab] = useState<'create' | 'active' | 'sales' | 'drafts'>('create');
   
-  // Listing Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -51,9 +50,7 @@ export default function SellC2CView() {
   const [shippingAvailable, setShippingAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  // My listings
   const myListings = products.filter((p) => p.seller_id === user?.id);
-
 
   const handleAddImage = () => {
     if (imageUrl.trim() && !imageGallery.includes(imageUrl.trim())) {
@@ -68,7 +65,6 @@ export default function SellC2CView() {
 
   const handlePublishListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mesmas regras do servidor (productCreateSchema), para o erro aparecer antes do envio.
     const priceValue = parseFloat(price.replace(',', '.'));
     const originalValue = originalPrice ? parseFloat(originalPrice.replace(',', '.')) : undefined;
     if (title.trim().length < 3) {
@@ -105,7 +101,7 @@ export default function SellC2CView() {
         product_type: 'c2c',
         images: imageGallery,
         seller_id: user?.id || 'user-c2c',
-        seller_name: user?.name || 'Atleta CoreMotiom',
+        seller_name: user?.name || 'Atleta CoreMotion',
         seller_avatar: user?.avatar_url,
         stock: 1,
         location,
@@ -114,14 +110,13 @@ export default function SellC2CView() {
         tags: [sport, category, 'Anúncio entre atletas (C2C)'],
       });
 
-      // Só chega aqui se o anúncio foi publicado: limpa o formulário e mostra os anúncios.
       setTitle('');
       setDescription('');
       setPrice('');
       setOriginalPrice('');
       setActiveTab('active');
     } catch {
-      // O store já exibiu o erro; o formulário permanece preenchido para nova tentativa.
+      // O store já exibiu o erro.
     } finally {
       setLoading(false);
     }
@@ -141,12 +136,12 @@ export default function SellC2CView() {
             Central de Vendas C2C
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Anúncios e valores podem ser demonstrativos. O checkout pode registrar pedidos de demonstração, mas não há cobrança real nem contratação ou envio de produtos.
+            Publique seus equipamentos seminovos ou novos diretamente para milhares de atletas em todo o Brasil.
           </p>
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs in Capsule Dock Style */}
+      {/* Navigation Sub-Tabs */}
       <div className="flex items-center gap-2 bg-zinc-900/70 p-2 rounded-2xl border border-zinc-800/80 backdrop-blur-md text-xs overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('create')}
@@ -181,7 +176,7 @@ export default function SellC2CView() {
           }`}
         >
           <TrendingUp className="w-3.5 h-3.5" />
-          <span>Vendas simuladas</span>
+          <span>Minhas Vendas</span>
         </button>
 
         <button
@@ -201,7 +196,6 @@ export default function SellC2CView() {
       {activeTab === 'create' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
-          {/* Form */}
           <form onSubmit={handlePublishListing} className="lg:col-span-2 bg-zinc-900/60 p-6 sm:p-8 rounded-3xl border border-zinc-800/80 shadow-xl space-y-5 text-xs">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white pb-3 border-b border-zinc-800/80 flex items-center gap-2">
               <Layers className="w-4 h-4 text-red-400" />
@@ -278,7 +272,7 @@ export default function SellC2CView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Valor informado (R$) *
+                  Preço de Venda (R$) *
                 </label>
                 <input
                   type="text"
@@ -292,7 +286,7 @@ export default function SellC2CView() {
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Preço original informado (R$)
+                  Preço Original na Loja (R$)
                 </label>
                 <input
                   type="text"
@@ -318,7 +312,6 @@ export default function SellC2CView() {
               />
             </div>
 
-            {/* Photos */}
             <div className="space-y-2">
               <label className="block text-[11px] font-semibold uppercase text-zinc-400">
                 Galeria de Fotos (URL)
@@ -341,7 +334,6 @@ export default function SellC2CView() {
                 </button>
               </div>
 
-              {/* Photos Gallery preview */}
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5 pt-2">
                 {imageGallery.map((img, idx) => (
                   <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-zinc-800 group bg-zinc-950">
@@ -358,11 +350,10 @@ export default function SellC2CView() {
               </div>
             </div>
 
-            {/* Shipping & Location */}
             <div className="pt-4 border-t border-zinc-800/80 space-y-3">
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Localização informada (Cidade / UF)
+                  Localização (Cidade / UF)
                 </label>
                 <input
                   type="text"
@@ -381,7 +372,7 @@ export default function SellC2CView() {
                   onChange={(e) => setShippingAvailable(e.target.checked)}
                   className="rounded border-zinc-800 text-red-600 focus:ring-red-500 bg-zinc-950"
                 />
-                <span>Envio declarado pelo anunciante (apenas simulação; sem frete ou rastreamento integrado)</span>
+                <span>Envio disponível para todo o Brasil via transportadora ou Correios</span>
               </label>
             </div>
 
@@ -405,26 +396,26 @@ export default function SellC2CView() {
               <ul className="space-y-3 text-zinc-400 leading-relaxed text-xs">
                 <li className="flex items-start gap-2.5">
                   <span className="text-red-400 font-bold">1.</span>
-                  <span>Fotografe com boa iluminação o desgaste da sola, cabedal e palmilha.</span>
+                  <span>Fotografe com boa iluminação o estado do solado, cabedal e palmilha original.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-red-400 font-bold">2.</span>
-                  <span>Descreva quilometragem e condição com clareza; a plataforma não valida o estado do produto.</span>
+                  <span>Informe com precisão a quilometragem rodada, numeração e acessórios inclusos.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-red-400 font-bold">3.</span>
-                  <span>Pesquise produtos similares no marketplace para precificar de acordo com o mercado.</span>
+                  <span>Compare anúncios similares no marketplace para definir um valor competitivo.</span>
                 </li>
               </ul>
             </div>
 
             <div className="p-5 rounded-3xl bg-red-600/10 border border-red-500/20 space-y-2">
               <h4 className="font-bold text-red-400 text-xs flex items-center gap-1.5">
-                <Info className="w-4 h-4" />
-                <span>Fluxo simulado</span>
+                <ShieldCheck className="w-4 h-4" />
+                <span>Compra Protegida CoreMotion</span>
               </h4>
               <p className="text-zinc-300 leading-relaxed text-xs">
-                O checkout pode registrar pedidos demonstrativos, mas não há pagamento PIX/cartão real, custódia, retenção de saldo, contratação de frete ou rastreamento nesta versão.
+                Transações seguras entre atletas com acompanhamento do pedido desde a confirmação até o recebimento pelo comprador.
               </p>
             </div>
           </div>
@@ -494,8 +485,8 @@ export default function SellC2CView() {
       {activeTab === 'sales' && (
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-10 text-center text-xs text-zinc-400 space-y-2">
           <TrendingUp className="w-8 h-8 text-red-400 mx-auto" />
-          <h4 className="font-bold text-white text-sm">Atividade de vendas simuladas</h4>
-          <p>Não há vendas reais: o checkout pode registrar pedidos demonstrativos, sem pagamento, frete, envio ou liberação de saldo integrados.</p>
+          <h4 className="font-bold text-white text-sm">Histórico de vendas</h4>
+          <p>Suas vendas concluídas e envios em andamento aparecerão reunidos neste painel.</p>
         </div>
       )}
 

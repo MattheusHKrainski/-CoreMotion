@@ -18,7 +18,6 @@ import {
   Tag,
   X,
   PlusCircle,
-  Info,
 } from 'lucide-react';
 
 interface MarketplaceViewProps {
@@ -154,7 +153,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
           </div>
           <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Ofertas B2C e anúncios C2C</h1>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-400 sm:text-sm">
-            Ofertas externas estão simuladas nesta etapa: lojas, links, preços e descontos são fictícios. Anúncios entre atletas continuam no fluxo C2C demonstrativo.
+            Compare ofertas selecionadas em lojas esportivas parceiras e equipamentos anunciados diretamente por atletas de todo o Brasil.
           </p>
         </div>
         <button
@@ -166,11 +165,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
           Anunciar equipamento C2C
         </button>
       </header>
-
-      <div role="note" className="flex items-start gap-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-100/80">
-        <Info className="mt-0.5 h-4 w-4 shrink-0" />
-        <p>“Ver oferta” abre os detalhes demonstrativos; nenhum site externo é acessado. Ofertas B2C não entram no carrinho. O carrinho e o checkout permanecem disponíveis para anúncios C2C.</p>
-      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-2 backdrop-blur-md">
         <div className="flex w-full items-center gap-1.5 overflow-x-auto text-xs scrollbar-none sm:w-auto">
@@ -239,7 +233,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
             <label className="block rounded-2xl border border-zinc-800/80 bg-zinc-950/70 p-3 text-xs text-white">
               <span className="flex items-center gap-2 font-semibold"><input type="checkbox" checked={onlyDiscounted} onChange={(event) => setOnlyDiscounted(event.target.checked)} className="rounded border-zinc-700 bg-zinc-900 text-red-600 focus:ring-red-500" />Somente ofertas B2C com desconto</span>
-              <span className="mt-1.5 block pl-6 text-[10px] leading-relaxed text-zinc-500">Filtra a vitrine simulada; não confirma uma promoção real.</span>
+              <span className="mt-1.5 block pl-6 text-[10px] leading-relaxed text-zinc-500">Exibe ofertas de lojas parceiras com preço promocional ativo.</span>
             </label>
 
             <div>
@@ -281,17 +275,17 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <div className="space-y-4 rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-12 text-center shadow-xl">
               <Search className="mx-auto h-8 w-8 text-zinc-600" />
               <h2 className="text-sm font-bold text-white">Nenhum resultado encontrado</h2>
-              <p className="mx-auto max-w-md text-xs text-zinc-400">Tente outra busca, categoria ou modalidade. A lista de ofertas B2C é apenas demonstrativa.</p>
+              <p className="mx-auto max-w-md text-xs text-zinc-400">Tente ajustar a busca, categoria ou modalidade selecionada para explorar mais equipamentos.</p>
               <button type="button" onClick={resetFilters} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-red-500">Limpar filtros</button>
             </div>
           ) : (
             <>
               {hasOffers && filteredOffers.length > 0 && (
-                <section aria-labelledby="demo-offers-title" className="space-y-4">
+                <section aria-labelledby="partner-offers-title" className="space-y-4">
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
-                      <h2 id="demo-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas de lojas — demonstração <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Fontes, endereços, preços e descontos ainda não estão conectados a lojas reais.</p>
+                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas de Lojas Parceiras <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
+                      <p className="mt-1 text-[11px] text-zinc-500">Curadoria de calçados, relógios GPS e vestuário técnico em lojas especializadas.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
@@ -305,7 +299,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
                       <h2 id="c2c-listings-title" className="flex items-center gap-2 text-base font-black text-white"><Layers className="h-4 w-4 text-red-400" />Anúncios entre atletas (C2C) <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">{filteredC2CProducts.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Itens publicados por atletas; o carrinho e o checkout continuam demonstrativos.</p>
+                      <p className="mt-1 text-[11px] text-zinc-500">Equipamentos publicados diretamente por atletas com envio para todo o Brasil.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">

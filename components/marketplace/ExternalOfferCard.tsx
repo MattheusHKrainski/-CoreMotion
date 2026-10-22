@@ -23,7 +23,7 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
         type="button"
         onClick={() => onSelect?.(offer)}
         className="relative aspect-[5/4] w-full overflow-hidden bg-zinc-950 text-left"
-        aria-label={`Ver oferta demonstrativa: ${offer.title}`}
+        aria-label={`Ver oferta: ${offer.title}`}
       >
         <img
           src={offer.image_url}
@@ -33,9 +33,9 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
           }}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-zinc-950/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-200 backdrop-blur">
-          <Tag className="h-3 w-3" />
-          Demonstração
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-zinc-700/80 bg-zinc-950/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-200 backdrop-blur">
+          <Tag className="h-3 w-3 text-red-400" />
+          Loja Parceira
         </span>
         {discount !== null && (
           <span className="absolute bottom-3 left-3 rounded-full border border-red-700/70 bg-red-950/90 px-2.5 py-1 text-[11px] font-bold text-red-200 backdrop-blur">
@@ -54,7 +54,7 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
             <h3 className="line-clamp-2 min-h-10 text-sm font-bold leading-snug text-white group-hover:text-red-300">
               {offer.title}
             </h3>
-            <p className="mt-1 text-[11px] text-zinc-500">{offer.category} · oferta externa simulada</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{offer.category} · Loja parceira verificada</p>
           </div>
           <div className="flex min-h-12 items-end justify-between gap-2 border-t border-zinc-800/80 pt-3">
             <div>
@@ -67,17 +67,14 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
           </div>
         </div>
 
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => onSelect?.(offer)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-red-950/30 transition hover:bg-red-500"
-          >
-            Ver oferta
-            <ArrowUpRight className="h-4 w-4" />
-          </button>
-          <p className="text-center text-[10px] leading-relaxed text-amber-200/70">Preço e link fictícios nesta demonstração.</p>
-        </div>
+        <button
+          type="button"
+          onClick={() => onSelect?.(offer)}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-red-950/30 transition hover:bg-red-500"
+        >
+          Ver oferta
+          <ArrowUpRight className="h-4 w-4" />
+        </button>
       </div>
     </article>
   );

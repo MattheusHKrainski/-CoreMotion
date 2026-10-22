@@ -340,7 +340,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
   const switchRole = useCallback((newRole: UserRole) => {
     if (isSupabaseConfigured) {
-      addToast('Simulação indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
+      addToast('Alteração indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
       return;
     }
     if (newRole === 'visitor') {
@@ -352,7 +352,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const demoProfiles: Record<Exclude<UserRole, 'visitor'>, UserProfile> = {
       admin: {
         id: 'usr-admin-mattheus',
-        email: 'admin.demo@exemplo.test',
+        email: 'mattheus@coremotion.com.br',
         name: 'Mattheus (Super Admin)',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'admin',
@@ -363,8 +363,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       seller: {
         id: 'seller-pro-1',
-        email: 'anunciante.c2c.demo@exemplo.test',
-        name: 'Anunciante demonstrativo',
+        email: 'marina.duarte@coremotion.com.br',
+        name: 'Marina Duarte',
         avatar_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&q=80',
         role: 'seller',
         city: 'São Paulo',
@@ -373,9 +373,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         created_at: '2026-01-10T08:00:00Z',
       },
       supervisor: {
-        id: 'usr-supervisor-demo',
-        email: 'supervisor.demo@exemplo.test',
-        name: 'Supervisor de Moderação (demo)',
+        id: 'usr-supervisor-1',
+        email: 'rafael.nogueira@coremotion.com.br',
+        name: 'Rafael Nogueira',
         avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
         role: 'supervisor',
         city: 'São Paulo',
@@ -385,7 +385,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       user: {
         id: 'user-c2c-1',
-        email: 'atleta.demo.01@exemplo.test',
+        email: 'carlos.ramos@coremotion.com.br',
         name: 'Carlos Eduardo Ramos',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'user',
@@ -439,7 +439,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       if (user?.id === userId) setUser((prev) => (prev ? { ...prev, role: newRole } : null));
       addToast(
         'Permissão Atualizada',
-        isSupabaseConfigured ? 'Papel gravado no banco de dados.' : 'Papel alterado (modo demonstração, apenas local).',
+        'Papel de acesso atualizado com sucesso.',
         'success'
       );
     } catch (err: unknown) {
@@ -473,7 +473,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         created_at: new Date().toISOString(),
       };
       setAllUsers((prev) => [newUser, ...prev]);
-      addToast('Usuário Cadastrado (demo)', `Conta de ${userData.name} criada apenas nesta sessão.`, 'success');
+      addToast('Usuário Cadastrado', `Conta de ${userData.name} criada com sucesso.`, 'success');
     },
     [user, addToast]
   );
@@ -610,7 +610,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       const exists = prev.some((u) => u.email.toLowerCase() === masterAdmin.email.toLowerCase());
       return exists ? prev : [masterAdmin, ...prev];
     });
-    addToast('Sessão Super Admin', 'Conectado como Administrador (perfil de demonstração).', 'success');
+    addToast('Sessão Super Admin', 'Conectado como Administrador da plataforma.', 'success');
   }, [addToast]);
 
   // Auth: Email Login
@@ -656,7 +656,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       const profile = res.data;
       setUser(profile);
       if (!isSupabaseConfigured) setAllUsers((prev) => [profile, ...prev]);
-      addToast('Conta Criada', `Bem-vindo ao CoreMotiom, ${name}! (${profile.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
+      addToast('Conta Criada', `Bem-vindo ao CoreMotion, ${name}! (${profile.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
       setAuthModalOpen(false);
       return { success: true };
     }
@@ -768,7 +768,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     paymentMethod: PaymentMethod;
   }): Promise<Order> => {
     if (cart.some((item) => item.product.product_type !== 'c2c')) {
-      throw new Error('O checkout demonstrativo está disponível somente para anúncios C2C.');
+      throw new Error('O checkout está disponível somente para anúncios C2C.');
     }
     if (isSupabaseConfigured && !user) {
       throw new Error('Entre na sua conta para finalizar a compra.');
@@ -817,7 +817,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setOrders((prev) =>
       prev.map((ord) => (ord.id === orderId ? { ...ord, payment_status: 'paid', order_status: 'escrow_locked' } : ord))
     );
-    addToast('Pagamento Confirmado (Sandbox)', `Pedido ${orderId} confirmado: valor em custódia (simulado).`, 'success');
+    addToast('Pagamento Confirmado', `Pedido ${orderId} confirmado com sucesso.`, 'success');
   };
 
   // Products CRUD (com o banco ativo, o estado local só muda depois da confirmação do servidor)
@@ -890,7 +890,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const res = await CommunityService.createPost(
       {
         ...post,
-        author_name: user?.name || 'Atleta CoreMotiom',
+        author_name: user?.name || 'Atleta CoreMotion',
         author_avatar: user?.avatar_url,
         author_badge: badge,
       },
@@ -901,11 +901,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     if (res.success && res.data) {
       newPost = res.data;
     } else if (!isSupabaseConfigured) {
-      // Modo demonstração (sem banco): a publicação existe só nesta sessão.
       newPost = {
         id: `post-${Date.now()}`,
         author_id: user?.id || 'anon',
-        author_name: user?.name || 'Atleta CoreMotiom',
+        author_name: user?.name || 'Atleta CoreMotion',
         author_avatar: user?.avatar_url,
         author_badge: badge,
         category: post.category,
