@@ -95,7 +95,7 @@ export default function AuthCallbackPage() {
             <div className="w-8 h-8 border-3 border-red-500 border-t-transparent rounded-full animate-spin mx-auto" />
             <h2 className="text-lg font-bold text-white">Autenticando com Google...</h2>
             <p className="text-xs text-zinc-400">
-              Validando credenciais com o Supabase. Esta janela fechará automaticamente.
+              Validando suas credenciais. Esta janela fechará automaticamente.
             </p>
           </>
         )}
@@ -107,7 +107,7 @@ export default function AuthCallbackPage() {
             </div>
             <h2 className="text-lg font-bold text-emerald-400">Autenticado com Sucesso!</h2>
             <p className="text-xs text-zinc-400">
-              Retornando ao CoreMotiom...
+              Retornando ao CoreMotion...
             </p>
           </>
         )}

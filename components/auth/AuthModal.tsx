@@ -128,27 +128,26 @@ export default function AuthModal() {
             </div>
             <div>
               <h3 className="text-lg font-black text-white">
-                {authModalMode === 'login' && 'Acessar CoreMotiom'}
+                {authModalMode === 'login' && 'Acessar CoreMotion'}
                 {authModalMode === 'register' && 'Criar Conta de Atleta'}
                 {authModalMode === 'forgot' && 'Recuperar Senha'}
-                {authModalMode === 'switch' && 'Perfis de Demonstração'}
+                {authModalMode === 'switch' && 'Alternar Conta'}
               </h3>
               <p className="text-xs text-zinc-400">
                 {authModalMode === 'login' && 'Entre para gerenciar pedidos, compras e vendas.'}
                 {authModalMode === 'register' && 'Junte-se à plataforma esportiva de alta performance.'}
                 {authModalMode === 'forgot' && 'Enviaremos instruções de redefinição para seu e-mail.'}
-                {authModalMode === 'switch' && 'Selecione uma conta para testar o sistema instantaneamente.'}
+                {authModalMode === 'switch' && 'Selecione a conta com a qual deseja acessar.'}
               </p>
             </div>
           </div>
 
-          {/* Acesso rápido: somente em modo demonstração (sem banco conectado) */}
           {!isSupabaseConfigured && (
           <div className="mb-6 p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300 mb-2.5 uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-red-500" />
-                Acesso Rápido Imediato (1 Clique):
+                Contas Salvas:
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs">
@@ -156,27 +155,27 @@ export default function AuthModal() {
                 type="button"
                 onClick={() => handleQuickLogin('admin')}
                 className="p-2 rounded-xl bg-red-600/15 hover:bg-red-600/30 text-red-300 hover:text-white font-semibold transition-all border border-red-500/30 text-center flex flex-col items-center gap-0.5 group"
-                title="Entrar imediatamente como Mattheus (Super Admin)"
+                title="Entrar como Mattheus Krainski"
               >
-                <span className="text-[11px] font-bold text-red-400 group-hover:text-white">👑 Super Admin</span>
+                <span className="text-[11px] font-bold text-red-400 group-hover:text-white">Administrador</span>
                 <span className="text-[9px] text-zinc-400 truncate max-w-full">Mattheus</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickLogin('seller')}
                 className="p-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white font-semibold transition-all border border-zinc-800 text-center flex flex-col items-center gap-0.5"
-                title="Entrar imediatamente como Lojista Oficial"
+                title="Entrar como Motion Performance Lab"
               >
-                <span className="text-[11px] font-bold text-amber-400">🛍️ Lojista Pro</span>
-                <span className="text-[9px] text-zinc-400">Motiom Lab</span>
+                <span className="text-[11px] font-bold text-amber-400">Lojista</span>
+                <span className="text-[9px] text-zinc-400">Motion Lab</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickLogin('user')}
                 className="p-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white font-semibold transition-all border border-zinc-800 text-center flex flex-col items-center gap-0.5"
-                title="Entrar imediatamente como Atleta"
+                title="Entrar como Carlos Ramos"
               >
-                <span className="text-[11px] font-bold text-emerald-400">🏃 Atleta</span>
+                <span className="text-[11px] font-bold text-emerald-400">Atleta</span>
                 <span className="text-[9px] text-zinc-400">Carlos Ramos</span>
               </button>
             </div>

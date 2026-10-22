@@ -26,6 +26,10 @@ export class ProductService {
    * Gracefully falls back to local products if offline.
    */
   static async getProducts(filters?: ProductFilters): Promise<Product[]> {
+    if (!isSupabaseConfigured) {
+      return DEMO_MODE ? this.applyLocalFilters(INITIAL_PRODUCTS, filters) : [];
+    }
+
     try {
       const params = new URLSearchParams();
       if (filters?.category) params.set('category', filters.category);
@@ -73,6 +77,18 @@ export class ProductService {
     product: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>,
     sellerId?: string
   ): Promise<{ success: boolean; data: Product } & Product> {
+    if (!isSupabaseConfigured) {
+      const fallbackProd: Product = {
+        ...product,
+        id: `prod_${Date.now()}`,
+        created_at: new Date().toISOString(),
+        views: 0,
+        likes_count: 0,
+        seller_id: sellerId || product.seller_id || 'system',
+      };
+      return { success: true, data: fallbackProd, ...fallbackProd };
+    }
+
     // O servidor define o vendedor a partir do token da sessão (sellerId é apenas informativo).
     const res = await authedFetch('/api/products', {
       method: 'POST',
@@ -103,6 +119,7 @@ export class ProductService {
    * Updates an existing product.
    */
   static async updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
+    if (!isSupabaseConfigured) return true;
     try {
       const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, {
         method: 'PATCH',
@@ -118,6 +135,7 @@ export class ProductService {
    * Deletes a product.
    */
   static async deleteProduct(id: string): Promise<boolean> {
+    if (!isSupabaseConfigured) return true;
     try {
       const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       return res.ok;

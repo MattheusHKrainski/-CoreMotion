@@ -76,7 +76,7 @@ export default function CreateStoreModal() {
                 Cadastrar Loja Oficial
               </h3>
               <p className="text-xs text-[#94A3B8]">
-                Crie a vitrine da sua marca esportiva no CoreMotiom.
+                Crie a vitrine oficial da sua marca esportiva no CoreMotion.
               </p>
             </div>
           </div>

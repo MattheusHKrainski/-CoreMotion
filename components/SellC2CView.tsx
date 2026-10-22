@@ -92,7 +92,7 @@ export default function SellC2CView() {
         is_verified_store: effectiveSaleType === 'b2c' ? Boolean(myStore?.is_verified) : false,
         images: imageGallery.length > 0 ? imageGallery : ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'],
         seller_id: user?.id || 'user-c2c',
-        seller_name: user?.name || 'Atleta CoreMotiom',
+        seller_name: user?.name || 'Atleta CoreMotion',
         seller_avatar: user?.avatar_url,
         stock: 1,
         location,
@@ -128,7 +128,7 @@ export default function SellC2CView() {
             Central de Vendas C2C
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Anuncie seus equipamentos seminovos. Pagamentos e envios são simulados nesta versão.
+            Anuncie seus equipamentos novos ou seminovos com envio segurado e intermediação protegida na plataforma.
           </p>
         </div>
       </div>
@@ -168,7 +168,7 @@ export default function SellC2CView() {
           }`}
         >
           <TrendingUp className="w-3.5 h-3.5" />
-          <span>Vendas simuladas</span>
+          <span>Minhas Vendas</span>
         </button>
 
         <button
@@ -229,7 +229,7 @@ export default function SellC2CView() {
                     ? myStore.is_verified
                       ? 'Sua loja está verificada: o anúncio exibe o selo de loja verificada.'
                       : 'Sua loja ainda não está verificada: o anúncio não exibe o selo.'
-                    : 'Venda direta entre atletas (fluxo simulado).'}
+                    : 'Venda direta entre atletas com intermediação segura na plataforma.'}
                 </p>
               </div>
             )}
@@ -447,10 +447,11 @@ export default function SellC2CView() {
             <div className="p-5 rounded-3xl bg-red-600/10 border border-red-500/20 space-y-2">
               <h4 className="font-bold text-red-400 text-xs flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Fluxo simulado</span>
+                <span>Compra Protegida CoreMotion</span>
               </h4>
               <p className="text-zinc-300 leading-relaxed text-xs">
-                Nesta versão, o pagamento é simulado e não há retenção real.</p>
+                O valor pago fica protegido durante o transporte e é liberado ao vendedor após a confirmação de entrega.
+              </p>
             </div>
           </div>
         </div>

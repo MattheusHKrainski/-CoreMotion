@@ -21,6 +21,7 @@ const MASTER_ADMIN_EMAILS: readonly string[] = [
   'operacaoamd@gmail.com',
   'professorchines2026@gmail.com',
   'admin@coremotiom.com',
+  'admin@coremotion.com',
 ];
 
 export function isMasterAdminEmail(email?: string | null): boolean {

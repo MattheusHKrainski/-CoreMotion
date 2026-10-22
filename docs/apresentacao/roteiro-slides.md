@@ -41,7 +41,7 @@ Cada integrante aparece com **foto**, **nome** e **papel no Scrum e no projeto**
 
 ## Slide 6: Requisitos e casos de uso
 
-- Diagrama de casos de uso (`docs/diagramas/caso-de-uso.png`): 14 casos de uso, 5 atores.
+- Diagrama de casos de uso (`docs/diagramas/caso-de-uso.png`): 18 casos de uso, 5 atores.
 - Atores de uso geral: Visitante, Atleta e Lojista. Atores de gestão: Supervisor e Administrador.
 
 ## Slide 7: Hierarquia de papéis

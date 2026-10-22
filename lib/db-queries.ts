@@ -219,7 +219,7 @@ function mapDbProductToModel(row: DbProductRow): Product {
     product_type: (row.product_type as Product['product_type']) || 'b2c',
     images: Array.isArray(row.images) && row.images.length > 0 ? row.images : [DEFAULT_PRODUCT_IMAGE],
     seller_id: row.seller_id,
-    seller_name: row.seller_name || 'CoreMotiom Parceiro',
+    seller_name: row.seller_name || 'Parceiro CoreMotion',
     seller_avatar: row.seller_avatar || undefined,
     store_id: row.store_id || undefined,
     store_name: row.store_name || undefined,

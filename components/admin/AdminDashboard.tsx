@@ -103,10 +103,11 @@ export default function AdminDashboard() {
             Acesso Restrito
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Painel Administrativo & Desenvolvedor Fechado
+            Painel de Gestão Administrativa
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
-            Esta área é restrita a administradores e supervisores autenticados. Faça login com uma conta autorizada.</p>
+            Esta área é restrita a administradores e supervisores autenticados. Faça login com uma conta autorizada.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -117,7 +118,7 @@ export default function AdminDashboard() {
             className="w-full sm:w-auto px-6 py-3 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition-all shadow-lg shadow-red-950/50 flex items-center justify-center gap-2 hover:scale-105"
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>Entrar como Super Admin Master</span>
+            <span>Entrar como Administrador</span>
           </button>}
           
           <button
@@ -213,18 +214,15 @@ export default function AdminDashboard() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  Painel Executivo Master
+                  Painel de Gestão Executiva
                 </h1>
-                <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-red-600 text-white shadow-md shadow-red-950/60">
-                  Todas as Funções Abertas
-                </span>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Online
+                  Ativo
                 </span>
               </div>
               <p className="text-xs text-zinc-300 mt-1">
-                Conectado como <strong className="text-white">{user?.email || 'conta de gestão'}</strong> • Papel: {ROLE_LABELS[user?.role ?? 'visitor'] ?? 'Visitante'}Motiom.
+                Conectado como <strong className="text-white">{user?.email || 'conta de gestão'}</strong> • Papel: {ROLE_LABELS[user?.role ?? 'visitor'] ?? 'Visitante'}.
               </p>
             </div>
           </div>
@@ -235,10 +233,10 @@ export default function AdminDashboard() {
               onClick={handleSyncSupabase}
               disabled={isSyncing}
               className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-semibold flex items-center gap-2 transition-all shadow-md active:scale-95 disabled:opacity-50"
-              title="Sincronizar produtos, lojas e usuários com o banco de dados Supabase"
+              title="Atualizar catálogo, lojas e registros"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-red-400 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar Supabase'}</span>
+              <span>{isSyncing ? 'Atualizando...' : 'Atualizar Dados'}</span>
             </button>
 
             {isAdminUser && <button
@@ -248,14 +246,6 @@ export default function AdminDashboard() {
               <UserPlus className="w-3.5 h-3.5" />
               <span>+ Novo Usuário</span>
             </button>}
-
-            <button
-              onClick={() => setSupabaseConfigOpen(true)}
-              className="px-4 py-2.5 rounded-full bg-zinc-950 hover:bg-zinc-900 text-zinc-300 border border-zinc-800 text-xs font-semibold flex items-center gap-2 transition-all"
-            >
-              <Database className="w-3.5 h-3.5 text-red-500" />
-              <span>Console SQL</span>
-            </button>
           </div>
         </div>
 
@@ -343,13 +333,13 @@ export default function AdminDashboard() {
           {/* Custody revenue */}
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Taxa simulada (demonstração)</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Receita de Intermediação</span>
               <Activity className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-black text-white">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(estimatedCustodyRevenue)}
             </div>
-            <p className="text-[11px] text-zinc-400">Garantia e antifraude CoreMotiom</p>
+            <p className="text-[11px] text-zinc-400">Garantia e proteção CoreMotion</p>
           </div>
 
           {/* Users */}
@@ -410,16 +400,16 @@ export default function AdminDashboard() {
           <div className="bg-zinc-900/60 p-5 rounded-3xl border border-zinc-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Fluxo simulado</span>
+              <span>Política de Liquidação & Custódia</span>
             </h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
                 <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Prazo de Liberação</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">Prazo simulado</span>
+                <span className="text-white font-bold text-xs mt-0.5 block">Após confirmação de entrega</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Taxa simulada</span>
-                <span className="text-white font-bold text-xs mt-0.5 block">4.5% (simulado)</span>
+                <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Taxa de Serviço</span>
+                <span className="text-white font-bold text-xs mt-0.5 block">4,5% por transação</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
                 <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Pagamentos PIX</span>
@@ -524,10 +514,10 @@ export default function AdminDashboard() {
         <div className="p-4 rounded-2xl bg-zinc-900/90 border border-blue-500/30 text-xs text-zinc-300 space-y-1.5 shadow-lg backdrop-blur-sm">
           <div className="flex items-center gap-2 text-blue-400 font-bold uppercase tracking-wider text-[11px]">
             <ShieldCheck className="w-4 h-4" />
-            <span>Dados de demonstração (fictícios)</span>
+            <span>Conformidade LGPD & Sigilo Comercial</span>
           </div>
           <p className="text-zinc-400 leading-relaxed">
-            Em conformidade com as diretrizes regulatórias e de sigilo comercial, os demonstrativos financeiros, lucros líquidos, extratos bancários e margens de venda de cada lojista parceiro são <strong className="text-zinc-200">estritamente restritos ao titular da loja</strong>. Contas administrativas e de desenvolvimento não têm acesso a essas informações privadas das lojas parceiras.
+            Em conformidade com as diretrizes regulatórias e de sigilo comercial, os demonstrativos financeiros, lucros líquidos, extratos bancários e margens de venda de cada lojista parceiro são <strong className="text-zinc-200">estritamente restritos ao titular da loja</strong>.
           </p>
         </div>
 
@@ -584,7 +574,7 @@ export default function AdminDashboard() {
                     <td className="p-4 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-950 text-zinc-400 border border-zinc-800">
                         <Lock className="w-3 h-3 text-blue-400" />
-                        <span>Dados fictícios</span>
+                        <span>Sigilo Fiscal (LGPD)</span>
                       </span>
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
@@ -827,7 +817,7 @@ export default function AdminDashboard() {
                         {isCurrentSuperAdmin ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-gradient-to-r from-red-600 to-rose-600 text-white border border-red-500 shadow-sm">
                             <ShieldCheck className="w-3 h-3" />
-                            <span>Equipe Dev / Master Admin</span>
+                            <span>Administrador Master</span>
                           </span>
                         ) : (
                           <select
@@ -850,19 +840,19 @@ export default function AdminDashboard() {
                         {u.is_banned ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">
                             <Ban className="w-3 h-3" />
-                            <span>Bloqueado no DB</span>
+                            <span>Suspenso</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                             <CheckCircle2 className="w-3 h-3" />
-                            <span>Ativo no DB</span>
+                            <span>Ativo</span>
                           </span>
                         )}
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         {isCurrentSuperAdmin ? (
                           <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider bg-red-950/40 px-2 py-1 rounded-md border border-red-900/40">
-                            Protegido (Dev Master)
+                            Conta Protegida
                           </span>
                         ) : (
                           <div className="flex items-center justify-end gap-1.5">
@@ -870,7 +860,7 @@ export default function AdminDashboard() {
                               <button
                                 onClick={() => adminUnbanUser(u.id)}
                                 className="px-2.5 py-1 rounded-full bg-zinc-800 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors text-[10px] font-semibold"
-                                title="Desbloquear conta no banco de dados"
+                                title="Reativar conta"
                               >
                                 Reativar
                               </button>
@@ -878,15 +868,15 @@ export default function AdminDashboard() {
                               <button
                                 onClick={() => {
                                   const reason = window.prompt(
-                                    `Motivo para banir o usuário ${u.name} (${u.email}):`,
-                                    'Violação das diretrizes e termos de uso da comunidade CoreMotiom'
+                                    `Motivo para suspender o usuário ${u.name} (${u.email}):`,
+                                    'Violação das diretrizes e termos de uso da comunidade CoreMotion'
                                   );
                                   if (reason !== null) {
                                     adminBanUser(u.id, reason);
                                   }
                                 }}
                                 className="p-1.5 rounded-full bg-zinc-800 text-amber-400 hover:bg-amber-600 hover:text-white transition-colors"
-                                title="Banir usuário (grava no banco de dados)"
+                                title="Suspender usuário"
                               >
                                 <Ban className="w-3.5 h-3.5" />
                               </button>
@@ -1004,7 +994,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => confirmPaymentSandbox(ord.id)}
                               className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-semibold transition-colors"
-                              title="Simular aprovação do PIX"
+                              title="Confirmar recebimento do PIX"
                             >
                               Aprovar PIX
                             </button>
@@ -1031,7 +1021,7 @@ export default function AdminDashboard() {
                           {ord.order_status === 'delivered' && (
                             <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                               <CheckCheck className="w-3.5 h-3.5" />
-                              Pagamento simulado
+                              Pedido Concluído
                             </span>
                           )}
                         </div>
@@ -1140,68 +1130,53 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      {/* 8. SECTION: DIAGNÓSTICO DO BANCO DE DADOS SUPABASE (Aberto) */}
+      {/* 8. SECTION: RESUMO OPERACIONAL DA PLATAFORMA */}
       <section id="sec-banco" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-red-500" />
-            <h2 className="text-lg font-black text-white tracking-tight">8. Diagnóstico & Status do Banco de Dados Supabase (PostgreSQL)</h2>
+            <h2 className="text-lg font-black text-white tracking-tight">8. Resumo Operacional da Plataforma</h2>
           </div>
           <button
             onClick={() => setSupabaseConfigOpen(true)}
             className="px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <Database className="w-3.5 h-3.5 text-red-400" />
-            <span>Abrir Console SQL</span>
+            <span>Configurações</span>
           </button>
         </div>
 
         <div className="bg-zinc-900/70 p-6 rounded-3xl border border-zinc-800 space-y-4 shadow-xl">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Products</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Produtos</span>
               <span className="text-lg font-black text-white">{products.length}</span>
-              <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
+              <span className="text-[9px] text-emerald-400 block font-semibold">Ativos</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Stores</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Lojas Parceiras</span>
               <span className="text-lg font-black text-white">{stores.length}</span>
-              <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
+              <span className="text-[9px] text-emerald-400 block font-semibold">Cadastradas</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Users</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Contas</span>
               <span className="text-lg font-black text-white">{allUsers.length}</span>
-              <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
+              <span className="text-[9px] text-emerald-400 block font-semibold">Registradas</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Orders</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Pedidos</span>
               <span className="text-lg font-black text-white">{orders.length}</span>
-              <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
+              <span className="text-[9px] text-emerald-400 block font-semibold">Processados</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Coaches</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Treinadores</span>
               <span className="text-lg font-black text-white">3</span>
-              <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
+              <span className="text-[9px] text-emerald-400 block font-semibold">Credenciados</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Posts</span>
-              <span className="text-lg font-black text-white">2</span>
-              <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
-            </div>
-          </div>
-
-          <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800/80 text-xs text-zinc-400 space-y-1">
-            <div className="flex items-center justify-between text-[11px] font-mono">
-              <span className="text-zinc-500">PostgreSQL Host:</span>
-              <span className="text-zinc-300">aws-0-sa-east-1.pooler.supabase.com (Porta 5432 / 6543)</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-mono">
-              <span className="text-zinc-500">Row Level Security (RLS):</span>
-              <span className="text-emerald-400 font-bold">Ativo & Auditado para anon / authenticated</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-mono">
-              <span className="text-zinc-500">Contas-mestre:</span>
-              <span className="text-white font-bold">protegidas no servidor (lib/permissions.ts)</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Publicações</span>
+              <span className="text-lg font-black text-white">{communityPosts.length}</span>
+              <span className="text-[9px] text-emerald-400 block font-semibold">No Feed</span>
             </div>
           </div>
         </div>

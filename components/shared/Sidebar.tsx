@@ -19,7 +19,6 @@ import {
   LogOut,
   SlidersHorizontal,
   Layers,
-  Database,
   CheckCircle2,
 } from 'lucide-react';
 
@@ -44,7 +43,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setSearchQuery,
     logout,
     switchRole,
-    setSupabaseConfigOpen,
     addToast,
     stores,
   } = useCoreMotiom();
@@ -160,7 +158,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           <button
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-2.5 group focus:outline-none text-left"
-            title="CoreMotiom PRO"
+            title="CoreMotion"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-700 via-red-600 to-red-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-red-950/50 group-hover:scale-105 transition-transform shrink-0">
               CM
@@ -168,14 +166,11 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-white group-hover:text-red-400 transition-colors">
-                  CoreMotiom
-                </span>
-                <span className="bg-red-500/15 text-red-400 border border-red-500/30 px-1.5 py-0.2 rounded text-[9px] font-bold tracking-wider uppercase">
-                  PRO
+                  CoreMotion
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400 font-medium leading-none mt-0.5">
-                Hub de Alta Performance
+                Esporte & Performance
               </p>
             </div>
           </button>
@@ -189,27 +184,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               <X className="w-5 h-5" />
             </button>
           )}
-        </div>
-
-        {/* System & DB Status Pill */}
-        <div className="px-2">
-          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-zinc-300 font-semibold">Sistema Online</span>
-            </div>
-            <button
-              onClick={() => setSupabaseConfigOpen(true)}
-              className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-emerald-400 transition-colors"
-              title="Status do Banco Supabase"
-            >
-              <Database className="w-3 h-3 text-emerald-400" />
-              <span>PostgreSQL</span>
-            </button>
-          </div>
         </div>
 
         {/* Global Instant Search Box */}
@@ -464,19 +438,19 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               <button
                 onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
                 className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
-                title="Alternar Papel para Teste"
+                title="Alternar Conta"
               >
                 <SlidersHorizontal className="w-3 h-3 text-red-400" />
-                <span>Modo</span>
+                <span>Contas</span>
               </button>
               )}
             </div>
 
-            {/* Quick Test Role Switcher Accordion */}
+            {/* Quick Account Switcher Accordion */}
             {showDemoSwitcher && showRoleSwitcher && (
               <div className="pt-2 border-t border-zinc-800/80 animate-in fade-in duration-150">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                  Simulação de Papel (demonstração)
+                  Alternar Conta
                 </div>
                 <div className="grid grid-cols-2 gap-1">
                   {(['visitor', 'user', 'seller', 'supervisor', 'admin'] as const).map((r) => (
@@ -534,7 +508,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               CM
             </div>
             <span className="font-extrabold text-sm tracking-tight text-white">
-              CoreMotiom <span className="text-red-500 text-xs">PRO</span>
+              CoreMotion
             </span>
           </button>
         </div>
