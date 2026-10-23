@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useCoreMotiom } from '@/lib/store';
 import BrandMark from '@/components/shared/BrandMark';
 import Footer from '@/components/shared/Footer';
@@ -36,13 +37,9 @@ export default function WelcomeLandingPage() {
     communityPosts,
     setAuthModalMode,
     setAuthModalOpen,
-    setPrefillAuthEmail,
-    setSearchQuery,
     enterPlatform,
   } = useCoreMotiom();
 
-  const [heroEmail, setHeroEmail] = useState('');
-  const [navSearch, setNavSearch] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedRoleTab, setSelectedRoleTab] = useState<'atleta' | 'treinador' | 'visitante'>('atleta');
 
@@ -54,12 +51,8 @@ export default function WelcomeLandingPage() {
     setAuthModalOpen(true);
   };
 
-  const handleOpenRegister = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleOpenRegister = () => {
     setMobileMenuOpen(false);
-    if (heroEmail.trim()) {
-      setPrefillAuthEmail(heroEmail.trim());
-    }
     setAuthModalMode('register');
     setAuthModalOpen(true);
   };
@@ -67,12 +60,6 @@ export default function WelcomeLandingPage() {
   const handleEnterAsVisitor = (target: 'home' | 'marketplace' | 'coaches' | 'community' = 'home') => {
     setMobileMenuOpen(false);
     enterPlatform(target);
-  };
-
-  const handleHeaderSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchQuery(navSearch.trim());
-    enterPlatform('marketplace');
   };
 
   const scrollToSection = (id: string) => {
@@ -88,11 +75,11 @@ export default function WelcomeLandingPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050714] text-white selection:bg-red-600 selection:text-white antialiased">
-      {/* BARRA SUPERIOR ESTILO GITHUB */}
-      <header className="sticky top-0 z-40 w-full bg-[#03050c]/90 backdrop-blur-xl border-b border-white/[0.08]">
+    <div className="min-h-screen flex flex-col bg-[#0B0C10] text-[#F8FAFC] selection:bg-red-600 selection:text-white antialiased">
+      {/* BARRA SUPERIOR MINIMALISTA DE ENTRADA */}
+      <header className="sticky top-0 z-40 w-full bg-[#0B0C10]/90 backdrop-blur-xl border-b border-zinc-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          {/* Esquerda: Marca + Links de Navegação */}
+          {/* Esquerda: Marca CoreMotion + Navegação */}
           <div className="flex items-center gap-6">
             <button
               type="button"
@@ -105,7 +92,7 @@ export default function WelcomeLandingPage() {
               </span>
             </button>
 
-            <nav className="hidden lg:flex items-center gap-5 text-sm font-medium text-slate-300">
+            <nav className="hidden lg:flex items-center gap-5 text-sm font-medium text-zinc-300">
               <button
                 type="button"
                 onClick={() => scrollToSection('proposta')}
@@ -122,7 +109,10 @@ export default function WelcomeLandingPage() {
               </button>
               <button
                 type="button"
-                onClick={() => scrollToSection('perfis')}
+                onClick={() => {
+                  setSelectedRoleTab('atleta');
+                  scrollToSection('perfis');
+                }}
                 className="hover:text-white transition-colors"
               >
                 Atletas & Clientes
@@ -147,75 +137,72 @@ export default function WelcomeLandingPage() {
             </nav>
           </div>
 
-          {/* Direita: Busca + Visitante + Entrar + Cadastrar */}
+          {/* Direita: Atalho Catálogo + Visitante + Entrar + Cadastrar */}
           <div className="hidden sm:flex items-center gap-2.5">
-            <form onSubmit={handleHeaderSearch} className="relative hidden xl:block">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={navSearch}
-                onChange={(e) => setNavSearch(e.target.value)}
-                placeholder="Buscar ofertas ou esportes..."
-                className="w-56 pl-8 pr-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/15 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-300 transition-colors"
-              />
-            </form>
+            <button
+              type="button"
+              onClick={() => handleEnterAsVisitor('marketplace')}
+              className="hidden xl:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs text-zinc-300 hover:text-white transition-colors"
+            >
+              <Search className="w-3.5 h-3.5 text-red-400" />
+              <span>Explorar catálogo</span>
+            </button>
 
             <button
               type="button"
               onClick={() => handleEnterAsVisitor('home')}
-              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors"
             >
               Visitante
             </button>
             <button
               type="button"
               onClick={handleOpenLogin}
-              className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white hover:text-slate-200 border border-white/25 hover:border-white/60 transition-colors"
+              className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white border border-zinc-700 hover:border-zinc-400 transition-colors"
             >
               Entrar
             </button>
             <button
               type="button"
-              onClick={() => handleOpenRegister()}
-              className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-white/[0.08] hover:bg-white/[0.15] border border-white/30 transition-colors"
+              onClick={handleOpenRegister}
+              className="px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-red-600 hover:bg-red-500 transition-colors"
             >
               Cadastrar-se
             </button>
           </div>
 
-          {/* Botão Mobile */}
+          {/* Menu Mobile */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label="Abrir menu inicial"
-            className="sm:hidden p-2 rounded-lg border border-white/15 text-slate-200 hover:bg-white/10"
+            className="sm:hidden p-2 rounded-lg border border-zinc-800 text-zinc-200 hover:bg-zinc-900"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
-        {/* Drawer Mobile */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-white/10 bg-[#050814] px-4 py-4 space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-300">
+          <div className="sm:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-4 space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-xs font-medium text-zinc-300">
               <button
                 type="button"
                 onClick={() => scrollToSection('proposta')}
-                className="p-2.5 rounded-lg bg-white/[0.04] text-left hover:text-white"
+                className="p-2.5 rounded-lg bg-zinc-900 text-left hover:text-white"
               >
                 Nossa proposta
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSection('como-funciona')}
-                className="p-2.5 rounded-lg bg-white/[0.04] text-left hover:text-white"
+                className="p-2.5 rounded-lg bg-zinc-900 text-left hover:text-white"
               >
                 Como funciona
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSection('perfis')}
-                className="p-2.5 rounded-lg bg-white/[0.04] text-left hover:text-white"
+                className="p-2.5 rounded-lg bg-zinc-900 text-left hover:text-white"
               >
                 Clientes & Atletas
               </button>
@@ -225,32 +212,32 @@ export default function WelcomeLandingPage() {
                   setSelectedRoleTab('treinador');
                   scrollToSection('perfis');
                 }}
-                className="p-2.5 rounded-lg bg-white/[0.04] text-left hover:text-white"
+                className="p-2.5 rounded-lg bg-zinc-900 text-left hover:text-white"
               >
                 Treinadores
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/10">
+            <div className="grid grid-cols-1 gap-2 pt-2 border-t border-zinc-800">
               <button
                 type="button"
-                onClick={() => handleOpenRegister()}
+                onClick={handleOpenRegister}
                 className="w-full py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold"
               >
-                Cadastrar-se gratuitamente
+                Cadastrar-se grátis
               </button>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={handleOpenLogin}
-                  className="py-2.5 rounded-xl border border-white/25 text-white text-xs font-semibold"
+                  className="py-2.5 rounded-xl border border-zinc-700 text-white text-xs font-semibold"
                 >
                   Fazer login
                 </button>
                 <button
                   type="button"
                   onClick={() => handleEnterAsVisitor('home')}
-                  className="py-2.5 rounded-xl bg-white/[0.07] text-slate-200 text-xs font-semibold"
+                  className="py-2.5 rounded-xl bg-zinc-900 text-zinc-200 text-xs font-semibold"
                 >
                   Entrar como visitante
                 </button>
@@ -261,142 +248,189 @@ export default function WelcomeLandingPage() {
       </header>
 
       <main className="flex-1">
-        {/* HERO MONUMENTAL INSPIRADO NA PÁGINA INICIAL DO GITHUB */}
-        <section className="relative overflow-hidden pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pt-28 lg:pb-36 border-b border-white/[0.08]">
-          {/* Atmosfera luminosa profunda no horizonte (azul-noite + toque carmesim CoreMotion) */}
+        {/* HERO CENTRAL DE ALTO IMPACTO COM ESCOLHA IMEDIATA: CADASTRAR, LOGAR OU VISITANTE */}
+        <section className="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-zinc-800/80">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_65%_at_50%_0%,rgba(23,37,96,0.58),transparent_70%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,rgba(220,38,38,0.16),transparent_70%)]"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[1150px] h-[380px] rounded-full bg-gradient-to-r from-indigo-950/60 via-red-900/35 to-blue-950/60 blur-3xl"
+            className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[980px] h-[300px] rounded-full bg-gradient-to-r from-zinc-900 via-red-950/35 to-zinc-900 blur-3xl"
           />
 
           <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.06] border border-white/15 text-xs font-semibold text-slate-200">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-semibold text-zinc-200">
               <Sparkles className="w-3.5 h-3.5 text-red-400" />
-              <span>Ecossistema esportivo completo • Ofertas reais, equipamentos e treinadores</span>
+              <span>Plataforma Esportiva CoreMotion • Equipamentos, Ofertas e Treinadores</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl lg:text-[64px] font-extrabold tracking-[-0.03em] leading-[1.07] text-white max-w-4xl mx-auto">
               O futuro de quem vive o esporte acontece em conjunto
             </h1>
 
-            <p className="max-w-2xl mx-auto text-base sm:text-xl text-slate-200/85 leading-relaxed font-normal">
-              As modalidades e os treinos evoluem, mas a dedicação permanece. Na CoreMotion, clientes, atletas e treinadores se unem em uma única plataforma segura.
+            <p className="max-w-2xl mx-auto text-base sm:text-xl text-zinc-300 leading-relaxed font-normal">
+              As modalidades e os desafios evoluem, mas a dedicação permanece. Na CoreMotion, clientes, atletas e treinadores se unem em uma única plataforma segura.
             </p>
 
-            {/* BARRA CENTRAL DUPLA ESTILO GITHUB: [Digite seu e-mail | Cadastrar-se] + [Entrar como visitante] */}
-            <div className="pt-2 flex flex-col md:flex-row items-stretch md:items-center justify-center gap-3.5 max-w-3xl mx-auto">
-              <form
-                onSubmit={handleOpenRegister}
-                className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-xl p-1.5 shadow-2xl shadow-black/50 gap-1.5"
+            {/* BARRA CENTRAL DE ESCOLHA DIRETA: CADASTRAR, LOGAR OU ENTRAR COMO VISITANTE */}
+            <div className="pt-2 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-3.5 max-w-3xl mx-auto">
+              <button
+                type="button"
+                onClick={handleOpenRegister}
+                className="px-7 py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold text-sm sm:text-base transition-all shadow-xl shadow-red-950/50 flex items-center justify-center gap-2"
               >
-                <label htmlFor="landing-hero-email" className="sr-only">
-                  Digite seu e-mail
-                </label>
-                <input
-                  id="landing-hero-email"
-                  type="email"
-                  value={heroEmail}
-                  onChange={(e) => setHeroEmail(e.target.value)}
-                  placeholder="Digite seu e-mail"
-                  className="flex-1 px-4 py-3 rounded-lg bg-transparent text-zinc-900 placeholder:text-zinc-500 text-sm sm:text-base font-medium focus:outline-none min-w-0"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-sm sm:text-base whitespace-nowrap transition-colors shadow-sm"
-                >
-                  Cadastrar-se grátis
-                </button>
-              </form>
+                <UserPlus className="w-4 h-4" />
+                <span>Cadastrar-se grátis</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenLogin}
+                className="px-7 py-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-extrabold text-sm sm:text-base transition-all shadow-xl flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Fazer login</span>
+              </button>
 
               <button
                 type="button"
                 onClick={() => handleEnterAsVisitor('home')}
-                className="px-7 py-4 rounded-xl border border-slate-300/45 hover:border-white bg-white/[0.04] hover:bg-white/[0.10] text-white font-bold text-sm sm:text-base whitespace-nowrap transition-all flex items-center justify-center gap-2"
+                className="px-7 py-4 rounded-xl border border-zinc-600 hover:border-white bg-zinc-900/70 hover:bg-zinc-800 text-white font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2"
               >
                 <span>Entrar como visitante</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
-            {/* ATALHO DIRETO E CLARO PARA QUEM JÁ TEM CONTA (LOGIN) */}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm text-slate-300 pt-1">
-              <button
-                type="button"
-                onClick={handleOpenLogin}
-                className="inline-flex items-center gap-1.5 font-semibold text-white hover:text-red-400 underline underline-offset-4 transition-colors"
-              >
-                <LogIn className="w-4 h-4 text-red-400" />
-                <span>Já possui uma conta? Fazer login</span>
-              </button>
-              <span className="hidden sm:inline text-white/20">•</span>
-              <span className="text-slate-400">
-                Sem mensalidade para explorar ofertas, catálogo e comunidade
-              </span>
-            </div>
-
-            {/* FAIXA DE DADOS VIVOS DA PLATAFORMA */}
+            {/* FAIXA DE DADOS VIVOS DA PLATAFORMA (ORDEM: ENTRE ATLETAS -> OFERTAS -> TREINADORES -> COMUNIDADE) */}
             <div className="pt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-left max-w-4xl mx-auto">
               <button
                 type="button"
                 onClick={() => handleEnterAsVisitor('marketplace')}
-                className="group p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-all"
+                className="group p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-red-500/40 transition-all"
               >
-                <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
                   <span>Entre Atletas</span>
                   <ShoppingBag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
                 <p className="text-2xl font-black text-white mt-1">{c2cCount}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Equipamentos com Compra Garantida</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">Equipamentos com Compra Garantida</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleEnterAsVisitor('marketplace')}
-                className="group p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-all"
+                className="group p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-red-500/40 transition-all"
               >
-                <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
                   <span>Ofertas Verificadas</span>
                   <Tag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
                 <p className="text-2xl font-black text-white mt-1">{activeOffers.length}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Promoções reais em grandes lojas</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">Promoções reais selecionadas</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleEnterAsVisitor('coaches')}
-                className="group p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-all"
+                className="group p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-red-500/40 transition-all"
               >
-                <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
                   <span>Treinadores</span>
                   <Award className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
                 <p className="text-2xl font-black text-white mt-1">{coaches.length}+</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Assessorias online e presenciais</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">Assessorias online e presenciais</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleEnterAsVisitor('community')}
-                className="group p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-all"
+                className="group p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-red-500/40 transition-all"
               >
-                <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
                   <span>Comunidade Ativa</span>
                   <Layers className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
                 <p className="text-2xl font-black text-white mt-1">{communityPosts.length}+</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Relatos de treinos, provas e dicas</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">Relatos de treinos, provas e dicas</p>
               </button>
+            </div>
+
+            {/* VITRINE VISUAL AUTÊNTICA COREMOTION */}
+            <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto text-left">
+              <div
+                onClick={() => handleEnterAsVisitor('marketplace')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('marketplace');
+                }}
+                className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
+              >
+                <Image
+                  src="/products/raquete-tenis.jpg"
+                  alt="Equipamentos esportivos entre atletas"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 320px"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-4 flex flex-col justify-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">De Atletas</span>
+                  <p className="text-sm font-bold text-white">Seminovos revisados com garantia</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => handleEnterAsVisitor('marketplace')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('marketplace');
+                }}
+                className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
+              >
+                <Image
+                  src="/offers/gps-ciclocomputador-bike.jpg"
+                  alt="Ofertas esportivas verificadas"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 320px"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-4 flex flex-col justify-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">Ofertas</span>
+                  <p className="text-sm font-bold text-white">Descontos e cupons selecionados</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => handleEnterAsVisitor('coaches')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('coaches');
+                }}
+                className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
+              >
+                <Image
+                  src="/products/kimono-jiujitsu.jpg"
+                  alt="Treinadores e modalidades esportivas"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 320px"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-4 flex flex-col justify-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">Treinadores</span>
+                  <p className="text-sm font-bold text-white">Evolução guiada em 10+ esportes</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* SEÇÃO 1: NOSSA PROPOSTA */}
-        <section id="proposta" className="py-20 sm:py-24 bg-[#080a12] border-b border-zinc-800/80">
+        <section id="proposta" className="py-20 sm:py-24 bg-[#0e1017] border-b border-zinc-800/80">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <div className="max-w-3xl space-y-3">
               <span className="text-xs font-bold uppercase tracking-widest text-red-400">
@@ -413,21 +447,21 @@ export default function WelcomeLandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="rounded-3xl bg-zinc-900/70 border border-zinc-800 p-6 sm:p-7 space-y-3 hover:border-red-500/35 transition-colors">
                 <div className="w-11 h-11 rounded-2xl bg-red-600/15 border border-red-500/30 flex items-center justify-center text-red-400">
-                  <Flame className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-white">Curadoria de Ofertas Reais</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">
-                  Reunimos descontos verificados e cupons ativos nas maiores lojas esportivas — como AliExpress, Mercado Livre, Amazon, Netshoes, Centauro, Decathlon e Olympikus — direto para a página oficial da promoção.
-                </p>
-              </div>
-
-              <div className="rounded-3xl bg-zinc-900/70 border border-zinc-800 p-6 sm:p-7 space-y-3 hover:border-red-500/35 transition-colors">
-                <div className="w-11 h-11 rounded-2xl bg-red-600/15 border border-red-500/30 flex items-center justify-center text-red-400">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-white">Compra e Venda Entre Atletas</h3>
                 <p className="text-sm text-zinc-400 leading-relaxed">
                   Tem um equipamento parado em ótimo estado ou quer subir de nível pagando menos? Negocie kimonos, raquetes, tênis, chuteiras, relógios GPS e bikes com pagamento em custódia e entrega rastreada.
+                </p>
+              </div>
+
+              <div className="rounded-3xl bg-zinc-900/70 border border-zinc-800 p-6 sm:p-7 space-y-3 hover:border-red-500/35 transition-colors">
+                <div className="w-11 h-11 rounded-2xl bg-red-600/15 border border-red-500/30 flex items-center justify-center text-red-400">
+                  <Flame className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Curadoria de Ofertas Reais</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">
+                  Reunimos descontos verificados e cupons ativos nos principais varejistas esportivos do mercado, levando você direto para a página oficial de cada promoção.
                 </p>
               </div>
 
@@ -465,14 +499,14 @@ export default function WelcomeLandingPage() {
                   step: '01',
                   title: 'Escolha seu acesso',
                   description:
-                    'Entre imediatamente como visitante para conhecer tudo, ou faça login / cadastro gratuito em segundos com seu e-mail.',
+                    'Entre imediatamente como visitante para conhecer tudo, ou faça login / cadastro gratuito em segundos.',
                   icon: Compass,
                 },
                 {
                   step: '02',
                   title: 'Explore ou anuncie',
                   description:
-                    'Compare ofertas em lojas oficiais, filtre equipamentos por esporte e conservação ou publique seu próprio anúncio para vender.',
+                    'Filtre equipamentos de atletas e ofertas por modalidade, estado de conservação e preço — ou publique seu anúncio.',
                   icon: Search,
                 },
                 {
@@ -514,7 +548,7 @@ export default function WelcomeLandingPage() {
         </section>
 
         {/* SEÇÃO 3: O QUE CADA PERFIL PODE FAZER (CLIENTE/ATLETA, TREINADOR E VISITANTE) */}
-        <section id="perfis" className="py-20 sm:py-24 bg-[#080a12] border-b border-zinc-800/80">
+        <section id="perfis" className="py-20 sm:py-24 bg-[#0e1017] border-b border-zinc-800/80">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
               <div className="space-y-2 max-w-2xl">
@@ -529,7 +563,6 @@ export default function WelcomeLandingPage() {
                 </p>
               </div>
 
-              {/* Seletor Rápido Interativo */}
               <div className="inline-flex p-1 rounded-2xl bg-zinc-900 border border-zinc-800 self-start">
                 <button
                   type="button"
@@ -567,7 +600,6 @@ export default function WelcomeLandingPage() {
               </div>
             </div>
 
-            {/* Cards Lado a Lado Detalhados */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* CARD 1: CLIENTES & ATLETAS */}
               <div
@@ -595,12 +627,6 @@ export default function WelcomeLandingPage() {
                     <li className="flex items-start gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span>
-                        <strong className="text-white">Aproveitar ofertas reais e cupons:</strong> acesse descontos selecionados em lojas confiáveis e copie cupons promocionais em 1 clique.
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                      <span>
                         <strong className="text-white">Comprar com Compra Garantida:</strong> adquira equipamentos novos e seminovos com PIX (5% OFF), cartão ou boleto e custódia até o recebimento.
                       </span>
                     </li>
@@ -608,6 +634,12 @@ export default function WelcomeLandingPage() {
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span>
                         <strong className="text-white">Anunciar e vender seus equipamentos:</strong> publique fotos, estado de conservação e preço em poucos cliques no menu <em>Quero Vender</em>.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-white">Aproveitar ofertas reais e cupons:</strong> acesse descontos selecionados em lojas esportivas e copie cupons promocionais em 1 clique.
                       </span>
                     </li>
                     <li className="flex items-start gap-2.5">
@@ -622,7 +654,7 @@ export default function WelcomeLandingPage() {
                 <div className="pt-4 border-t border-zinc-800 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() => handleOpenRegister()}
+                    onClick={handleOpenRegister}
                     className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold transition-colors"
                   >
                     <UserPlus className="w-4 h-4" />
@@ -691,7 +723,7 @@ export default function WelcomeLandingPage() {
                 <div className="pt-4 border-t border-zinc-800 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() => handleOpenRegister()}
+                    onClick={handleOpenRegister}
                     className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold transition-colors"
                   >
                     <Award className="w-4 h-4" />
@@ -721,10 +753,10 @@ export default function WelcomeLandingPage() {
                   Prefere só conhecer primeiro?
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold text-white">
-                  Entrando como Visitante, você navega livremente sem precisar criar senha agora
+                  Entrando como Visitante, você navega livremente sem precisar criar conta agora
                 </h3>
                 <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                  Veja todas as ofertas e abra promoções externas, pesquise equipamentos por modalidade, consulte perfis de treinadores e leia os relatos da comunidade. Se depois quiser comprar, anunciar ou publicar, você entra ou cria sua conta em um clique.
+                  Veja todos os equipamentos de atletas, abra ofertas selecionadas, consulte perfis de treinadores e leia os relatos da comunidade. Se depois quiser comprar, anunciar ou publicar, você entra ou se cadastra em um clique.
                 </p>
               </div>
 
@@ -773,7 +805,7 @@ export default function WelcomeLandingPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-gradient-to-br from-zinc-900 via-[#101322] to-zinc-950 border border-zinc-800 p-8 sm:p-12 text-center space-y-6 shadow-2xl">
+            <div className="rounded-3xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 p-8 sm:p-12 text-center space-y-6 shadow-2xl">
               <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
                 Pronto para entrar na CoreMotion?
               </h2>
@@ -784,7 +816,7 @@ export default function WelcomeLandingPage() {
               <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => handleOpenRegister()}
+                  onClick={handleOpenRegister}
                   className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-colors shadow-lg shadow-red-950/50"
                 >
                   Criar minha conta gratuita
@@ -811,7 +843,6 @@ export default function WelcomeLandingPage() {
 
       <Footer />
 
-      {/* Botão flutuante de voltar ao topo (canto inferior direito, igual ao layout de referência) */}
       <button
         type="button"
         onClick={scrollToTop}

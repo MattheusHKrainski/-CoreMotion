@@ -42,6 +42,10 @@ describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
     assert.match(html, /Para Treinadores e Assessorias/);
     assert.match(html, /Custódia Protegida/);
 
+    // Zero formulários/inputs na tela inicial pública para nunca acionar falso-positivo de Safe Browsing
+    assert.equal(/<form[\s>]/i.test(html), false);
+    assert.equal(/<input[\s>]/i.test(html), false);
+
     // Zero termos artificiais ou jargão interno
     const forbidden = ['simulado', 'demonstração', 'fictício', 'Marca Demo', 'B2C', 'C2C', '⌘K'];
     for (const term of forbidden) {
