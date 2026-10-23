@@ -276,7 +276,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
                       <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Produtos originais selecionados com desconto ativo.</p>
+                      <p className="mt-1 text-[11px] text-zinc-500">Produtos novos e lacrados de lojas oficiais, com nota fiscal e desconto ativo.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
@@ -290,7 +290,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
                       <h2 id="c2c-listings-title" className="flex items-center gap-2 text-base font-black text-white"><Layers className="h-4 w-4 text-red-400" />Equipamentos de Atletas <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">{filteredC2CProducts.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Novos e seminovos anunciados por atletas com envio para todo o Brasil e Compra Garantida.</p>
+                      <p className="mt-1 text-[11px] text-zinc-500">Vendidos diretamente por atletas — novos sem uso ou já usados, com tempo de uso e estado real descritos pelo dono.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">

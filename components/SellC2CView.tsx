@@ -39,13 +39,14 @@ export default function SellC2CView() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [originalPrice, setOriginalPrice] = useState('');
-  const [category, setCategory] = useState('Calçados');
+  const [category, setCategory] = useState('Equipamentos');
   const [sport, setSport] = useState('Corrida');
   const [condition, setCondition] = useState<ProductCondition>('usado_excelente');
+  const [usageTime, setUsageTime] = useState('');
   const [location, setLocation] = useState(user?.city ? `${user.city}, ${user.state || 'SP'}` : 'São Paulo, SP');
   const [imageUrl, setImageUrl] = useState('');
   const [imageGallery, setImageGallery] = useState<string[]>([
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80',
+    '/c2c/relogio-garmin-mesa.jpg',
   ]);
   const [shippingAvailable, setShippingAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -98,6 +99,7 @@ export default function SellC2CView() {
         category,
         sport,
         condition,
+        usage_time: usageTime.trim() || undefined,
         product_type: 'c2c',
         images: imageGallery,
         seller_id: user?.id || 'user-c2c',
@@ -114,6 +116,7 @@ export default function SellC2CView() {
       setDescription('');
       setPrice('');
       setOriginalPrice('');
+      setUsageTime('');
       setActiveTab('active');
     } catch {
       // O store já exibiu o erro.
@@ -259,22 +262,36 @@ export default function SellC2CView() {
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Condição de Uso *
+                  Estado do Produto *
                 </label>
                 <select
                   value={condition}
                   onChange={(e) => setCondition(e.target.value as ProductCondition)}
                   className="w-full px-3.5 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                 >
-                  <option value="novo">Novo (Lacrado)</option>
-                  <option value="como_novo">Como Novo (Sem marcas)</option>
-                  <option value="usado_excelente">Usado (Excelente Estado)</option>
-                  <option value="usado_bom">Usado (Bom Estado)</option>
+                  <option value="novo">Novo — Nunca usado (na caixa / etiqueta)</option>
+                  <option value="como_novo">Pouquíssimo uso (1 a 4 vezes)</option>
+                  <option value="seminovo">Seminovo (bem conservado)</option>
+                  <option value="usado_excelente">Usado — Ótimo estado</option>
+                  <option value="usado_bom">Usado — Bom estado (marcas leves)</option>
                 </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
+                  Tempo de Uso
+                </label>
+                <input
+                  type="text"
+                  value={usageTime}
+                  onChange={(e) => setUsageTime(e.target.value)}
+                  placeholder="Ex: 6 meses (2x/sem), 120 km ou Sem uso"
+                  className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
+                />
+              </div>
+
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
                   Preço de Venda (R$) *
@@ -284,20 +301,20 @@ export default function SellC2CView() {
                   required
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  placeholder="850.00"
+                  placeholder="220.00"
                   className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none font-bold"
                 />
               </div>
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Preço Original na Loja (R$)
+                  Valor Pago Quando Novo (R$)
                 </label>
                 <input
                   type="text"
                   value={originalPrice}
                   onChange={(e) => setOriginalPrice(e.target.value)}
-                  placeholder="1999.00 (opcional)"
+                  placeholder="390.00 (opcional)"
                   className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-zinc-400 rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                 />
               </div>
@@ -305,14 +322,14 @@ export default function SellC2CView() {
 
             <div>
               <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                Descrição Detalhada do Equipamento *
+                Relato Honesto sobre Estado, Uso e Motivo da Venda *
               </label>
               <textarea
                 required
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva detalhes como quilometragem rodada, tamanho, presença de caixa original, motivo da venda, etc."
+                placeholder="Conte há quanto tempo comprou, frequência de uso/km rodados, se há algum detalhe estético, itens inclusos (caixa, capa, cabo) e por que está vendendo."
                 className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none leading-relaxed"
               />
             </div>

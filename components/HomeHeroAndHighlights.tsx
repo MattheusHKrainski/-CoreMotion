@@ -188,7 +188,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
               <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Equipamentos novos selecionados com desconto ativo.</p>
+              <p className="mt-1 text-[11px] text-zinc-500">Produtos novos e lacrados de lojas oficiais, com nota fiscal e desconto ativo.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
@@ -205,7 +205,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
               <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Layers className="h-4 w-4 text-red-400" />Equipamentos de Atletas <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">{filteredC2CProducts.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Seminovos e novos bem cuidados anunciados por atletas, com Compra 100% Garantida.</p>
+              <p className="mt-1 text-[11px] text-zinc-500">Vendidos diretamente por atletas — novos sem uso ou já usados, com tempo de uso e conservação reais informados pelo dono.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver todos <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
