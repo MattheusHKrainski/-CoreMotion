@@ -12,7 +12,7 @@ import {
 } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderStatus, UserRole } from '@/lib/types';
-import { DEMO_OFFERS } from '@/fixtures/demo-offers';
+import AdminOffersManager from './AdminOffersManager';
 import {
   ShieldCheck,
   Package,
@@ -49,6 +49,7 @@ export default function AdminDashboard() {
     user,
     setActiveView,
     products,
+    activeOffers,
     allUsers,
     orders,
     updateUserRole,
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
 
   const catalogValue = products.reduce((acc, p) => acc + p.price * (p.stock || 1), 0);
   const c2cCount = products.filter((p) => p.product_type === 'c2c').length;
-  const partnerOfferCount = DEMO_OFFERS.length;
+  const partnerOfferCount = activeOffers.length;
   const registeredOrderValue = orders.reduce((sum, o) => sum + o.total, 0);
 
   const filteredUsers = allUsers.filter((u) => {
@@ -252,6 +253,13 @@ export default function AdminDashboard() {
           >
             <TrendingUp className="w-3.5 h-3.5 text-red-400" />
             <span>Métricas & Ecossistema</span>
+          </button>
+          <button
+            onClick={() => scrollToSection('admin-offers-section')}
+            className="px-3 py-1.5 rounded-full bg-red-600/20 border border-red-500/30 text-red-200 hover:bg-red-600 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1.5"
+          >
+            <Tag className="w-3.5 h-3.5 text-red-400" />
+            <span>Ofertas & Afiliados ({partnerOfferCount})</span>
           </button>
           <button
             onClick={() => scrollToSection('sec-produtos')}
@@ -384,6 +392,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       </section>
+
+      {/* GESTÃO COMPLETA DE OFERTAS EXTERNAS E LINKS DE AFILIADOS */}
+      <AdminOffersManager />
 
       {/* 3. SECTION: MODERAÇÃO DO CATÁLOGO */}
       <section id="sec-produtos" className="space-y-4">

@@ -34,6 +34,8 @@ export interface ExternalOffer {
   original_price?: number;
   image_url: string;
   source_url: string;
+  coupon_code?: string;
+  is_active?: boolean;
   is_demo: boolean;
   created_at: string;
 }
