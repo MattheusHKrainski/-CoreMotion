@@ -30,8 +30,6 @@ import {
 
 export default function WelcomeLandingPage() {
   const {
-    isAuthenticated,
-    user,
     products,
     activeOffers,
     coaches,
@@ -162,40 +160,27 @@ export default function WelcomeLandingPage() {
               />
             </form>
 
-            {isAuthenticated && user ? (
-              <button
-                type="button"
-                onClick={() => handleEnterAsVisitor('home')}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold transition-colors"
-              >
-                <span>Ir para a plataforma ({user.name.split(' ')[0]})</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleEnterAsVisitor('home')}
-                  className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
-                >
-                  Visitante
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenLogin}
-                  className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white hover:text-slate-200 border border-white/25 hover:border-white/60 transition-colors"
-                >
-                  Entrar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleOpenRegister()}
-                  className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-white/[0.08] hover:bg-white/[0.15] border border-white/30 transition-colors"
-                >
-                  Cadastrar-se
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              onClick={() => handleEnterAsVisitor('home')}
+              className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors"
+            >
+              Visitante
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenLogin}
+              className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white hover:text-slate-200 border border-white/25 hover:border-white/60 transition-colors"
+            >
+              Entrar
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOpenRegister()}
+              className="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-white/[0.08] hover:bg-white/[0.15] border border-white/30 transition-colors"
+            >
+              Cadastrar-se
+            </button>
           </div>
 
           {/* Botão Mobile */}
@@ -332,7 +317,7 @@ export default function WelcomeLandingPage() {
                 onClick={() => handleEnterAsVisitor('home')}
                 className="px-7 py-4 rounded-xl border border-slate-300/45 hover:border-white bg-white/[0.04] hover:bg-white/[0.10] text-white font-bold text-sm sm:text-base whitespace-nowrap transition-all flex items-center justify-center gap-2"
               >
-                <span>{isAuthenticated ? 'Ir para a plataforma' : 'Entrar como visitante'}</span>
+                <span>Entrar como visitante</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

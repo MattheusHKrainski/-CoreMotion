@@ -174,7 +174,7 @@ const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undef
 
 const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
 const OFFERS_STORAGE_KEY = 'coremotion_managed_offers_v1';
-const ENTERED_SESSION_KEY = 'coremotion_entered_session_v1';
+const ENTERED_SESSION_KEY = 'coremotion_entered_session_v2';
 
 /** Junta duas listas de anúncios por id; os itens de `incoming` prevalecem. */
 function mergeProductsById(current: Product[], incoming: Product[]): Product[] {
@@ -440,17 +440,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       // ignore
     }
   }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      setHasEnteredPlatform(true);
-      try {
-        sessionStorage.setItem(ENTERED_SESSION_KEY, '1');
-      } catch {
-        // ignore
-      }
-    }
-  }, [isAuthenticated]);
 
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
   const switchRole = useCallback((newRole: UserRole) => {
