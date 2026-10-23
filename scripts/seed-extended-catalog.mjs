@@ -9,232 +9,236 @@ const client = new Client({
 
 const storesToSeed = [
   {
-    name: 'Velocità Performance SP',
+    name: 'Perfil de loja demonstrativo 01',
     slug: 'velocita-performance',
-    description: 'A loja mais tradicional de corrida de rua de São Paulo. Tênis de alta performance, modelos com placa de carbono e avaliação de pisada.',
+    description: 'Perfil B2C demonstrativo para Corrida & Maratona. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=1200&q=80',
     category: 'Corrida & Maratona',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '18.421.902/0001-44',
-    contact_email: 'contato@velocita.com.br',
-    contact_phone: '(11) 3088-2100',
+    contact_email: 'lojista-demo-01@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Jardins, São Paulo - SP',
-    rating: 4.9,
-    sales_count: 1420
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Keep Running Brasil',
+    name: 'Perfil de loja demonstrativo 02',
     slug: 'keep-running-brasil',
-    description: 'Especialistas apaixonados por corrida. Tênis de rodagem, competição, vestuário técnico e meias de compressão.',
+    description: 'Perfil B2C demonstrativo para Corrida & Performance. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&q=80',
     category: 'Corrida & Performance',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '24.119.832/0001-90',
-    contact_email: 'atendimento@keeprunning.com.br',
-    contact_phone: '(11) 3255-4010',
+    contact_email: 'lojista-demo-02@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Vila Madalena, São Paulo - SP',
-    rating: 5.0,
-    sales_count: 980
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Spaceman Bike Lab',
+    name: 'Perfil de loja demonstrativo 03',
     slug: 'spaceman-bike-lab',
-    description: 'Boutique e oficina especializada em bicicletas de estrada, gravel e triatlo. Bike fit computadorizado e componentes Shimano/SRAM.',
+    description: 'Perfil B2C demonstrativo para Ciclismo & Triatlo. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&q=80',
     category: 'Ciclismo & Triatlo',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '31.204.551/0001-12',
-    contact_email: 'contato@spacemanbikelab.com.br',
-    contact_phone: '(11) 3812-9900',
+    contact_email: 'lojista-demo-03@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Pinheiros, São Paulo - SP',
-    rating: 4.9,
-    sales_count: 650
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Dux Nutrition Official Store',
+    name: 'Perfil de loja demonstrativo 04',
     slug: 'dux-nutrition-official',
-    description: 'Nutrição esportiva limpa, pura e de altíssimo padrão. Whey isolado, creatina Creapure, eletrólitos e suplementação de endurance.',
+    description: 'Perfil B2C demonstrativo para Nutrição & Suplementos. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1200&q=80',
     category: 'Nutrição & Suplementos',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '21.094.331/0001-08',
-    contact_email: 'pedidos@duxnutrition.com.br',
-    contact_phone: '(11) 4003-8822',
+    contact_email: 'lojista-demo-04@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'São Paulo - SP',
-    rating: 5.0,
-    sales_count: 3100
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'AquaTri Specialist Floripa',
+    name: 'Perfil de loja demonstrativo 05',
     slug: 'aquatri-specialist',
-    description: 'A loja oficial do triatleta em Florianópolis. Wetsuits de natação em águas abertas, óculos espelhados e acessórios Ironman.',
+    description: 'Perfil B2C demonstrativo para Triatlo & Natação. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=1200&q=80',
     category: 'Triatlo & Natação',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '19.822.401/0001-33',
-    contact_email: 'floripa@aquatri.com.br',
-    contact_phone: '(48) 3224-8190',
+    contact_email: 'lojista-demo-05@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Jurerê Internacional, Florianópolis - SC',
-    rating: 4.8,
-    sales_count: 510
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Top Run Curitiba',
+    name: 'Perfil de loja demonstrativo 06',
     slug: 'top-run-curitiba',
-    description: 'Ponto de encontro dos corredores do Sul. Principais lançamentos em amortecimento e super-tênis das marcas Nike, Asics e Saucony.',
+    description: 'Perfil B2C demonstrativo para Corrida & Performance. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1533560904424-a0c61dc306fc?w=1200&q=80',
     category: 'Corrida & Performance',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '29.330.118/0001-72',
-    contact_email: 'contato@topruncuritiba.com.br',
-    contact_phone: '(41) 3015-7720',
+    contact_email: 'lojista-demo-06@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Batel, Curitiba - PR',
-    rating: 4.9,
-    sales_count: 730
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Pedal Pro Rio',
+    name: 'Perfil de loja demonstrativo 07',
     slug: 'pedal-pro-rio',
-    description: 'Loja premium no Leblon. Bikes de estrada, gravel, sapatilhas de carbono, capacetes MIPS e pós-venda especializado.',
+    description: 'Perfil B2C demonstrativo para Ciclismo de Estrada. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&q=80',
     category: 'Ciclismo de Estrada',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '15.912.482/0001-20',
-    contact_email: 'leblon@pedalprorio.com.br',
-    contact_phone: '(21) 2294-5500',
+    contact_email: 'lojista-demo-07@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Leblon, Rio de Janeiro - RJ',
-    rating: 4.9,
-    sales_count: 420
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Montanha & Trilha Brasil',
+    name: 'Perfil de loja demonstrativo 08',
     slug: 'montanha-trilha-brasil',
-    description: 'Tudo para corrida em trilha, ultra-maratonas de montanha e trekking. Mochilas de hidratação, bastões e tênis de tração.',
+    description: 'Perfil B2C demonstrativo para Trail Running & Aventura. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80',
     category: 'Trail Running & Aventura',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '28.109.444/0001-65',
-    contact_email: 'contato@montanhatrilha.com.br',
-    contact_phone: '(12) 3663-8810',
+    contact_email: 'lojista-demo-08@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Campos do Jordão - SP',
-    rating: 4.8,
-    sales_count: 380
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Wahoo & Smart Trainers Brasil',
+    name: 'Perfil de loja demonstrativo 09',
     slug: 'wahoo-smart-trainers',
-    description: 'Distribuidor credenciado de rolos de treino inteligentes, sensores de potência e ecossistema de ciclismo indoor no Brasil.',
+    description: 'Perfil B2C demonstrativo para Ciclismo & Tecnologia. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80',
     category: 'Ciclismo & Tecnologia',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '33.910.102/0001-51',
-    contact_email: 'comercial@smarttrainersbrasil.com.br',
-    contact_phone: '(16) 3620-1190',
+    contact_email: 'lojista-demo-09@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Ribeirão Preto - SP',
-    rating: 5.0,
-    sales_count: 290
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Centauro Pro & Casual',
+    name: 'Perfil de loja demonstrativo 10',
     slug: 'centauro-pro-casual',
-    description: 'Variedade multiesportiva completa: do atleta de fim de semana ao competidor assíduo. Tênis casuais, vestuário e acessórios.',
+    description: 'Perfil B2C demonstrativo para Multiesportes & Casual. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?w=1200&q=80',
     category: 'Multiesportes & Casual',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '06.323.491/0001-83',
-    contact_email: 'parcerias@centauro.com.br',
-    contact_phone: '(11) 2322-3000',
+    contact_email: 'lojista-demo-10@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Barueri - SP',
-    rating: 4.7,
-    sales_count: 4800
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Track&Field Lifestyle & Run',
+    name: 'Perfil de loja demonstrativo 11',
     slug: 'track-field-lifestyle',
-    description: 'Vestuário técnico esportivo de alto padrão com tecnologia Thermodry e corte anatômico premium para treino e dia a dia.',
+    description: 'Perfil B2C demonstrativo para Vestuário & Casual Premium. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1200&q=80',
     category: 'Vestuário & Casual Premium',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '60.404.992/0001-11',
-    contact_email: 'loja.iguatemi@tf.com.br',
-    contact_phone: '(11) 3816-4400',
+    contact_email: 'lojista-demo-11@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Iguatemi, São Paulo - SP',
-    rating: 4.9,
-    sales_count: 1850
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Endurance Lab Nutrição Rápida',
+    name: 'Perfil de loja demonstrativo 12',
     slug: 'endurance-lab-nutri',
-    description: 'Importadora oficial de géis Maurten, eletrólitos SaltStick, pastilhas Nuun e géis Gu Roctane para treinos longos e provas.',
+    description: 'Perfil B2C demonstrativo para Nutrição Esportiva. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1579722820308-d74e571900a9?w=1200&q=80',
     category: 'Nutrição Esportiva',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '37.810.229/0001-44',
-    contact_email: 'pedidos@endurancelab.com.br',
-    contact_phone: '(19) 3290-7711',
+    contact_email: 'lojista-demo-12@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Cambuí, Campinas - SP',
-    rating: 4.9,
-    sales_count: 1100
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Oakley & Eyewear Sport Pro',
+    name: 'Perfil de loja demonstrativo 13',
     slug: 'oakley-eyewear-sport',
-    description: 'Especialista em óculos solares esportivos com lentes polarizadas e tecnologia Prizm para contraste visual absoluto em corrida e bike.',
+    description: 'Perfil B2C demonstrativo para Acessórios & Óculos. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1508296695146-257a814070b4?w=1200&q=80',
     category: 'Acessórios & Óculos',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '41.209.881/0001-90',
-    contact_email: 'eyewear@sportprobrasil.com.br',
-    contact_phone: '(31) 3280-9944',
+    contact_email: 'lojista-demo-13@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Savassi, Belo Horizonte - MG',
-    rating: 4.8,
-    sales_count: 890
+    rating: 0,
+    sales_count: 0
   },
   {
-    name: 'Casual Motion Streetwear',
+    name: 'Perfil de loja demonstrativo 14',
     slug: 'casual-motion-street',
-    description: 'Moda casual esportiva, bonés de aba curva, camisetas respiráveis, meias cano médio e acessórios urbanos para atletas em dias de descanso.',
+    description: 'Perfil B2C demonstrativo para Moda Casual & Street. Informações, vínculo com marcas, produtos, estoque e disponibilidade são ilustrativos e não verificados.',
     logo_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&q=80',
     banner_url: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1200&q=80',
     category: 'Moda Casual & Street',
-    is_verified: true,
-    verification_status: 'verified',
+    is_verified: false,
+    verification_status: 'none',
     cnpj: '38.441.902/0001-77',
-    contact_email: 'contato@casualmotion.com.br',
-    contact_phone: '(11) 5084-2199',
+    contact_email: 'lojista-demo-14@exemplo.test',
+    contact_phone: '(00) 00000-0000',
     location: 'Vila Mariana, São Paulo - SP',
-    rating: 4.7,
-    sales_count: 670
+    rating: 0,
+    sales_count: 0
   }
 ];
 
 async function main() {
+  if (process.env.COREMOTIOM_ENABLE_RETIRED_STORE_SEED !== '1') {
+    console.warn('Seed de perfis de loja e catálogo B2C aposentado; nenhum dado foi alterado.');
+    return;
+  }
   await client.connect();
   console.log('Connected to PostgreSQL database for extended catalog seed...');
 
@@ -302,7 +306,7 @@ async function main() {
     },
     {
       title: 'Cinto Elástico Porta-Número & Géis com Bolsos Refletivos',
-      description: 'Acessório indispensável para maratonas e provas de 10k/21k. Ajuste micrométrico na cintura, prendedor oficial de número de peito e 6 elásticos para géis energéticos.',
+      description: 'Acessório indispensável para maratonas e provas de 10k/21k. Ajuste micrométrico na cintura, prendedor de número de peito e 6 elásticos para géis energéticos.',
       price: 59.90,
       original_price: 79.90,
       category: 'Acessórios & Vestuário',
@@ -381,7 +385,7 @@ async function main() {
       location: 'Barueri - SP'
     },
     {
-      title: 'Tênis Olympikus Corre 3 (Edição Oficial Maratona SP)',
+      title: 'Tênis Olympikus Corre 3 (anúncio demonstrativo)',
       description: 'O tênis brasileiro mais aclamado pelos corredores. Entressola com tecnologia Eleva Pro para máxima impulsão e cabedal Oxitec super respirável. Drop 8mm, peso 210g.',
       price: 449.90,
       original_price: 499.90,
@@ -560,7 +564,7 @@ async function main() {
     },
     {
       title: 'Capacete Ciclismo Specialized Align II com Proteção Cerebral MIPS',
-      description: 'Proteção certificada com tecnologia de rotação multidirecional MIPS por um valor acessível. Sistema de ajuste Headset SX com micro-catraca e ventilação 4th Dimension.',
+      description: 'Anúncio demonstrativo de capacete esportivo. Características, certificações, autenticidade e disponibilidade não são verificadas pela plataforma.',
       price: 549.00,
       original_price: 699.00,
       category: 'Equipamentos',
@@ -609,7 +613,7 @@ async function main() {
 
     // --- ALTA PERFORMANCE & CARBONO (R$ 1.500 a R$ 4.800) ---
     {
-      title: 'Tênis Nike Vaporfly 3 Placa de Carbono Flyplate (Super Tênis Oficial)',
+      title: 'Tênis Nike Vaporfly 3 com placa de carbono (anúncio demonstrativo)',
       description: 'O tênis líder dos pódios mundiais. Espuma ZoomX ultrarresponsiva com placa integral de fibra de carbono curvada que atua como uma catapulta a cada passada.',
       price: 1899.99,
       original_price: 2199.99,
@@ -795,6 +799,7 @@ async function main() {
     // Check if product with this title exists
     const check = await client.query('SELECT id FROM public.products WHERE title = $1', [p.title]);
     if (check.rows.length === 0) {
+      // These seeded listings are not internally reviewed; shipping stays enabled for the demo flow only.
       await client.query(`
         INSERT INTO public.products (
           id, title, description, price, original_price, category, sport,
@@ -803,15 +808,15 @@ async function main() {
           tags, seller_name, created_at, updated_at
         ) VALUES (
           gen_random_uuid(), $1, $2, $3, $4, $5, $6,
-          $7, $8, $9, $10, $11, true,
+          $7, $8, $9, $10, $11, false,
           $12, $13, $14, $15, true, 'active', $16,
           $17, $18, NOW(), NOW()
         )
       `, [
         p.title, p.description, p.price, p.original_price, p.category, p.sport,
-        p.condition, p.product_type, p.images, storeId, storeObj?.name || 'Loja Parceira',
+        p.condition, p.product_type, p.images, storeId, storeObj?.name || 'Perfil de loja demonstrativo',
         p.stock, Math.floor(200 + Math.random() * 1500), Math.floor(15 + Math.random() * 80),
-        p.location, p.brand, p.tags, storeObj?.name || 'Loja Parceira'
+        p.location, p.brand, p.tags, storeObj?.name || 'Perfil de loja demonstrativo'
       ]);
       console.log(`Inserted product: ${p.title} (R$ ${p.price})`);
     } else {
