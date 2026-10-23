@@ -169,14 +169,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
   const [allUsers, setAllUsers] = useState<UserProfile[]>(DEMO_MODE ? INITIAL_USERS : []);
-  const [products, setProducts] = useState<Product[]>(DEMO_MODE ? INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c') : []);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'));
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(DEMO_MODE ? INITIAL_COMMUNITY_POSTS : []);
-  const [coaches] = useState<Coach[]>(DEMO_MODE ? INITIAL_COACHES : []);
-  const [athletes] = useState<Athlete[]>(DEMO_MODE ? INITIAL_ATHLETES : []);
-  const [news] = useState<NewsArticle[]>(DEMO_MODE ? INITIAL_NEWS : []);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(INITIAL_COMMUNITY_POSTS);
+  const [coaches] = useState<Coach[]>(INITIAL_COACHES);
+  const [athletes] = useState<Athlete[]>(INITIAL_ATHLETES);
+  const [news] = useState<NewsArticle[]>(INITIAL_NEWS);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
 
@@ -238,10 +238,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
         if (isMounted) {
           if (liveProducts.length > 0) {
-            // Preserva anúncios não ativos já carregados pela conta logada.
-            setProducts((prev) => mergeProductsById(prev.filter((p) => p.status !== 'active'), liveProducts));
+            const curatedC2C = INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c');
+            // Preserva anúncios não ativos da conta logada, prioriza dados ao vivo do banco e mantém vitrine multiesportiva.
+            setProducts((prev) =>
+              mergeProductsById(prev.filter((p) => p.status !== 'active'), mergeProductsById(liveProducts, curatedC2C))
+            );
           }
-          if (livePosts.length > 0) setCommunityPosts(livePosts);
+          if (livePosts.length > 0) {
+            const liveIds = new Set(livePosts.map((p) => p.id));
+            setCommunityPosts([...livePosts, ...INITIAL_COMMUNITY_POSTS.filter((p) => !liveIds.has(p.id))]);
+          }
         }
       } catch (err) {
         console.warn('[CoreMotiom] Error loading live database records:', err);

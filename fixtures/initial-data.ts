@@ -3055,6 +3055,22 @@ export const INITIAL_COACHES: Coach[] = [
     cref_number: 'CREF 093615-G/PR',
     availability: 'Planilhas semanais com suporte via WhatsApp',
   },
+  {
+    id: 'coach-9',
+    name: 'Treinadora Larissa Peixoto',
+    title: 'Técnica de Natação em Piscina e Águas Abertas',
+    specialty: 'Crawl, Respiração & Travessias',
+    sports: ['Natação', 'Águas Abertas', 'Condicionamento'],
+    avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80',
+    bio: 'Ex-nadadora de seleção estadual com metodologia focada em perda do medo da água, correção hidrodinâmica da braçada, virada olímpica e travessias marítimas.',
+    rating: 4.98,
+    reviews_count: 56,
+    hourly_rate: 150.00,
+    location: 'Salvador, BA (Piscina Semiolímpica / Online)',
+    is_certified: true,
+    cref_number: 'CBDA / CREF 014980-G/BA',
+    availability: 'Manhãs e Noites — Aulas Individuais e Turmas',
+  },
 ];
 
 export const INITIAL_ATHLETES: Athlete[] = [
