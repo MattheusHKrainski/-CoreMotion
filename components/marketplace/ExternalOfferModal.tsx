@@ -79,7 +79,7 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
           <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-700/80 bg-black/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-100">
             <Tag className="h-3.5 w-3.5 text-red-400" />
-            Oferta Parceira
+            Oferta
           </span>
           {discount !== null && (
             <span className="absolute left-4 top-4 rounded-full bg-red-600 px-3 py-1.5 text-xs font-black text-white shadow-lg">
@@ -108,21 +108,21 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
               </div>
             )}
             <p className="text-2xl font-black text-white">{formatPrice(offer.price)}</p>
-            <p className="mt-1 text-[11px] text-zinc-400">ou em até 10x sem juros na loja parceira</p>
+            <p className="mt-1 text-[11px] text-zinc-400">ou em até 10x sem juros</p>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-xs leading-relaxed text-zinc-300">
             <div className="mb-1.5 flex items-center gap-2 font-bold text-white">
               <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
-              Parceiro Verificado CoreMotion
+              Oferta Verificada CoreMotion
             </div>
-            <p>Oferta selecionada na vitrine oficial <strong className="text-white">{offer.store_name}</strong>, com nota fiscal, garantia de fábrica e envio segurado para todo o Brasil.</p>
+            <p>Oferta selecionada em <strong className="text-white">{offer.store_name}</strong>, com nota fiscal, garantia de fábrica e envio segurado para todo o Brasil.</p>
           </div>
 
           {partnerRedirectNotice && (
             <p role="status" className="flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-              Oferta selecionada em {offer.store_name} com condição promocional ativa.
+              Oferta selecionada em {offer.store_name} com condição especial ativa.
             </p>
           )}
 
@@ -131,10 +131,10 @@ export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModa
             onClick={handleOpenSource}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-500"
           >
-            Ir para oferta na loja
+            Ir para oferta
             <ExternalLink className="h-4 w-4" />
           </button>
-          <p className="text-center text-[10px] text-zinc-500">Venda e entrega realizadas diretamente pela loja parceira {offer.store_name}.</p>
+          <p className="text-center text-[10px] text-zinc-500">Venda e entrega realizadas diretamente por {offer.store_name}.</p>
         </div>
       </section>
     </div>

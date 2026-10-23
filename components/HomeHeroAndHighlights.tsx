@@ -103,7 +103,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
             {showStaffSummary && (
               <div className="grid grid-cols-1 gap-2 border-t border-zinc-800/80 pt-5 sm:grid-cols-3">
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Lojas Parceiras</span>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Ofertas</span>
                   <span className="mt-1 block text-xs font-bold text-white">Grandes Marcas</span>
                   <span className="text-[10px] text-zinc-400">Descontos selecionados em novos</span>
                 </div>
@@ -159,12 +159,12 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-black text-white sm:text-xl"><ShoppingBag className="h-5 w-5 text-red-400" />Explore o catálogo</h2>
-            <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em lojas parceiras e anúncios de atletas.</p>
+            <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em ofertas e anúncios de atletas.</p>
           </div>
           <div className="flex flex-wrap gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
             {([
               { id: 'all', label: 'Tudo' },
-              { id: 'offers', label: 'Lojas Parceiras' },
+              { id: 'offers', label: 'Ofertas' },
               { id: 'c2c', label: 'De Atletas' },
             ] as const).map((tab) => (
               <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`rounded-full px-3 py-1.5 font-semibold transition ${activeTab === tab.id ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
@@ -187,8 +187,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas em Destaque nas Lojas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Equipamentos novos com desconto nas principais lojas esportivas parceiras.</p>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
+              <p className="mt-1 text-[11px] text-zinc-500">Equipamentos novos selecionados com desconto ativo.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>

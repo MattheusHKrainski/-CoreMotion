@@ -82,7 +82,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSport, setSelectedSport] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
-  const [onlyDiscounted, setOnlyDiscounted] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -94,11 +93,10 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
       if (!matchesCategory(offer.category, selectedCategory)) return false;
       if (selectedSport !== 'all' && offer.sport !== selectedSport) return false;
-      if (onlyDiscounted && getOfferDiscountPercent(offer) === null) return false;
       return true;
     });
     return sortOffers(filtered, sortBy);
-  }, [normalizedQuery, selectedCategory, selectedSport, onlyDiscounted, sortBy]);
+  }, [normalizedQuery, selectedCategory, selectedSport, sortBy]);
 
   const filteredC2CProducts = useMemo(() => {
     const filtered = products.filter((product) => {
@@ -113,7 +111,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
     return sortProducts(filtered, sortBy);
   }, [products, normalizedQuery, selectedCategory, selectedSport, selectedCondition, sortBy]);
 
-  useEffect(() => setVisibleCount(PAGE_SIZE), [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, onlyDiscounted, sortBy]);
+  useEffect(() => setVisibleCount(PAGE_SIZE), [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy]);
 
   const visibleC2CProducts = filteredC2CProducts.slice(0, visibleCount);
   const hasOffers = selectedTab !== 'c2c';
@@ -123,7 +121,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
     selectedCategory !== 'all',
     selectedSport !== 'all',
     selectedCondition !== 'all' && selectedTab !== 'offers',
-    onlyDiscounted,
   ].filter(Boolean).length;
 
   const resetFilters = () => {
@@ -131,7 +128,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
     setSelectedCategory('all');
     setSelectedSport('all');
     setSelectedCondition('all');
-    setOnlyDiscounted(false);
     setSearchQuery('');
   };
 
@@ -171,7 +167,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         <div className="flex w-full items-center gap-1.5 overflow-x-auto text-xs scrollbar-none sm:w-auto">
           {([
             { id: 'all', label: `Tudo (${filteredOffers.length + filteredC2CProducts.length})`, icon: ShoppingBag },
-            { id: 'offers', label: `Lojas Parceiras (${filteredOffers.length})`, icon: Tag },
+            { id: 'offers', label: `Ofertas (${filteredOffers.length})`, icon: Tag },
             { id: 'c2c', label: `De Atletas (${filteredC2CProducts.length})`, icon: Layers },
           ] as const).map((tab) => {
             const Icon = tab.icon;
@@ -219,7 +215,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
           {selectedCategory !== 'all' && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{selectedCategory}<button type="button" aria-label="Limpar categoria" onClick={() => setSelectedCategory('all')}><X className="h-3 w-3" /></button></span>}
           {selectedSport !== 'all' && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{selectedSport}<button type="button" aria-label="Limpar modalidade" onClick={() => setSelectedSport('all')}><X className="h-3 w-3" /></button></span>}
           {selectedCondition !== 'all' && selectedTab !== 'offers' && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{CONDITIONS.find((condition) => condition.id === selectedCondition)?.label}<button type="button" aria-label="Limpar condição" onClick={() => setSelectedCondition('all')}><X className="h-3 w-3" /></button></span>}
-          {onlyDiscounted && <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-200">Ofertas com desconto<button type="button" aria-label="Remover filtro de desconto" onClick={() => setOnlyDiscounted(false)}><X className="h-3 w-3" /></button></span>}
           <button type="button" onClick={resetFilters} className="ml-auto font-semibold text-red-400 hover:underline">Limpar todos</button>
         </div>
       )}
@@ -231,11 +226,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
               <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white"><SlidersHorizontal className="h-3.5 w-3.5 text-red-400" />Refinar resultados</h2>
               {activeFiltersCount > 0 && <button type="button" onClick={resetFilters} className="text-[10px] font-medium text-zinc-500 hover:text-white">Limpar</button>}
             </div>
-
-            <label className="block rounded-2xl border border-zinc-800/80 bg-zinc-950/70 p-3 text-xs text-white">
-              <span className="flex items-center gap-2 font-semibold"><input type="checkbox" checked={onlyDiscounted} onChange={(event) => setOnlyDiscounted(event.target.checked)} className="rounded border-zinc-700 bg-zinc-900 text-red-600 focus:ring-red-500" />Apenas itens em promoção</span>
-              <span className="mt-1.5 block pl-6 text-[10px] leading-relaxed text-zinc-500">Mostra ofertas com desconto especial ativo nas lojas parceiras.</span>
-            </label>
 
             <div>
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Categorias</h3>
@@ -268,7 +258,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
         <div className="space-y-7 md:col-span-3">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-800/60 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-400">
-            <span>{displayedCount} resultado(s) · {hasOffers ? `${filteredOffers.length} em lojas parceiras` : ''}{hasOffers && hasC2C ? ' + ' : ''}{hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}</span>
+            <span>{displayedCount} resultado(s) · {hasOffers ? `${filteredOffers.length} em ofertas` : ''}{hasOffers && hasC2C ? ' + ' : ''}{hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}</span>
             {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
           </div>
 
@@ -285,8 +275,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                 <section aria-labelledby="partner-offers-title" className="space-y-4">
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
-                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas em Lojas Parceiras <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Produtos originais com desconto nas principais lojas esportivas.</p>
+                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
+                      <p className="mt-1 text-[11px] text-zinc-500">Produtos originais selecionados com desconto ativo.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">

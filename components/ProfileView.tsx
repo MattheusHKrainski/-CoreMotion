@@ -9,7 +9,7 @@ import type { Order, UserProfile, UserRole } from '@/lib/types';
 import { LogOut, Save, ShieldCheck, UserCircle2 } from 'lucide-react';
 
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
-  user: 'Atleta: compra com garantia, anuncia seus próprios equipamentos, aproveita descontos em lojas parceiras e participa da comunidade.',
+  user: 'Atleta: compra com garantia, anuncia seus próprios equipamentos, aproveita ofertas com desconto e participa da comunidade.',
   seller: 'Vendedor Verificado: anuncia equipamentos esportivos com Compra Garantida e participa da comunidade.',
   supervisor:
     'Supervisor: modera a comunidade, os anúncios e os pedidos da plataforma. Não altera papéis nem exclui contas.',

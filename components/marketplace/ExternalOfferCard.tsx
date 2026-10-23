@@ -35,7 +35,7 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
         />
         <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-zinc-700/80 bg-zinc-950/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-200 backdrop-blur">
           <Tag className="h-3 w-3 text-red-400" />
-          Loja Parceira
+          Oferta
         </span>
         {discount !== null && (
           <span className="absolute bottom-3 left-3 rounded-full border border-red-700/70 bg-red-950/90 px-2.5 py-1 text-[11px] font-bold text-red-200 backdrop-blur">
@@ -54,7 +54,7 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
             <h3 className="line-clamp-2 min-h-10 text-sm font-bold leading-snug text-white group-hover:text-red-300">
               {offer.title}
             </h3>
-            <p className="mt-1 text-[11px] text-zinc-500">{offer.category} · Loja parceira verificada</p>
+            <p className="mt-1 text-[11px] text-zinc-500">{offer.category} · Oferta verificada</p>
           </div>
           <div className="flex min-h-12 items-end justify-between gap-2 border-t border-zinc-800/80 pt-3">
             <div>
