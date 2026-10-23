@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
-import { DEMO_OFFERS, getOfferDiscountPercent } from '@/fixtures/demo-offers';
+import { getOfferDiscountPercent } from '@/fixtures/demo-offers';
 import ProductCard from '@/components/marketplace/ProductCard';
 import ExternalOfferCard from '@/components/marketplace/ExternalOfferCard';
 import {
@@ -25,7 +25,7 @@ interface HomeHeroAndHighlightsProps {
 
 type HomeTab = 'all' | 'offers' | 'c2c';
 
-const QUICK_FILTERS = ['all', 'Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Musculação'];
+const QUICK_FILTERS = ['all', 'Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Ciclismo', 'Musculação'];
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -39,15 +39,15 @@ function matchesQuickFilter(category: string, sport: string, filter: string): bo
 }
 
 export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }: HomeHeroAndHighlightsProps) {
-  const { user, products, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { user, products, activeOffers, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<HomeTab>('all');
   const showStaffSummary = isStaffRole(user?.role);
-  const featuredOffer = DEMO_OFFERS[0];
+  const featuredOffer = activeOffers[0] ?? null;
 
-  const filteredOffers = useMemo(() => DEMO_OFFERS.filter((offer) =>
+  const filteredOffers = useMemo(() => activeOffers.filter((offer) =>
     matchesQuickFilter(offer.category, offer.sport, activeFilter)
-  ), [activeFilter]);
+  ), [activeOffers, activeFilter]);
 
   const filteredC2CProducts = useMemo(() => products.filter((product) =>
     product.product_type === 'c2c' &&
@@ -58,7 +58,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
   const showOffers = activeTab !== 'c2c';
   const showC2C = activeTab !== 'offers';
   const resultCount = (showOffers ? filteredOffers.length : 0) + (showC2C ? filteredC2CProducts.length : 0);
-  const discount = getOfferDiscountPercent(featuredOffer);
+  const discount = featuredOffer ? getOfferDiscountPercent(featuredOffer) : null;
 
   const openMarketplace = () => {
     setSearchQuery('');
@@ -121,37 +121,39 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
             )}
           </div>
 
-          <div className="lg:col-span-5">
-            <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/80 shadow-2xl">
-              <div className="relative aspect-[4/3] overflow-hidden bg-zinc-950">
-                <img
-                  src={featuredOffer.image_url}
-                  alt={featuredOffer.title}
-                  onError={(event) => {
-                    event.currentTarget.src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1000&q=80';
-                  }}
-                  className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
-                <span className="absolute left-4 top-4 rounded-full border border-red-500/30 bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-red-200">Destaque da Semana</span>
-                {discount !== null && <span className="absolute right-4 top-4 rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white">-{discount}%</span>}
-                <div className="absolute bottom-4 left-4 right-4 space-y-1">
-                  <span className="text-[11px] font-semibold text-zinc-300">{featuredOffer.store_name}</span>
-                  <h2 className="line-clamp-2 text-lg font-black leading-tight text-white">{featuredOffer.title}</h2>
+          {featuredOffer && (
+            <div className="lg:col-span-5">
+              <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/80 shadow-2xl">
+                <div className="relative aspect-[4/3] overflow-hidden bg-zinc-950">
+                  <img
+                    src={featuredOffer.image_url}
+                    alt={featuredOffer.title}
+                    onError={(event) => {
+                      event.currentTarget.src = '/offers/gps-ciclocomputador-bike.jpg';
+                    }}
+                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
+                  <span className="absolute left-4 top-4 rounded-full border border-red-500/30 bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-red-200">Destaque da Semana</span>
+                  {discount !== null && <span className="absolute right-4 top-4 rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white">-{discount}%</span>}
+                  <div className="absolute bottom-4 left-4 right-4 space-y-1">
+                    <span className="text-[11px] font-semibold text-zinc-300">{featuredOffer.store_name}</span>
+                    <h2 className="line-clamp-2 text-lg font-black leading-tight text-white">{featuredOffer.title}</h2>
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
-                <div>
-                  {discount !== null && featuredOffer.original_price && <span className="block text-xs text-zinc-500 line-through">{formatPrice(featuredOffer.original_price)}</span>}
-                  <span className="text-xl font-black text-white">{formatPrice(featuredOffer.price)}</span>
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
+                  <div>
+                    {discount !== null && featuredOffer.original_price && <span className="block text-xs text-zinc-500 line-through">{formatPrice(featuredOffer.original_price)}</span>}
+                    <span className="text-xl font-black text-white">{formatPrice(featuredOffer.price)}</span>
+                  </div>
+                  <button type="button" onClick={() => onSelectOffer?.(featuredOffer)} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-500">
+                    Ver oferta
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
-                <button type="button" onClick={() => onSelectOffer?.(featuredOffer)} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-500">
-                  Ver oferta
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </article>
-          </div>
+              </article>
+            </div>
+          )}
         </div>
       </section>
 
@@ -194,7 +196,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
           </div>
           {filteredOffers.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
-              {filteredOffers.slice(0, 3).map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={onSelectOffer} />)}
+              {filteredOffers.slice(0, 3).map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
             </div>
           ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhuma oferta encontrada para este filtro.</p>}
         </section>
