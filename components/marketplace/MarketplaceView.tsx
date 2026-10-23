@@ -2,8 +2,9 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
-import { DEMO_OFFERS, getOfferDiscountPercent } from '@/fixtures/demo-offers';
+import { getOfferDiscountPercent } from '@/fixtures/demo-offers';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
 import {
@@ -77,7 +78,7 @@ function sortOffers(items: ExternalOffer[], sortBy: SortBy): ExternalOffer[] {
 }
 
 export default function MarketplaceView({ onSelectProduct, onSelectOffer }: MarketplaceViewProps) {
-  const { products, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { user, products, activeOffers, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [selectedTab, setSelectedTab] = useState<CatalogTab>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSport, setSelectedSport] = useState('all');
@@ -88,15 +89,15 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
   const normalizedQuery = normalize(searchQuery.trim());
   const filteredOffers = useMemo(() => {
-    const filtered = DEMO_OFFERS.filter((offer) => {
-      const searchText = normalize(`${offer.title} ${offer.description} ${offer.store_name} ${offer.category} ${offer.sport}`);
+    const filtered = activeOffers.filter((offer) => {
+      const searchText = normalize(`${offer.title} ${offer.description} ${offer.store_name} ${offer.category} ${offer.sport} ${offer.coupon_code || ''}`);
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
       if (!matchesCategory(offer.category, selectedCategory)) return false;
       if (selectedSport !== 'all' && offer.sport !== selectedSport) return false;
       return true;
     });
     return sortOffers(filtered, sortBy);
-  }, [normalizedQuery, selectedCategory, selectedSport, sortBy]);
+  }, [activeOffers, normalizedQuery, selectedCategory, selectedSport, sortBy]);
 
   const filteredC2CProducts = useMemo(() => {
     const filtered = products.filter((product) => {
@@ -137,7 +138,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
   };
 
   const categoryCount = (category: string) =>
-    DEMO_OFFERS.filter((offer) => matchesCategory(offer.category, category)).length +
+    activeOffers.filter((offer) => matchesCategory(offer.category, category)).length +
     products.filter((product) => product.product_type === 'c2c' && matchesCategory(product.category, category)).length;
 
   return (
@@ -230,7 +231,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <div>
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Categorias</h3>
               <div className="space-y-1 text-xs">
-                <button type="button" onClick={() => setSelectedCategory('all')} className={`flex w-full items-center justify-between rounded-full px-3 py-1.5 text-left ${selectedCategory === 'all' ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}><span>Todas</span><span className="text-[10px] text-zinc-500">{DEMO_OFFERS.length + products.filter((product) => product.product_type === 'c2c').length}</span></button>
+                <button type="button" onClick={() => setSelectedCategory('all')} className={`flex w-full items-center justify-between rounded-full px-3 py-1.5 text-left ${selectedCategory === 'all' ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}><span>Todas</span><span className="text-[10px] text-zinc-500">{activeOffers.length + products.filter((product) => product.product_type === 'c2c').length}</span></button>
                 {CATEGORIES.map((category) => <button key={category} type="button" onClick={() => setSelectedCategory(category)} className={`flex w-full items-center justify-between rounded-full px-3 py-1.5 text-left ${selectedCategory === category ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}><span>{category}</span><span className="text-[10px] text-zinc-500">{categoryCount(category)}</span></button>)}
               </div>
             </div>
@@ -276,11 +277,21 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
                       <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Produtos novos e lacrados de lojas oficiais, com nota fiscal e desconto ativo.</p>
+                      <p className="mt-1 text-[11px] text-zinc-500">Promoções reais selecionadas em grandes lojas esportivas, com redirecionamento direto e descontos ativos.</p>
                     </div>
+                    {isStaffRole(user?.role) && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveView('profile')}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-500/35 bg-red-600/15 px-3 py-1.5 text-xs font-bold text-red-300 transition hover:bg-red-600 hover:text-white"
+                      >
+                        <Tag className="h-3.5 w-3.5" />
+                        Gerenciar ofertas
+                      </button>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
-                    {filteredOffers.map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={onSelectOffer} />)}
+                    {filteredOffers.map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
                   </div>
                 </section>
               )}

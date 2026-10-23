@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
 import Sidebar from '@/components/shared/Sidebar';
 import Footer from '@/components/shared/Footer';
@@ -20,7 +21,18 @@ import CheckoutModal from '@/components/CheckoutModal';
 import { X, CheckCircle, AlertCircle, Info, Lock } from 'lucide-react';
 
 export default function CoreMotiomApp() {
-  const { activeView, setActiveView, toasts, removeToast, isVisitor, setAuthModalOpen, setAuthModalMode } = useCoreMotiom();
+  const {
+    user,
+    activeView,
+    setActiveView,
+    toasts,
+    removeToast,
+    isVisitor,
+    setAuthModalOpen,
+    setAuthModalMode,
+    setEditingOfferId,
+    deleteOffer,
+  } = useCoreMotiom();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<ExternalOffer | null>(null);
 
@@ -75,7 +87,18 @@ export default function CoreMotiomApp() {
       <SupabaseConfigModal />
       <CheckoutModal />
       <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
-      <ExternalOfferModal offer={selectedOffer} onClose={() => setSelectedOffer(null)} />
+      <ExternalOfferModal
+        offer={selectedOffer}
+        onClose={() => setSelectedOffer(null)}
+        canManage={isStaffRole(user?.role)}
+        onEditOffer={(offer) => {
+          setEditingOfferId(offer.id);
+          setActiveView('profile');
+        }}
+        onDeleteOffer={(offer) => {
+          void deleteOffer(offer.id);
+        }}
+      />
 
       <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2 px-2">
         {toasts.map((toast) => (

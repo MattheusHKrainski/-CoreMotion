@@ -1,142 +1,192 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import type { ExternalOffer } from '@/lib/types';
-import { getOfferDiscountPercent } from '@/fixtures/demo-offers';
-import { CheckCircle2, ExternalLink, ShieldCheck, Store, Tag, X } from 'lucide-react';
+import React, { useState } from 'react';
+import Image from 'next/image';
+import { Check, Copy, ExternalLink, Pencil, Store, Ticket, Trash2, X } from 'lucide-react';
+import { ExternalOffer } from '@/lib/types';
 
 interface ExternalOfferModalProps {
   offer: ExternalOffer | null;
   onClose: () => void;
+  canManage?: boolean;
+  onEditOffer?: (offer: ExternalOffer) => void;
+  onDeleteOffer?: (offer: ExternalOffer) => void;
 }
 
-function formatPrice(value: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-}
-
-export default function ExternalOfferModal({ offer, onClose }: ExternalOfferModalProps) {
-  const [partnerRedirectNotice, setPartnerRedirectNotice] = useState(false);
-
-  useEffect(() => {
-    if (!offer) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [offer, onClose]);
-
-  useEffect(() => setPartnerRedirectNotice(false), [offer?.id]);
+export default function ExternalOfferModal({
+  offer,
+  onClose,
+  canManage = false,
+  onEditOffer,
+  onDeleteOffer,
+}: ExternalOfferModalProps) {
+  const [copiedCoupon, setCopiedCoupon] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   if (!offer) return null;
 
-  const discount = getOfferDiscountPercent(offer);
-  const handleOpenSource = () => {
-    if (offer.is_demo) {
-      setPartnerRedirectNotice(true);
-      return;
-    }
+  const formatPrice = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
+  const destinationHost = (() => {
     try {
-      const url = new URL(offer.source_url);
-      if (url.protocol === 'https:') window.open(url.toString(), '_blank', 'noopener,noreferrer');
+      return new URL(offer.source_url).hostname.replace(/^www\./, '');
     } catch {
-      // Ignora endereços inválidos.
+      return offer.store_name;
+    }
+  })();
+
+  const handleCopyCoupon = async () => {
+    if (!offer.coupon_code) return;
+    try {
+      await navigator.clipboard.writeText(offer.coupon_code);
+      setCopiedCoupon(true);
+      setTimeout(() => setCopiedCoupon(false), 2500);
+    } catch {
+      // ignore clipboard restriction
     }
   };
 
+  const handleAction = () => {
+    if (offer.is_demo) return;
+    window.open(offer.source_url, '_blank', 'noopener,noreferrer');
+  };
+
+  const resolvedSrc = imgError ? '/offers/gps-ciclocomputador-bike.jpg' : offer.image_url;
+  const isUnoptimized = !resolvedSrc.startsWith('/');
+
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/80 p-3 backdrop-blur-md sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
     >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="external-offer-title"
-        className="relative my-auto grid w-full max-w-3xl overflow-hidden rounded-3xl border border-zinc-700/80 bg-[#111318] text-white shadow-2xl md:grid-cols-2"
+      <div
+        className="relative w-full max-w-lg rounded-3xl bg-zinc-900 border border-zinc-800 p-6 sm:p-7 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Fechar detalhes da oferta"
-          className="absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-black/70 p-2 text-zinc-200 transition hover:bg-zinc-800"
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-zinc-900/90 text-zinc-400 hover:text-white border border-zinc-700/70 transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X className="w-5 h-5" />
         </button>
 
-        <div className="relative min-h-64 bg-zinc-950 md:min-h-full">
-          <img
-            src={offer.image_url}
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-zinc-950">
+          <Image
+            src={resolvedSrc}
             alt={offer.title}
-            onError={(event) => {
-              event.currentTarget.src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&q=80';
-            }}
-            className="absolute inset-0 h-full w-full object-cover"
+            fill
+            unoptimized={isUnoptimized}
+            onError={() => setImgError(true)}
+            sizes="(max-width: 640px) 100vw, 512px"
+            className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
-          <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-700/80 bg-black/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-100">
-            <Tag className="h-3.5 w-3.5 text-red-400" />
-            Oferta
-          </span>
-          {discount !== null && (
-            <span className="absolute left-4 top-4 rounded-full bg-red-600 px-3 py-1.5 text-xs font-black text-white shadow-lg">
-              {discount}% OFF
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-200 bg-zinc-800 px-2.5 py-1 rounded-full">
+              <Store className="w-3.5 h-3.5 text-red-400" />
+              {offer.store_name}
+            </span>
+            <span>
+              {offer.sport} • {offer.category}
+            </span>
+          </div>
+
+          <h2 className="text-xl font-black text-white leading-tight">{offer.title}</h2>
+          <p className="text-sm text-zinc-300 leading-relaxed">{offer.description}</p>
+        </div>
+
+        <div className="flex items-baseline justify-between gap-2 pt-3 border-t border-zinc-800">
+          <div className="flex items-baseline gap-2.5">
+            <span className="text-2xl font-black text-white">{formatPrice(offer.price)}</span>
+            {offer.original_price && offer.original_price > offer.price && (
+              <span className="text-sm text-zinc-500 line-through">
+                {formatPrice(offer.original_price)}
+              </span>
+            )}
+          </div>
+          {!offer.is_demo && (
+            <span className="text-[11px] text-zinc-400 truncate max-w-[190px]" title={offer.source_url}>
+              Destino: {destinationHost}
             </span>
           )}
         </div>
 
-        <div className="space-y-5 p-5 sm:p-7">
-          <div className="space-y-2 pr-8">
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-              <Store className="h-4 w-4 text-red-400" />
-              Vendido por: <span className="text-zinc-200">{offer.store_name}</span>
-            </p>
-            <h2 id="external-offer-title" className="text-xl font-black leading-tight sm:text-2xl">{offer.title}</h2>
-            <p className="text-xs text-zinc-500">{offer.category} · {offer.sport}</p>
-          </div>
-
-          <p className="text-sm leading-relaxed text-zinc-300">{offer.description}</p>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-            {discount !== null && offer.original_price && (
-              <div className="mb-1 flex items-center gap-2 text-xs text-zinc-500">
-                <span className="line-through">{formatPrice(offer.original_price)}</span>
-                <span className="font-bold text-emerald-300">-{discount}%</span>
-              </div>
-            )}
-            <p className="text-2xl font-black text-white">{formatPrice(offer.price)}</p>
-            <p className="mt-1 text-[11px] text-zinc-400">ou em até 10x sem juros</p>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-xs leading-relaxed text-zinc-300">
-            <div className="mb-1.5 flex items-center gap-2 font-bold text-white">
-              <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
-              Oferta Verificada CoreMotion
+        {offer.coupon_code && (
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-emerald-950/40 border border-dashed border-emerald-500/40">
+            <div className="flex items-center gap-2 text-xs">
+              <Ticket className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="text-zinc-300">
+                Cupom disponível:{' '}
+                <strong className="font-mono text-emerald-300 tracking-wider">{offer.coupon_code}</strong>
+              </span>
             </div>
-            <p>Oferta selecionada em <strong className="text-white">{offer.store_name}</strong>, com nota fiscal, garantia de fábrica e envio segurado para todo o Brasil.</p>
+            <button
+              type="button"
+              onClick={handleCopyCoupon}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/25 hover:bg-emerald-600/40 text-emerald-200 text-xs font-bold transition-colors"
+            >
+              {copiedCoupon ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedCoupon ? 'Copiado!' : 'Copiar cupom'}
+            </button>
           </div>
+        )}
 
-          {partnerRedirectNotice && (
-            <p role="status" className="flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-              Oferta selecionada em {offer.store_name} com condição especial ativa.
-            </p>
-          )}
+        <button
+          type="button"
+          onClick={handleAction}
+          className="w-full py-3.5 px-5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-950/50"
+        >
+          <span>Ir para oferta em {offer.store_name}</span>
+          <ExternalLink className="w-4 h-4" />
+        </button>
 
-          <button
-            type="button"
-            onClick={handleOpenSource}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-500"
-          >
-            Ir para oferta
-            <ExternalLink className="h-4 w-4" />
-          </button>
-          <p className="text-center text-[10px] text-zinc-500">Venda e entrega realizadas diretamente por {offer.store_name}.</p>
-        </div>
-      </section>
+        <p className="text-[11px] text-zinc-500 text-center leading-relaxed">
+          Você será redirecionado em nova aba para a página da promoção na loja externa. Preço, frete e estoque são confirmados no site de destino.
+        </p>
+
+        {canManage && (onEditOffer || onDeleteOffer) && (
+          <div className="pt-3 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+              Gestão rápida Admin
+            </span>
+            <div className="flex items-center gap-2">
+              {onEditOffer && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = offer;
+                    onClose();
+                    onEditOffer(target);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-semibold transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-amber-400" />
+                  Editar oferta
+                </button>
+              )}
+              {onDeleteOffer && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = offer;
+                    onClose();
+                    onDeleteOffer(target);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-600 text-red-200 hover:text-white border border-red-500/30 text-xs font-semibold transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Excluir
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

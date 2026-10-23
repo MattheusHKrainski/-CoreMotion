@@ -6,6 +6,7 @@ import {
   UserProfile,
   UserRole,
   Product,
+  ExternalOffer,
   CartItem,
   Order,
   PaymentMethod,
@@ -23,6 +24,8 @@ import {
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
+import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
+import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 import { DEMO_MODE } from '@/lib/demo-mode';
 import { getSupabaseClient as getSupabase, isSupabaseConfigured } from '@/services/supabaseClient';
 import { authedFetch } from './auth-fetch';
@@ -120,6 +123,24 @@ interface CoreMotiomContextType {
   updateProduct: (id: string, data: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
 
+  // External Offers & Affiliate Links Management
+  offers: ExternalOffer[];
+  activeOffers: ExternalOffer[];
+  editingOfferId: string | null;
+  setEditingOfferId: (id: string | null) => void;
+  addOffer: (input: OfferCreateInput) => Promise<ExternalOffer | null>;
+  updateOffer: (id: string, input: OfferUpdateInput) => Promise<boolean>;
+  deleteOffer: (id: string) => Promise<boolean>;
+  toggleOfferActive: (id: string, isActive: boolean) => Promise<boolean>;
+  resetDefaultOffers: () => Promise<void>;
+  fetchOfferMetadata: (url: string) => Promise<{
+    store_name?: string;
+    title?: string;
+    image_url?: string;
+    description?: string;
+    price?: number;
+  } | null>;
+
   // Community
   communityPosts: CommunityPost[];
   /** Devolve true quando a publicação foi criada (o formulário só é limpo nesse caso). */
@@ -147,6 +168,7 @@ interface CoreMotiomContextType {
 const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
+const OFFERS_STORAGE_KEY = 'coremotion_managed_offers_v1';
 
 /** Junta duas listas de anúncios por id; os itens de `incoming` prevalecem. */
 function mergeProductsById(current: Product[], incoming: Product[]): Product[] {
@@ -170,6 +192,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
   const [allUsers, setAllUsers] = useState<UserProfile[]>(DEMO_MODE ? INITIAL_USERS : []);
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'));
+  const [offers, setOffers] = useState<ExternalOffer[]>(INITIAL_EXTERNAL_OFFERS);
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -216,6 +240,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
     const initData = async () => {
       try {
+        const savedOffers = localStorage.getItem(OFFERS_STORAGE_KEY);
+        if (savedOffers && isMounted) {
+          const parsedOffers = JSON.parse(savedOffers);
+          if (Array.isArray(parsedOffers)) {
+            setOffers(parsedOffers);
+          }
+        }
+
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && isMounted) {
           const parsed = JSON.parse(saved);
@@ -226,6 +258,20 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
             if (parsed.user) setUser(parsed.user);
           }
+        }
+
+        // Busca ofertas reais do banco PostgreSQL quando disponível em produção
+        try {
+          const offersRes = await fetch('/api/offers');
+          if (offersRes.ok) {
+            const offersData = await offersRes.json();
+            if (isMounted && Array.isArray(offersData.offers)) {
+              setOffers(offersData.offers);
+              localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(offersData.offers));
+            }
+          }
+        } catch {
+          // Ambiente local sem DATABASE_URL mantém as ofertas salvas em localStorage / INITIAL_EXTERNAL_OFFERS
         }
 
         const conn = await testSupabaseConnection();
@@ -316,6 +362,17 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           AuthService.listUsers(),
           ProductService.getProducts({ status: 'all' }),
         ]);
+        try {
+          const staffOffersRes = await authedFetch('/api/offers?includeInactive=true');
+          if (staffOffersRes.ok) {
+            const staffOffersJson = await staffOffersRes.json();
+            if (!cancelled && Array.isArray(staffOffersJson.offers)) {
+              setOffers(staffOffersJson.offers);
+            }
+          }
+        } catch {
+          // ignore if offline
+        }
         if (cancelled) return;
         setOrders(allOrders);
         if (users.length > 0) setAllUsers(users);
@@ -1010,6 +1067,203 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Post Excluído', 'A publicação foi removida pela moderação.', 'info');
   };
 
+  // --- GESTÃO DE OFERTAS EXTERNAS & AFILIADOS (ADMIN / SUPERVISOR) ---
+  const persistOffersLocally = (next: ExternalOffer[]) => {
+    setOffers(next);
+    try {
+      localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // ignore quota errors
+    }
+  };
+
+  const activeOffers = offers.filter((offer) => offer.is_active !== false);
+
+  const addOffer = async (input: OfferCreateInput): Promise<ExternalOffer | null> => {
+    if (!isStaffRole(user?.role)) {
+      addToast('Acesso restrito', 'Somente administradores podem cadastrar ofertas.', 'error');
+      return null;
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch('/api/offers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        });
+        const data = await res.json();
+        if (res.ok && data.offer) {
+          persistOffersLocally([data.offer, ...offers]);
+          addToast('Oferta publicada', `"${data.offer.title}" já está ativa na vitrine.`, 'success');
+          return data.offer as ExternalOffer;
+        }
+        if (res.status !== 503) {
+          addToast('Erro ao salvar oferta', data.error || 'Verifique os campos preenchidos.', 'error');
+          return null;
+        }
+      } catch {
+        // Fallback local caso rota esteja offline
+      }
+    }
+
+    const created: ExternalOffer = {
+      id: `offer-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: input.title.trim(),
+      description: input.description.trim(),
+      store_name: input.store_name.trim(),
+      category: input.category || 'Equipamentos',
+      sport: input.sport || 'Corrida',
+      price: Number(input.price),
+      original_price: input.original_price ? Number(input.original_price) : undefined,
+      image_url: input.image_url.trim(),
+      source_url: input.source_url.trim(),
+      coupon_code: input.coupon_code?.trim() || undefined,
+      is_active: input.is_active ?? true,
+      is_demo: false,
+      created_at: new Date().toISOString(),
+    };
+    persistOffersLocally([created, ...offers]);
+    addToast('Oferta publicada', `"${created.title}" já está ativa na vitrine.`, 'success');
+    return created;
+  };
+
+  const updateOffer = async (id: string, input: OfferUpdateInput): Promise<boolean> => {
+    if (!isStaffRole(user?.role)) {
+      addToast('Acesso restrito', 'Somente administradores podem alterar ofertas.', 'error');
+      return false;
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch(`/api/offers?id=${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        });
+        const data = await res.json();
+        if (res.ok && data.offer) {
+          persistOffersLocally(offers.map((item) => (item.id === id ? data.offer : item)));
+          addToast('Oferta atualizada', 'As alterações já estão visíveis no site.', 'success');
+          return true;
+        }
+        if (res.status !== 503) {
+          addToast('Erro ao atualizar', data.error || 'Não foi possível salvar as alterações.', 'error');
+          return false;
+        }
+      } catch {
+        // Fallback local
+      }
+    }
+
+    const next = offers.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            ...(input.title !== undefined ? { title: input.title.trim() } : {}),
+            ...(input.description !== undefined ? { description: input.description.trim() } : {}),
+            ...(input.store_name !== undefined ? { store_name: input.store_name.trim() } : {}),
+            ...(input.category !== undefined ? { category: input.category } : {}),
+            ...(input.sport !== undefined ? { sport: input.sport } : {}),
+            ...(input.price !== undefined ? { price: Number(input.price) } : {}),
+            ...(input.original_price !== undefined
+              ? { original_price: input.original_price ? Number(input.original_price) : undefined }
+              : {}),
+            ...(input.image_url !== undefined ? { image_url: input.image_url.trim() } : {}),
+            ...(input.source_url !== undefined ? { source_url: input.source_url.trim() } : {}),
+            ...(input.coupon_code !== undefined
+              ? { coupon_code: input.coupon_code ? input.coupon_code.trim() : undefined }
+              : {}),
+            ...(input.is_active !== undefined ? { is_active: input.is_active } : {}),
+            is_demo: false,
+          }
+        : item
+    );
+    persistOffersLocally(next);
+    addToast('Oferta atualizada', 'As alterações já estão visíveis no site.', 'success');
+    return true;
+  };
+
+  const deleteOffer = async (id: string): Promise<boolean> => {
+    if (!isStaffRole(user?.role)) {
+      addToast('Acesso restrito', 'Somente administradores podem excluir ofertas.', 'error');
+      return false;
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch(`/api/offers?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok && res.status !== 503) {
+          const data = await res.json().catch(() => ({}));
+          addToast('Erro ao excluir', data.error || 'Não foi possível remover a oferta.', 'error');
+          return false;
+        }
+      } catch {
+        // Fallback local
+      }
+    }
+
+    persistOffersLocally(offers.filter((item) => item.id !== id));
+    if (editingOfferId === id) setEditingOfferId(null);
+    addToast('Oferta removida', 'O item foi excluído da vitrine.', 'info');
+    return true;
+  };
+
+  const toggleOfferActive = async (id: string, isActive: boolean): Promise<boolean> => {
+    return updateOffer(id, { is_active: isActive });
+  };
+
+  const resetDefaultOffers = async (): Promise<void> => {
+    if (!isStaffRole(user?.role)) return;
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch('/api/offers?action=reset', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.offers)) {
+          persistOffersLocally(data.offers);
+          addToast('Catálogo restaurado', 'As ofertas iniciais reais foram restauradas.', 'success');
+          return;
+        }
+      } catch {
+        // Fallback local
+      }
+    }
+    persistOffersLocally(INITIAL_EXTERNAL_OFFERS);
+    addToast('Catálogo restaurado', 'As ofertas iniciais reais foram restauradas.', 'success');
+  };
+
+  const fetchOfferMetadata = async (url: string) => {
+    if (!url.trim()) return null;
+    try {
+      const res = await authedFetch('/api/offers/metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.metadata) return data.metadata;
+      }
+    } catch {
+      // Fallback client detection below
+    }
+    try {
+      const hostname = new URL(url.trim()).hostname.toLowerCase();
+      if (hostname.includes('aliexpress')) return { store_name: 'AliExpress' };
+      if (hostname.includes('mercadolivre') || hostname.includes('mercadolibre')) return { store_name: 'Mercado Livre' };
+      if (hostname.includes('amazon') || hostname.includes('amzn.to')) return { store_name: 'Amazon Brasil' };
+      if (hostname.includes('shopee')) return { store_name: 'Shopee' };
+      if (hostname.includes('netshoes')) return { store_name: 'Netshoes' };
+      if (hostname.includes('centauro')) return { store_name: 'Centauro' };
+      if (hostname.includes('decathlon')) return { store_name: 'Decathlon' };
+      return { store_name: hostname.replace(/^www\./, '').split('.')[0] };
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <CoreMotiomContext.Provider
       value={{
@@ -1062,6 +1316,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         createProduct,
         updateProduct,
         deleteProduct,
+        offers,
+        activeOffers,
+        editingOfferId,
+        setEditingOfferId,
+        addOffer,
+        updateOffer,
+        deleteOffer,
+        toggleOfferActive,
+        resetDefaultOffers,
+        fetchOfferMetadata,
         communityPosts,
         createCommunityPost,
         likeCommunityPost,
