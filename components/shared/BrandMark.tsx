@@ -11,7 +11,7 @@ export default function BrandMark({ className = 'w-9 h-9' }: BrandMarkProps) {
     <svg
       viewBox="0 0 100 100"
       aria-hidden="true"
-      className={`${className} shrink-0 drop-shadow-[0_4px_12px_rgba(220,38,38,0.35)]`}
+      className={`${className} shrink-0 drop-shadow-md`}
     >
       <defs>
         <linearGradient id={gradId} x1="12%" y1="12%" x2="90%" y2="90%">
