@@ -4,8 +4,27 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { CoreMotiomProvider } from '@/lib/store';
 import CoreMotiomApp from '@/app/page';
+import HomeHeroAndHighlights from '@/components/HomeHeroAndHighlights';
+import MarketplaceView from '@/components/marketplace/MarketplaceView';
 
 describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
+  it('mantém a ordem (Tudo, De Atletas, Ofertas) na Home e no Marketplace', () => {
+    const homeHtml = renderToStaticMarkup(
+      React.createElement(CoreMotiomProvider, null, React.createElement(HomeHeroAndHighlights))
+    );
+    const homeTudoIdx = homeHtml.indexOf('>Tudo<');
+    const homeAtletasIdx = homeHtml.indexOf('>De Atletas<');
+    const homeOfertasIdx = homeHtml.indexOf('>Ofertas<');
+    assert.ok(homeTudoIdx > -1 && homeAtletasIdx > homeTudoIdx && homeOfertasIdx > homeAtletasIdx);
+
+    const mpHtml = renderToStaticMarkup(
+      React.createElement(CoreMotiomProvider, null, React.createElement(MarketplaceView))
+    );
+    const mpTudoIdx = mpHtml.indexOf('Tudo (');
+    const mpAtletasIdx = mpHtml.indexOf('De Atletas (');
+    const mpOfertasIdx = mpHtml.indexOf('Ofertas (');
+    assert.ok(mpTudoIdx > -1 && mpAtletasIdx > mpTudoIdx && mpOfertasIdx > mpAtletasIdx);
+  });
   it('renderiza na entrada inicial as 3 opções de acesso (logar, cadastrar e visitante), proposta, funcionamento e perfis', () => {
     const html = renderToStaticMarkup(
       React.createElement(CoreMotiomProvider, null, React.createElement(CoreMotiomApp))

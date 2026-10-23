@@ -346,11 +346,11 @@ export default function WelcomeLandingPage() {
                 className="group p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-all"
               >
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Ofertas Verificadas</span>
-                  <Tag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
+                  <span>Entre Atletas</span>
+                  <ShoppingBag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
-                <p className="text-2xl font-black text-white mt-1">{activeOffers.length}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Promoções reais em grandes lojas</p>
+                <p className="text-2xl font-black text-white mt-1">{c2cCount}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Equipamentos com Compra Garantida</p>
               </button>
 
               <button
@@ -359,11 +359,11 @@ export default function WelcomeLandingPage() {
                 className="group p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 transition-all"
               >
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Entre Atletas</span>
-                  <ShoppingBag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
+                  <span>Ofertas Verificadas</span>
+                  <Tag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
-                <p className="text-2xl font-black text-white mt-1">{c2cCount}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Equipamentos com Compra Garantida</p>
+                <p className="text-2xl font-black text-white mt-1">{activeOffers.length}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Promoções reais em grandes lojas</p>
               </button>
 
               <button
