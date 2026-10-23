@@ -161,13 +161,13 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-black text-white sm:text-xl"><ShoppingBag className="h-5 w-5 text-red-400" />Explore o catálogo</h2>
-            <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em ofertas e anúncios de atletas.</p>
+            <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em anúncios de atletas e ofertas.</p>
           </div>
           <div className="flex flex-wrap gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
             {([
               { id: 'all', label: 'Tudo' },
-              { id: 'offers', label: 'Ofertas' },
               { id: 'c2c', label: 'De Atletas' },
+              { id: 'offers', label: 'Ofertas' },
             ] as const).map((tab) => (
               <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`rounded-full px-3 py-1.5 font-semibold transition ${activeTab === tab.id ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
                 {tab.label}
@@ -185,23 +185,6 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         </div>
       </section>
 
-      {(activeTab === 'all' || activeTab === 'offers') && (
-        <section className="space-y-4">
-          <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
-            <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Produtos novos e lacrados de lojas oficiais, com nota fiscal e desconto ativo.</p>
-            </div>
-            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
-          </div>
-          {filteredOffers.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
-              {filteredOffers.slice(0, 3).map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
-            </div>
-          ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhuma oferta encontrada para este filtro.</p>}
-        </section>
-      )}
-
       {(activeTab === 'all' || activeTab === 'c2c') && (
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
@@ -216,6 +199,23 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
               {filteredC2CProducts.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} onSelect={onSelectProduct} />)}
             </div>
           ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhum equipamento encontrado para este filtro.</p>}
+        </section>
+      )}
+
+      {(activeTab === 'all' || activeTab === 'offers') && (
+        <section className="space-y-4">
+          <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
+              <p className="mt-1 text-[11px] text-zinc-500">Produtos novos e lacrados de lojas oficiais, com nota fiscal e desconto ativo.</p>
+            </div>
+            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
+          </div>
+          {filteredOffers.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
+              {filteredOffers.slice(0, 3).map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
+            </div>
+          ) : <p className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center text-xs text-zinc-500">Nenhuma oferta encontrada para este filtro.</p>}
         </section>
       )}
 

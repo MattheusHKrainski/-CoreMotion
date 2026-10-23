@@ -71,6 +71,11 @@ interface CoreMotiomContextType {
   setAuthModalOpen: (open: boolean) => void;
   authModalMode: 'login' | 'register' | 'forgot' | 'switch';
   setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch') => void;
+  prefillAuthEmail: string;
+  setPrefillAuthEmail: (email: string) => void;
+  hasEnteredPlatform: boolean;
+  enterPlatform: (targetView?: ActiveView) => void;
+  openWelcomePage: () => void;
   isCheckoutOpen: boolean;
   setCheckoutOpen: (open: boolean) => void;
   isSupabaseConfigOpen: boolean;
@@ -169,6 +174,7 @@ const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undef
 
 const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
 const OFFERS_STORAGE_KEY = 'coremotion_managed_offers_v1';
+const ENTERED_SESSION_KEY = 'coremotion_entered_session_v2';
 
 /** Junta duas listas de anúncios por id; os itens de `incoming` prevalecem. */
 function mergeProductsById(current: Product[], incoming: Product[]): Product[] {
@@ -183,6 +189,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
+  const [prefillAuthEmail, setPrefillAuthEmail] = useState('');
+  const [hasEnteredPlatform, setHasEnteredPlatform] = useState(false);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -240,6 +248,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
     const initData = async () => {
       try {
+        if (sessionStorage.getItem(ENTERED_SESSION_KEY) === '1' && isMounted) {
+          setHasEnteredPlatform(true);
+        }
         const savedOffers = localStorage.getItem(OFFERS_STORAGE_KEY);
         if (savedOffers && isMounted) {
           const parsedOffers = JSON.parse(savedOffers);
@@ -408,6 +419,27 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const role: UserRole = user?.role || 'visitor';
   const isVisitor = !user || role === 'visitor';
   const isAuthenticated = Boolean(user && role !== 'visitor');
+
+  const enterPlatform = useCallback((targetView?: ActiveView) => {
+    setHasEnteredPlatform(true);
+    if (targetView) {
+      setActiveView(targetView);
+    }
+    try {
+      sessionStorage.setItem(ENTERED_SESSION_KEY, '1');
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const openWelcomePage = useCallback(() => {
+    setHasEnteredPlatform(false);
+    try {
+      sessionStorage.removeItem(ENTERED_SESSION_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
   const switchRole = useCallback((newRole: UserRole) => {
@@ -1275,6 +1307,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         setAuthModalOpen,
         authModalMode,
         setAuthModalMode,
+        prefillAuthEmail,
+        setPrefillAuthEmail,
+        hasEnteredPlatform,
+        enterPlatform,
+        openWelcomePage,
         isCheckoutOpen,
         setCheckoutOpen,
         isSupabaseConfigOpen,

@@ -6,6 +6,7 @@ import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
 import Sidebar from '@/components/shared/Sidebar';
 import Footer from '@/components/shared/Footer';
+import WelcomeLandingPage from '@/components/WelcomeLandingPage';
 import AuthModal from '@/components/auth/AuthModal';
 import MarketplaceView from '@/components/marketplace/MarketplaceView';
 import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
@@ -25,6 +26,7 @@ export default function CoreMotiomApp() {
     user,
     activeView,
     setActiveView,
+    hasEnteredPlatform,
     toasts,
     removeToast,
     isVisitor,
@@ -35,6 +37,47 @@ export default function CoreMotiomApp() {
   } = useCoreMotiom();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<ExternalOffer | null>(null);
+
+  if (!hasEnteredPlatform) {
+    return (
+      <>
+        <WelcomeLandingPage />
+        <AuthModal />
+        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2 px-2">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`pointer-events-auto flex items-start justify-between gap-3 rounded-2xl border p-4 text-xs shadow-2xl transition-all animate-in slide-in-from-bottom-2 ${
+                toast.type === 'success'
+                  ? 'border-emerald-500/40 bg-zinc-900/95 text-white shadow-emerald-950/20'
+                  : toast.type === 'error'
+                    ? 'border-red-500/40 bg-zinc-900/95 text-white shadow-red-950/20'
+                    : 'border-zinc-700 bg-zinc-900/95 text-white shadow-black/60'
+              }`}
+            >
+              <div className="flex items-start gap-2.5">
+                {toast.type === 'success' && <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />}
+                {toast.type === 'error' && <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />}
+                {toast.type === 'info' && <Info className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />}
+                <div>
+                  <h5 className="text-xs font-bold text-white">{toast.title}</h5>
+                  <p className="mt-0.5 text-[11px] text-zinc-400">{toast.message}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeToast(toast.id)}
+                aria-label="Fechar notificação"
+                className="rounded-full p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0B0C10] text-[#F8FAFC] selection:bg-red-600 selection:text-white antialiased">
