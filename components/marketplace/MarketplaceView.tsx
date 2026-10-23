@@ -167,9 +167,9 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-2 backdrop-blur-md">
         <div className="flex w-full items-center gap-1.5 overflow-x-auto text-xs scrollbar-none sm:w-auto">
           {([
-            { id: 'all', label: `Tudo (${filteredOffers.length + filteredC2CProducts.length})`, icon: ShoppingBag },
-            { id: 'offers', label: `Ofertas (${filteredOffers.length})`, icon: Tag },
+            { id: 'all', label: `Tudo (${filteredC2CProducts.length + filteredOffers.length})`, icon: ShoppingBag },
             { id: 'c2c', label: `De Atletas (${filteredC2CProducts.length})`, icon: Layers },
+            { id: 'offers', label: `Ofertas (${filteredOffers.length})`, icon: Tag },
           ] as const).map((tab) => {
             const Icon = tab.icon;
             return (
@@ -259,7 +259,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
         <div className="space-y-7 md:col-span-3">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-800/60 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-400">
-            <span>{displayedCount} resultado(s) · {hasOffers ? `${filteredOffers.length} em ofertas` : ''}{hasOffers && hasC2C ? ' + ' : ''}{hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}</span>
+            <span>{displayedCount} resultado(s) · {hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}{hasC2C && hasOffers ? ' + ' : ''}{hasOffers ? `${filteredOffers.length} em ofertas` : ''}</span>
             {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
           </div>
 
@@ -272,30 +272,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             </div>
           ) : (
             <>
-              {hasOffers && filteredOffers.length > 0 && (
-                <section aria-labelledby="partner-offers-title" className="space-y-4">
-                  <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
-                    <div>
-                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Promoções reais selecionadas em grandes lojas esportivas, com redirecionamento direto e descontos ativos.</p>
-                    </div>
-                    {isStaffRole(user?.role) && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveView('profile')}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-500/35 bg-red-600/15 px-3 py-1.5 text-xs font-bold text-red-300 transition hover:bg-red-600 hover:text-white"
-                      >
-                        <Tag className="h-3.5 w-3.5" />
-                        Gerenciar ofertas
-                      </button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
-                    {filteredOffers.map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
-                  </div>
-                </section>
-              )}
-
               {hasC2C && filteredC2CProducts.length > 0 && (
                 <section aria-labelledby="c2c-listings-title" className="space-y-4">
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
@@ -318,6 +294,30 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   {visibleCount >= filteredC2CProducts.length && filteredC2CProducts.length > PAGE_SIZE && (
                     <p className="flex items-center justify-center gap-2 border-t border-zinc-800/80 pt-5 text-xs text-zinc-400"><Check className="h-4 w-4 text-emerald-400" />Todos os equipamentos foram exibidos.</p>
                   )}
+                </section>
+              )}
+
+              {hasOffers && filteredOffers.length > 0 && (
+                <section aria-labelledby="partner-offers-title" className="space-y-4">
+                  <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
+                    <div>
+                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
+                      <p className="mt-1 text-[11px] text-zinc-500">Promoções reais selecionadas em grandes lojas esportivas, com redirecionamento direto e descontos ativos.</p>
+                    </div>
+                    {isStaffRole(user?.role) && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveView('profile')}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-red-500/35 bg-red-600/15 px-3 py-1.5 text-xs font-bold text-red-300 transition hover:bg-red-600 hover:text-white"
+                      >
+                        <Tag className="h-3.5 w-3.5" />
+                        Gerenciar ofertas
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
+                    {filteredOffers.map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
+                  </div>
                 </section>
               )}
             </>

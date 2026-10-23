@@ -1,7 +1,7 @@
 'use client';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import BrandMark from '@/components/shared/BrandMark';
 import {
@@ -20,6 +20,9 @@ export default function AuthModal() {
     setAuthModalOpen,
     authModalMode,
     setAuthModalMode,
+    prefillAuthEmail,
+    setPrefillAuthEmail,
+    enterPlatform,
     loginWithEmail,
     signUpWithEmail,
     signInWithGoogle,
@@ -33,6 +36,13 @@ export default function AuthModal() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
+
+  useEffect(() => {
+    if (isAuthModalOpen && prefillAuthEmail) {
+      setEmail(prefillAuthEmail);
+      setPrefillAuthEmail('');
+    }
+  }, [isAuthModalOpen, prefillAuthEmail, setPrefillAuthEmail]);
 
   if (!isAuthModalOpen) return null;
 
@@ -54,12 +64,15 @@ export default function AuthModal() {
     try {
       if (type === 'admin') {
         loginAsMasterAdmin();
+        enterPlatform('home');
         setAuthModalOpen(false);
       } else if (type === 'seller') {
         switchRole('seller');
+        enterPlatform('home');
         setAuthModalOpen(false);
       } else {
         switchRole('user');
+        enterPlatform('home');
         setAuthModalOpen(false);
       }
     } catch {
@@ -81,6 +94,7 @@ export default function AuthModal() {
         if (!res.success) {
           setErrorMsg(res.error || 'Credenciais inválidas. Verifique seu e-mail e senha.');
         } else {
+          enterPlatform('home');
           setAuthModalOpen(false);
         }
       } else if (authModalMode === 'register') {
@@ -93,6 +107,7 @@ export default function AuthModal() {
         if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
         } else {
+          enterPlatform('home');
           setAuthModalOpen(false);
         }
       } else if (authModalMode === 'forgot') {
