@@ -87,7 +87,7 @@ export default function Footer() {
             <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200 mb-3.5">Institucional</h5>
             <ul className="space-y-2.5 text-xs">
               <li><button type="button" onClick={() => setActiveView('home')} className="hover:text-white transition-colors">Sobre a CoreMotion</button></li>
-              <li><button type="button" onClick={() => openSport()} className="hover:text-white transition-colors">Lojas Parceiras</button></li>
+              <li><button type="button" onClick={() => openSport()} className="hover:text-white transition-colors">Ofertas</button></li>
               <li><button type="button" onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Seja um Treinador</button></li>
               <li><button type="button" onClick={() => setActiveView('community')} className="hover:text-white transition-colors">Comunidade</button></li>
               <li><span className="cursor-default">Trabalhe Conosco</span></li>

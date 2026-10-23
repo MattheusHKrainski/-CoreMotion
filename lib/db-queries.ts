@@ -216,7 +216,7 @@ function mapDbProductToModel(row: DbProductRow): Product {
     product_type: productType,
     images: Array.isArray(row.images) && row.images.length > 0 ? row.images : [DEFAULT_PRODUCT_IMAGE],
     seller_id: row.seller_id,
-    seller_name: row.seller_name || 'CoreMotion Parceiro',
+    seller_name: row.seller_name || 'CoreMotion Oficial',
     seller_avatar: row.seller_avatar || undefined,
     ...(productType === 'b2c'
       ? {

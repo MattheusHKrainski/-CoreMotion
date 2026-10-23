@@ -1,7 +1,7 @@
 import type { ExternalOffer } from '@/lib/types';
 
 /**
- * Curadoria de ofertas esportivas de lojas parceiras.
+ * Curadoria de ofertas esportivas selecionadas.
  * Os domínios `.example.test` são mantidos nos metadados internos de origem conforme contrato de segurança.
  */
 export const DEMO_OFFERS: ExternalOffer[] = [

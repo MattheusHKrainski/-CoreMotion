@@ -47,6 +47,7 @@ export interface Product {
   category: string;
   sport: string;
   condition: ProductCondition;
+  usage_time?: string;
   product_type: ProductType;
   images: string[];
   seller_id?: string | null;

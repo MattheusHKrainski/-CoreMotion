@@ -330,11 +330,11 @@ export default function AdminDashboard() {
 
           <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800 space-y-2 shadow-xl hover:border-zinc-700 transition-colors">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold uppercase text-[10px] tracking-wider">Ofertas de Lojas Parceiras</span>
+              <span className="font-semibold uppercase text-[10px] tracking-wider">Ofertas Ativas</span>
               <Tag className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-black text-white">{partnerOfferCount}</div>
-            <p className="text-[11px] text-zinc-400">Ofertas B2C selecionadas em lojas esportivas parceiras.</p>
+            <p className="text-[11px] text-zinc-400">Ofertas esportivas selecionadas com desconto.</p>
           </div>
         </div>
 
@@ -346,14 +346,14 @@ export default function AdminDashboard() {
             </h3>
             <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                <span className="text-zinc-500">Anúncios entre atletas (C2C)</span>
+                <span className="text-zinc-500">Anúncios entre atletas</span>
                 <strong className="mt-1 block text-xl text-white">{c2cCount}</strong>
                 <span className="text-[10px] text-zinc-500">Negociação direta verificada</span>
               </div>
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                <span className="text-zinc-500">Ofertas parceiras (B2C)</span>
+                <span className="text-zinc-500">Ofertas selecionadas</span>
                 <strong className="mt-1 block text-xl text-white">{partnerOfferCount}</strong>
-                <span className="text-[10px] text-zinc-500">Curadoria de lojas especializadas</span>
+                <span className="text-[10px] text-zinc-500">Curadoria com desconto ativo</span>
               </div>
             </div>
           </div>
@@ -884,7 +884,7 @@ export default function AdminDashboard() {
               <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Ofertas Parceiras</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Ofertas</span>
               <span className="text-lg font-black text-white">{partnerOfferCount}</span>
               <span className="text-[9px] text-emerald-400 block font-semibold">Ativas</span>
             </div>
@@ -900,7 +900,7 @@ export default function AdminDashboard() {
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
               <span className="text-[10px] text-zinc-500 uppercase font-bold block">Tabela Coaches</span>
-              <span className="text-lg font-black text-white">3</span>
+              <span className="text-lg font-black text-white">9</span>
               <span className="text-[9px] text-emerald-400 block font-semibold">Sincronizado</span>
             </div>
             <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
