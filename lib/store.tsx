@@ -239,9 +239,18 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (isMounted) {
           if (liveProducts.length > 0) {
             const curatedC2C = INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c');
-            // Preserva anúncios não ativos da conta logada, prioriza dados ao vivo do banco e mantém vitrine multiesportiva.
+            // Mantém no topo apenas anúncios realmente publicados por usuários recentemente (sem os seeds antigos repetidos).
+            const recentUserListings = liveProducts.filter((item) => {
+              if (item.id.startsWith('20000000-0000-4000-8000-')) return false;
+              if (item.title.endsWith('— Seminovo')) return false;
+              const createdMs = new Date(item.created_at).getTime();
+              return Number.isFinite(createdMs) && createdMs >= new Date('2026-10-22T00:00:00Z').getTime();
+            });
             setProducts((prev) =>
-              mergeProductsById(prev.filter((p) => p.status !== 'active'), mergeProductsById(liveProducts, curatedC2C))
+              mergeProductsById(
+                prev.filter((p) => p.status !== 'active'),
+                mergeProductsById(recentUserListings, curatedC2C)
+              )
             );
           }
           if (livePosts.length > 0) {

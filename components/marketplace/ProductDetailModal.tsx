@@ -14,7 +14,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
+  Clock,
+  ShieldCheck,
+  User,
 } from 'lucide-react';
+import { getConditionMeta, getDefaultUsageTime } from './ProductCard';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -257,10 +261,20 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
             <div className="space-y-4">
               
               {/* Product Header */}
-              <div>
-                <span className="inline-block px-2 py-0.5 rounded bg-[#0E1017] text-[#9CA3AF] text-[11px] uppercase font-semibold tracking-wider border border-[#232836] mb-2">
-                  Condição: {product.condition === 'novo' ? 'Novo (Lacrado)' : product.condition === 'como_novo' ? 'Como Novo' : 'Usado (Excelente Estado)'}
-                </span>
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-950/60 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-sky-200">
+                    <User className="h-3 w-3 text-sky-400" />
+                    Equipamento de Atleta
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+                      getConditionMeta(product.condition).pillClass
+                    }`}
+                  >
+                    {getConditionMeta(product.condition).badge}
+                  </span>
+                </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
                   {product.title}
                 </h2>
@@ -269,11 +283,9 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               {/* Price Block */}
               <div className="p-4 rounded-xl bg-[#0E1017] border border-[#232836]">
                 {product.original_price && product.original_price > product.price && (
-                  <div className="flex items-center gap-2 text-xs text-[#9CA3AF] line-through mb-0.5">
-                    <span>{formatPrice(product.original_price)}</span>
-                    <span className="text-red-400 no-underline text-[10px] font-bold">
-                      -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}% de desconto
-                    </span>
+                  <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-1">
+                    <span>Valor pago quando novo:</span>
+                    <span className="line-through font-medium">{formatPrice(product.original_price)}</span>
                   </div>
                 )}
                 <div className="text-2xl sm:text-3xl font-black text-white">
@@ -285,6 +297,28 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 <div className="mt-2 text-xs text-red-400 font-semibold flex items-center gap-1">
                   <Zap className="w-3.5 h-3.5" />
                   <span>5% de desconto no pagamento via PIX</span>
+                </div>
+              </div>
+
+              {/* Ficha de Estado & Tempo de Uso */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="p-3 rounded-xl bg-[#0E1017] border border-[#232836]">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                    <Clock className="w-3.5 h-3.5 text-red-400" />
+                    Tempo de Uso
+                  </span>
+                  <span className="mt-1 block text-xs font-bold text-white">
+                    {product.usage_time || getDefaultUsageTime(product.condition)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#0E1017] border border-[#232836]">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Estado Real
+                  </span>
+                  <span className="mt-1 block text-xs font-bold text-white">
+                    {getConditionMeta(product.condition).detail}
+                  </span>
                 </div>
               </div>
 
@@ -342,7 +376,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               {/* Description */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-1.5">
-                  Descrição do Produto
+                  Relato do Atleta sobre Conservação e Uso
                 </h4>
                 <p className="text-xs text-[#D1D5DB] leading-relaxed whitespace-pre-line">
                   {product.description}
