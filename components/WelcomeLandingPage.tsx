@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useCoreMotiom } from '@/lib/store';
+import { ACCOUNT_TYPES } from '@/lib/sports';
 import BrandMark from '@/components/shared/BrandMark';
 import Footer from '@/components/shared/Footer';
 import {
@@ -35,13 +36,14 @@ export default function WelcomeLandingPage() {
     activeOffers,
     coaches,
     communityPosts,
+    setAuthAccountType,
     setAuthModalMode,
     setAuthModalOpen,
     enterPlatform,
   } = useCoreMotiom();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedRoleTab, setSelectedRoleTab] = useState<'atleta' | 'treinador' | 'visitante'>('atleta');
+  const [selectedRoleTab, setSelectedRoleTab] = useState<'atleta' | 'treinador' | 'casual' | 'visitante'>('atleta');
 
   const c2cCount = products.filter((p) => p.product_type === 'c2c' && p.status === 'active').length;
 
@@ -556,14 +558,14 @@ export default function WelcomeLandingPage() {
                   Feito para cada perfil
                 </span>
                 <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
-                  O que você pode fazer sendo Cliente, Treinador ou Visitante
+                  Escolha seu caminho: Atleta, Treinador ou Casual
                 </h2>
                 <p className="text-sm sm:text-base text-zinc-400">
                   Seja para economizar em equipamentos, vender material parado, captar novos alunos ou apenas pesquisar preços, cada perfil tem ferramentas sob medida.
                 </p>
               </div>
 
-              <div className="inline-flex p-1 rounded-2xl bg-zinc-900 border border-zinc-800 self-start">
+              <div className="inline-flex flex-wrap p-1 rounded-2xl bg-zinc-900 border border-zinc-800 self-start">
                 <button
                   type="button"
                   onClick={() => setSelectedRoleTab('atleta')}
@@ -586,6 +588,7 @@ export default function WelcomeLandingPage() {
                 >
                   Treinador
                 </button>
+                <button type="button" onClick={() => setSelectedRoleTab('casual')} className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold ${selectedRoleTab === 'casual' ? 'bg-red-600 text-white' : 'text-zinc-400'}`}>Casual</button>
                 <button
                   type="button"
                   onClick={() => setSelectedRoleTab('visitante')}
@@ -600,6 +603,8 @@ export default function WelcomeLandingPage() {
               </div>
             </div>
 
+            <div className="grid sm:grid-cols-3 gap-4">{Object.entries(ACCOUNT_TYPES).map(([key, value]) => <article key={key} className={`rounded-2xl border bg-zinc-950 p-6 space-y-3 ${selectedRoleTab === ({ athlete: 'atleta', coach: 'treinador', casual: 'casual' } as Record<string, string>)[key] ? 'border-red-500 shadow-lg shadow-red-950/20' : 'border-zinc-800'}`}><h3 className="text-xl font-bold text-white">{value.label}</h3><p className="text-sm text-zinc-400 leading-relaxed">{value.description}</p><button type="button" className="text-red-400 text-sm font-bold" onClick={() => { setAuthAccountType(key as keyof typeof ACCOUNT_TYPES); handleOpenRegister(); }}>Criar perfil {value.label}</button></article>)}</div>
+            <p className="text-sm text-zinc-400">O visitante navega sem conta. O perfil Casual é uma conta para compras, comunidade e atividades de rotina, sem acesso ao recrutamento. Atletas personalizam altura, peso, idade, tempo de prática, posição, estatísticas, medalhas e histórico. Treinadores apresentam formação, certificações, equipe e metodologia. Nas seletivas, veja endereço, data, horário, categoria SUB e a rotina de treinos após aprovação. Publique somente informações que deseja compartilhar.</p>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* CARD 1: CLIENTES & ATLETAS */}
               <div
@@ -654,7 +659,7 @@ export default function WelcomeLandingPage() {
                 <div className="pt-4 border-t border-zinc-800 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={handleOpenRegister}
+                    onClick={() => { setAuthAccountType('athlete'); handleOpenRegister(); }}
                     className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold transition-colors"
                   >
                     <UserPlus className="w-4 h-4" />
@@ -723,7 +728,7 @@ export default function WelcomeLandingPage() {
                 <div className="pt-4 border-t border-zinc-800 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={handleOpenRegister}
+                    onClick={() => { setAuthAccountType('coach'); handleOpenRegister(); }}
                     className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold transition-colors"
                   >
                     <Award className="w-4 h-4" />

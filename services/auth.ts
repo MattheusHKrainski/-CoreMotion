@@ -108,7 +108,7 @@ export class AuthService {
    * Cria a conta no Supabase Auth. O papel não é escolhido pelo cliente: contas nascem como atleta
    * e o servidor aplica o papel de conta-mestre no sincronismo.
    */
-  static async signUpWithEmail(email: string, pass: string, name: string): Promise<AuthResponse<UserProfile>> {
+  static async signUpWithEmail(email: string, pass: string, name: string, accountType: import("@/lib/sports").AccountType = "casual"): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
     const sb = getSupabaseClient();
 
@@ -123,7 +123,7 @@ export class AuthService {
       const { data, error } = await sb.auth.signUp({
         email: cleanEmail,
         password: pass,
-        options: { data: { name } },
+        options: { data: { name, account_type: accountType } },
       });
       if (error) {
         const exists = error.message?.toLowerCase().includes('already');

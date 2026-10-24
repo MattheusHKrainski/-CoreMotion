@@ -1,4 +1,5 @@
 'use client';
+import { ACCOUNT_TYPES, type AccountType } from './sports';
 
 import { calculateCheckoutTotals, ShippingMethod } from './checkout';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
@@ -59,7 +60,10 @@ type ActiveView =
   | 'coaches'
   | 'community'
   | 'profile'
-  | 'admin';
+  | 'admin'
+  | 'trials'
+  | 'talents'
+  | 'sports-profile';
 
 interface CoreMotiomContextType {
   // Navigation & UI Modals
@@ -71,6 +75,8 @@ interface CoreMotiomContextType {
   setAuthModalOpen: (open: boolean) => void;
   authModalMode: 'login' | 'register' | 'forgot' | 'switch';
   setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch') => void;
+  authAccountType: AccountType;
+  setAuthAccountType: (type: AccountType) => void;
   prefillAuthEmail: string;
   setPrefillAuthEmail: (email: string) => void;
   hasEnteredPlatform: boolean;
@@ -100,10 +106,10 @@ interface CoreMotiomContextType {
   adminSyncSupabase: () => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
   loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  signUpWithEmail: (email: string, pass: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
-  switchRole: (newRole: UserRole) => void;
+  switchRole: (newRole: UserRole, accountType?: AccountType) => void;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
 
   // Cart & Orders
@@ -189,6 +195,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAuthModalOpen, setAuthModalOpenState] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
+  const [authAccountType, setAuthAccountType] = useState<AccountType>('casual');
   const [prefillAuthEmail, setPrefillAuthEmail] = useState('');
   const [hasEnteredPlatform, setHasEnteredPlatform] = useState(false);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
@@ -415,6 +422,21 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
   }, [user, orders, cart, favorites]);
 
+  const sportsSessionId = user?.id;
+  const sportsAccountType = user?.account_type;
+  useEffect(() => {
+    if (!sportsSessionId || !isSupabaseConfigured) return;
+    let active = true;
+    import('@/services/supabaseClient').then(async ({ getSupabaseClient }) => {
+      const result = await getSupabaseClient()?.auth.getUser();
+      const kind = result?.data.user?.user_metadata?.account_type;
+      if (active && sportsAccountType !== kind && ['athlete', 'coach', 'casual'].includes(kind)) {
+        setUser(current => current ? { ...current, account_type: kind } : current);
+      }
+    });
+    return () => { active = false; };
+  }, [sportsSessionId, sportsAccountType]);
+
   // Derived Auth info
   const role: UserRole = user?.role || 'visitor';
   const isVisitor = !user || role === 'visitor';
@@ -451,7 +473,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   }, [openWelcomePage]);
 
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
-  const switchRole = useCallback((newRole: UserRole) => {
+  const switchRole = useCallback((newRole: UserRole, accountType?: AccountType) => {
     if (isSupabaseConfigured) {
       addToast('Alteração indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
       return;
@@ -510,10 +532,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     };
 
     const targetProfile = demoProfiles[newRole];
-    setUser(targetProfile);
+    setUser({ ...targetProfile, id: accountType ? `${targetProfile.id}-${accountType}` : targetProfile.id, name: accountType === 'coach' ? 'Marina Duarte' : accountType === 'casual' ? 'Ana Silva' : targetProfile.name, account_type: accountType || 'athlete' });
     addToast(
       'Perfil Atualizado',
-      `Agora você está operando com permissões de ${newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Anunciante C2C' : 'Atleta'}.`,
+      `Agora você está operando com permissões de ${accountType ? ACCOUNT_TYPES[accountType].label : newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Anunciante C2C' : 'Atleta'}.`,
       'success'
     );
   }, [addToast]);
@@ -756,17 +778,18 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = async (
     email: string,
     pass: string,
-    name: string
+    name: string,
+    accountType: AccountType = 'casual'
   ): Promise<{ success: boolean; error?: string }> => {
     manualAuthRef.current = true;
     let res: Awaited<ReturnType<typeof AuthService.signUpWithEmail>>;
     try {
-      res = await AuthService.signUpWithEmail(email, pass, name);
+      res = await AuthService.signUpWithEmail(email, pass, name, accountType);
     } finally {
       manualAuthRef.current = false;
     }
     if (res.success && res.data) {
-      const profile = res.data;
+      const profile = { ...res.data, account_type: accountType };
       setUser(profile);
       if (!isSupabaseConfigured) setAllUsers((prev) => [profile, ...prev]);
       addToast('Conta Criada', `Bem-vindo ao CoreMotion, ${name}! (${profile.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
@@ -1316,6 +1339,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         setAuthModalOpen,
         authModalMode,
         setAuthModalMode,
+        authAccountType,
+        setAuthAccountType,
         prefillAuthEmail,
         setPrefillAuthEmail,
         hasEnteredPlatform,

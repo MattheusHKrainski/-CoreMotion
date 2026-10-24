@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { canAccessSports } from '@/lib/sports';
 import BrandMark from '@/components/shared/BrandMark';
 import {
   Search,
@@ -97,6 +98,11 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       description: 'Feed de Atletas',
       icon: Layers,
     },
+    ...(canAccessSports(user) ? [
+      { id: 'trials' as const, label: 'Seletivas e treinos', description: 'Oportunidades e inscrições', icon: Users },
+      { id: 'talents' as const, label: 'Banco de atletas', description: 'Currículos e convocações', icon: Users },
+      { id: 'sports-profile' as const, label: 'Meu perfil esportivo', description: 'Formação e conquistas', icon: User },
+    ] : []),
     ...(userIsStaff
       ? [
           {
