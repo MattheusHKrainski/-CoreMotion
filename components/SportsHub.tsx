@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { canAccessSports, canRecruit, type SportsRecord } from '@/lib/sports';
+import { loadSportsPreview } from '@/fixtures/sports-preview';
 import { getSupabaseClient } from '@/services/supabaseClient';
 
 const input = 'w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white';
@@ -36,7 +37,7 @@ export default function SportsHub({ view }: { view: 'trials' | 'talents' | 'spor
         else setRecords(data || []);
       });
     } else {
-      try { setRecords(JSON.parse(localStorage.getItem('coremotion_sports_v1') || '[]')); }
+      try { setRecords(loadSportsPreview(localStorage)); }
       catch { setError('Não foi possível ler os dados locais.'); }
     }
     return () => { active = false; };

@@ -30,3 +30,9 @@ Os campos de contato e currículo são intencionalmente publicados para outros p
 ## Verificação
 
 `npm run type-check`, `npm run lint`, `npm run test:unit`, `npm run test:db`, `npm run build`.
+
+## Conteúdo inicial temporário
+
+Sem Supabase configurado, `fixtures/sports-preview.ts` preenche as áreas com 8 currículos de atletas, 5 profissionais, 6 seletivas e 3 interações de inscrição/convocação. As datas são futuras no momento da primeira carga; os contatos usam o domínio reservado `.example.test` e não representam canais reais. As informações não correspondem a eventos ou pessoas verificados.
+
+A carga é feita uma única vez por navegador (`coremotion_sports_content_v1`) e respeita os dados anteriores. Edições e exclusões continuam preservadas. Com Supabase configurado, essa carga não é executada e nenhum desses registros é enviado ao banco. Substituir por publicações reais quando disponíveis.

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { loadSportsPreview } from '@/fixtures/sports-preview';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import type { SportsRecord } from '@/lib/sports';
 export default function CoachProfiles({ sport, search }: { sport: string; search: string }) {
@@ -13,7 +14,7 @@ export default function CoachProfiles({ sport, search }: { sport: string; search
         if (active) { setProfiles(data || []); if (error) setError('Perfis profissionais indisponíveis no momento.'); }
       });
     } else {
-      try { setProfiles(JSON.parse(localStorage.getItem('coremotion_sports_v1') || '[]').filter((r: SportsRecord) => r.kind === 'coach')); } catch { setError('Não foi possível ler os perfis locais.'); }
+      try { setProfiles(loadSportsPreview(localStorage).filter((r: SportsRecord) => r.kind === 'coach')); } catch { setError('Não foi possível ler os perfis locais.'); }
     }
     return () => { active = false; };
   }, []);
