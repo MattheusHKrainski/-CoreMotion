@@ -15,6 +15,24 @@ async function getAccessToken(): Promise<string | null> {
   }
 }
 
+export interface ApiResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Normaliza a resposta de uma rota /api: sucesso só com HTTP 2xx e `success: true`;
+ * caso contrário devolve a mensagem de erro enviada pelo servidor (ou um texto padrão).
+ */
+export async function readResult<T extends object = Record<string, never>>(
+  res: Response,
+  fallbackError = 'Não foi possível concluir a operação.'
+): Promise<ApiResult & Partial<T>> {
+  const data = (await res.json().catch(() => null)) as (Partial<T> & { success?: boolean; error?: string }) | null;
+  if (res.ok && data?.success) return data as ApiResult & Partial<T>;
+  return { success: false, error: data?.error || fallbackError } as ApiResult & Partial<T>;
+}
+
 export async function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has('Content-Type')) {

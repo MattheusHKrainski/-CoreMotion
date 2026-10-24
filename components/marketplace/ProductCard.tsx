@@ -1,201 +1,231 @@
 'use client';
 
 import React from 'react';
-import { Product } from '@/lib/types';
+import type { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
-import {
-  Heart,
-  ShoppingBag,
-  ShieldCheck,
-  MapPin,
-  ArrowRight,
-  Layers,
-} from 'lucide-react';
+import { ArrowRight, Clock, Heart, MapPin, ShieldCheck, ShoppingBag, Sparkles, User } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
   onSelect?: (product: Product) => void;
 }
 
+function formatPrice(value: number): string {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+}
+
+export function getConditionMeta(condition: Product['condition']): {
+  badge: string;
+  detail: string;
+  pillClass: string;
+  isBrandNew: boolean;
+} {
+  switch (condition) {
+    case 'novo':
+      return {
+        badge: 'Novo · Sem uso',
+        detail: 'Nunca usado',
+        pillClass: 'border-emerald-500/40 bg-emerald-950/90 text-emerald-200',
+        isBrandNew: true,
+      };
+    case 'como_novo':
+      return {
+        badge: 'Pouquíssimo uso',
+        detail: 'Usado poucas vezes',
+        pillClass: 'border-teal-500/40 bg-teal-950/90 text-teal-200',
+        isBrandNew: false,
+      };
+    case 'seminovo':
+      return {
+        badge: 'Seminovo',
+        detail: 'Já usado · Bem conservado',
+        pillClass: 'border-sky-500/40 bg-sky-950/90 text-sky-200',
+        isBrandNew: false,
+      };
+    case 'usado_excelente':
+      return {
+        badge: 'Usado · Ótimo estado',
+        detail: 'Usado · Ótima conservação',
+        pillClass: 'border-amber-500/40 bg-amber-950/90 text-amber-200',
+        isBrandNew: false,
+      };
+    case 'usado_bom':
+      return {
+        badge: 'Usado · Bom estado',
+        detail: 'Usado · Marcas normais de uso',
+        pillClass: 'border-orange-500/40 bg-orange-950/90 text-orange-200',
+        isBrandNew: false,
+      };
+    default:
+      return {
+        badge: condition,
+        detail: 'Anúncio de atleta',
+        pillClass: 'border-zinc-700/80 bg-black/85 text-zinc-200',
+        isBrandNew: false,
+      };
+  }
+}
+
+export function getDefaultUsageTime(condition: Product['condition']): string {
+  switch (condition) {
+    case 'novo':
+      return 'Zero uso (na caixa / etiqueta)';
+    case 'como_novo':
+      return 'Usado 2 a 4 vezes';
+    case 'seminovo':
+      return 'Cerca de 5 a 8 meses de uso';
+    case 'usado_excelente':
+      return 'Cerca de 6 meses de uso';
+    case 'usado_bom':
+      return 'Cerca de 9 meses de uso';
+    default:
+      return 'Uso pessoal';
+  }
+}
+
 export default function ProductCard({ product, onSelect }: ProductCardProps) {
   const { addToCart, setCheckoutOpen, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
-  const isFav = favorites.includes(product.id);
+  const isFavorite = favorites.includes(product.id);
 
-  const formatPrice = (val: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(val);
-  };
+  if (product.product_type !== 'c2c') return null;
 
-  const getConditionLabel = (cond: Product['condition']) => {
-    switch (cond) {
-      case 'novo':
-        return 'Novo';
-      case 'como_novo':
-        return 'Seminovo';
-      case 'usado_excelente':
-        return 'Excelente';
-      case 'usado_bom':
-        return 'Bom Estado';
-      default:
-        return cond;
-    }
-  };
-
-  const isB2C = product.product_type === 'b2c';
+  const selectProduct = () => onSelect?.(product);
+  const conditionMeta = getConditionMeta(product.condition);
+  const usageLabel = product.usage_time || getDefaultUsageTime(product.condition);
 
   return (
-    <div className="group relative bg-zinc-900/60 hover:bg-zinc-900/90 rounded-2xl border border-zinc-800/80 hover:border-red-500/40 shadow-xl shadow-black/50 hover:shadow-red-950/20 transition-all duration-300 flex flex-col overflow-hidden">
-      
-      {/* Image Container with Floating Pill Badges */}
-      <div
-        onClick={() => onSelect && onSelect(product)}
-        className="relative aspect-square w-full bg-zinc-950/80 overflow-hidden cursor-pointer"
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/60 shadow-xl shadow-black/30 transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900/90">
+      <button
+        type="button"
+        onClick={selectProduct}
+        className="relative aspect-[5/4] w-full overflow-hidden bg-zinc-950/80 text-left"
+        aria-label={`Ver anúncio de atleta: ${product.title}`}
       >
         <img
-          src={product.images[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80'}
+          src={product.images[0] || '/products/nike-pegasus-1.jpg'}
           alt={product.title}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80';
+          onError={(event) => {
+            event.currentTarget.src = '/products/nike-pegasus-1.jpg';
           }}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
 
-        {/* Top Badges (Pills) */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
-          {isB2C ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-zinc-950/90 text-red-400 text-[10px] font-semibold tracking-wide uppercase border border-red-500/30 backdrop-blur-md">
-              <ShieldCheck className="w-3 h-3 text-red-500" />
-              <span>Loja Oficial</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-zinc-950/90 text-zinc-300 text-[10px] font-medium tracking-wide uppercase border border-zinc-800 backdrop-blur-md">
-              <Layers className="w-3 h-3 text-zinc-400" />
-              <span>Atleta C2C</span>
-            </span>
-          )}
+        {/* Origem clara: vendido por atleta pessoa física */}
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-zinc-700/90 bg-zinc-950/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-100 backdrop-blur">
+          <User className="h-3 w-3 text-sky-400" />
+          De Atleta
+        </span>
 
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-black/80 text-zinc-400 text-[10px] font-medium uppercase backdrop-blur-md border border-zinc-800/80">
-            {getConditionLabel(product.condition)}
-          </span>
-        </div>
-
-        {/* Favorite Button (Pill circular) */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isVisitor) {
-              setAuthModalOpen(true);
-            } else {
-              toggleFavorite(product.id);
-            }
-          }}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-10 ${
-            isFav
-              ? 'bg-red-600 text-white shadow-lg shadow-red-950/50'
-              : 'bg-zinc-950/70 text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800'
-          }`}
-          title="Salvar nos Favoritos"
+        {/* Estado claro: Novo sem uso vs Já usado */}
+        <span
+          className={`absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold backdrop-blur ${conditionMeta.pillClass}`}
         >
-          <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
-        </button>
+          {conditionMeta.isBrandNew ? (
+            <Sparkles className="h-3 w-3 shrink-0" />
+          ) : (
+            <Clock className="h-3 w-3 shrink-0" />
+          )}
+          {conditionMeta.badge}
+        </span>
+      </button>
 
-        {/* Discount Badge */}
-        {product.original_price && product.original_price > product.price && (
-          <div className="absolute bottom-3 left-3 bg-red-950/90 text-red-400 border border-red-700/80 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight backdrop-blur-md">
-            -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
-          </div>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => (isVisitor ? setAuthModalOpen(true) : toggleFavorite(product.id))}
+        aria-label={isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
+        className={`absolute right-3 top-3 rounded-full p-2 backdrop-blur transition ${
+          isFavorite ? 'bg-red-600 text-white' : 'border border-zinc-700 bg-zinc-950/80 text-zinc-300 hover:text-white'
+        }`}
+      >
+        <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'fill-current' : ''}`} />
+      </button>
 
-      {/* Product Information */}
-      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-        <div>
-          {/* Category & Sport Tag */}
-          <div className="flex items-center justify-between text-[11px] text-zinc-500 mb-1.5 font-medium tracking-wide uppercase">
-            <span className="text-zinc-400">{product.sport}</span>
-            <span className="text-zinc-600">•</span>
+      <div className="flex flex-1 flex-col justify-between gap-3 p-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+            <span className="truncate text-zinc-300">{product.sport}</span>
             <span className="truncate">{product.category}</span>
           </div>
 
-          {/* Title */}
-          <h4
-            onClick={() => onSelect && onSelect(product)}
-            className="text-xs sm:text-[13px] font-semibold text-zinc-100 group-hover:text-red-400 transition-colors line-clamp-2 cursor-pointer leading-snug"
+          <button
+            type="button"
+            onClick={selectProduct}
+            className="line-clamp-2 min-h-10 text-left text-sm font-bold leading-snug text-zinc-100 transition hover:text-red-300"
           >
             {product.title}
-          </h4>
+          </button>
 
-          {/* Seller / Store info */}
-          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 mt-2.5">
-            {product.store_name ? (
-              <span className="font-medium text-zinc-300 flex items-center gap-1 truncate">
-                {product.store_name}
-                {product.is_verified_store && (
-                  <ShieldCheck className="w-3 h-3 text-red-500 shrink-0" />
-                )}
+          {/* Tempo de uso explícito logo no card */}
+          <div className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950/80 px-2.5 py-1 text-[11px] font-medium text-zinc-300">
+            <Clock className="h-3 w-3 shrink-0 text-red-400" />
+            <span className="truncate">{usageLabel}</span>
+          </div>
+
+          {/* Trecho realista do relato do dono */}
+          <p className="line-clamp-2 text-[11px] leading-relaxed text-zinc-400">
+            {product.description}
+          </p>
+
+          {/* Atleta anunciante + cidade */}
+          <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-zinc-400">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-[9px] font-bold text-zinc-200">
+                {product.seller_name.charAt(0).toUpperCase()}
               </span>
-            ) : (
-              <span className="text-zinc-400 truncate flex items-center gap-1">
-                Atleta: {product.seller_name}
-              </span>
-            )}
+              <span className="truncate">{product.seller_name}</span>
+            </div>
             {product.location && (
-              <>
-                <span className="text-zinc-700">•</span>
-                <span className="text-[10px] text-zinc-500 flex items-center gap-0.5 truncate">
-                  <MapPin className="w-2.5 h-2.5 text-zinc-500" />
-                  {product.location}
-                </span>
-              </>
+              <span className="flex shrink-0 items-center gap-0.5 text-[10px] text-zinc-500">
+                <MapPin className="h-2.5 w-2.5" />
+                {product.location}
+              </span>
             )}
           </div>
         </div>
 
-        {/* Pricing & CTA Capsule Buttons */}
-        <div className="pt-3 border-t border-zinc-800/80 flex items-end justify-between gap-2">
+        <div className="flex items-end justify-between gap-2 border-t border-zinc-800/80 pt-3">
           <div>
-            {product.original_price && product.original_price > product.price && (
-              <span className="text-[10px] text-zinc-500 line-through block -mb-0.5">
-                {formatPrice(product.original_price)}
+            {product.original_price && product.original_price > product.price ? (
+              <span className="mb-0.5 block text-[10px] text-zinc-500">
+                Novo custou {formatPrice(product.original_price)}
+              </span>
+            ) : (
+              <span className="mb-0.5 flex items-center gap-1 text-[10px] text-emerald-400">
+                <ShieldCheck className="h-3 w-3" />
+                Compra Garantida
               </span>
             )}
-            <span className="text-sm sm:text-[15px] font-extrabold text-white tracking-tight">
+            <span className="text-lg font-extrabold tracking-tight text-white">
               {formatPrice(product.price)}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                addToCart(product, 1);
-              }}
-              className="p-2 rounded-full bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition-all hover:scale-105 active:scale-95"
-              title="Adicionar ao Carrinho"
+              type="button"
+              onClick={() => addToCart(product, 1)}
+              title="Adicionar ao carrinho"
+              className="rounded-full border border-zinc-700/60 bg-zinc-800/80 p-2 text-zinc-300 transition hover:scale-105 hover:bg-zinc-800 hover:text-white"
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
+              <ShoppingBag className="h-3.5 w-3.5" />
             </button>
-
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onSelect) {
-                  onSelect(product);
-                } else {
+              type="button"
+              onClick={() => {
+                if (onSelect) onSelect(product);
+                else {
                   addToCart(product, 1);
                   setCheckoutOpen(true);
                 }
               }}
-              className="px-3.5 py-1.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold tracking-wide transition-all shadow-md shadow-red-950/40 hover:scale-105 active:scale-95 flex items-center gap-1"
+              className="inline-flex items-center gap-1 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-red-950/40 transition hover:scale-105 hover:bg-red-500"
             >
-              <span>Ver mais</span>
-              <ArrowRight className="w-3 h-3" />
+              Ver detalhes
+              <ArrowRight className="h-3 w-3" />
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
