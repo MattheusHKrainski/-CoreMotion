@@ -187,7 +187,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Navigation & views
   const [activeView, setActiveView] = useState<ActiveView>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+  const [isAuthModalOpen, setAuthModalOpenState] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
   const [prefillAuthEmail, setPrefillAuthEmail] = useState('');
   const [hasEnteredPlatform, setHasEnteredPlatform] = useState(false);
@@ -440,6 +440,15 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       // ignore
     }
   }, []);
+
+  // Every authentication entry point opens over the welcome page.
+  const setAuthModalOpen = useCallback((open: boolean) => {
+    if (open) {
+      openWelcomePage();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    setAuthModalOpenState(open);
+  }, [openWelcomePage]);
 
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
   const switchRole = useCallback((newRole: UserRole) => {

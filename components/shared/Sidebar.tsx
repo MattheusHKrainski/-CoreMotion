@@ -43,7 +43,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setSearchQuery,
     logout,
     switchRole,
-    openWelcomePage,
     addToast,
   } = useCoreMotiom();
 
@@ -170,18 +169,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             </button>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            setIsMobileOpen(false);
-            openWelcomePage();
-          }}
-          className="mx-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800/90 text-[11px] font-semibold text-zinc-300 hover:text-white flex items-center justify-between transition-colors"
-        >
-          <span>Página inicial & Como funciona</span>
-          <span className="text-red-400">↗</span>
-        </button>
 
         {/* Global Instant Search Box */}
         <div className="px-2">
