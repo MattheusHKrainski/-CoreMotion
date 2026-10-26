@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { canAccessSports } from '@/lib/sports';
+import BrandMark from '@/components/shared/BrandMark';
 import {
   Search,
   ShoppingBag,
@@ -11,7 +13,6 @@ import {
   User,
   PlusCircle,
   ShieldCheck,
-  Store as StoreIcon,
   Users,
   Compass,
   Menu,
@@ -19,7 +20,6 @@ import {
   LogOut,
   SlidersHorizontal,
   Layers,
-  Database,
   CheckCircle2,
 } from 'lucide-react';
 
@@ -44,21 +44,16 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setSearchQuery,
     logout,
     switchRole,
-    setSupabaseConfigOpen,
     addToast,
-    stores,
   } = useCoreMotiom();
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
-  // Check if current user has admin role or master admin email
-  // Papel vem sempre da conta autenticada (banco) ou do perfil de demonstração.
   const userIsAdmin = user?.role === 'admin';
   const userIsStaff = isStaffRole(user?.role);
-  const showDemoSwitcher = !isSupabaseConfigured;
+  const showRoleMenu = !isSupabaseConfigured && userIsStaff;
 
-  // Calculate cart subtotal
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
   interface NavItem {
@@ -84,15 +79,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       icon: ShoppingBag,
     },
     {
-      id: 'stores',
-      label: 'Lojas Oficiais',
-      description: `${stores.length} Lojas Parceiras`,
-      icon: StoreIcon,
-      badge: `${stores.length}`,
-    },
-    {
       id: 'sell',
-      label: 'Vender C2C',
+      label: 'Quero Vender',
       description: 'Anuncie seus Equipamentos',
       icon: PlusCircle,
       badge: 'Anunciar',
@@ -110,12 +98,17 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       description: 'Feed de Atletas',
       icon: Layers,
     },
+    ...(canAccessSports(user) ? [
+      { id: 'trials' as const, label: 'Seletivas e treinos', description: 'Oportunidades e inscrições', icon: Users },
+      { id: 'talents' as const, label: 'Banco de atletas', description: 'Currículos e convocações', icon: Users },
+      { id: 'sports-profile' as const, label: 'Meu perfil esportivo', description: 'Formação e conquistas', icon: User },
+    ] : []),
     ...(userIsStaff
       ? [
           {
             id: 'admin' as const,
             label: 'Painel Admin',
-            description: 'Gestão, Lojas & Usuários',
+            description: 'Gestão, anúncios e usuários',
             icon: ShieldCheck,
             badge: 'ADMIN',
             highlight: true,
@@ -135,7 +128,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setIsMobileOpen(false);
   };
 
-  // Keyboard shortcut Ctrl+K / Cmd+K for search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -150,32 +142,25 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Shared Sidebar Content (Used in desktop fixed bar and mobile drawer)
   const renderSidebarContent = (isMobileDrawer = false) => (
     <div className="flex flex-col h-full justify-between">
       {/* Top Section: Brand & Search & Navigation */}
       <div className="space-y-4">
-        {/* Brand Header */}
         <div className="flex items-center justify-between px-2 pt-1">
           <button
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-2.5 group focus:outline-none text-left"
-            title="CoreMotiom PRO"
+            title="CoreMotion"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-700 via-red-600 to-red-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-red-950/50 group-hover:scale-105 transition-transform shrink-0">
-              CM
-            </div>
+            <BrandMark className="w-9 h-9 group-hover:scale-105 transition-transform" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-white group-hover:text-red-400 transition-colors">
-                  CoreMotiom
-                </span>
-                <span className="bg-red-500/15 text-red-400 border border-red-500/30 px-1.5 py-0.2 rounded text-[9px] font-bold tracking-wider uppercase">
-                  PRO
+                  CoreMotion
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400 font-medium leading-none mt-0.5">
-                Hub de Alta Performance
+                Tudo para o Seu Esporte
               </p>
             </div>
           </button>
@@ -189,27 +174,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               <X className="w-5 h-5" />
             </button>
           )}
-        </div>
-
-        {/* System & DB Status Pill */}
-        <div className="px-2">
-          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-zinc-300 font-semibold">Sistema Online</span>
-            </div>
-            <button
-              onClick={() => setSupabaseConfigOpen(true)}
-              className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-emerald-400 transition-colors"
-              title="Status do Banco Supabase"
-            >
-              <Database className="w-3 h-3 text-emerald-400" />
-              <span>PostgreSQL</span>
-            </button>
-          </div>
         </div>
 
         {/* Global Instant Search Box */}
@@ -228,14 +192,19 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   setActiveView('marketplace');
                 }
               }}
-              placeholder="Buscar produtos, marcas..."
-              className="w-full pl-9 pr-12 py-2 bg-zinc-900/90 hover:bg-zinc-900 text-xs text-white placeholder-zinc-500 rounded-xl border border-zinc-800 focus:border-red-500/60 focus:bg-zinc-950 focus:outline-none transition-all shadow-inner"
+              placeholder="Pesquisar produtos ou esportes..."
+              className="w-full pl-9 pr-8 py-2 bg-zinc-900/90 hover:bg-zinc-900 text-xs text-white placeholder-zinc-500 rounded-xl border border-zinc-800 focus:border-red-500/60 focus:bg-zinc-950 focus:outline-none transition-all shadow-inner"
             />
-            <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-              <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] border border-zinc-700 font-mono">
-                ⌘K
-              </kbd>
-            </div>
+            {searchQuery.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                aria-label="Limpar busca"
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-zinc-500 hover:text-white transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -305,7 +274,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             Ações Rápidas
           </div>
 
-          {/* Cart Button with Counter */}
           <button
             onClick={() => {
               setCheckoutOpen(true);
@@ -333,7 +301,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             )}
           </button>
 
-          {/* Favorites Button (if logged in) */}
           {!isVisitor && (
             <button
               onClick={() => {
@@ -403,7 +370,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           </div>
         ) : (
           <div className="p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2.5">
-            {/* User Details */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center font-bold text-xs shadow shrink-0">
@@ -424,7 +390,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               </button>
             </div>
 
-            {/* User Role Badge */}
             <div className="flex items-center justify-between pt-1">
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider ${
@@ -449,7 +414,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   </>
                 ) : role === 'seller' ? (
                   <>
-                    <StoreIcon className="w-2.5 h-2.5" />
+                    <Layers className="w-2.5 h-2.5" />
                     <span>{ROLE_LABELS.seller}</span>
                   </>
                 ) : (
@@ -460,23 +425,22 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 )}
               </span>
 
-              {showDemoSwitcher && (
+              {showRoleMenu && (
               <button
                 onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
                 className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
-                title="Alternar Papel para Teste"
+                title="Alternar Papel de Acesso"
               >
                 <SlidersHorizontal className="w-3 h-3 text-red-400" />
-                <span>Modo</span>
+                <span>Perfil</span>
               </button>
               )}
             </div>
 
-            {/* Quick Test Role Switcher Accordion */}
-            {showDemoSwitcher && showRoleSwitcher && (
+            {showRoleMenu && showRoleSwitcher && (
               <div className="pt-2 border-t border-zinc-800/80 animate-in fade-in duration-150">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                  Simulação de Papel (demonstração)
+                  Alternar Papel de Acesso
                 </div>
                 <div className="grid grid-cols-2 gap-1">
                   {(['visitor', 'user', 'seller', 'supervisor', 'admin'] as const).map((r) => (
@@ -506,7 +470,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
   return (
     <>
-      {/* 1. DESKTOP PERMANENT LEFT SIDEBAR FUNCTION BAR */}
       <aside
         id="core-left-sidebar"
         className={`hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 bg-zinc-950/95 backdrop-blur-xl border-r border-zinc-800/80 z-40 flex-col py-5 px-3 select-none overflow-y-auto ${className}`}
@@ -514,9 +477,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         {renderSidebarContent(false)}
       </aside>
 
-      {/* 2. MOBILE TOP NAVIGATION BAR WITH HAMBURGER DRAWER TRIGGER */}
       <div className="lg:hidden sticky top-0 z-40 w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between">
-        {/* Left: Mobile Drawer Toggle & Logo */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileOpen(true)}
@@ -530,16 +491,13 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-2 group focus:outline-none"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-red-700 to-red-500 flex items-center justify-center text-white font-black text-xs shadow-md">
-              CM
-            </div>
+            <BrandMark className="w-7 h-7" />
             <span className="font-extrabold text-sm tracking-tight text-white">
-              CoreMotiom <span className="text-red-500 text-xs">PRO</span>
+              CoreMotion
             </span>
           </button>
         </div>
 
-        {/* Right: Cart & User Shortcut */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCheckoutOpen(true)}
@@ -575,16 +533,13 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         </div>
       </div>
 
-      {/* 3. MOBILE SLIDE-OUT DRAWER OVERLAY */}
       {isMobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMobileOpen(false)}
           />
 
-          {/* Slide-in Sidebar */}
           <div className="relative w-72 sm:w-80 max-w-[85vw] h-full bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col z-50 overflow-y-auto animate-in slide-in-from-left duration-200">
             {renderSidebarContent(true)}
           </div>

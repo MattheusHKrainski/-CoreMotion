@@ -1,8 +1,11 @@
 'use client';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import { ACCOUNT_TYPES, type AccountType } from '@/lib/sports';
+import BrandMark from '@/components/shared/BrandMark';
 import {
   X,
   Mail,
@@ -19,11 +22,16 @@ export default function AuthModal() {
     setAuthModalOpen,
     authModalMode,
     setAuthModalMode,
+    authAccountType: accountType,
+    setAuthAccountType: setAccountType,
+    prefillAuthEmail,
+    setPrefillAuthEmail,
+    enterPlatform,
     loginWithEmail,
     signUpWithEmail,
-    signInWithGoogle,
     loginAsMasterAdmin,
     switchRole,
+    openWelcomePage,
   } = useCoreMotiom();
 
   const [email, setEmail] = useState('');
@@ -33,32 +41,31 @@ export default function AuthModal() {
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
+  useEffect(() => {
+    if (isAuthModalOpen && prefillAuthEmail) {
+      setEmail(prefillAuthEmail);
+      setPrefillAuthEmail('');
+    }
+  }, [isAuthModalOpen, prefillAuthEmail, setPrefillAuthEmail]);
+
   if (!isAuthModalOpen) return null;
 
-  const handleGoogleAuth = async () => {
-    setErrorMsg('');
-    setInfoMsg('');
-    try {
-      await signInWithGoogle();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Falha ao iniciar login com Google.';
-      setErrorMsg(message);
-    }
-  };
-
-  const handleQuickLogin = async (type: 'admin' | 'seller' | 'user') => {
+  const handleQuickLogin = async (type: 'admin' | AccountType) => {
     setErrorMsg('');
     setInfoMsg('');
     setLoading(true);
+    if (isSupabaseConfigured) {
+      window.location.assign(`/?acesso-rapido=${type}`);
+      return;
+    }
     try {
       if (type === 'admin') {
         loginAsMasterAdmin();
-        setAuthModalOpen(false);
-      } else if (type === 'seller') {
-        switchRole('seller');
+        enterPlatform('home');
         setAuthModalOpen(false);
       } else {
-        switchRole('user');
+        switchRole('user', type);
+        enterPlatform('home');
         setAuthModalOpen(false);
       }
     } catch {
@@ -80,6 +87,7 @@ export default function AuthModal() {
         if (!res.success) {
           setErrorMsg(res.error || 'Credenciais inválidas. Verifique seu e-mail e senha.');
         } else {
+          enterPlatform('home');
           setAuthModalOpen(false);
         }
       } else if (authModalMode === 'register') {
@@ -88,10 +96,11 @@ export default function AuthModal() {
           setLoading(false);
           return;
         }
-        const res = await signUpWithEmail(email, password, name);
+        const res = await signUpWithEmail(email, password, name, accountType);
         if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
         } else {
+          enterPlatform('home');
           setAuthModalOpen(false);
         }
       } else if (authModalMode === 'forgot') {
@@ -123,27 +132,24 @@ export default function AuthModal() {
         <div className="p-6 sm:p-8">
           {/* Brand Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-red-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-red-950/50">
-              CM
-            </div>
+            <BrandMark className="w-10 h-10" />
             <div>
               <h3 className="text-lg font-black text-white">
-                {authModalMode === 'login' && 'Acessar CoreMotiom'}
+                {authModalMode === 'login' && 'Acessar CoreMotion'}
                 {authModalMode === 'register' && 'Criar Conta de Atleta'}
                 {authModalMode === 'forgot' && 'Recuperar Senha'}
-                {authModalMode === 'switch' && 'Perfis de Demonstração'}
+                {authModalMode === 'switch' && 'Selecionar Perfil'}
               </h3>
               <p className="text-xs text-zinc-400">
                 {authModalMode === 'login' && 'Entre para gerenciar pedidos, compras e vendas.'}
                 {authModalMode === 'register' && 'Junte-se à plataforma esportiva de alta performance.'}
                 {authModalMode === 'forgot' && 'Enviaremos instruções de redefinição para seu e-mail.'}
-                {authModalMode === 'switch' && 'Selecione uma conta para testar o sistema instantaneamente.'}
+                {authModalMode === 'switch' && 'Selecione uma conta para acessar a plataforma instantaneamente.'}
               </p>
             </div>
           </div>
 
-          {/* Acesso rápido: somente em modo demonstração (sem banco conectado) */}
-          {!isSupabaseConfigured && (
+          {QUICK_ACCESS_ENABLED && (
           <div className="mb-6 p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300 mb-2.5 uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-zinc-300">
@@ -151,34 +157,9 @@ export default function AuthModal() {
                 Acesso Rápido Imediato (1 Clique):
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin')}
-                className="p-2 rounded-xl bg-red-600/15 hover:bg-red-600/30 text-red-300 hover:text-white font-semibold transition-all border border-red-500/30 text-center flex flex-col items-center gap-0.5 group"
-                title="Entrar imediatamente como Mattheus (Super Admin)"
-              >
-                <span className="text-[11px] font-bold text-red-400 group-hover:text-white">👑 Super Admin</span>
-                <span className="text-[9px] text-zinc-400 truncate max-w-full">Mattheus</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('seller')}
-                className="p-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white font-semibold transition-all border border-zinc-800 text-center flex flex-col items-center gap-0.5"
-                title="Entrar imediatamente como Lojista Oficial"
-              >
-                <span className="text-[11px] font-bold text-amber-400">🛍️ Lojista Pro</span>
-                <span className="text-[9px] text-zinc-400">Motiom Lab</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('user')}
-                className="p-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white font-semibold transition-all border border-zinc-800 text-center flex flex-col items-center gap-0.5"
-                title="Entrar imediatamente como Atleta"
-              >
-                <span className="text-[11px] font-bold text-emerald-400">🏃 Atleta</span>
-                <span className="text-[9px] text-zinc-400">Carlos Ramos</span>
-              </button>
+            <p className="text-xs text-zinc-400 mb-3">Acesso temporário com dados locais. Não altera contas nem registros reais.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              {(['admin', 'athlete', 'coach', 'casual'] as const).map(type => <button key={type} disabled={loading} type="button" onClick={() => handleQuickLogin(type)} className="rounded-xl border border-zinc-800 bg-zinc-950 hover:border-red-600 p-3 font-bold text-white">{type === 'admin' ? '👑 Admin' : ACCOUNT_TYPES[type].label}</button>)}
             </div>
           </div>
           )}
@@ -199,43 +180,12 @@ export default function AuthModal() {
             </div>
           )}
 
-          {/* Google OAuth Button */}
-          {authModalMode !== 'forgot' && (
-            <div className="mb-4">
-              <button
-                type="button"
-                onClick={handleGoogleAuth}
-                className="w-full py-2.5 px-4 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-white flex items-center justify-center gap-3 transition-all"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#EA4335"
-                    d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.6 7.5 23.5 12 23.5z"
-                  />
-                </svg>
-                <span>Continuar com Google</span>
-              </button>
-
-              <div className="relative my-4 flex items-center justify-center">
-                <div className="border-t border-zinc-800 w-full"></div>
-                <span className="bg-zinc-950 px-3 text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">
-                  ou com e-mail
-                </span>
-              </div>
-            </div>
-          )}
+          {authModalMode !== 'forgot' && <div className="mb-5 space-y-3">
+            <p className="text-xs font-bold text-zinc-400 uppercase">{authModalMode === 'register' ? 'Escolha seu perfil' : 'Novo por aqui? Crie seu perfil'}</p>
+            <div className="grid grid-cols-3 gap-2">{(Object.keys(ACCOUNT_TYPES) as AccountType[]).map(type => <button key={type} type="button" onClick={() => { setAccountType(type); setAuthModalMode('register'); }} className={`p-3 rounded-xl border text-xs font-bold ${accountType === type && authModalMode === 'register' ? 'bg-red-950 border-red-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-300'}`}>{ACCOUNT_TYPES[type].label}</button>)}</div>
+            {authModalMode === 'register' && <p className="text-xs text-zinc-400 leading-relaxed">{ACCOUNT_TYPES[accountType].description}</p>}
+            <button type="button" className="text-xs text-red-400 underline" onClick={() => { setAuthModalOpen(false); openWelcomePage(); setTimeout(() => document.getElementById('perfis')?.scrollIntoView({ behavior: 'smooth' }), 100); }}>Clique aqui para saber mais sobre os perfis</button>
+          </div>}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3.5">
