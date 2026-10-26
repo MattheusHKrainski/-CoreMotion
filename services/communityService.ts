@@ -104,30 +104,22 @@ export class CommunityService {
   /**
    * Likes a post.
    */
-  static async likePost(postId: string): Promise<{ success: boolean; error?: string; likes_count?: number }> {
+  static async getMyLikes(): Promise<string[]> {
+    const sb = getSupabaseClient();
+    if (!sb) return [];
+    const { data, error } = await sb.from('community_likes').select('post_id');
+    if (error) throw new Error(error.message);
+    return (data || []).map(row => row.post_id);
+  }
+
+  static async likePost(postId: string, liked: boolean): Promise<{ success: boolean; error?: string; likes_count?: number }> {
     const sb = getSupabaseClient();
     if (!sb) return { success: true };
-
     try {
-      const { data: current, error: readError } = await sb
-        .from('community_posts')
-        .select('likes_count')
-        .eq('id', postId)
-        .single();
-      if (readError || !current) return { success: false, error: readError?.message || POST_NOT_FOUND };
-
-      const likes = (current.likes_count || 0) + 1;
-      const { data, error } = await sb
-        .from('community_posts')
-        .update({ likes_count: likes })
-        .eq('id', postId)
-        .select('id');
+      const { data, error } = await sb.rpc('set_community_like', { p_post_id: postId, p_liked: liked });
       if (error) return { success: false, error: error.message };
-      if (!data || data.length === 0) return { success: false, error: POST_NOT_FOUND };
-      return { success: true, likes_count: likes };
-    } catch (err: unknown) {
-      return { success: false, error: err instanceof Error ? err.message : String(err) };
-    }
+      return { success: true, likes_count: Number(data) };
+    } catch { return { success: false, error: 'Não foi possível registrar a curtida.' }; }
   }
 
   /**

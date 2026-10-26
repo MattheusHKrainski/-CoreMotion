@@ -1,5 +1,6 @@
 'use client';
 
+import { sellerContactUrl } from '@/lib/seller-contact';
 import React, { useState } from 'react';
 import { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
@@ -422,6 +423,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               </div>
             </div>
 
+            <section className="rounded-xl border border-red-500/30 bg-red-950/20 p-4 space-y-3"><h3 className="text-sm font-bold">Converse com o vendedor antes de comprar</h3><p className="text-xs text-zinc-400">Confirme o estado do produto e combine preço, pagamento e entrega. Nunca envie senhas ou códigos de segurança.</p>{sellerContactUrl(product.contact_phone, product.title) ? <a href={sellerContactUrl(product.contact_phone, product.title)!} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-xl bg-green-700 hover:bg-green-600 px-4 py-3 text-sm font-bold text-white">Negociar com o vendedor pelo WhatsApp ↗</a> : <p className="text-xs text-amber-300">Este anúncio antigo ainda não tem telefone de contato. Aguarde a atualização pelo anunciante antes de negociar.</p>}</section>
             {/* Action Buttons */}
             <div className="pt-4 border-t border-[#232836] space-y-2.5">
               <div className="grid grid-cols-2 gap-3">

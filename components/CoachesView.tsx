@@ -1,5 +1,7 @@
 'use client';
 
+import SportPicker from '@/components/shared/SportPicker';
+import { matchesSport } from '@/lib/modalities';
 import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import CoachProfiles from './CoachProfiles';
@@ -10,7 +12,6 @@ import {
   ShieldCheck,
   Star,
   Award,
-  Filter,
   CheckCircle2,
   X,
   ArrowRight,
@@ -20,26 +21,11 @@ import {
   Calendar,
 } from 'lucide-react';
 
-const SPORTS_FILTERS = [
-  'Pilates',
-  'Ginástica',
-  'Alongamento',
-  'Yoga',
-  'Jiu-Jitsu',
-  'Basquete',
-  'Karatê',
-  'Vôlei',
-  'Tênis',
-  'Futebol',
-  'Musculação',
-  'Corrida',
-  'Natação',
-];
-
 export default function CoachesView() {
   const { coaches, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortBy, setSortBy] = useState('name');
   const [bookingCoach, setBookingCoach] = useState<Coach | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'consultation' | 'season'>('monthly');
@@ -49,14 +35,14 @@ export default function CoachesView() {
   const filteredCoaches = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     return activeCoaches.filter((coach) => {
-      if (selectedSport !== 'all' && !coach.sports.some((s) => s.toLowerCase() === selectedSport.toLowerCase())) {
+      if (!coach.sports.some((s) => matchesSport(s, selectedSport))) {
         return false;
       }
       if (!query) return true;
       const haystack = `${coach.name} ${coach.title} ${coach.specialty} ${coach.location} ${coach.sports.join(' ')}`.toLowerCase();
       return haystack.includes(query);
-    });
-  }, [activeCoaches, selectedSport, searchTerm]);
+    }).sort((a, b) => sortBy === 'rating' ? b.rating - a.rating : a.name.localeCompare(b.name, 'pt-BR'));
+  }, [activeCoaches, selectedSport, searchTerm, sortBy]);
 
   const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +81,7 @@ export default function CoachesView() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar treinador por nome, cidade ou especialidade"
               placeholder="Buscar treinador, esporte ou cidade..."
               className="w-full pl-9 pr-8 py-2.5 bg-zinc-900 text-xs text-white placeholder-zinc-500 rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
             />
@@ -117,7 +104,7 @@ export default function CoachesView() {
             <ShieldCheck className="w-4 h-4 text-red-400 shrink-0" />
             <div>
               <span className="font-bold text-white block">{activeCoaches.length} Profissionais Ativos</span>
-              <span className="text-[11px] text-zinc-400">CREF e federações verificadas</span>
+              <span className="text-[11px] text-zinc-400">Confira a formação no perfil</span>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 px-4 py-3">
@@ -137,39 +124,11 @@ export default function CoachesView() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 bg-zinc-900/70 p-2 rounded-2xl border border-zinc-800/80 backdrop-blur-md overflow-x-auto scrollbar-none text-xs">
-        <button
-          type="button"
-          onClick={() => setSelectedSport('all')}
-          className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-            selectedSport === 'all'
-              ? 'bg-red-600 text-white shadow-md shadow-red-950/50'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-          }`}
-        >
-          <Filter className="w-3 h-3" />
-          <span>Todas ({activeCoaches.length})</span>
-        </button>
-
-        {SPORTS_FILTERS.map((sport) => (
-          <button
-            key={sport}
-            type="button"
-            onClick={() => setSelectedSport(sport)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedSport === sport
-                ? 'bg-red-600 text-white shadow-md shadow-red-950/50'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-            }`}
-          >
-            {sport}
-          </button>
-        ))}
-      </div>
+      <section aria-label="Filtros de treinadores" className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3"><SportPicker value={selectedSport} onChange={setSelectedSport} options={activeCoaches.flatMap(c => c.sports)} /><label className="block text-xs text-zinc-400 space-y-2">Ordenar catálogo<select value={sortBy} onChange={e => setSortBy(e.target.value)} className="block rounded-xl border border-zinc-700 bg-zinc-950 p-2.5 text-white"><option value="name">Nome: A–Z</option><option value="rating">Melhores avaliações</option></select></label><div className="flex flex-wrap justify-between gap-3 text-sm text-zinc-400"><span>{filteredCoaches.length} treinadores no catálogo • perfis da comunidade abaixo</span><button type="button" onClick={() => { setSelectedSport('all'); setSearchTerm(''); setSortBy('name'); }} className="text-red-400">Limpar filtros</button></div></section>
 
       <CoachProfiles sport={selectedSport} search={searchTerm} />
 
+      <header className="border-t border-zinc-800 pt-6 space-y-2"><h2 className="text-xl font-bold">Catálogo de treinadores</h2><p className="text-sm text-zinc-400">Compare modalidades, localização, formação e planos antes de escolher um profissional.</p></header>
       {/* Coaches Grid */}
       {filteredCoaches.length === 0 ? (
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-10 text-center space-y-3">

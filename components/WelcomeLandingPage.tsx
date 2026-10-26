@@ -20,7 +20,6 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Tag,
   TrendingUp,
   UserCheck,
@@ -261,11 +260,6 @@ export default function WelcomeLandingPage() {
           />
 
           <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-semibold text-zinc-200">
-              <Sparkles className="w-3.5 h-3.5 text-red-400" />
-              <span>Plataforma Esportiva CoreMotion • Equipamentos, Ofertas e Treinadores</span>
-            </div>
-
             <h1 className="text-4xl sm:text-6xl lg:text-[64px] font-extrabold tracking-[-0.03em] leading-[1.07] text-white max-w-4xl mx-auto">
               Seu esporte, suas conexões, seu próximo passo
             </h1>

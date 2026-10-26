@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
         seller_avatar: profile?.avatar_url || null,
         stock: input.stock,
         location: input.location || null,
+        contact_phone: input.contact_phone,
         shipping_available: input.shipping_available,
         status: 'active',
         brand: input.brand || null,

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { productCreateSchema } from '../../lib/schemas/product.schema';
 
 const validListing = {
+  contact_phone: '(41) 99999-9999',
   title: 'Tênis de corrida usado',
   description: 'Anúncio demonstrativo entre atletas para teste.',
   price: 250,

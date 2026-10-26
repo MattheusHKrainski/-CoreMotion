@@ -1,5 +1,7 @@
 'use client';
 
+import SportPicker from '@/components/shared/SportPicker';
+import { matchesSport } from '@/lib/modalities';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
@@ -31,7 +33,7 @@ type SortBy = 'relevance' | 'price_asc' | 'price_desc' | 'discount_desc' | 'newe
 
 const PAGE_SIZE = 12;
 const CATEGORIES = ['Calçados', 'Vestuário', 'Artes Marciais', 'Equipamentos', 'Acessórios', 'Tecnologia & Wearables'];
-const SPORTS = ['Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Musculação', 'Natação', 'Ciclismo'];
+
 const CONDITIONS = [
   { id: 'novo', label: 'Novo (lacrado)' },
   { id: 'como_novo', label: 'Como novo' },
@@ -93,7 +95,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       const searchText = normalize(`${offer.title} ${offer.description} ${offer.store_name} ${offer.category} ${offer.sport} ${offer.coupon_code || ''}`);
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
       if (!matchesCategory(offer.category, selectedCategory)) return false;
-      if (selectedSport !== 'all' && offer.sport !== selectedSport) return false;
+      if (!matchesSport(offer.sport, selectedSport)) return false;
       return true;
     });
     return sortOffers(filtered, sortBy);
@@ -105,7 +107,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       const searchText = normalize(`${product.title} ${product.description} ${product.brand || ''} ${product.seller_name} ${product.category} ${product.sport}`);
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
       if (!matchesCategory(product.category, selectedCategory)) return false;
-      if (selectedSport !== 'all' && product.sport !== selectedSport) return false;
+      if (!matchesSport(product.sport, selectedSport)) return false;
       if (selectedCondition !== 'all' && product.condition !== selectedCondition) return false;
       return true;
     });
@@ -237,11 +239,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             </div>
 
             <div>
-              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Modalidade</h3>
-              <div className="space-y-1 text-xs">
-                <button type="button" onClick={() => setSelectedSport('all')} className={`w-full rounded-full px-3 py-1.5 text-left ${selectedSport === 'all' ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}>Todas as modalidades</button>
-                {SPORTS.map((sport) => <button key={sport} type="button" onClick={() => setSelectedSport(sport)} className={`w-full rounded-full px-3 py-1.5 text-left ${selectedSport === sport ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}>{sport}</button>)}
-              </div>
+              <SportPicker value={selectedSport} onChange={value => setSelectedSport(value || 'all')} options={[...products.map(p => p.sport), ...activeOffers.map(o => o.sport)]} />
             </div>
 
             {selectedTab !== 'offers' && (

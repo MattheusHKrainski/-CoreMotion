@@ -18,6 +18,7 @@ export default function CommunityView() {
   const {
     communityPosts,
     createCommunityPost,
+    likedCommunityPosts,
     likeCommunityPost,
     addCommunityComment,
     reportCommunityPost,
@@ -233,10 +234,12 @@ export default function CommunityView() {
             <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 text-xs">
               <div className="flex items-center gap-4">
                 <button
-                  onClick={() => likeCommunityPost(post.id)}
+                  onClick={() => void likeCommunityPost(post.id)}
+                  aria-pressed={likedCommunityPosts.includes(post.id)}
+                  aria-label={likedCommunityPosts.includes(post.id) ? 'Remover curtida' : 'Curtir publicação'}
                   className="flex items-center gap-1.5 text-zinc-400 hover:text-red-400 transition-colors"
                 >
-                  <Heart className="w-4 h-4 text-red-500 fill-red-500/20" />
+                  <Heart className={`w-4 h-4 text-red-500 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500' : ''}`} />
                   <span className="font-bold text-white text-xs">{post.likes_count}</span>
                 </button>
 

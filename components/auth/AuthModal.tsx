@@ -1,6 +1,7 @@
 'use client';
 import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
+import SportPicker from '@/components/shared/SportPicker';
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { ACCOUNT_TYPES, type AccountType } from '@/lib/sports';
@@ -34,6 +35,7 @@ export default function AuthModal() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [sport, setSport] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
@@ -76,7 +78,7 @@ export default function AuthModal() {
           setLoading(false);
           return;
         }
-        const res = await signUpWithEmail(email, password, name, accountType);
+        const res = await signUpWithEmail(email, password, name, accountType, accountType === 'casual' ? undefined : sport.trim());
         if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
         } else {
@@ -163,6 +165,7 @@ export default function AuthModal() {
           {authModalMode !== 'forgot' && <div className="mb-5 space-y-3">
             <p className="text-xs font-bold text-zinc-400 uppercase">{authModalMode === 'register' ? 'Escolha seu perfil' : 'Novo por aqui? Crie seu perfil'}</p>
             <div className="grid grid-cols-3 gap-2">{(Object.keys(ACCOUNT_TYPES) as AccountType[]).map(type => <button key={type} type="button" onClick={() => { setAccountType(type); setAuthModalMode('register'); }} className={`p-3 rounded-xl border text-xs font-bold ${accountType === type && authModalMode === 'register' ? 'bg-red-950 border-red-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-300'}`}>{ACCOUNT_TYPES[type].label}</button>)}</div>
+            {authModalMode === 'register' && accountType !== 'casual' && <SportPicker value={sport} onChange={setSport} label="Sua modalidade principal" required />}
             {authModalMode === 'register' && <p className="text-xs text-zinc-400 leading-relaxed">{ACCOUNT_TYPES[accountType].description}</p>}
             <button type="button" className="text-xs text-red-400 underline" onClick={() => { setAuthModalOpen(false); openWelcomePage(); setTimeout(() => document.getElementById('perfis')?.scrollIntoView({ behavior: 'smooth' }), 100); }}>Clique aqui para saber mais sobre os perfis</button>
           </div>}
