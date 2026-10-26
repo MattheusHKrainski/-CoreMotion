@@ -6,7 +6,7 @@
 import crypto from 'node:crypto';
 import { queryDb } from './db';
 import type { ExternalOffer } from './types';
-import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
+import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 
 interface DbExternalOfferRow {
@@ -74,34 +74,26 @@ export async function ensureExternalOffersTable(): Promise<void> {
     );
   `);
 
-  const countRows = await queryDb<{ total: string }>(`SELECT COUNT(*)::text AS total FROM public.external_offers`);
-  const total = Number(countRows[0]?.total || '0');
-
-  if (total === 0) {
-    for (const offer of INITIAL_EXTERNAL_OFFERS) {
-      await queryDb(
-        `INSERT INTO public.external_offers
-          (id, title, description, store_name, category, sport, price, original_price, image_url, source_url, coupon_code, is_active, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-         ON CONFLICT (id) DO NOTHING`,
-        [
-          offer.id,
-          offer.title,
-          offer.description,
-          offer.store_name,
-          offer.category,
-          offer.sport,
-          offer.price,
-          offer.original_price ?? null,
-          offer.image_url,
-          offer.source_url,
-          offer.coupon_code ?? null,
-          offer.is_active ?? true,
-          offer.created_at,
-        ]
-      );
-    }
-  }
+  // Atomic replacement of unchanged legacy seeds only. Never overwrite custom records or corrected destinations.
+  await queryDb(`
+    WITH retired AS (
+      DELETE FROM public.external_offers old
+      USING jsonb_each_text($1::jsonb) legacy
+      WHERE old.id = legacy.key AND old.source_url = legacy.value AND old.created_by IS NULL
+      RETURNING old.id
+    )
+    INSERT INTO public.external_offers
+      (id, title, description, store_name, category, sport, price, original_price, image_url, source_url, coupon_code, is_active, created_at)
+    SELECT seed.id, seed.title, seed.description, seed.store_name, seed.category, seed.sport,
+      seed.price, seed.original_price, seed.image_url, seed.source_url, seed.coupon_code, seed.is_active, seed.created_at
+    FROM jsonb_to_recordset($2::jsonb) AS seed(
+      id text, title text, description text, store_name text, category text, sport text,
+      price numeric, original_price numeric, image_url text, source_url text, coupon_code text,
+      is_active boolean, created_at timestamptz
+    )
+    WHERE EXISTS (SELECT 1 FROM retired) OR NOT EXISTS (SELECT 1 FROM public.external_offers)
+    ON CONFLICT (id) DO NOTHING
+  `, [JSON.stringify(LEGACY_SEARCH_OFFERS), JSON.stringify(INITIAL_EXTERNAL_OFFERS)]);
 
   tableBootstrapped = true;
 }

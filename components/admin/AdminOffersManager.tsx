@@ -1,5 +1,6 @@
 'use client';
 
+import { isProductDestination } from '@/lib/offer-catalog';
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
@@ -285,8 +286,8 @@ export default function AdminOffersManager() {
       ? Number(String(form.original_price).replace(',', '.'))
       : undefined;
 
-    if (!form.source_url.trim().startsWith('https://')) {
-      setFormError('O link da promoção / afiliado precisa começar com https://');
+    if (!isProductDestination(form.source_url.trim())) {
+      setFormError('Use o link direto do produto (https://), não uma página de busca ou categoria.');
       return;
     }
     if (form.title.trim().length < 3) {
@@ -451,7 +452,7 @@ export default function AdminOffersManager() {
               {/* 1. Link de Destino / Afiliado + Botão Mágico */}
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                  1. Link da promoção ou Link de Afiliado (https://) *
+                  1. Link direto do produto ou afiliado (https://) *
                 </label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
@@ -459,7 +460,7 @@ export default function AdminOffersManager() {
                     <input
                       type="url"
                       required
-                      placeholder="https://s.click.aliexpress.com/... ou https://amzn.to/... ou link da loja"
+                      placeholder="https://s.click.aliexpress.com/... ou https://amzn.to/... ou URL específica do produto"
                       value={form.source_url}
                       onChange={(e) => setForm((f) => ({ ...f, source_url: e.target.value }))}
                       className={`${inputCls} pl-10`}
@@ -475,6 +476,7 @@ export default function AdminOffersManager() {
                     <span>{isFetchingMeta ? 'Buscando...' : 'Puxar foto e título pelo link'}</span>
                   </button>
                 </div>
+                <p className="text-[11px] text-zinc-500 mt-2">Confira se o link abre o modelo e a cor exatos. Use uma foto da galeria desse mesmo produto; importar metadados não comprova a correspondência.</p>
               </div>
 
               {/* 2. Loja + Seletor Rápido */}

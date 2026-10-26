@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import ProductImage from '@/components/shared/ProductImage';
 import { Check, Copy, ExternalLink, Pencil, Store, Ticket, Trash2, X } from 'lucide-react';
 import { ExternalOffer } from '@/lib/types';
 
@@ -21,7 +21,6 @@ export default function ExternalOfferModal({
   onDeleteOffer,
 }: ExternalOfferModalProps) {
   const [copiedCoupon, setCopiedCoupon] = useState(false);
-  const [imgError, setImgError] = useState(false);
 
   if (!offer) return null;
 
@@ -52,8 +51,6 @@ export default function ExternalOfferModal({
     window.open(offer.source_url, '_blank', 'noopener,noreferrer');
   };
 
-  const resolvedSrc = imgError ? '/offers/gps-ciclocomputador-bike.jpg' : offer.image_url;
-  const isUnoptimized = !resolvedSrc.startsWith('/');
 
   return (
     <div
@@ -73,16 +70,8 @@ export default function ExternalOfferModal({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-zinc-950">
-          <Image
-            src={resolvedSrc}
-            alt={offer.title}
-            fill
-            unoptimized={isUnoptimized}
-            onError={() => setImgError(true)}
-            sizes="(max-width: 640px) 100vw, 512px"
-            className="object-cover"
-          />
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-white">
+<ProductImage src={offer.image_url} alt={offer.title} sizes="(max-width: 640px) 100vw, 512px" />
         </div>
 
         <div className="space-y-2">
@@ -97,7 +86,7 @@ export default function ExternalOfferModal({
           </div>
 
           <h2 className="text-xl font-black text-white leading-tight">{offer.title}</h2>
-          <p className="text-sm text-zinc-300 leading-relaxed">{offer.description}</p>
+          <p className="text-sm text-zinc-300 leading-relaxed">{offer.description}</p><p className="text-xs text-zinc-400">Preço de referência. Confira na loja a cor, o tamanho, o estoque e as condições de pagamento antes de comprar.</p>
         </div>
 
         <div className="flex items-baseline justify-between gap-2 pt-3 border-t border-zinc-800">

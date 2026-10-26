@@ -46,7 +46,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
   const isFav = favorites.includes(product.id);
   const galleryImages = product.images && product.images.length > 0
     ? product.images
-    : ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'];
+    : ['/products/image-unavailable.svg'];
 
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -148,7 +148,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 src={galleryImages[selectedImgIndex] || galleryImages[0]}
                 alt={`${product.title} - ${getAngleLabel(selectedImgIndex, product.category)}`}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80';
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/products/image-unavailable.svg';
                 }}
                 className="w-full h-full object-cover transition-opacity duration-300 animate-in fade-in"
               />
@@ -220,7 +221,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                           src={img}
                           alt=""
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80';
+                            e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/products/image-unavailable.svg';
                           }}
                           className="w-full h-full object-cover"
                         />

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isStaffRole } from '@/lib/permissions';
 import { errorResponse, requireAuth } from '@/lib/server-auth';
 import { readJson } from '@/lib/api-utils';
+import { isProductDestination } from '@/lib/offer-catalog';
 import { detectStoreNameFromHost } from '@/lib/schemas/offer.schema';
 
 export const dynamic = 'force-dynamic';
@@ -78,35 +79,55 @@ export async function POST(req: NextRequest) {
     return errorResponse('Link inválido. Use um endereço completo começando com https://', 400);
   }
 
-  if (parsed.protocol !== 'https:') {
-    return errorResponse('Por segurança, use apenas links https://.', 400);
+  if (!isProductDestination(rawUrl)) {
+    return errorResponse('Informe o link direto do produto em https://, não uma busca ou categoria.', 400);
   }
 
   const storeName = detectStoreNameFromHost(parsed.hostname);
 
   try {
-    const addresses = await dns.lookup(parsed.hostname, { all: true });
-    if (addresses.length === 0 || addresses.some((entry) => isPrivateIp(entry.address))) {
-      return errorResponse('Endereço de destino não permitido.', 400);
-    }
-
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6500);
-    const response = await fetch(parsed.toString(), {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8',
-      },
-    }).finally(() => clearTimeout(timeout));
-
-    const html = (await response.text()).slice(0, 350_000);
+    let response: Response;
+    let destination = parsed;
+    try {
+      for (let redirects = 0; ; redirects++) {
+        if (destination.protocol !== 'https:' || destination.username || destination.password) {
+          return errorResponse('Redirecionamento de destino não permitido.', 400);
+        }
+        const addresses = await dns.lookup(destination.hostname, { all: true });
+        if (!addresses.length || addresses.some(entry => isPrivateIp(entry.address))) {
+          return errorResponse('Endereço de destino não permitido.', 400);
+        }
+        response = await fetch(destination.toString(), {
+          signal: controller.signal,
+          redirect: 'manual',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; CoreMotion/1.0)',
+            Accept: 'text/html,application/xhtml+xml',
+            'Accept-Language': 'pt-BR,pt;q=0.9',
+          },
+        });
+        if (![301, 302, 303, 307, 308].includes(response.status)) break;
+        const location = response.headers.get('location');
+        await response.body?.cancel();
+        if (!location || redirects >= 4) return errorResponse('Não foi possível confirmar o destino do link.', 422);
+        destination = new URL(location, destination);
+      }
+      if (!response.ok || !isProductDestination(destination.toString())) {
+        await response.body?.cancel();
+        return errorResponse('O link não abriu uma página de produto válida. Confira o endereço na loja.', 422);
+      }
+      // Keep the timeout active while reading the response, not just while receiving headers.
+      const html = (await response.text()).slice(0, 350_000);
+      const productMarkup = /["']@type["']\s*:\s*(?:\[\s*)?["']Product(?:Group)?["']/i.test(html) ||
+        /(?:og:type[^>]+content=["'](?:product|og:product)|content=["'](?:product|og:product)["'][^>]+og:type)/i.test(html);
+      if (!productMarkup) {
+        return NextResponse.json({ success: true, partial: true, metadata: { store_name: detectStoreNameFromHost(destination.hostname) }, warning: 'Não foi possível confirmar dados de produto. Confira título e foto manualmente na loja.' });
+      }
     const finalHost = (() => {
       try {
-        return new URL(response.url || parsed.toString()).hostname;
+        return destination.hostname;
       } catch {
         return parsed.hostname;
       }
@@ -116,7 +137,8 @@ export async function POST(req: NextRequest) {
     const title =
       extractMeta(html, ['og:title', 'twitter:title']) ||
       (titleTagMatch?.[1] ? decodeHtml(titleTagMatch[1]) : undefined);
-    const imageUrl = extractMeta(html, ['og:image', 'og:image:secure_url', 'twitter:image']);
+    const rawImage = extractMeta(html, ['og:image', 'og:image:secure_url', 'twitter:image']);
+    const imageUrl = rawImage ? new URL(rawImage, destination).href : undefined;
     const description = extractMeta(html, ['og:description', 'description', 'twitter:description']);
     const rawPrice = extractMeta(html, ['product:price:amount', 'og:price:amount']);
     const parsedPrice = rawPrice ? Number(rawPrice.replace(',', '.')) : undefined;
@@ -126,11 +148,14 @@ export async function POST(req: NextRequest) {
       metadata: {
         store_name: detectStoreNameFromHost(finalHost) || storeName,
         title: title?.slice(0, 180),
-        image_url: imageUrl,
+        image_url: imageUrl?.startsWith('https://') ? imageUrl : undefined,
         description: description?.slice(0, 800),
         price: parsedPrice && Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : undefined,
       },
     });
+    } finally {
+      clearTimeout(timeout);
+    }
   } catch {
     // Em ambientes sem acesso externo ou se a loja bloquear bot, devolvemos ao menos a loja detectada sem erro 500.
     return NextResponse.json({

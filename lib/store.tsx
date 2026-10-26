@@ -25,6 +25,7 @@ import {
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
+import { refreshLegacyOffers } from './offer-catalog';
 import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 import { DEMO_MODE } from '@/lib/demo-mode';
@@ -262,7 +263,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (savedOffers && isMounted) {
           const parsedOffers = JSON.parse(savedOffers);
           if (Array.isArray(parsedOffers)) {
-            setOffers(parsedOffers);
+            const refreshed = refreshLegacyOffers(parsedOffers);
+            setOffers(refreshed);
+            localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(refreshed));
           }
         }
 
