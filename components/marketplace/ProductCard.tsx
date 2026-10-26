@@ -102,10 +102,11 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
         aria-label={`Ver anúncio de atleta: ${product.title}`}
       >
         <img
-          src={product.images[0] || '/products/nike-pegasus-1.jpg'}
+          src={product.images[0] || '/products/image-unavailable.svg'}
           alt={product.title}
           onError={(event) => {
-            event.currentTarget.src = '/products/nike-pegasus-1.jpg';
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = '/products/image-unavailable.svg';
           }}
           className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isProductDestination } from '../offer-catalog';
 
 const httpsUrlSchema = z
   .string()
@@ -39,7 +40,7 @@ export const offerCreateSchema = z.object({
   price: z.number().positive('O preço em oferta deve ser maior que zero.').max(1_000_000),
   original_price: z.number().positive().max(1_000_000).nullable().optional(),
   image_url: imagePathOrHttpsSchema,
-  source_url: httpsUrlSchema,
+  source_url: httpsUrlSchema.refine(isProductDestination, 'Informe o link direto do produto, não uma busca, categoria ou página inicial.'),
   coupon_code: z.string().trim().max(40).nullable().optional(),
   is_active: z.boolean().optional().default(true),
 });
