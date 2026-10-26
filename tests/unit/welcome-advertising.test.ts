@@ -32,3 +32,12 @@ it('as superfícies de venda não prometem garantia ou custódia da plataforma',
   const footer = readFileSync('components/shared/Footer.tsx', 'utf8');
   assert.match(footer, /Não garante as transações, não retém pagamentos e não realiza entregas/);
 });
+
+it('mantém as mesmas bordas neutras em todos os módulos de perfil', () => {
+  const source = readFileSync('components/WelcomeLandingPage.tsx', 'utf8');
+  const profiles = source.slice(source.indexOf('id="perfis"'), source.indexOf('id="comecar"'));
+  assert.equal((profiles.match(/border-zinc-700/g) || []).length, 3);
+  assert.doesNotMatch(profiles, /border-zinc-600|bg-gradient-to-b/);
+  assert.match(source, /aria-label="Conheça a CoreMotion"/);
+  assert.match(profiles, /Conheça as ferramentas de cada caminho/);
+});
