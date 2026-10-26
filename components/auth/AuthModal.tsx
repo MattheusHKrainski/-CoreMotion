@@ -1,5 +1,6 @@
 'use client';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -53,6 +54,10 @@ export default function AuthModal() {
     setErrorMsg('');
     setInfoMsg('');
     setLoading(true);
+    if (isSupabaseConfigured) {
+      window.location.assign(`/?acesso-rapido=${type}`);
+      return;
+    }
     try {
       if (type === 'admin') {
         loginAsMasterAdmin();
@@ -144,7 +149,7 @@ export default function AuthModal() {
             </div>
           </div>
 
-          {!isSupabaseConfigured && (
+          {QUICK_ACCESS_ENABLED && (
           <div className="mb-6 p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300 mb-2.5 uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-zinc-300">
@@ -152,6 +157,7 @@ export default function AuthModal() {
                 Acesso Rápido Imediato (1 Clique):
               </span>
             </div>
+            <p className="text-xs text-zinc-400 mb-3">Acesso temporário com dados locais. Não altera contas nem registros reais.</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {(['admin', 'athlete', 'coach', 'casual'] as const).map(type => <button key={type} disabled={loading} type="button" onClick={() => handleQuickLogin(type)} className="rounded-xl border border-zinc-800 bg-zinc-950 hover:border-red-600 p-3 font-bold text-white">{type === 'admin' ? '👑 Admin' : ACCOUNT_TYPES[type].label}</button>)}
             </div>

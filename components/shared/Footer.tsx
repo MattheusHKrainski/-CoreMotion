@@ -3,9 +3,8 @@
 import React from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import BrandMark from '@/components/shared/BrandMark';
-import { Lock, Mail, Clock, Instagram, Youtube, Globe } from 'lucide-react';
+import { Mail, Clock, Instagram, Youtube, Globe } from 'lucide-react';
 
-const PAYMENT_METHODS = ['PIX', 'Visa', 'Mastercard', 'Elo', 'Hipercard', 'Boleto'];
 
 export default function Footer() {
   const { setActiveView, setSearchQuery, setCheckoutOpen, isVisitor, setAuthModalOpen } = useCoreMotiom();
@@ -37,7 +36,7 @@ export default function Footer() {
             </button>
 
             <p className="text-xs text-zinc-400 leading-relaxed max-w-sm">
-              Plataforma completa de esportes para comprar equipamentos das principais marcas, desapegar com segurança e treinar com profissionais qualificados.
+              Plataforma de anúncios esportivos que conecta atletas, anunciantes e treinadores. Pagamento, entrega e condições são combinados entre as partes.
             </p>
 
             <div className="space-y-1.5 pt-1 text-xs text-zinc-400">
@@ -125,33 +124,15 @@ export default function Footer() {
               <li><span className="cursor-default">Central de Atendimento</span></li>
               <li><span className="cursor-default">Prazos e Entregas</span></li>
               <li><span className="cursor-default">Trocas e Devoluções</span></li>
-              <li><span className="cursor-default">Compra Garantida</span></li>
+              <li><span className="cursor-default">Sobre os anúncios</span></li>
               <li><span className="cursor-default">Perguntas Frequentes</span></li>
             </ul>
           </div>
         </div>
 
-        {/* Payment Methods & Security Row */}
-        <div className="py-6 border-b border-zinc-800/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mr-1">
-              Formas de pagamento:
-            </span>
-            {PAYMENT_METHODS.map((method) => (
-              <span
-                key={method}
-                className="px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-semibold text-zinc-300"
-              >
-                {method}
-              </span>
-            ))}
-          </div>
-
-          <div className="inline-flex items-center gap-2 text-xs text-zinc-400">
-            <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>Ambiente Seguro · Certificado SSL 256-bit</span>
-          </div>
-        </div>
+        <p className="py-6 border-b border-zinc-800/80 text-xs leading-relaxed text-zinc-400">
+          A CoreMotion hospeda anúncios e facilita conexões. Não garante as transações, não retém pagamentos e não realiza entregas. Nas ofertas externas, a compra acontece no site da loja, conforme as condições dela.
+        </p>
 
         {/* Bottom Legal Bar */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500">

@@ -1,4 +1,5 @@
 'use client';
+import { IS_QUICK_ACCESS, QUICK_PROFILE } from './quick-access';
 import { ACCOUNT_TYPES, type AccountType } from './sports';
 
 import { calculateCheckoutTotals, ShippingMethod } from './checkout';
@@ -25,6 +26,7 @@ import {
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
+import { refreshLegacyOffers } from './offer-catalog';
 import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 import { DEMO_MODE } from '@/lib/demo-mode';
@@ -178,9 +180,9 @@ interface CoreMotiomContextType {
 
 const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
+const LOCAL_STORAGE_KEY = IS_QUICK_ACCESS ? 'coremotion_quick_state_v1' : 'coremotiom_state_v1';
 const OFFERS_STORAGE_KEY = 'coremotion_managed_offers_v1';
-const ENTERED_SESSION_KEY = 'coremotion_entered_session_v2';
+const ENTERED_SESSION_KEY = IS_QUICK_ACCESS ? 'coremotion_quick_entered_v1' : 'coremotion_entered_session_v2';
 
 /** Junta duas listas de anúncios por id; os itens de `incoming` prevalecem. */
 function mergeProductsById(current: Product[], incoming: Product[]): Product[] {
@@ -262,7 +264,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (savedOffers && isMounted) {
           const parsedOffers = JSON.parse(savedOffers);
           if (Array.isArray(parsedOffers)) {
-            setOffers(parsedOffers);
+            const refreshed = refreshLegacyOffers(parsedOffers);
+            setOffers(refreshed);
+            localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(refreshed));
           }
         }
 
@@ -747,6 +751,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     });
     addToast('Sessão Super Admin', 'Conectado como Administrador da plataforma.', 'success');
   }, [addToast]);
+
+  useEffect(() => {
+    if (!QUICK_PROFILE) return;
+    if (QUICK_PROFILE === 'admin') loginAsMasterAdmin();
+    else switchRole('user', QUICK_PROFILE);
+    enterPlatform('home');
+    setAuthModalOpen(false);
+  }, [loginAsMasterAdmin, switchRole, enterPlatform, setAuthModalOpen]);
 
   // Auth: Email Login
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {

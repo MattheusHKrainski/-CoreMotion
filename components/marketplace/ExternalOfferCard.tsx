@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React from 'react';
+import ProductImage from '@/components/shared/ProductImage';
 import { ExternalLink, Store, Ticket } from 'lucide-react';
 import { ExternalOffer } from '@/lib/types';
 
@@ -11,7 +11,6 @@ interface ExternalOfferCardProps {
 }
 
 export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCardProps) {
-  const [imgError, setImgError] = useState(false);
 
   const discount =
     offer.original_price && offer.original_price > offer.price
@@ -21,8 +20,6 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
   const formatPrice = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-  const resolvedSrc = imgError ? '/offers/gps-ciclocomputador-bike.jpg' : offer.image_url;
-  const isUnoptimized = !resolvedSrc.startsWith('/');
 
   return (
     <div
@@ -37,16 +34,8 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
       }}
       className="group relative flex flex-col justify-between bg-zinc-900/70 rounded-2xl border border-zinc-800/80 overflow-hidden transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900 hover:shadow-xl hover:shadow-red-950/20 cursor-pointer"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-950">
-        <Image
-          src={resolvedSrc}
-          alt={offer.title}
-          fill
-          unoptimized={isUnoptimized}
-          onError={() => setImgError(true)}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
+<ProductImage src={offer.image_url} alt={offer.title} sizes="(max-width: 640px) 100vw, 512px" />
 
         <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 max-w-[76%]">
           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-950/90 text-zinc-100 border border-zinc-700/80 backdrop-blur-md flex items-center gap-1">

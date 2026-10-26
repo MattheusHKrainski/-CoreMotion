@@ -2,6 +2,7 @@
  * Utilitário de cliente: anexa o token de sessão do Supabase às chamadas de API protegidas.
  * Visitantes (sem sessão) recebem a resposta 401 do servidor e o app trata o erro.
  */
+import { IS_QUICK_ACCESS } from './quick-access';
 import { getSupabaseClient } from '@/services/supabaseClient';
 
 async function getAccessToken(): Promise<string | null> {
@@ -34,6 +35,9 @@ export async function readResult<T extends object = Record<string, never>>(
 }
 
 export async function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  if (IS_QUICK_ACCESS) {
+    return Response.json({ success: false, error: 'O acesso rápido não altera dados reais. Saia do acesso temporário para usar sua conta.' }, { status: 403 });
+  }
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');

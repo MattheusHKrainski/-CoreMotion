@@ -86,7 +86,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
               Tudo para o seu esporte em um só lugar.
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-              Do tatame às quadras, das pistas aos campos: encontre descontos nas melhores marcas, compre e venda equipamentos com garantia e treine com especialistas em Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida e mais.
+              Do tatame às quadras, das pistas aos campos: encontre descontos nas melhores marcas, compre e venda equipamentos entre atletas e treine com especialistas em Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida e mais.
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
               <button type="button" onClick={() => openMarketplace()} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-red-950/40 transition hover:bg-red-500 sm:text-sm">
@@ -109,8 +109,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
                 </div>
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
                   <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Entre Atletas</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Compra 100% Garantida</span>
-                  <span className="text-[10px] text-zinc-400">Novos e seminovos revisados</span>
+                  <span className="mt-1 block text-xs font-bold text-white">Anúncios entre atletas</span>
+                  <span className="text-[10px] text-zinc-400">Novos e seminovos anunciados</span>
                 </div>
                 <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
                   <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Comunidade</span>
@@ -226,7 +226,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         </button>
         <button type="button" onClick={handleSellClick} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Bike className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <span><strong className="block text-sm text-white">Venda seu Equipamento Parado</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Anuncie em poucos cliques e receba com total segurança de atletas de todo o país.</span></span>
+          <span><strong className="block text-sm text-white">Venda seu Equipamento Parado</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Anuncie em poucos cliques e negocie diretamente com atletas de todo o país.</span></span>
         </button>
         <button type="button" onClick={() => setActiveView('community')} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/30 hover:bg-zinc-900">
           <Users className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />

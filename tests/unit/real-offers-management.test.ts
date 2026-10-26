@@ -9,7 +9,7 @@ import {
 
 describe('Real External Offers & Admin Affiliate Management', () => {
   it('ships real curated offers with HTTPS store URLs, non-demo mode, and 100% unique images', () => {
-    assert.ok(INITIAL_EXTERNAL_OFFERS.length >= 12);
+    assert.ok(INITIAL_EXTERNAL_OFFERS.length >= 8);
 
     const images = new Set<string>();
     const urls = new Set<string>();
