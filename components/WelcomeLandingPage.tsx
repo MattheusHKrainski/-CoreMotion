@@ -369,6 +369,7 @@ export default function WelcomeLandingPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('marketplace');
                 }}
+                style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', overflow: 'hidden', minWidth: 0 }}
                 className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
               >
                 <Image
@@ -391,6 +392,7 @@ export default function WelcomeLandingPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('marketplace');
                 }}
+                style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', overflow: 'hidden', minWidth: 0 }}
                 className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
               >
                 <Image
@@ -413,6 +415,7 @@ export default function WelcomeLandingPage() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('coaches');
                 }}
+                style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', overflow: 'hidden', minWidth: 0 }}
                 className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
               >
                 <Image
