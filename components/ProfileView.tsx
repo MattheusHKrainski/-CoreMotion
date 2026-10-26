@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
 import type { Order, UserProfile, UserRole } from '@/lib/types';
+import { ACCOUNT_TYPES, canAccessSports } from '@/lib/sports';
 import AdminOffersManager from '@/components/admin/AdminOffersManager';
 import { LogOut, Save, ShieldCheck, Tag, UserCircle2 } from 'lucide-react';
 
@@ -71,6 +72,8 @@ export default function ProfileView() {
   const formKey = [user.id, user.name, user.phone ?? '', user.city ?? '', user.state ?? ''].join('|');
 
   return (
+    <>
+    {canAccessSports(user) && <div className="max-w-3xl mx-auto mb-6 p-5 rounded-2xl border border-red-900 bg-red-950/20"><h2 className="font-bold">{user.account_type === 'coach' ? 'Seu perfil profissional' : 'Seu currículo esportivo'}</h2><p className="text-sm text-zinc-400 my-2">Personalize sua trajetória, conquistas e especialidades.</p><button className="text-sm text-red-400 font-bold" onClick={() => setActiveView('sports-profile')}>Personalizar perfil esportivo →</button></div>}
     <ProfileContent
       key={formKey}
       user={user}
@@ -79,6 +82,7 @@ export default function ProfileView() {
       onOpenAdmin={() => setActiveView('admin')}
       onLogout={() => logout()}
     />
+    </>
   );
 }
 
@@ -115,8 +119,8 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
   const myOrders = isSupabaseConfigured ? remoteOrders : orders.filter((o) => o.user_id === userId);
 
   const role = (user.role === 'visitor' ? 'user' : user.role) as Exclude<UserRole, 'visitor'>;
-  const roleLabel = ROLE_LABELS[user.role] ?? 'Atleta';
-  const roleDescription = ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
+  const roleLabel = user.role === 'admin' ? 'Administrador' : user.account_type ? ACCOUNT_TYPES[user.account_type].label : ROLE_LABELS[user.role] ?? 'Usuário';
+  const roleDescription = user.role === 'admin' ? ROLE_DESCRIPTIONS.admin : user.account_type ? ACCOUNT_TYPES[user.account_type].description : ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

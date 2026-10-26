@@ -1,6 +1,7 @@
 export type UserRole = 'visitor' | 'user' | 'seller' | 'supervisor' | 'admin';
 
 export interface UserProfile {
+  account_type?: import("./sports").AccountType;
   id: string;
   supabase_id?: string;
   email: string;

@@ -115,6 +115,7 @@ async function main() {
     legacyB2cId = legacyProduct.rows[0].id;
 
     await db.exec(readFileSync(RETIREMENT, 'utf8'));
+    await db.exec(readFileSync(resolve(migrationsDir, '20261023130000_sports_recruitment.sql'), 'utf8'));
   }
 
   // Contas de teste. Cada cadastro dispara handle_new_user, como o Supabase Auth faz.
@@ -418,6 +419,52 @@ async function main() {
     regAppendOne.ok && Number((await state(`SELECT jsonb_array_length(comments) AS n FROM public.community_posts WHERE id = $1`, [regPostId])).n) === 2);
 
   // Store verification and badges are retired from the app; schema/data stay in place.
+
+  if (!BASELINE_MODE) {
+    await sys(`UPDATE public.profiles SET is_banned=false, role='user' WHERE id IN ($1,$2)`, [id.a1,id.a2]);
+    const sportsClaims = (key, type) => ({ ...claims(key), user_metadata: { account_type: type } });
+    const coachUser = await sys(`INSERT INTO auth.users(email,raw_user_meta_data) VALUES ('coach-sports@example.test','{"name":"Treinador"}'::jsonb) RETURNING id`);
+    const coach = { ...sportsClaims('a2', 'coach'), sub: coachUser.rows[0].id, email: 'coach-sports@example.test' };
+    const athlete = sportsClaims('a1', 'athlete');
+    const casual = sportsClaims('seller', 'casual');
+    const trial = { name: 'Peneira de vôlei', team: 'Time Curitiba', sport: 'Vôlei', city: 'Curitiba / PR', address: 'Ginásio central', date: '2099-12-20', time: '09:00', minAge: '15', maxAge: '30', category: 'Adulto', requirements: 'Documento e tênis', deadline: '2099-12-19', trainingDays: 'Segunda e quarta', trainingTime: '18:00', trainingLocation: 'Ginásio central', contact: 'Equipe' };
+    const insertSport = (jwt, kind, data) => run('authenticated', jwt, `INSERT INTO public.sports_records(owner,kind,data) VALUES ($1,$2,$3::jsonb) RETURNING *`, [jwt.sub, kind, JSON.stringify(data)]);
+    const opportunity = await insertSport(coach, 'trial', trial);
+    check('Esportes treinador publica seletiva completa', opportunity.ok, opportunity.error);
+    check('Esportes atleta não publica seletiva', !(await insertSport(athlete, 'trial', trial)).ok);
+    check('Esportes casual não publica seletiva', !(await insertSport(casual, 'trial', trial)).ok);
+    check('Esportes treinador não publica seletiva sem rotina', !(await insertSport(coach, 'trial', { name: 'Incompleta', sport: 'Vôlei', city: 'Curitiba' })).ok);
+    const curriculum = await insertSport(athlete, 'athlete', { name: 'Carlos', sport: 'Vôlei', city: 'Curitiba', age: '22', height: '180', weight: '75', experience: '5' });
+    check('Esportes atleta publica currículo', curriculum.ok, curriculum.error);
+    const casualRead = await run('authenticated', casual, `SELECT * FROM public.sports_records WHERE kind IN ('trial','athlete')`);
+    check('Esportes casual não lê seletivas nem atletas', casualRead.ok && casualRead.rows.length===0);
+    if (opportunity.ok && curriculum.ok) {
+      const data = { name: 'Carlos', target: opportunity.rows[0].id, recipient: coach.sub, profile: curriculum.rows[0].id };
+      const application = await insertSport(athlete, 'application', data);
+      check('Esportes atleta inscreve-se em seletiva válida', application.ok, application.error);
+      check('Esportes inscrição duplicada é recusada', !(await insertSport(athlete, 'application', data)).ok);
+      check('Esportes destinatário adulterado é recusado', !(await insertSport(athlete, 'application', { ...data, recipient: id.master })).ok);
+      if (application.ok) {
+        const response = await run('authenticated', coach, `UPDATE public.sports_records SET data=data || '{"status":"Aceito"}'::jsonb WHERE id=$1 RETURNING *`, [application.rows[0].id]);
+        check('Esportes treinador responde à inscrição', response.ok && response.rows.length===1, response.error);
+        const tamper = await run('authenticated', coach, `UPDATE public.sports_records SET data=data || '{"name":"Outro atleta"}'::jsonb WHERE id=$1`, [application.rows[0].id]);
+        check('Esportes treinador não altera identidade da inscrição', !tamper.ok);
+      }
+      const invitation = await insertSport(coach, 'invite', { name: 'Equipe', target: curriculum.rows[0].id, recipient: athlete.sub, message: 'Convocação para treino terça às 18h' });
+      check('Esportes treinador envia convocação', invitation.ok, invitation.error);
+      if (invitation.ok) {
+        const accept = await run('authenticated', athlete, `UPDATE public.sports_records SET data=data || '{"status":"Aceito"}'::jsonb WHERE id=$1 RETURNING id`, [invitation.rows[0].id]);
+        check('Esportes atleta aceita sua convocação', accept.ok && accept.rows.length===1, accept.error);
+      }
+      const foreignEdit = await run('authenticated', coach, `UPDATE public.sports_records SET data=data || '{"name":"Alterado"}'::jsonb WHERE id=$1 RETURNING id`, [curriculum.rows[0].id]);
+      check('Esportes treinador não edita currículo alheio', foreignEdit.ok && foreignEdit.rows.length===0);
+      const banId = coach.sub;
+      await sys(`UPDATE public.profiles SET is_banned=true WHERE id=$1`, [banId]);
+      const bannedRead = await run('authenticated', coach, `SELECT id FROM public.sports_records`);
+      check('Esportes conta banida perde leitura', bannedRead.ok && bannedRead.rows.length===0);
+
+    }
+  }
 
   // ------------------------------------------------------------------ Relatório
   const width = Math.max(...results.map((r) => r.name.length));

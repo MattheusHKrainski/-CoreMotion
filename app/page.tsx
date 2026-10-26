@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
+import SportsHub from '@/components/SportsHub';
 import Sidebar from '@/components/shared/Sidebar';
 import Footer from '@/components/shared/Footer';
 import WelcomeLandingPage from '@/components/WelcomeLandingPage';
@@ -118,6 +119,8 @@ export default function CoreMotiomApp() {
           )}
 
           {activeView === 'coaches' && <CoachesView />}
+          {(activeView === 'trials' || activeView === 'talents' || activeView === 'sports-profile') && <SportsHub key={activeView} view={activeView} />}
+
           {activeView === 'community' && <CommunityView />}
           {activeView === 'profile' && <ProfileView />}
           {activeView === 'admin' && <AdminDashboard />}

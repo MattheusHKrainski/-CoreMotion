@@ -1,6 +1,6 @@
-# CoreMotion
+# CoreMotiom
 
-Marketplace esportivo demonstrativo com uma **vitrine B2C de ofertas externas simuladas**, **anúncios entre atletas** (C2C), **comunidade**, **checkout e envio demonstrativos** e **painel de gestão**. As ofertas B2C usam dados fictícios; lojas, links, preços e descontos reais ainda não estão conectados.
+Marketplace esportivo com **lojas oficiais** (B2C), **venda entre atletas** (C2C), **comunidade**, **compra com pagamento simulado** e **painel de gestão** com hierarquia de três papéis: **Administrador**, **Supervisor** e **Usuário**. O papel **Lojista** é o atleta que cria uma loja.
 
 Trabalho de Conclusão de Curso (TCC) desenvolvido pela equipe da disciplina, com metodologia Scrum.
 
@@ -13,8 +13,8 @@ Trabalho de Conclusão de Curso (TCC) desenvolvido pela equipe da disciplina, co
 | Código-fonte completo (frontend, API e banco) | Repositório: https://github.com/MattheusHKrainski/-CoreMotion |
 | Documentação do aplicativo | Este README e [`database/README.md`](database/README.md) |
 | Scripts de banco de dados | [`supabase/migrations/`](supabase/migrations/) e [`database/`](database/) |
-| Documento do TCC (ABNT) | [`docs/tcc/TCC-CoreMotion-ABNT.docx`](docs/tcc/TCC-CoreMotion-ABNT.docx) |
-| Diagrama de casos de uso (escopo original do TCC) | [`docs/diagramas/caso-de-uso.png`](docs/diagramas/caso-de-uso.png) |
+| Documento do TCC (ABNT) | [`docs/tcc/TCC-CoreMotiom-ABNT.docx`](docs/tcc/TCC-CoreMotiom-ABNT.docx) |
+| Diagrama de casos de uso | [`docs/diagramas/caso-de-uso.png`](docs/diagramas/caso-de-uso.png) |
 | Validação (plano e resultados) | [`docs/validacao/`](docs/validacao/) |
 | Roteiro da apresentação | [`docs/apresentacao/roteiro-slides.md`](docs/apresentacao/roteiro-slides.md) |
 | Apresentação (Google Slides ou PowerPoint Online) | _Link a ser inserido pela equipe_ |
@@ -24,37 +24,42 @@ Trabalho de Conclusão de Curso (TCC) desenvolvido pela equipe da disciplina, co
 
 ## Funcionalidades
 
-- **Vitrine B2C demonstrativa**: cards de ofertas mostram loja de origem, preço, desconto quando há preço original e ação simulada **Ver oferta**. Nesta etapa, lojas, links, preços e descontos são fictícios; nenhum site externo é consultado ou aberto. A integração com fontes reais fica para uma etapa posterior.
-- **Anúncios C2C**: atletas publicam equipamentos entre pessoas, com filtros por texto, categoria, modalidade e condição. O catálogo interno, a moderação, o carrinho e o checkout aceitam somente C2C.
-- **Perfis de loja**: não há criação, diretório ou revisão de perfis de loja na experiência atual. Registros e colunas legados (incluindo CNPJ e verificações anteriores) permanecem armazenados, mas ficam fora das rotas e da interface públicas.
-- **Carrinho e checkout demonstrativo**: mantém PIX, cartão, boleto, desconto PIX, parcelamento e cálculo local de frete para apresentação. Valores, código PIX, prazos e envio são simulados; o código PIX não é válido, não há gateway nem transportadora e nenhum pagamento ou envio real é feito. A conclusão pode registrar um pedido demonstrativo C2C.
-- **Meus pedidos**: o comprador acompanha os pedidos demonstrativos e seus status em **Perfil**. Supervisores e administradores alteram esses status no painel, sem confirmar pagamento ou entrega reais.
+- **Catálogo**: busca por texto; filtros por tipo de venda (todos, lojas oficiais ou venda entre atletas), categoria, modalidade, condição e *Somente Lojas Oficiais (CNPJ)*, que mostra apenas produtos de lojas verificadas; ordenação por relevância, menor ou maior preço e lançamentos recentes.
+- **Lojas oficiais**: qualquer atleta pode criar uma loja e passa a ser lojista. A loja pode solicitar o **selo de verificação**, aprovado ou reprovado por supervisor ou administrador. A reprovação registra o motivo padrão "Documentação pendente ou inconsistente"; não há campo para observações.
+- **Anúncios**: o lojista publica produtos oficiais (B2C) pela própria loja, escolhendo *Loja oficial* no campo *Tipo de venda*. Atletas e lojistas anunciam equipamentos usados entre atletas (C2C). Quem anunciou pode excluir o próprio anúncio. Supervisores e administradores podem suspender e reativar produtos e excluir anúncios de terceiros. A interface não tem tela de edição de anúncios: a API aceita alterações do dono, mas nenhum formulário as envia.
+- **Carrinho e compra**: PIX (com desconto de 5%), cartão de crédito e boleto. **O pagamento é simulado**: não há integração com gateway financeiro. A aprovação do pagamento é simulada no painel de gestão, pelo botão *Simular aprovação do PIX*, na seção de pedidos.
+- **Meus pedidos**: o comprador acompanha seus pedidos e seus status em **Perfil**. Supervisores e administradores alteram o status dos pedidos no painel.
 - **Comunidade**: publicações, curtidas e comentários. A denúncia usa um dos motivos fixos (*Spam*, *Conteúdo ofensivo*, *Informação falsa* ou *Outro*) e marca a publicação para moderação; supervisores e administradores podem removê-la.
-- **Perfil e painel de gestão**: edição de dados básicos; moderação de anúncios C2C e da comunidade; gestão de usuários e pedidos demonstrativos; diagnóstico do banco.
+- **Perfil**: edição de nome, telefone, cidade e UF, com exibição do papel, das regras que se aplicam a ele e dos pedidos.
+- **Painel de gestão** (supervisor e administrador): indicadores, verificação de lojas, moderação do catálogo e da comunidade, usuários (a troca de papel é exclusiva do administrador), pedidos e diagnóstico do banco.
 - Treinadores são **dados estáticos de demonstração**.
 
 ## Papéis e permissões
 
-Os papéis ativos são **Administrador** (`admin`), **Supervisor** (`supervisor`) e **Atleta/Usuário** (`user`). O papel legado **`seller`** é apresentado como **Anunciante C2C** e mantém apenas permissões de atleta; não concede acesso a perfis de loja nem a anúncios B2C. O **Visitante** é quem não entrou na conta.
+Os três papéis da hierarquia do curso são **Administrador** (`admin`), **Supervisor** (`supervisor`) e **Usuário** (`user`, o atleta). O **Lojista** (`seller`) é um Usuário que criou uma loja, e o **Visitante** é quem não entrou na conta.
 
-A matriz abaixo reflete `lib/permissions.ts` e as políticas atuais do banco. Ofertas B2C demonstrativas podem ser exploradas por todos, mas não são anúncios compráveis pelo carrinho interno.
+A matriz abaixo reflete `lib/permissions.ts` e é aplicada no servidor (rotas de API) e no banco (políticas RLS e triggers).
 
-| Capacidade | Visitante | Atleta | Anunciante C2C (`seller`) | Supervisor | Administrador |
+| Capacidade | Visitante | Atleta | Lojista | Supervisor | Administrador |
 |---|:-:|:-:|:-:|:-:|:-:|
-| Explorar ofertas B2C demonstrativas, catálogo C2C e comunidade | ✔ | ✔ | ✔ | ✔ | ✔ |
-| Comprar e acompanhar os próprios pedidos demonstrativos | | ✔ | ✔ | ✔ | ✔ |
-| Publicar, curtir, comentar e denunciar na comunidade | | ✔ | ✔ | ✔ | ✔ |
+| Navegar no catálogo, nas lojas e na comunidade | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Comprar e acompanhar os próprios pedidos | | ✔ | ✔ | ✔ | ✔ |
+| Publicar, curtir, comentar e denunciar | | ✔ | ✔ | ✔ | ✔ |
 | Anunciar equipamento entre atletas (C2C) | | ✔ | ✔ | | ✔ |
-| Moderar publicações denunciadas e anúncios C2C | | | | ✔ | ✔ |
-| Gerenciar pedidos demonstrativos | | | | ✔ | ✔ |
+| Criar loja (o atleta passa a lojista) | | ✔ | ✔ | | ✔ |
+| Gerenciar a própria loja e os produtos oficiais (B2C) | | | ✔ | | ✔ |
+| Solicitar selo de verificação da própria loja | | | ✔ | | ✔ |
+| Aprovar ou reprovar verificação de loja | | | | ✔ | ✔ |
+| Moderar publicações denunciadas e anúncios de terceiros | | | | ✔ | ✔ |
+| Gerenciar pedidos (status e confirmação de pagamento) | | | | ✔ | ✔ |
 | Listar contas | | | | ✔ | ✔ |
-| Suspender e reativar contas | | | | ✔ (atletas e anunciantes) | ✔ (exceto contas-mestre) |
+| Suspender e reativar contas | | | | ✔ (só atletas e lojistas) | ✔ (exceto contas-mestre) |
 | Alterar papéis | | | | | ✔ (exceto contas-mestre) |
 | Excluir contas | | | | | ✔ (exceto contas-mestre) |
 
-**Hierarquia de gestão**: Administrador > Supervisor. Atleta e Anunciante C2C têm as mesmas permissões de publicação C2C; o papel `seller` é mantido apenas para compatibilidade com contas legadas. O supervisor modera e gerencia pedidos demonstrativos, mas não publica, não altera papéis e não exclui contas.
+**Hierarquia** (níveis de `ROLE_RANK`): Administrador > Supervisor > Lojista > Atleta > Visitante. O administrador tem todas as capacidades. O supervisor modera e gerencia pedidos, mas não anuncia, não cria lojas, não altera papéis e não exclui contas.
 
-**Como o papel é definido**: o papel fica em `public.profiles.role` e é validado no servidor a partir do token de sessão do Supabase Auth. Ao criar uma conta, o papel padrão é `user`; a conta-mestre é promovida a administrador. Nenhum fluxo cria ou promove uma conta por causa de uma loja.
+**Como o papel é definido**: o papel fica na tabela `public.profiles` e é validado **no servidor** em cada requisição, a partir do token de sessão do Supabase Auth. O navegador não decide permissões. Ao criar a primeira loja, o atleta passa a lojista; administradores e supervisores não são rebaixados.
 
 **Contas-mestre**: as contas listadas em `MASTER_ADMIN_EMAILS` (`lib/permissions.ts`) recebem o papel de administrador no cadastro e na migração. A mesma lista está na função SQL `public.is_master_email`; ao alterar uma, altere a outra. O aplicativo não permite suspender, rebaixar nem excluir essas contas (`canSuspendTarget`, `canChangeRoleOf` e `canDeleteTarget`).
 
@@ -63,7 +68,7 @@ A matriz abaixo reflete `lib/permissions.ts` e as políticas atuais do banco. Of
 ## Tecnologias
 
 - **Frontend**: Next.js 15 (App Router), React 19, TypeScript e Tailwind CSS 4.
-- **Backend**: rotas de API do Next.js (`app/api/*`), validação de sessão e papel e esquemas Zod para autenticação, anúncios e pedidos (`lib/schemas/`).
+- **Backend**: rotas de API do Next.js (`app/api/*`), com validação de sessão e de papel em cada rota de escrita e validação das entradas por utilitários próprios (`lib/api-utils.ts`).
 - **Autenticação**: Supabase Auth (token JWT).
 - **Banco de dados**: PostgreSQL (Supabase), com Row Level Security (RLS), triggers e funções de autorização. O servidor acessa o banco com o driver `pg`.
 - **Qualidade**: ESLint, verificação de tipos com TypeScript, testes de autorização do banco com PGlite (PostgreSQL em WebAssembly), teste de fumaça das rotas de API e CI no GitHub Actions.
@@ -74,7 +79,7 @@ A matriz abaixo reflete `lib/permissions.ts` e as políticas atuais do banco. Of
 
 ### Pré-requisitos
 
-- Node.js 22 ou superior (versão usada no CI; o `@supabase/supabase-js` atual exige WebSocket nativo, disponível a partir do Node.js 22) e npm.
+- Node.js 20 ou superior (versão usada no CI; o Next.js 15 aceita Node.js 18.18 ou superior) e npm.
 - Um projeto no [Supabase](https://supabase.com) (plano gratuito é suficiente).
 
 ### 1. Obter o código e instalar as dependências
@@ -133,7 +138,7 @@ npm run start      # o Next.js exibe um aviso sobre a saída "standalone", mas o
 
 ### 6. Dados de demonstração (opcional)
 
-Os dados fictícios ficam em `fixtures/` e os anúncios C2C só aparecem com `NEXT_PUBLIC_DEMO_MODE=true`. As ofertas B2C são fixtures separadas em `fixtures/demo-offers.ts`, sempre identificadas como simulação. O seed ativo de exemplo (`scripts/seed-all-products.mjs`) contém somente C2C. Seeds antigos de lojas/B2C e catálogos destrutivos estão desativados por padrão; não os habilite para dados de produção.
+Os dados fictícios ficam em `fixtures/` e só aparecem com `NEXT_PUBLIC_DEMO_MODE=true`. Os scripts `scripts/seed-*.mjs` preenchem o catálogo do banco para desenvolvimento. Os scripts `seed-catalog.mjs` e `seed-rich-catalog.mjs` **apagam** a tabela de produtos e só rodam com `CONFIRM_DESTRUCTIVE_SEED=SIM`.
 
 ---
 
@@ -142,15 +147,14 @@ Os dados fictícios ficam em `fixtures/` e os anúncios C2C só aparecem com `NE
 | Verificação | Comando | Resultado |
 |---|---|---|
 | Verificação de tipos | `npm run type-check` | Sem erros |
-| Lint | `npm run lint` | 0 erros; 17 avisos de `<img>` (não bloqueiam o build) |
-| Testes unitários | `npm run test:unit` | **12 de 12 aprovados** |
+| Lint | `npm run lint` | 0 erros; 23 avisos (uso de `<img>`, não bloqueiam o build) |
 | Build de produção | `npm run build` | Aprovado |
-| Autorização do banco (62 cenários) | `npm run test:db` | **62 de 62 aprovados**, incluindo aposentadoria de lojas/B2C |
-| Teste de fumaça das rotas de API | `BASE_URL=http://localhost:3000 bash scripts/smoke-api.sh` | **14 de 14 aprovados** (sem token e com token forjado: 401) |
+| Autorização do banco (47 cenários) | `npm run test:db` | **47 de 47 aprovados** no esquema endurecido |
+| Teste de fumaça das rotas de API | `BASE_URL=http://localhost:3000 bash scripts/smoke-api.sh` | **22 de 22 aprovados** (sem token e com token forjado: 401) |
 
 Resultados registrados em:
 
-- [`docs/validacao/resultados-testes-banco.txt`](docs/validacao/resultados-testes-banco.txt): resultado atualizado da suíte endurecida (62 cenários), incluindo bloqueio de novas publicações B2C, indisponibilidade de lojas legadas via REST e preservação dos registros existentes. A comparação da linha de base de 2026-10-08 está registrada no próprio arquivo.
+- [`docs/validacao/resultados-testes-banco.txt`](docs/validacao/resultados-testes-banco.txt): a **linha de base** (esquema inicial, antes da correção) reprova **29 de 47** cenários. Entre as falhas estavam autoescalonamento de papel pelos metadados do cadastro, leitura anônima de perfis, pedido marcado como pago pelo cliente e exclusão de tabela (`TRUNCATE`) por usuários autenticados.
 - [`docs/validacao/smoke-api.txt`](docs/validacao/smoke-api.txt): resultado do teste de fumaça das rotas de API.
 - [`docs/validacao/plano-de-testes.md`](docs/validacao/plano-de-testes.md): o que é testado, como e com quais limitações.
 
@@ -162,7 +166,7 @@ O workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa essas 
 
 ```
 app/
-  api/                    Rotas de API: users, auth/sync e products (catálogo C2C)
+  api/                    Rotas de API: users, auth/sync, products, listings, stores
   auth/callback/          Retorno da autenticação
   page.tsx                Aplicação (navegação por visões)
 components/               Telas e componentes (Sidebar, AdminDashboard, ProfileView, CheckoutModal, ...)
@@ -172,14 +176,14 @@ lib/
   auth-fetch.ts           Envio do token de sessão nas chamadas à API (navegador)
   api-utils.ts            Leitura e validação básica das entradas das rotas
   db.ts, db-queries.ts    Conexão e consultas SQL parametrizadas (servidor)
-  schemas/                Esquemas Zod para autenticação, anúncios e pedidos
+  schemas/                Esquemas Zod (ainda não aplicados às rotas)
   store.tsx               Estado global e ações do aplicativo
 services/                 Acesso a dados (Supabase no navegador e API interna)
 supabase/migrations/      Esquema e segurança do banco (SQL versionado)
 database/
   README.md               Documentação do banco
   tests/                  Testes de autorização do banco (PGlite)
-  legacy/                 Scripts antigos mantidos só como referência
+  legacy/                 Scripts antigos e destrutivos, mantidos só como referência
 scripts/                  Seeds, utilitários e teste de fumaça das rotas de API
 docs/
   diagramas/              Diagrama de casos de uso (PNG e SVG) e gerador (Python)
@@ -196,12 +200,12 @@ docs/
 Medidas implementadas nesta versão:
 
 - **Sem credenciais no código**: URLs e chaves vêm de variáveis de ambiente. Uma versão anterior tinha uma senha de banco embutida no código, que continua no histórico do Git.
-- **Sessão obrigatória nas escritas**: as rotas de escrita existentes validam a sessão antes de aceitar a operação; sem token válido, a resposta é `401`.
+- **Sessão obrigatória nas escritas**: toda rota de escrita valida o token antes de ler o corpo da requisição. Sem token válido, a resposta é `401`. Sem papel suficiente ou com conta suspensa, a resposta é `403`.
 - **Papel vem do banco, nunca do cliente**: o cadastro ignora qualquer papel enviado pelo navegador. Ao criar o perfil, o banco atribui `user`, ou `admin` apenas para contas-mestre.
-- **B2C desligado no catálogo interno**: API, validação de entrada, políticas RLS e trigger do banco rejeitam novas linhas B2C; linhas legadas ficam ocultas aos papéis REST e não podem ser usadas no checkout.
-- **Dados legados preservados**: a migração aditiva não apaga lojas, CNPJs, campos ou registros antigos. O acesso às lojas via `anon`/`authenticated` foi revogado; o app não possui rotas de criação, diretório ou revisão de loja.
-- **RLS e privilégios mínimos**: políticas por dono e por staff; contas suspensas não criam conteúdo; visitantes veem anúncios C2C ativos, comunidade e ofertas demonstrativas locais. `TRUNCATE` não é concedido.
-- **Triggers de proteção**: papel, suspensão, moderação, status de pagamento e status do pedido são validados no banco. Os pedidos também são limitados a anúncios C2C.
+- **Anúncios B2C**: a rota lê o nome e o selo de verificação da loja no banco. O navegador não informa se a loja é verificada, e o lojista só anuncia pela própria loja.
+- **RLS endurecida**: políticas por dono e por staff; contas suspensas não criam nem alteram conteúdo; visitantes anônimos leem apenas a vitrine (produtos, lojas e comunidade).
+- **Triggers de proteção de colunas**: papel, suspensão, verificação de loja, status de pagamento e status de pedido só podem ser alterados pelo perfil correto.
+- **Privilégios mínimos**: `REVOKE` de privilégios amplos (inclusive `TRUNCATE`, que o RLS não controla) e `GRANT` apenas do necessário.
 - **Consultas parametrizadas** no servidor, contra injeção de SQL.
 
 **Ação necessária antes da publicação**: a senha do banco que esteve no código do repositório **deve ser redefinida** no painel do Supabase (*Project Settings › Database › Reset database password*). A nova URI deve ser usada apenas no `.env.local` de cada desenvolvedor. Trate como comprometida qualquer credencial que tenha sido publicada.
@@ -210,11 +214,11 @@ Medidas implementadas nesta versão:
 
 ## Limitações conhecidas
 
-- As ofertas B2C são totalmente fictícias nesta etapa: não existe scraping, fonte real, link externo funcional ou integração de preços. A conexão futura de fontes será feita depois.
-- PIX, cartão, boleto, parcelamento e cálculo de frete são **simulados**. O checkout pode registrar pedidos demonstrativos C2C, mas não há gateway, transportadora, pagamento, venda ou envio reais.
+- Pagamentos (PIX, cartão e boleto) são **simulados**. Não há integração com gateway financeiro.
 - Treinadores são **dados estáticos** de demonstração.
-- Não há testes automatizados de interface (ponta a ponta). O código é validado por tipos, lint, build e testes de banco.
+- Não há testes automatizados de interface (ponta a ponta). A interface foi verificada por tipos, lint, build e pelo teste de fumaça das rotas.
 - A interface não tem tela para editar anúncios já publicados.
+- Os esquemas Zod em `lib/schemas/` ainda não são usados pelas rotas; a validação atual está em `lib/api-utils.ts`.
 - A conexão do servidor com o PostgreSQL verifica o certificado (`rejectUnauthorized: true`). Se o pooler usar uma CA própria, informe o certificado em `DATABASE_SSL_CA`.
 - Sem a configuração do Supabase e sem `NEXT_PUBLIC_DEMO_MODE=true`, o login e o cadastro ficam indisponíveis (nenhuma sessão local é criada).
 
