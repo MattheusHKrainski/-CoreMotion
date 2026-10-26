@@ -1,142 +1,83 @@
 # Banco de dados do CoreMotiom
 
-Este documento descreve o modelo de dados, o controle de acesso (papéis, RLS e triggers), os scripts e os testes do banco PostgreSQL usado pelo CoreMotiom (projeto Supabase).
-
-- Esquema inicial: [`supabase/migrations/20250101000000_coremotiom_initial_schema.sql`](../supabase/migrations/20250101000000_coremotiom_initial_schema.sql)
-- Hierarquia de papéis e endurecimento de segurança: [`supabase/migrations/20261008000000_roles_hierarchy_and_security.sql`](../supabase/migrations/20261008000000_roles_hierarchy_and_security.sql)
-- Testes de autorização: [`database/tests/`](tests/)
-
----
+Este documento descreve o PostgreSQL/Supabase usado pelo aplicativo, suas migrações, regras de acesso e testes. A versão atual mantém o esquema histórico de lojas para compatibilidade, mas retirou os perfis de loja da experiência pública. A vitrine B2C atual é composta por fixtures fictícias; o catálogo interno e o checkout aceitam apenas C2C.
 
 ## 1. Ordem de execução
 
-Execute os scripts **nesta ordem**, no *SQL Editor* do Supabase ou com `psql`:
+Aplique as migrações **nesta ordem** pelo SQL Editor do Supabase ou com `psql`:
 
-1. `20250101000000_coremotiom_initial_schema.sql`: cria as tabelas, os triggers e as políticas iniciais.
-2. `20261008000000_roles_hierarchy_and_security.sql`: aplica a hierarquia de papéis e o endurecimento. É **idempotente**: pode ser executado mais de uma vez.
+1. [`20250101000000_coremotiom_initial_schema.sql`](../supabase/migrations/20250101000000_coremotiom_initial_schema.sql) — esquema inicial e tabelas.
+2. [`20261008000000_roles_hierarchy_and_security.sql`](../supabase/migrations/20261008000000_roles_hierarchy_and_security.sql) — hierarquia de papéis, RLS e privilégios.
+3. [`20261009000000_security_fixes.sql`](../supabase/migrations/20261009000000_security_fixes.sql) — correções incrementais para produtos, pedidos e comunidade.
+4. [`20261020000000_retire_store_b2c_marketplace.sql`](../supabase/migrations/20261020000000_retire_store_b2c_marketplace.sql) — migração aditiva que desativa as rotas públicas de loja e a publicação/compra de produtos B2C.
 
-A migração 2 faz o seguinte, nesta ordem:
-
-- converte o papel legado `merchant` em `seller` antes de recriar a restrição de papéis;
-- recria a restrição `profiles_role_check` com os papéis `admin`, `supervisor`, `seller` e `user`;
-- promove a `admin` as contas-mestre já cadastradas;
-- substitui todas as políticas RLS antigas por regras de dono e de staff;
-- cria os triggers de proteção de colunas e revoga privilégios amplos.
+As migrações existentes não foram reescritas. A última migração é idempotente e **não apaga nem transforma registros legados**: mantém tabelas, CNPJs, campos, referências e produtos B2C antigos, mas revoga o acesso REST a `stores`, oculta anúncios B2C e impede novas publicações B2C e pedidos que os incluam.
 
 ## 2. Modelo de dados
 
-| Tabela | Finalidade | Colunas principais |
+| Tabela | Uso atual | Observações |
 |---|---|---|
-| `profiles` | Perfil de cada conta; `id` referencia `auth.users` | `role`, `is_banned`, `ban_reason`, `store_id`, `city`, `state`, `sport_interests` |
-| `stores` | Lojas oficiais (B2C) e seu selo de verificação | `owner_id`, `slug`, `is_verified`, `verification_status`, `verification_requested_at`, `verification_docs` |
-| `products` | Anúncios: produtos de lojas (`b2c`) e anúncios entre atletas (`c2c`) | `seller_id`, `store_id`, `product_type`, `price`, `stock`, `status` (`active` ou suspenso) |
-| `orders` | Pedidos e seus estados de pagamento e de entrega | `user_id`, `items` (JSONB), `total`, `payment_method`, `payment_status`, `order_status` |
-| `community_posts` | Publicações da comunidade, com curtidas, comentários e denúncias | `author_id`, `category`, `comments` (JSONB), `is_reported`, `report_reason` |
+| `profiles` | Perfil de cada conta; `id` referencia `auth.users` | `role`, suspensão, cidade, UF e interesses. `store_id` permanece como campo legado. |
+| `stores` | Dados históricos de perfis de loja | Tabela e dados preservados. Não há criação, diretório ou revisão de lojas na aplicação, e `anon`/`authenticated` não têm acesso REST. |
+| `products` | Anúncios entre atletas (C2C) | `product_type`, `store_id`, `store_name` e selo antigo continuam no esquema para compatibilidade. A aplicação só lê/escreve C2C. |
+| `orders` | Pedidos demonstrativos | `items` é JSONB; triggers recalculam totais e recusam qualquer item que não seja C2C. Pagamento e envio continuam simulados. |
+| `community_posts` | Publicações, curtidas, comentários e denúncias | Mantém as políticas de autor e moderação. |
 
-**Papéis** (`profiles.role`): `admin` (administrador), `supervisor`, `seller` (lojista) e `user` (atleta). O visitante não é gravado no banco; é o estado de quem não está autenticado.
+`profiles.role` aceita os papéis históricos `admin`, `supervisor`, `seller` e `user`. O papel `seller` continua válido para contas existentes, mas na aplicação equivale a um anunciante C2C — não concede acesso a lojas nem permite publicar B2C. Visitante não é gravado no banco.
 
-**Status de verificação** (`stores.verification_status`) e **de pedido** (`orders.order_status`) são restritos por `CHECK` no próprio esquema, o que impede valores fora do domínio.
+Os campos e as linhas antigos de B2C não devem ser apresentados como ofertas reais, anúncios compráveis, lojas oficiais ou entidades verificadas. As ofertas B2C do aplicativo ficam separadas em `fixtures/demo-offers.ts` e são explicitamente fictícias.
 
-## 3. Funções de autorização
+## 3. Funções e triggers de segurança
 
-As funções que consultam tabelas usam `SECURITY DEFINER` com `search_path` fixo, para evitar sequestro de caminho de busca. `is_master_email` é uma função SQL imutável, sem acesso a tabelas.
+As funções de autorização usam `SECURITY DEFINER` com `search_path` fixo. Entre elas: `public.is_master_email`, `public.is_admin`, `public.is_staff`, `public.current_user_role` e `public.is_banned_user`.
 
-| Função | Retorno | Uso |
+| Trigger | Tabela | Regra relevante |
 |---|---|---|
-| `public.is_master_email(email)` | `boolean` | Verifica se o e-mail é de conta-mestre. Deve manter a mesma lista de `lib/permissions.ts` |
-| `public.is_admin()` | `boolean` | Usuário autenticado tem papel `admin` |
-| `public.is_staff()` | `boolean` | Usuário autenticado tem papel `admin` ou `supervisor` |
-| `public.current_user_role()` | `text` | Papel do usuário autenticado |
-| `public.is_banned_user()` | `boolean` | Conta suspensa; usada nas políticas de escrita |
+| `on_auth_user_created` | `auth.users` | Cria perfil como `user`, exceto contas-mestre que recebem `admin`. |
+| `profiles_protect_columns` | `profiles` | Protege papel, suspensão, motivo de suspensão e e-mail. |
+| `stores_protect_columns` | `stores` | Regra histórica de verificação; a tabela não está acessível pelos papéis REST. |
+| `products_protect_columns` | `products` | Protege autoria, métricas e status de moderação. |
+| `products_reject_new_b2c` | `products` | Rejeita inserção B2C e mudança de C2C para B2C; registros antigos permanecem. |
+| `orders_compute_totals` | `orders` | Recalcula preço, frete, desconto PIX e total a partir dos produtos. |
+| `orders_z_c2c_only_items` | `orders` | Recusa pedidos novos/alterações de itens que incluam produto não C2C. |
+| `community_protect_columns` | `community_posts` | Protege autoria, conteúdo, curtidas, comentários e denúncias. |
 
-## 4. Triggers de proteção
+Os triggers de aplicação continuam sendo complementados pelas políticas RLS. A conexão de servidor via `DATABASE_URL` tem privilégios próprios e não herda o JWT do usuário; as rotas que a usam validam sessão, papel e corpo da requisição antes de executar consultas.
 
-| Trigger | Tabela | Regra |
+## 4. Políticas RLS e privilégios
+
+RLS permanece habilitada nas tabelas do aplicativo. As regras relevantes depois da migração de aposentadoria são:
+
+| Tabela | SELECT | INSERT / UPDATE / DELETE |
 |---|---|---|
-| `on_auth_user_created` | `auth.users` | Cria o perfil. O papel é `admin` apenas para contas-mestre; caso contrário, `user` |
-| `profiles_protect_columns` | `profiles` | Usuário comum não altera `role`, `is_banned`, `ban_reason` nem `email` |
-| `stores_protect_columns` | `stores` | Só o staff altera a verificação (`is_verified`, `verification_status`, revisão) |
-| `products_protect_columns` | `products` | Vendedor não altera a moderação (`status` suspenso pelo staff) |
-| `orders_protect_columns` | `orders` | Cliente não define `payment_status` nem `order_status`; só o staff confirma pagamento |
-| `community_protect_columns` | `community_posts` | Qualquer atleta ativo pode curtir, comentar e denunciar. Autoria, título, texto, imagem e categoria só o autor ou o staff altera |
+| `profiles` | Próprio perfil ou staff | Próprio perfil/staff conforme as políticas; papel e suspensão protegidos por trigger. |
+| `stores` | Sem privilégio REST para `anon` ou `authenticated` | Sem privilégio REST para `anon` ou `authenticated`; acesso de administração do banco permanece separado. |
+| `products` | Somente C2C ativo, próprio ou visível ao staff | Somente C2C; inserção exige usuário ativo ou admin, alterações/exclusões seguem dono e staff. |
+| `orders` | Comprador ou staff | Comprador não suspenso/admin; status financeiro e total são protegidos/recalculados. O trigger rejeita itens B2C legados. |
+| `community_posts` | Público | Autor ativo ou staff conforme a operação e as colunas protegidas. |
 
-Os triggers só restringem chamadas **com JWT** (`auth.uid()` não nulo). Conexões sem JWT, como o servidor com `DATABASE_URL`, migrações e o painel do Supabase, não são restringidas pelos triggers, porque o servidor valida o papel antes de gravar (ver a seção 7).
+A migração `20261020000000` revoga todos os privilégios de tabela de `stores` para `anon` e `authenticated`. A leitura pública de `products` continua disponível para C2C ativo, e a comunidade mantém suas políticas existentes. `TRUNCATE` não é concedido — RLS não controla essa operação.
 
-## 5. Políticas RLS
+## 5. Rotas e serviços da aplicação
 
-RLS está **habilitada** nas cinco tabelas. As políticas combinam-se com `OR`; por isso, as políticas antigas permissivas foram removidas.
+As rotas mantidas são `app/api/auth/sync`, `app/api/products` e `app/api/users`. Não há rota de lojas ou revisão de CNPJ. `GET /api/products` força `product_type=c2c`, `POST` aceita somente C2C e `PATCH`/`DELETE` não expõem linhas B2C legadas. `ProductService` e `OrderService` repetem os bloqueios no cliente de aplicação; RLS e triggers também os aplicam no banco.
 
-| Tabela | SELECT | INSERT | UPDATE | DELETE |
-|---|---|---|---|---|
-| `profiles` | Próprio perfil ou staff | Próprio `id` ou administrador | Próprio perfil ou staff | Administrador |
-| `stores` | Todos (vitrine pública) | Dono não suspenso ou administrador | Dono não suspenso ou staff | Dono ou administrador |
-| `products` | Anúncio ativo, dono ou staff | Vendedor não suspenso ou administrador | Vendedor não suspenso ou staff | Vendedor ou staff |
-| `orders` | Comprador ou staff | Comprador não suspenso ou administrador | Comprador não suspenso ou staff | Administrador |
-| `community_posts` | Todos | Autor não suspenso ou administrador | Autenticado não suspenso ou staff (colunas protegidas por trigger) | Autor ou staff |
+O checkout permanece demonstrativo: a migração bloqueia itens B2C, mas nenhum gateway, pagamento, transportadora ou envio real é integrado.
 
-## 6. Privilégios
+## 6. Scripts auxiliares
 
-```sql
-REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
-REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
-GRANT SELECT ON public.products, public.stores, public.community_posts TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
-```
+- `scripts/seed-all-products.mjs` contém exemplos C2C e pode ser usado em desenvolvimento depois de revisar o conteúdo e configurar o banco.
+- `scripts/seed-data.mjs`, `seed-extended-catalog.mjs`, `seed-50-stores.mjs`, `seed-catalog.mjs` e `seed-rich-catalog.mjs` são seeds históricos de lojas/B2C, **desativados por padrão**. Não os habilite em dados de produção.
+- `scripts/update-product-images.mjs` altera imagens de registros existentes; revise antes de executar.
+- `scripts/inspect-db.mjs` é somente leitura; `scripts/smoke-api.sh` testa sessão nas rotas sem depender do banco.
+- `database/legacy/` contém utilitários antigos mantidos apenas como referência.
 
-- **Visitante anônimo** lê apenas a vitrine: produtos, lojas e comunidade.
-- **Autenticado** passa pelas políticas RLS. O privilégio `TRUNCATE` **não** é concedido: RLS não controla `TRUNCATE`, por isso ele é revogado.
+## 7. Testes
 
-## 7. Conexão do servidor
-
-As rotas de API (`app/api/*`) acessam o banco com `DATABASE_URL`, pelo driver `pg`. Essa conexão não carrega o JWT do usuário, então **as políticas RLS não se aplicam a ela**. Por isso, a autorização é aplicada duas vezes:
-
-1. **No servidor**: toda rota de escrita valida o token com `requireAuth` (`lib/server-auth.ts`) e verifica a capacidade com `lib/permissions.ts` antes de executar a consulta.
-2. **No banco**: as consultas do cliente Supabase (navegador) passam pela RLS e pelos triggers.
-
-A string `DATABASE_URL` é lida apenas no servidor e nunca é versionada.
-
-## 8. Scripts auxiliares
-
-| Caminho | Finalidade | Atenção |
-|---|---|---|
-| `scripts/seed-catalog.mjs` | Carrega catálogo de demonstração | **Apaga** a tabela `products` antes de inserir |
-| `scripts/seed-rich-catalog.mjs` | Carrega catálogo ampliado | **Apaga** a tabela `products` antes de inserir |
-| `scripts/seed-all-products.mjs`, `seed-extended-catalog.mjs`, `seed-50-stores.mjs`, `seed-data.mjs` | Dados de demonstração | Leia o código antes de executar |
-| `scripts/update-product-images.mjs` | Atualiza a coluna `images` dos produtos | Altera dados; uso em desenvolvimento |
-| `scripts/inspect-db.mjs` | Inspeciona o banco | Somente leitura |
-| `scripts/smoke-api.sh` | Teste de fumaça das rotas de API (sem banco) | Requer o servidor no ar |
-| `database/legacy/*.mjs` | Scripts antigos (migração e organização) | **Não usar.** Mantidos apenas como referência |
-
-Execute scripts de dados somente em desenvolvimento ou com backup disponível.
-
-## 9. Testes de autorização
-
-A suíte `database/tests/rls.test.mjs` executa **47 cenários** sobre PostgreSQL em memória (PGlite 0.3.2). Cada cenário conecta-se com um papel (`anon`, `authenticated`) e um JWT de teste, e verifica se a operação é permitida ou negada. Os cenários cobrem:
-
-- escalonamento de privilégio pelos metadados do cadastro e por alteração do próprio papel;
-- leitura anônima e acesso a dados de outros usuários;
-- suspensão de conta (escrita bloqueada) e exclusão de contas (somente administrador);
-- proteção de colunas (pagamento, status de pedido, verificação de loja, moderação);
-- privilégios de tabela (`TRUNCATE` negado) e exclusão em cascata de `auth.users`.
-
-Comandos:
+A suíte `database/tests/rls.test.mjs` usa PGlite para executar o esquema e as quatro migrações. Os **62 cenários** incluem papéis/RLS, C2C, rejeição de novas linhas B2C, ocultação e preservação de dados B2C legados, revogação do acesso à tabela `stores`, checkout C2C, pedidos, comunidade e `TRUNCATE`.
 
 ```bash
-npm run test:db                                   # esquema endurecido: 47 de 47
-BASELINE=1 npm --prefix database/tests test       # linha de base (esquema inicial)
+npm run test:db
 ```
 
-Resultados em [`docs/validacao/resultados-testes-banco.txt`](../docs/validacao/resultados-testes-banco.txt):
-
-| Esquema | Aprovados | Reprovados |
-|---|:-:|:-:|
-| Inicial (linha de base) | 18 | 29 |
-| Endurecido (inicial + migração 2) | **47** | 0 |
-
-Na linha de base, as falhas mais graves permitiam que um atleta se tornasse administrador, que um visitante lesse perfis, que um cliente marcasse o próprio pedido como pago e que um usuário autenticado executasse `TRUNCATE`.
-
-## 10. Segurança operacional
-
-- **Senha do banco**: a senha que esteve no código do repositório deve ser redefinida no Supabase (*Project Settings › Database › Reset database password*). Use a nova URI apenas no `.env.local`.
-- **Backups**: mantenha backups automáticos ativos no projeto Supabase antes de executar scripts de dados.
-- **Certificado**: a conexão do servidor verifica o certificado do PostgreSQL (`rejectUnauthorized: true`). Se o pooler usar uma CA própria (ex.: a do Supabase), informe o certificado em `DATABASE_SSL_CA`.
+PGlite não substitui uma verificação no projeto Supabase real. A execução automatizada usa dados temporários e não conecta nem altera uma base externa. Antes de aplicar uma migração num projeto configurado, faça backup e confirme o ambiente.

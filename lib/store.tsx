@@ -1,12 +1,13 @@
 'use client';
+import { ACCOUNT_TYPES, type AccountType } from './sports';
 
 import { calculateCheckoutTotals, ShippingMethod } from './checkout';
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import {
   UserProfile,
   UserRole,
   Product,
-  Store,
+  ExternalOffer,
   CartItem,
   Order,
   PaymentMethod,
@@ -18,13 +19,14 @@ import {
 } from './types';
 import {
   INITIAL_PRODUCTS,
-  INITIAL_STORES,
   INITIAL_COACHES,
   INITIAL_ATHLETES,
   INITIAL_COMMUNITY_POSTS,
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
+import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
+import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 import { DEMO_MODE } from '@/lib/demo-mode';
 import { getSupabaseClient as getSupabase, isSupabaseConfigured } from '@/services/supabaseClient';
 import { authedFetch } from './auth-fetch';
@@ -33,11 +35,11 @@ import {
   canSuspendTarget,
   hasCapability,
   isAdminRole,
+  isStaffRole,
 } from './permissions';
 import {
   AuthService,
   ProductService,
-  StoreService,
   OrderService,
   CommunityService,
   testSupabaseConnection,
@@ -54,12 +56,14 @@ interface Toast {
 type ActiveView =
   | 'home'
   | 'marketplace'
-  | 'stores'
   | 'sell'
   | 'coaches'
   | 'community'
   | 'profile'
-  | 'admin';
+  | 'admin'
+  | 'trials'
+  | 'talents'
+  | 'sports-profile';
 
 interface CoreMotiomContextType {
   // Navigation & UI Modals
@@ -67,16 +71,19 @@ interface CoreMotiomContextType {
   setActiveView: (view: ActiveView) => void;
   selectedProduct: Product | null;
   setSelectedProduct: (p: Product | null) => void;
-  selectedStore: Store | null;
-  setSelectedStore: (s: Store | null) => void;
   isAuthModalOpen: boolean;
   setAuthModalOpen: (open: boolean) => void;
   authModalMode: 'login' | 'register' | 'forgot' | 'switch';
   setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch') => void;
+  authAccountType: AccountType;
+  setAuthAccountType: (type: AccountType) => void;
+  prefillAuthEmail: string;
+  setPrefillAuthEmail: (email: string) => void;
+  hasEnteredPlatform: boolean;
+  enterPlatform: (targetView?: ActiveView) => void;
+  openWelcomePage: () => void;
   isCheckoutOpen: boolean;
   setCheckoutOpen: (open: boolean) => void;
-  isCreateStoreModalOpen: boolean;
-  setCreateStoreModalOpen: (open: boolean) => void;
   isSupabaseConfigOpen: boolean;
   setSupabaseConfigOpen: (open: boolean) => void;
   searchQuery: string;
@@ -99,11 +106,11 @@ interface CoreMotiomContextType {
   adminSyncSupabase: () => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
   loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  signUpWithEmail: (email: string, pass: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
-  switchRole: (newRole: UserRole) => void;
-  updateUserProfile: (data: Partial<UserProfile>) => void;
+  switchRole: (newRole: UserRole, accountType?: AccountType) => void;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
 
   // Cart & Orders
   cart: CartItem[];
@@ -124,21 +131,34 @@ interface CoreMotiomContextType {
   // Products
   products: Product[];
   createProduct: (product: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>) => Promise<Product>;
-  updateProduct: (id: string, data: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
+  updateProduct: (id: string, data: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
 
-  // Stores & Official Verification
-  stores: Store[];
-  createStore: (storeData: Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | 'products_count' | 'is_verified' | 'verification_status'>) => Promise<Store>;
-  requestStoreVerification: (storeId: string, docs: NonNullable<Store['verification_docs']>) => Promise<void>;
-  adminVerifyStore: (storeId: string, approve: boolean, notes?: string) => Promise<void>;
+  // External Offers & Affiliate Links Management
+  offers: ExternalOffer[];
+  activeOffers: ExternalOffer[];
+  editingOfferId: string | null;
+  setEditingOfferId: (id: string | null) => void;
+  addOffer: (input: OfferCreateInput) => Promise<ExternalOffer | null>;
+  updateOffer: (id: string, input: OfferUpdateInput) => Promise<boolean>;
+  deleteOffer: (id: string) => Promise<boolean>;
+  toggleOfferActive: (id: string, isActive: boolean) => Promise<boolean>;
+  resetDefaultOffers: () => Promise<void>;
+  fetchOfferMetadata: (url: string) => Promise<{
+    store_name?: string;
+    title?: string;
+    image_url?: string;
+    description?: string;
+    price?: number;
+  } | null>;
 
   // Community
   communityPosts: CommunityPost[];
-  createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string }) => void;
-  likeCommunityPost: (postId: string) => void;
-  addCommunityComment: (postId: string, content: string) => void;
-  reportCommunityPost: (postId: string, reason: string) => void;
+  /** Devolve true quando a publicação foi criada (o formulário só é limpo nesse caso). */
+  createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string }) => Promise<boolean>;
+  likeCommunityPost: (postId: string) => Promise<void>;
+  addCommunityComment: (postId: string, content: string) => Promise<void>;
+  reportCommunityPost: (postId: string, reason: string) => Promise<void>;
   adminDeleteCommunityPost: (postId: string) => void;
 
   // Coaches & Athletes & News
@@ -159,16 +179,26 @@ interface CoreMotiomContextType {
 const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
+const OFFERS_STORAGE_KEY = 'coremotion_managed_offers_v1';
+const ENTERED_SESSION_KEY = 'coremotion_entered_session_v2';
+
+/** Junta duas listas de anúncios por id; os itens de `incoming` prevalecem. */
+function mergeProductsById(current: Product[], incoming: Product[]): Product[] {
+  const byId = new Map(current.map((p) => [p.id, p]));
+  incoming.forEach((p) => byId.set(p.id, p));
+  return Array.from(byId.values());
+}
 
 export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Navigation & views
   const [activeView, setActiveView] = useState<ActiveView>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+  const [isAuthModalOpen, setAuthModalOpenState] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
+  const [authAccountType, setAuthAccountType] = useState<AccountType>('casual');
+  const [prefillAuthEmail, setPrefillAuthEmail] = useState('');
+  const [hasEnteredPlatform, setHasEnteredPlatform] = useState(false);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
-  const [isCreateStoreModalOpen, setCreateStoreModalOpen] = useState(false);
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -176,18 +206,26 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
   const [allUsers, setAllUsers] = useState<UserProfile[]>(DEMO_MODE ? INITIAL_USERS : []);
-  const [products, setProducts] = useState<Product[]>(DEMO_MODE ? INITIAL_PRODUCTS : []);
-  const [stores, setStores] = useState<Store[]>(DEMO_MODE ? INITIAL_STORES : []);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'));
+  const [offers, setOffers] = useState<ExternalOffer[]>(INITIAL_EXTERNAL_OFFERS);
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(DEMO_MODE ? INITIAL_COMMUNITY_POSTS : []);
-  const [coaches] = useState<Coach[]>(DEMO_MODE ? INITIAL_COACHES : []);
-  const [athletes] = useState<Athlete[]>(DEMO_MODE ? INITIAL_ATHLETES : []);
-  const [news] = useState<NewsArticle[]>(DEMO_MODE ? INITIAL_NEWS : []);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(INITIAL_COMMUNITY_POSTS);
+  const [coaches] = useState<Coach[]>(INITIAL_COACHES);
+  const [athletes] = useState<Athlete[]>(INITIAL_ATHLETES);
+  const [news] = useState<NewsArticle[]>(INITIAL_NEWS);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
-  const [, setIsHydrated] = useState(false);
+
+  // userRef: o listener de auth lê o usuário atual sem ser recriado a cada mudança.
+  // manualAuthRef: true durante login/cadastro manual, que já sincronizam o próprio perfil.
+  const userRef = useRef<UserProfile | null>(null);
+  const manualAuthRef = useRef(false);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   // Toast system
   const addToast = useCallback((title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -202,82 +240,86 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Check Supabase connection, load live data and listen to auth state
+  // Ao encerrar a sessão, descarta o que só a conta logada podia ver (pedidos, contas, anúncios não ativos).
+  const resetPrivateState = useCallback(() => {
+    if (!isSupabaseConfigured) return;
+    setOrders([]);
+    setAllUsers([]);
+    setProducts((prev) => prev.filter((p) => p.status === 'active'));
+  }, []);
+
+  // Dados públicos (anúncios ativos e comunidade), carrinho/favoritos salvos e sessão do Supabase.
   useEffect(() => {
     let isMounted = true;
-
-    // Listen to OAuth messages from popup window
-    const handleOAuthMessage = async (event: MessageEvent) => {
-      // Só aceita mensagens da própria aplicação (popup de OAuth no mesmo origin).
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
-        const sb = getSupabase();
-        if (sb) {
-          const { data } = await sb.auth.getSession();
-          if (data.session?.user && isMounted) {
-            const u = data.session.user;
-            const email = u.email || '';
-            const profile = await AuthService.getProfileOrCreate(u.id, email, {
-              name: u.user_metadata?.name || u.user_metadata?.full_name || email.split('@')[0],
-              avatar_url: u.user_metadata?.avatar_url,
-            });
-            if (!profile) return;
-            setUser(profile);
-            setAllUsers((prev) => {
-              const exists = prev.some((p) => p.email.toLowerCase() === email.toLowerCase());
-              return exists
-                ? prev.map((p) => (p.email.toLowerCase() === email.toLowerCase() ? profile : p))
-                : [profile, ...prev];
-            });
-            addToast('Google OAuth Concluído', `Bem-vindo, ${profile.name}!`, 'success');
-            setAuthModalOpen(false);
-          }
-        }
-      } else if (event.data?.type === 'OAUTH_AUTH_ERROR') {
-        addToast('Erro no Google OAuth', event.data.error || 'Falha na autenticação do Google.', 'error');
-      }
-    };
-
-    window.addEventListener('message', handleOAuthMessage);
-
     let authSubscription: { unsubscribe: () => void } | null = null;
 
     const initData = async () => {
       try {
-        // Load saved client storage safely without synchronous effect setState
+        if (sessionStorage.getItem(ENTERED_SESSION_KEY) === '1' && isMounted) {
+          setHasEnteredPlatform(true);
+        }
+        const savedOffers = localStorage.getItem(OFFERS_STORAGE_KEY);
+        if (savedOffers && isMounted) {
+          const parsedOffers = JSON.parse(savedOffers);
+          if (Array.isArray(parsedOffers)) {
+            setOffers(parsedOffers);
+          }
+        }
+
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && isMounted) {
           const parsed = JSON.parse(saved);
-          if (parsed.orders) setOrders(parsed.orders);
-          if (parsed.cart) setCart(parsed.cart);
-          if (parsed.favorites) setFavorites(parsed.favorites);
-          if (parsed.user) setUser(parsed.user);
+          if (Array.isArray(parsed.cart)) setCart(parsed.cart.filter((item: CartItem) => item?.product?.product_type === 'c2c'));
+          if (Array.isArray(parsed.favorites)) setFavorites(parsed.favorites);
+          // Com o Supabase ativo a sessão vem do Auth: nunca restaurar usuário/pedidos do navegador.
+          if (!isSupabaseConfigured) {
+            if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
+            if (parsed.user) setUser(parsed.user);
+          }
         }
-        if (isMounted) setIsHydrated(true);
+
+        // Busca ofertas reais do banco PostgreSQL quando disponível em produção
+        try {
+          const offersRes = await fetch('/api/offers');
+          if (offersRes.ok) {
+            const offersData = await offersRes.json();
+            if (isMounted && Array.isArray(offersData.offers)) {
+              setOffers(offersData.offers);
+              localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(offersData.offers));
+            }
+          }
+        } catch {
+          // Ambiente local sem DATABASE_URL mantém as ofertas salvas em localStorage / INITIAL_EXTERNAL_OFFERS
+        }
 
         const conn = await testSupabaseConnection();
         if (isMounted) setIsSupabaseLive(conn.connected);
 
-        // Load live products, stores, community posts and database registered users
-        const [liveProducts, liveStores, livePosts, usersRes] = await Promise.all([
+        const [liveProducts, livePosts] = await Promise.all([
           ProductService.getProducts(),
-          StoreService.getStores(),
           CommunityService.getPosts(),
-          fetch('/api/users?include_internal=true').then((r) => r.json()).catch(() => null),
         ]);
 
         if (isMounted) {
-          if (liveProducts && liveProducts.length > 0) {
-            setProducts(liveProducts);
+          if (liveProducts.length > 0) {
+            const curatedC2C = INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c');
+            // Mantém no topo apenas anúncios realmente publicados por usuários recentemente (sem os seeds antigos repetidos).
+            const recentUserListings = liveProducts.filter((item) => {
+              if (item.id.startsWith('20000000-0000-4000-8000-')) return false;
+              if (item.title.endsWith('— Seminovo')) return false;
+              const createdMs = new Date(item.created_at).getTime();
+              return Number.isFinite(createdMs) && createdMs >= new Date('2026-10-22T00:00:00Z').getTime();
+            });
+            setProducts((prev) =>
+              mergeProductsById(
+                prev.filter((p) => p.status !== 'active'),
+                mergeProductsById(recentUserListings, curatedC2C)
+              )
+            );
           }
-          if (liveStores && liveStores.length > 0) {
-            setStores(liveStores);
-          }
-          if (livePosts && livePosts.length > 0) {
-            setCommunityPosts(livePosts);
-          }
-          if (usersRes?.success && Array.isArray(usersRes.users) && usersRes.users.length > 0) {
-            setAllUsers(usersRes.users);
+          if (livePosts.length > 0) {
+            const liveIds = new Set(livePosts.map((p) => p.id));
+            setCommunityPosts([...livePosts, ...INITIAL_COMMUNITY_POSTS.filter((p) => !liveIds.has(p.id))]);
           }
         }
       } catch (err) {
@@ -285,86 +327,155 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    initData();
+    void initData();
 
-    if (isSupabaseConfigured) {
-      const sb = getSupabase();
-      if (sb) {
-        sb.auth.getSession().then(async ({ data, error }) => {
-          if (!error && data.session?.user && isMounted) {
-            const u = data.session.user;
-            const email = u.email || '';
-            const profile = await AuthService.getProfileOrCreate(u.id, email, {
-              name: u.user_metadata?.name || email.split('@')[0],
-              avatar_url: u.user_metadata?.avatar_url,
-            });
-            if (!profile) return;
-            setUser(profile);
-          }
-        }).catch(() => {
-          if (isMounted) setIsSupabaseLive(false);
-        });
-
-        const { data: authListener } = sb.auth.onAuthStateChange(async (event, session) => {
-          if (session?.user && isMounted) {
-            const u = session.user;
-            const email = u.email || '';
-            const profile = await AuthService.getProfileOrCreate(u.id, email, {
-              name: u.user_metadata?.name || email.split('@')[0],
-              avatar_url: u.user_metadata?.avatar_url,
-            });
-            if (!profile) return;
-            setUser(profile);
-          } else if (event === 'SIGNED_OUT' && isMounted) {
-            setUser(null);
-          }
-        });
-
-        if (authListener?.subscription) {
-          authSubscription = authListener.subscription;
+    const sb = isSupabaseConfigured ? getSupabase() : null;
+    if (sb) {
+      // Único ponto de restauração/entrada de sessão (INITIAL_SESSION cobre o F5; SIGNED_IN cobre o OAuth).
+      // O Supabase não pode ser chamado dentro do callback (deadlock): o sync roda em setTimeout.
+      const { data } = sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          resetPrivateState();
+          return;
         }
-      }
+        if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+        const sessionUser = session?.user;
+        if (!sessionUser || manualAuthRef.current || userRef.current?.id === sessionUser.id) return;
+
+        setTimeout(async () => {
+          const email = sessionUser.email || '';
+          const result = await AuthService.getProfileOrCreate(sessionUser.id, email, {
+            name: sessionUser.user_metadata?.name || sessionUser.user_metadata?.full_name || email.split('@')[0],
+            avatar_url: sessionUser.user_metadata?.avatar_url,
+          });
+          if (!isMounted) return;
+          if (result.success && result.data) {
+            setUser(result.data);
+          } else {
+            addToast('Não foi possível entrar', result.error || 'Falha ao carregar o seu perfil.', 'error');
+          }
+        }, 0);
+      });
+      authSubscription = data.subscription;
     }
 
     return () => {
       isMounted = false;
-      window.removeEventListener('message', handleOAuthMessage);
       authSubscription?.unsubscribe();
     };
-  }, [addToast]);
+  }, [addToast, resetPrivateState]);
 
-  // Save to local storage
-  const saveState = useCallback(() => {
+  // Dados privados da conta logada: staff vê todos os pedidos/contas/anúncios; os demais, só os seus.
+  const userId = user?.id;
+  const userRole = user?.role;
+  useEffect(() => {
+    if (!isSupabaseConfigured || !userId) return;
+    let cancelled = false;
+
+    const loadPrivateData = async () => {
+      if (isStaffRole(userRole)) {
+        const [allOrders, users, allProducts] = await Promise.all([
+          OrderService.getAllOrdersAdmin(),
+          AuthService.listUsers(),
+          ProductService.getProducts({ status: 'all' }),
+        ]);
+        try {
+          const staffOffersRes = await authedFetch('/api/offers?includeInactive=true');
+          if (staffOffersRes.ok) {
+            const staffOffersJson = await staffOffersRes.json();
+            if (!cancelled && Array.isArray(staffOffersJson.offers)) {
+              setOffers(staffOffersJson.offers);
+            }
+          }
+        } catch {
+          // ignore if offline
+        }
+        if (cancelled) return;
+        setOrders(allOrders);
+        if (users.length > 0) setAllUsers(users);
+        if (allProducts.length > 0) setProducts(allProducts);
+      } else {
+        const [myOrders, myProducts] = await Promise.all([
+          OrderService.getMyOrders(userId),
+          ProductService.getProducts({ seller_id: userId, status: 'all' }),
+        ]);
+        if (cancelled) return;
+        setOrders(myOrders);
+        if (myProducts.length > 0) setProducts((prev) => mergeProductsById(prev, myProducts));
+      }
+    };
+
+    void loadPrivateData();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, userRole]);
+
+  // Persistência local: carrinho e favoritos sempre; sessão e pedidos apenas no modo demonstração sem banco.
+  useEffect(() => {
     try {
-      const payload = {
-        user,
-        allUsers,
-        products,
-        stores,
-        orders,
-        cart,
-        favorites,
-        communityPosts,
-      };
+      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // ignore
     }
-  }, [user, allUsers, products, stores, orders, cart, favorites, communityPosts]);
+  }, [user, orders, cart, favorites]);
 
+  const sportsSessionId = user?.id;
+  const sportsAccountType = user?.account_type;
   useEffect(() => {
-    saveState();
-  }, [saveState]);
+    if (!sportsSessionId || !isSupabaseConfigured) return;
+    let active = true;
+    import('@/services/supabaseClient').then(async ({ getSupabaseClient }) => {
+      const result = await getSupabaseClient()?.auth.getUser();
+      const kind = result?.data.user?.user_metadata?.account_type;
+      if (active && sportsAccountType !== kind && ['athlete', 'coach', 'casual'].includes(kind)) {
+        setUser(current => current ? { ...current, account_type: kind } : current);
+      }
+    });
+    return () => { active = false; };
+  }, [sportsSessionId, sportsAccountType]);
 
   // Derived Auth info
   const role: UserRole = user?.role || 'visitor';
   const isVisitor = !user || role === 'visitor';
   const isAuthenticated = Boolean(user && role !== 'visitor');
 
+  const enterPlatform = useCallback((targetView?: ActiveView) => {
+    setHasEnteredPlatform(true);
+    if (targetView) {
+      setActiveView(targetView);
+    }
+    try {
+      sessionStorage.setItem(ENTERED_SESSION_KEY, '1');
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const openWelcomePage = useCallback(() => {
+    setHasEnteredPlatform(false);
+    try {
+      sessionStorage.removeItem(ENTERED_SESSION_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Every authentication entry point opens over the welcome page.
+  const setAuthModalOpen = useCallback((open: boolean) => {
+    if (open) {
+      openWelcomePage();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    setAuthModalOpenState(open);
+  }, [openWelcomePage]);
+
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
-  const switchRole = useCallback((newRole: UserRole) => {
+  const switchRole = useCallback((newRole: UserRole, accountType?: AccountType) => {
     if (isSupabaseConfigured) {
-      addToast('Simulação indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
+      addToast('Alteração indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
       return;
     }
     if (newRole === 'visitor') {
@@ -376,7 +487,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const demoProfiles: Record<Exclude<UserRole, 'visitor'>, UserProfile> = {
       admin: {
         id: 'usr-admin-mattheus',
-        email: 'mattheusxmljz@gmail.com',
+        email: 'mattheus@coremotion.com.br',
         name: 'Mattheus (Super Admin)',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'admin',
@@ -387,20 +498,19 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       seller: {
         id: 'seller-pro-1',
-        email: 'contato@motiompro.com.br',
-        name: 'Motiom Pro Lab (Lojista Oficial)',
+        email: 'marina.duarte@coremotion.com.br',
+        name: 'Marina Duarte',
         avatar_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&q=80',
         role: 'seller',
-        store_id: 'store-1',
         city: 'São Paulo',
         state: 'SP',
         sport_interests: ['Alta Performance', 'Corrida'],
         created_at: '2026-01-10T08:00:00Z',
       },
       supervisor: {
-        id: 'usr-supervisor-demo',
-        email: 'supervisor@coremotiom.com',
-        name: 'Supervisor de Moderação (demo)',
+        id: 'usr-supervisor-1',
+        email: 'rafael.nogueira@coremotion.com.br',
+        name: 'Rafael Nogueira',
         avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
         role: 'supervisor',
         city: 'São Paulo',
@@ -410,7 +520,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
       user: {
         id: 'user-c2c-1',
-        email: 'carlos.ramos@atleta.com',
+        email: 'carlos.ramos@coremotion.com.br',
         name: 'Carlos Eduardo Ramos',
         avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
         role: 'user',
@@ -422,10 +532,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     };
 
     const targetProfile = demoProfiles[newRole];
-    setUser(targetProfile);
+    setUser({ ...targetProfile, id: accountType ? `${targetProfile.id}-${accountType}` : targetProfile.id, name: accountType === 'coach' ? 'Marina Duarte' : accountType === 'casual' ? 'Ana Silva' : targetProfile.name, account_type: accountType || 'athlete' });
     addToast(
       'Perfil Atualizado',
-      `Agora você está operando com permissões de ${newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Lojista' : 'Atleta'}.`,
+      `Agora você está operando com permissões de ${accountType ? ACCOUNT_TYPES[accountType].label : newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Anunciante C2C' : 'Atleta'}.`,
       'success'
     );
   }, [addToast]);
@@ -464,7 +574,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       if (user?.id === userId) setUser((prev) => (prev ? { ...prev, role: newRole } : null));
       addToast(
         'Permissão Atualizada',
-        isSupabaseConfigured ? 'Papel gravado no banco de dados.' : 'Papel alterado (modo demonstração, apenas local).',
+        'Papel de acesso atualizado com sucesso.',
         'success'
       );
     } catch (err: unknown) {
@@ -498,7 +608,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         created_at: new Date().toISOString(),
       };
       setAllUsers((prev) => [newUser, ...prev]);
-      addToast('Usuário Cadastrado (demo)', `Conta de ${userData.name} criada apenas nesta sessão.`, 'success');
+      addToast('Usuário Cadastrado', `Conta de ${userData.name} criada com sucesso.`, 'success');
     },
     [user, addToast]
   );
@@ -587,8 +697,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       }
       try {
         if (isSupabaseConfigured) {
-          const ok = await ProductService.updateProduct(productId, { status: newStatus });
-          if (!ok) throw new Error('Falha ao atualizar o status do anúncio.');
+          const result = await ProductService.updateProduct(productId, { status: newStatus });
+          if (!result.success) throw new Error(result.error || 'Falha ao atualizar o status do anúncio.');
         }
         setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, status: newStatus } : p)));
         addToast('Catálogo Atualizado', `Anúncio agora está "${newStatus}".`, 'success');
@@ -601,21 +711,22 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   const adminSyncSupabase = useCallback(async () => {
     try {
-      const [liveProducts, liveStores, livePosts] = await Promise.all([
+      const [liveProducts, livePosts] = await Promise.all([
         ProductService.getProducts(),
-        StoreService.getStores(),
         CommunityService.getPosts(),
       ]);
-      if (liveProducts && liveProducts.length > 0) setProducts(liveProducts);
-      if (liveStores && liveStores.length > 0) setStores(liveStores);
+      const c2cProducts = liveProducts.filter((product) => product.product_type === 'c2c');
+      if (c2cProducts.length > 0) {
+        setProducts((prev) => mergeProductsById(prev.filter((p) => p.status !== 'active'), c2cProducts));
+      }
       if (livePosts && livePosts.length > 0) setCommunityPosts(livePosts);
       setIsSupabaseLive(true);
       addToast(
         'Supabase Sincronizado',
-        `Carregados ${liveProducts?.length || 0} produtos e ${liveStores?.length || 0} lojas do banco de dados oficial.`,
+        `Carregados ${c2cProducts.length} anúncios C2C e ${livePosts?.length || 0} publicações da comunidade.`,
         'success'
       );
-      return { success: true, count: (liveProducts?.length || 0) + (liveStores?.length || 0) };
+      return { success: true, count: c2cProducts.length + (livePosts?.length || 0) };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Falha na sincronização com Supabase';
       addToast('Aviso de Sincronização', msg, 'info');
@@ -634,20 +745,27 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       const exists = prev.some((u) => u.email.toLowerCase() === masterAdmin.email.toLowerCase());
       return exists ? prev : [masterAdmin, ...prev];
     });
-    addToast('Sessão Super Admin', 'Conectado como Administrador (perfil de demonstração).', 'success');
+    addToast('Sessão Super Admin', 'Conectado como Administrador da plataforma.', 'success');
   }, [addToast]);
 
   // Auth: Email Login
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
-    const res = await AuthService.loginWithEmail(email, pass);
+    manualAuthRef.current = true;
+    let res: Awaited<ReturnType<typeof AuthService.loginWithEmail>>;
+    try {
+      res = await AuthService.loginWithEmail(email, pass);
+    } finally {
+      manualAuthRef.current = false;
+    }
     if (res.success && res.data) {
-      setUser(res.data);
-      setAllUsers((prev) => {
-        const exists = prev.some((p) => p.email.toLowerCase() === res.data!.email.toLowerCase());
-        return exists
-          ? prev.map((p) => (p.email.toLowerCase() === res.data!.email.toLowerCase() ? res.data! : p))
-          : [res.data!, ...prev];
-      });
+      const profile = res.data;
+      setUser(profile);
+      if (!isSupabaseConfigured) {
+        setAllUsers((prev) => {
+          const exists = prev.some((p) => p.email.toLowerCase() === profile.email.toLowerCase());
+          return exists ? prev.map((p) => (p.email.toLowerCase() === profile.email.toLowerCase() ? profile : p)) : [profile, ...prev];
+        });
+      }
       addToast('Login Concluído', `Bem-vindo de volta, ${res.data.name}!`, 'success');
       setAuthModalOpen(false);
       return { success: true };
@@ -660,13 +778,21 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = async (
     email: string,
     pass: string,
-    name: string
+    name: string,
+    accountType: AccountType = 'casual'
   ): Promise<{ success: boolean; error?: string }> => {
-    const res = await AuthService.signUpWithEmail(email, pass, name);
+    manualAuthRef.current = true;
+    let res: Awaited<ReturnType<typeof AuthService.signUpWithEmail>>;
+    try {
+      res = await AuthService.signUpWithEmail(email, pass, name, accountType);
+    } finally {
+      manualAuthRef.current = false;
+    }
     if (res.success && res.data) {
-      setUser(res.data);
-      setAllUsers((prev) => [res.data!, ...prev]);
-      addToast('Conta Criada', `Bem-vindo ao CoreMotiom, ${name}! (${res.data.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
+      const profile = { ...res.data, account_type: accountType };
+      setUser(profile);
+      if (!isSupabaseConfigured) setAllUsers((prev) => [profile, ...prev]);
+      addToast('Conta Criada', `Bem-vindo ao CoreMotion, ${name}! (${profile.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
       setAuthModalOpen(false);
       return { success: true };
     }
@@ -696,19 +822,33 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await AuthService.signOut();
     setUser(null);
+    resetPrivateState();
     setActiveView('home');
     addToast('Sessão Encerrada', 'Você saiu da sua conta com segurança.', 'info');
   };
 
-  const updateUserProfile = (data: Partial<UserProfile>) => {
+  const updateUserProfile = async (data: Partial<UserProfile>): Promise<void> => {
     if (!user) return;
-    setUser((prev) => (prev ? { ...prev, ...data } : null));
-    AuthService.updateProfile(user.id, data).catch(console.warn);
+    let saved: Partial<UserProfile> = data;
+    if (isSupabaseConfigured) {
+      const res = await AuthService.updateProfile(user.id, data);
+      if (!res.success) {
+        addToast('Perfil não salvo', res.error || 'Não foi possível salvar as alterações.', 'error');
+        return;
+      }
+      if (res.user) saved = res.user;
+    }
+    setUser((prev) => (prev ? { ...prev, ...saved } : null));
+    setAllUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, ...saved } : u)));
     addToast('Perfil Salvo', 'Suas informações foram atualizadas.', 'success');
   };
 
   // Cart operations
   const addToCart = (product: Product, quantity = 1, selected_size?: string) => {
+    if (product.product_type !== 'c2c') {
+      addToast('Oferta externa', 'Ofertas B2C ficam fora do carrinho e do checkout C2C.', 'info');
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id && item.selected_size === selected_size);
       if (existing) {
@@ -763,6 +903,12 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     shippingMethod: ShippingMethod;
     paymentMethod: PaymentMethod;
   }): Promise<Order> => {
+    if (cart.some((item) => item.product.product_type !== 'c2c')) {
+      throw new Error('O checkout está disponível somente para anúncios C2C.');
+    }
+    if (isSupabaseConfigured && !user) {
+      throw new Error('Entre na sua conta para finalizar a compra.');
+    }
     // Totais seguem lib/checkout.ts; o banco recalcula o pedido ao gravar.
     const totals = calculateCheckoutTotals(
       cartTotal,
@@ -793,180 +939,143 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     return newOrder;
   };
 
+  /** Pagamento simulado (equipe): o valor fica retido em custódia (escrow_locked), igual ao que o banco grava. */
   const confirmPaymentSandbox = async (orderId: string) => {
-    await OrderService.confirmPaymentSandbox(orderId);
+    if (!hasCapability(user?.role, 'orders.manage')) {
+      addToast('Acesso Negado', 'Seu papel não pode confirmar pagamentos.', 'error');
+      return;
+    }
+    const result = await OrderService.confirmPaymentSandbox(orderId);
+    if (!result.success) {
+      addToast('Pagamento não confirmado', result.error || 'Não foi possível confirmar o pagamento.', 'error');
+      return;
+    }
     setOrders((prev) =>
-      prev.map((ord) =>
-        ord.id === orderId
-          ? {
-              ...ord,
-              payment_status: 'paid',
-              order_status: 'preparing',
-            }
-          : ord
-      )
+      prev.map((ord) => (ord.id === orderId ? { ...ord, payment_status: 'paid', order_status: 'escrow_locked' } : ord))
     );
-    addToast('Pagamento Confirmado (Sandbox)', `Pedido ${orderId} confirmado (pagamento simulado).`, 'success');
+    addToast('Pagamento Confirmado', `Pedido ${orderId} confirmado com sucesso.`, 'success');
   };
 
-  // Products CRUD
+  // Products CRUD (com o banco ativo, o estado local só muda depois da confirmação do servidor)
   const createProduct = async (
     productData: Omit<Product, 'id' | 'created_at' | 'views' | 'likes_count'>
   ): Promise<Product> => {
-    const res = await ProductService.createProduct(productData, user?.id);
-    const newProduct: Product = (res.success && res.data) ? res.data : {
-      ...productData,
-      id: `prod-${Date.now()}`,
-      views: 1,
-      likes_count: 0,
-      created_at: new Date().toISOString(),
-    };
+    if (productData.product_type !== 'c2c') {
+      const error = new Error('Produtos B2C são exibidos como ofertas externas e não podem ser publicados como anúncios internos.');
+      addToast('Tipo de anúncio indisponível', error.message, 'error');
+      throw error;
+    }
+    let newProduct: Product;
+    try {
+      newProduct = (await ProductService.createProduct(productData, user?.id)).data;
+    } catch (err: unknown) {
+      addToast('Anúncio não publicado', errorText(err, 'Não foi possível publicar o anúncio.'), 'error');
+      throw err;
+    }
 
     setProducts((prev) => [newProduct, ...prev]);
     addToast('Anúncio Publicado', `O produto "${newProduct.title}" está disponível no Marketplace.`, 'success');
     return newProduct;
   };
 
-  const updateProduct = (id: string, data: Partial<Product>) => {
-    ProductService.updateProduct(id, data).catch(console.warn);
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
+  const updateProduct = async (id: string, data: Partial<Product>): Promise<void> => {
+    let saved: Product | undefined;
+    if (isSupabaseConfigured) {
+      const result = await ProductService.updateProduct(id, data);
+      if (!result.success) {
+        addToast('Anúncio não atualizado', result.error || 'Não foi possível salvar as alterações.', 'error');
+        return;
+      }
+      saved = result.product;
+    }
+    setProducts((prev) => prev.map((p) => (p.id === id ? saved ?? { ...p, ...data } : p)));
     addToast('Produto Atualizado', 'As alterações foram salvas com sucesso.', 'success');
   };
 
-  const deleteProduct = (id: string) => {
-    ProductService.deleteProduct(id).catch(console.warn);
+  const deleteProduct = async (id: string): Promise<void> => {
+    if (isSupabaseConfigured) {
+      const result = await ProductService.deleteProduct(id);
+      if (!result.success) {
+        addToast('Anúncio não excluído', result.error || 'Não foi possível excluir o anúncio.', 'error');
+        return;
+      }
+    }
     setProducts((prev) => prev.filter((p) => p.id !== id));
+    setCart((prev) => prev.filter((item) => item.product.id !== id));
     addToast('Produto Removido', 'O anúncio foi excluído.', 'info');
   };
 
-  // Stores & Verification
-  const createStore = async (
-    storeData: Omit<Store, 'id' | 'created_at' | 'rating' | 'sales_count' | 'products_count' | 'is_verified' | 'verification_status'>
-  ): Promise<Store> => {
-    const res = await StoreService.createStore(storeData);
-    const newStore: Store = (res.success && res.data) ? res.data : {
-      ...storeData,
-      id: `store-${Date.now()}`,
-      is_verified: false,
-      verification_status: 'none',
-      rating: 5.0,
-      sales_count: 0,
-      products_count: 0,
-      created_at: new Date().toISOString(),
-    };
-
-    setStores((prev) => [...prev, newStore]);
-    if (user) {
-      setUser((prev) => (prev ? { ...prev, store_id: newStore.id, role: 'seller' } : null));
-    }
-    addToast('Loja Criada!', `Sua loja "${newStore.name}" foi inaugurada no CoreMotiom.`, 'success');
-    return newStore;
-  };
-
-  const requestStoreVerification = async (storeId: string, docs: NonNullable<Store['verification_docs']>) => {
-    await StoreService.requestVerification(storeId, docs);
-    setStores((prev) =>
-      prev.map((s) =>
-        s.id === storeId
-          ? {
-              ...s,
-              verification_status: 'pending',
-              verification_requested_at: new Date().toISOString(),
-              verification_docs: docs,
-            }
-          : s
-      )
-    );
-    addToast(
-      'Solicitação Enviada',
-      'A documentação e o CNPJ são analisados manualmente pela equipe.',
-      'info'
-    );
-  };
-
-  const adminVerifyStore = async (storeId: string, approve: boolean, notes?: string) => {
-    if (!hasCapability(user?.role, 'stores.verify')) {
-      addToast(
-        'Acesso Negado',
-        'Apenas administradores e supervisores podem homologar lojas.',
-        'error'
-      );
-      return;
-    }
-    await StoreService.adminReviewStore(storeId, approve);
-    setStores((prev) =>
-      prev.map((s) =>
-        s.id === storeId
-          ? {
-              ...s,
-              is_verified: approve,
-              verification_status: approve ? 'verified' : 'rejected',
-              verification_docs: s.verification_docs
-                ? { ...s.verification_docs, notes }
-                : { notes },
-            }
-          : s
-      )
-    );
-
-    // Update products from this store to show verified store badge
-    if (approve) {
-      setProducts((prev) =>
-        prev.map((p) => (p.store_id === storeId ? { ...p, is_verified_store: true } : p))
-      );
-      addToast('Loja Verificada', 'Selo "Verificado" concedido à loja.', 'success');
-    } else {
-      setProducts((prev) =>
-        prev.map((p) => (p.store_id === storeId ? { ...p, is_verified_store: false } : p))
-      );
-      addToast('Verificação Recusada', 'A solicitação foi indeferida.', 'info');
-    }
-  };
-
   // Community
+  const requireLogin = (message: string): boolean => {
+    if (user) return true;
+    addToast('Entre na sua conta', message, 'info');
+    setAuthModalMode('login');
+    setAuthModalOpen(true);
+    return false;
+  };
+
   const createCommunityPost = async (post: {
     title: string;
     content: string;
     category: CommunityPost['category'];
     image_url?: string;
-  }) => {
+  }): Promise<boolean> => {
+    if (isSupabaseConfigured && !requireLogin('É preciso estar autenticado para publicar na comunidade.')) return false;
+
+    const badge = user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Anunciante' : 'Atleta';
     const res = await CommunityService.createPost(
       {
         ...post,
-        author_name: user?.name || 'Atleta CoreMotiom',
+        author_name: user?.name || 'Atleta CoreMotion',
         author_avatar: user?.avatar_url,
-        author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Loja Oficial' : 'Atleta',
+        author_badge: badge,
       },
       user?.id
     );
 
-    const newPost: CommunityPost = (res.success && res.data) ? res.data : {
-      id: `post-${Date.now()}`,
-      author_id: user?.id || 'anon',
-      author_name: user?.name || 'Atleta CoreMotiom',
-      author_avatar: user?.avatar_url,
-      author_badge: user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Loja Oficial' : 'Atleta',
-      category: post.category,
-      title: post.title,
-      content: post.content,
-      image_url: post.image_url,
-      likes_count: 0,
-      comments_count: 0,
-      comments: [],
-      created_at: new Date().toISOString(),
-    };
+    let newPost: CommunityPost;
+    if (res.success && res.data) {
+      newPost = res.data;
+    } else if (!isSupabaseConfigured) {
+      newPost = {
+        id: `post-${Date.now()}`,
+        author_id: user?.id || 'anon',
+        author_name: user?.name || 'Atleta CoreMotion',
+        author_avatar: user?.avatar_url,
+        author_badge: badge,
+        category: post.category,
+        title: post.title,
+        content: post.content,
+        image_url: post.image_url,
+        likes_count: 0,
+        comments_count: 0,
+        comments: [],
+        created_at: new Date().toISOString(),
+      };
+    } else {
+      addToast('Publicação não criada', res.error || 'Não foi possível publicar. Tente novamente.', 'error');
+      return false;
+    }
+
     setCommunityPosts((prev) => [newPost, ...prev]);
     addToast('Publicação Criada', 'Sua postagem está visível para a comunidade esportiva.', 'success');
+    return true;
   };
 
-  const likeCommunityPost = async (postId: string) => {
-    await CommunityService.likePost(postId);
+  const likeCommunityPost = async (postId: string): Promise<void> => {
+    if (!requireLogin('Entre para curtir publicações da comunidade.')) return;
+    const result = await CommunityService.likePost(postId);
+    if (!result.success) {
+      addToast('Curtida não registrada', result.error || 'Tente novamente.', 'error');
+      return;
+    }
     setCommunityPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, likes_count: p.likes_count + 1 } : p))
+      prev.map((p) => (p.id === postId ? { ...p, likes_count: result.likes_count ?? p.likes_count + 1 } : p))
     );
   };
 
-  const addCommunityComment = async (postId: string, content: string) => {
+  const addCommunityComment = async (postId: string, content: string): Promise<void> => {
+    if (!requireLogin('Entre para comentar nas publicações da comunidade.')) return;
     const comment = {
       id: `comm-${Date.now()}`,
       author_name: user?.name || 'Atleta',
@@ -974,7 +1083,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       content,
       created_at: new Date().toISOString(),
     };
-    await CommunityService.addComment(postId, comment);
+    const result = await CommunityService.addComment(postId, comment);
+    if (!result.success) {
+      addToast('Comentário não enviado', result.error || 'Tente novamente.', 'error');
+      return;
+    }
     setCommunityPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -989,17 +1102,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Comentário Adicionado', 'Sua resposta foi enviada.', 'success');
   };
 
-  const reportCommunityPost = (postId: string, reason: string) => {
-    if (!user) {
-      addToast('Entre na sua conta', 'É preciso estar autenticado para denunciar uma publicação.', 'info');
+  const reportCommunityPost = async (postId: string, reason: string): Promise<void> => {
+    if (!requireLogin('É preciso estar autenticado para denunciar uma publicação.')) return;
+    const result = await CommunityService.reportPost(postId, reason);
+    if (!result.success) {
+      addToast('Denúncia não gravada', result.error || 'Tente novamente.', 'error');
       return;
     }
     setCommunityPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, is_reported: true, report_reason: reason } : p))
     );
-    CommunityService.reportPost(postId, reason).then((result) => {
-      if (!result.success) addToast('Denúncia não gravada', result.error || 'Tente novamente.', 'error');
-    });
     addToast('Denúncia Registrada', 'A publicação foi encaminhada para moderação.', 'info');
   };
 
@@ -1019,6 +1131,203 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Post Excluído', 'A publicação foi removida pela moderação.', 'info');
   };
 
+  // --- GESTÃO DE OFERTAS EXTERNAS & AFILIADOS (ADMIN / SUPERVISOR) ---
+  const persistOffersLocally = (next: ExternalOffer[]) => {
+    setOffers(next);
+    try {
+      localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // ignore quota errors
+    }
+  };
+
+  const activeOffers = offers.filter((offer) => offer.is_active !== false);
+
+  const addOffer = async (input: OfferCreateInput): Promise<ExternalOffer | null> => {
+    if (!isStaffRole(user?.role)) {
+      addToast('Acesso restrito', 'Somente administradores podem cadastrar ofertas.', 'error');
+      return null;
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch('/api/offers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        });
+        const data = await res.json();
+        if (res.ok && data.offer) {
+          persistOffersLocally([data.offer, ...offers]);
+          addToast('Oferta publicada', `"${data.offer.title}" já está ativa na vitrine.`, 'success');
+          return data.offer as ExternalOffer;
+        }
+        if (res.status !== 503) {
+          addToast('Erro ao salvar oferta', data.error || 'Verifique os campos preenchidos.', 'error');
+          return null;
+        }
+      } catch {
+        // Fallback local caso rota esteja offline
+      }
+    }
+
+    const created: ExternalOffer = {
+      id: `offer-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: input.title.trim(),
+      description: input.description.trim(),
+      store_name: input.store_name.trim(),
+      category: input.category || 'Equipamentos',
+      sport: input.sport || 'Corrida',
+      price: Number(input.price),
+      original_price: input.original_price ? Number(input.original_price) : undefined,
+      image_url: input.image_url.trim(),
+      source_url: input.source_url.trim(),
+      coupon_code: input.coupon_code?.trim() || undefined,
+      is_active: input.is_active ?? true,
+      is_demo: false,
+      created_at: new Date().toISOString(),
+    };
+    persistOffersLocally([created, ...offers]);
+    addToast('Oferta publicada', `"${created.title}" já está ativa na vitrine.`, 'success');
+    return created;
+  };
+
+  const updateOffer = async (id: string, input: OfferUpdateInput): Promise<boolean> => {
+    if (!isStaffRole(user?.role)) {
+      addToast('Acesso restrito', 'Somente administradores podem alterar ofertas.', 'error');
+      return false;
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch(`/api/offers?id=${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        });
+        const data = await res.json();
+        if (res.ok && data.offer) {
+          persistOffersLocally(offers.map((item) => (item.id === id ? data.offer : item)));
+          addToast('Oferta atualizada', 'As alterações já estão visíveis no site.', 'success');
+          return true;
+        }
+        if (res.status !== 503) {
+          addToast('Erro ao atualizar', data.error || 'Não foi possível salvar as alterações.', 'error');
+          return false;
+        }
+      } catch {
+        // Fallback local
+      }
+    }
+
+    const next = offers.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            ...(input.title !== undefined ? { title: input.title.trim() } : {}),
+            ...(input.description !== undefined ? { description: input.description.trim() } : {}),
+            ...(input.store_name !== undefined ? { store_name: input.store_name.trim() } : {}),
+            ...(input.category !== undefined ? { category: input.category } : {}),
+            ...(input.sport !== undefined ? { sport: input.sport } : {}),
+            ...(input.price !== undefined ? { price: Number(input.price) } : {}),
+            ...(input.original_price !== undefined
+              ? { original_price: input.original_price ? Number(input.original_price) : undefined }
+              : {}),
+            ...(input.image_url !== undefined ? { image_url: input.image_url.trim() } : {}),
+            ...(input.source_url !== undefined ? { source_url: input.source_url.trim() } : {}),
+            ...(input.coupon_code !== undefined
+              ? { coupon_code: input.coupon_code ? input.coupon_code.trim() : undefined }
+              : {}),
+            ...(input.is_active !== undefined ? { is_active: input.is_active } : {}),
+            is_demo: false,
+          }
+        : item
+    );
+    persistOffersLocally(next);
+    addToast('Oferta atualizada', 'As alterações já estão visíveis no site.', 'success');
+    return true;
+  };
+
+  const deleteOffer = async (id: string): Promise<boolean> => {
+    if (!isStaffRole(user?.role)) {
+      addToast('Acesso restrito', 'Somente administradores podem excluir ofertas.', 'error');
+      return false;
+    }
+
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch(`/api/offers?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok && res.status !== 503) {
+          const data = await res.json().catch(() => ({}));
+          addToast('Erro ao excluir', data.error || 'Não foi possível remover a oferta.', 'error');
+          return false;
+        }
+      } catch {
+        // Fallback local
+      }
+    }
+
+    persistOffersLocally(offers.filter((item) => item.id !== id));
+    if (editingOfferId === id) setEditingOfferId(null);
+    addToast('Oferta removida', 'O item foi excluído da vitrine.', 'info');
+    return true;
+  };
+
+  const toggleOfferActive = async (id: string, isActive: boolean): Promise<boolean> => {
+    return updateOffer(id, { is_active: isActive });
+  };
+
+  const resetDefaultOffers = async (): Promise<void> => {
+    if (!isStaffRole(user?.role)) return;
+    if (isSupabaseConfigured) {
+      try {
+        const res = await authedFetch('/api/offers?action=reset', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.offers)) {
+          persistOffersLocally(data.offers);
+          addToast('Catálogo restaurado', 'As ofertas iniciais reais foram restauradas.', 'success');
+          return;
+        }
+      } catch {
+        // Fallback local
+      }
+    }
+    persistOffersLocally(INITIAL_EXTERNAL_OFFERS);
+    addToast('Catálogo restaurado', 'As ofertas iniciais reais foram restauradas.', 'success');
+  };
+
+  const fetchOfferMetadata = async (url: string) => {
+    if (!url.trim()) return null;
+    try {
+      const res = await authedFetch('/api/offers/metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.metadata) return data.metadata;
+      }
+    } catch {
+      // Fallback client detection below
+    }
+    try {
+      const hostname = new URL(url.trim()).hostname.toLowerCase();
+      if (hostname.includes('aliexpress')) return { store_name: 'AliExpress' };
+      if (hostname.includes('mercadolivre') || hostname.includes('mercadolibre')) return { store_name: 'Mercado Livre' };
+      if (hostname.includes('amazon') || hostname.includes('amzn.to')) return { store_name: 'Amazon Brasil' };
+      if (hostname.includes('shopee')) return { store_name: 'Shopee' };
+      if (hostname.includes('netshoes')) return { store_name: 'Netshoes' };
+      if (hostname.includes('centauro')) return { store_name: 'Centauro' };
+      if (hostname.includes('decathlon')) return { store_name: 'Decathlon' };
+      return { store_name: hostname.replace(/^www\./, '').split('.')[0] };
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <CoreMotiomContext.Provider
       value={{
@@ -1026,16 +1335,19 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         setActiveView,
         selectedProduct,
         setSelectedProduct,
-        selectedStore,
-        setSelectedStore,
         isAuthModalOpen,
         setAuthModalOpen,
         authModalMode,
         setAuthModalMode,
+        authAccountType,
+        setAuthAccountType,
+        prefillAuthEmail,
+        setPrefillAuthEmail,
+        hasEnteredPlatform,
+        enterPlatform,
+        openWelcomePage,
         isCheckoutOpen,
         setCheckoutOpen,
-        isCreateStoreModalOpen,
-        setCreateStoreModalOpen,
         isSupabaseConfigOpen,
         setSupabaseConfigOpen,
         searchQuery,
@@ -1075,10 +1387,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         createProduct,
         updateProduct,
         deleteProduct,
-        stores,
-        createStore,
-        requestStoreVerification,
-        adminVerifyStore,
+        offers,
+        activeOffers,
+        editingOfferId,
+        setEditingOfferId,
+        addOffer,
+        updateOffer,
+        deleteOffer,
+        toggleOfferActive,
+        resetDefaultOffers,
+        fetchOfferMetadata,
         communityPosts,
         createCommunityPost,
         likeCommunityPost,
