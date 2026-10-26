@@ -5,7 +5,9 @@ import { useCoreMotiom } from '@/lib/store';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
-import type { Order, UserProfile, UserRole } from '@/lib/types';
+import ProductCard from '@/components/marketplace/ProductCard';
+import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
+import type { Product, Order, UserProfile, UserRole } from '@/lib/types';
 import { ACCOUNT_TYPES, canAccessSports } from '@/lib/sports';
 import AdminOffersManager from '@/components/admin/AdminOffersManager';
 import { LogOut, Save, ShieldCheck, Tag, UserCircle2 } from 'lucide-react';
@@ -50,7 +52,10 @@ const inputClass =
   'w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-600/60';
 
 export default function ProfileView() {
-  const { user, isVisitor, setAuthModalOpen, updateUserProfile, setActiveView, logout, orders } = useCoreMotiom();
+  const { user, isVisitor, setAuthModalOpen, updateUserProfile, setActiveView, logout, orders, favorites, products, setCheckoutOpen } = useCoreMotiom();
+
+  const [section, setSection] = useState<'details' | 'favorites' | 'orders' | 'products'>('details');
+  const [selected, setSelected] = useState<Product | null>(null);
 
   if (isVisitor || !user) {
     return (
@@ -73,20 +78,37 @@ export default function ProfileView() {
 
   return (
     <>
-    {canAccessSports(user) && <div className="max-w-3xl mx-auto mb-6 p-5 rounded-2xl border border-red-900 bg-red-950/20"><h2 className="font-bold">{user.account_type === 'coach' ? 'Seu perfil profissional' : 'Seu currículo esportivo'}</h2><p className="text-sm text-zinc-400 my-2">Personalize sua trajetória, conquistas e especialidades.</p><button className="text-sm text-red-400 font-bold" onClick={() => setActiveView('sports-profile')}>Personalizar perfil esportivo →</button></div>}
-    <ProfileContent
+    <div className="max-w-5xl mx-auto mb-8 space-y-5">
+      <header><h1 className="text-2xl sm:text-3xl font-black text-white">Minha conta</h1><p className="text-sm text-zinc-400 mt-2">Seus dados, equipamentos e atividades em um só lugar.</p></header>
+      <nav aria-label="Opções da minha conta" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {([['details', 'Dados da conta'], ['favorites', `Meus favoritos (${favorites.length})`], ['orders', 'Pedidos feitos']] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={section === id} onClick={() => setSection(id)} className={`rounded-xl border p-4 text-left text-sm font-bold transition-colors ${section === id ? 'border-red-500 bg-red-950/30 text-white' : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-red-500'}`}>{label}</button>)}
+        <button type="button" onClick={() => setCheckoutOpen(true)} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meu carrinho</button>
+        <button type="button" onClick={() => setSection('products')} aria-pressed={section === 'products'} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meus produtos à venda</button>
+        {canAccessSports(user) && <button type="button" onClick={() => setActiveView('sports-profile')} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">{user.account_type === 'coach' ? 'Meu perfil profissional' : 'Criar ou editar currículo de atleta'}</button>}
+        <button type="button" onClick={() => logout()} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left text-red-400">Sair da conta</button>
+      </nav>
+      {section === 'favorites' && <section aria-label="Meus favoritos" className="space-y-4">
+        <h2 className="text-xl font-bold">Meus favoritos</h2>
+        {products.filter(p => favorites.includes(p.id)).length === 0 ? <div className="rounded-2xl border border-zinc-800 p-6 text-zinc-400"><p>Nenhum produto salvo disponível. Toque no coração dos produtos no Marketplace para salvar aqui.</p><button type="button" onClick={() => setActiveView('marketplace')} className="text-red-400 font-bold mt-4">Explorar Marketplace →</button></div> : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => favorites.includes(p.id)).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div>}
+      </section>}
+      {section === 'products' && <section aria-label="Meus produtos à venda" className="space-y-4"><h2 className="text-xl font-bold">Meus produtos à venda</h2><button type="button" onClick={() => setActiveView('sell')} className="text-red-400 font-bold text-sm">Anunciar ou gerenciar meus produtos →</button>{products.some(p => p.seller_id === user.id) ? <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => p.seller_id === user.id).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div> : <p className="rounded-2xl border border-zinc-800 p-6 text-zinc-400">Você ainda não publicou produtos.</p>}</section>}
+    </div>
+    <ProductDetailModal product={selected} onClose={() => setSelected(null)} />
+    {(section === 'details' || section === 'orders') && <ProfileContent
       key={formKey}
+      ordersOnly={section === 'orders'}
       user={user}
       orders={orders}
       onSave={updateUserProfile}
       onOpenAdmin={() => setActiveView('admin')}
       onLogout={() => logout()}
-    />
+    />}
     </>
   );
 }
 
 interface ProfileContentProps {
+  ordersOnly: boolean;
   user: UserProfile;
   orders: Order[];
   onSave: (data: Partial<UserProfile>) => void;
@@ -94,7 +116,7 @@ interface ProfileContentProps {
   onLogout: () => void;
 }
 
-function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: ProfileContentProps) {
+function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnly }: ProfileContentProps) {
   const [form, setForm] = useState({
     name: user.name ?? '',
     phone: user.phone ?? '',
@@ -143,7 +165,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
   return (
     <div className={`${isStaff ? 'max-w-5xl' : 'max-w-3xl'} mx-auto space-y-6`}>
       <div>
-        <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">Meu perfil</h1>
+        <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">{ordersOnly ? 'Pedidos feitos' : 'Dados da conta'}</h1>
         <p className="text-sm text-zinc-400 mt-1">
           {isStaff
             ? 'Dados da conta administrativa, gestão completa de ofertas/afiliados e acesso ao painel central.'
@@ -158,7 +180,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
         </div>
       )}
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6">
+      <section hidden={ordersOnly} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div
             className="w-16 h-16 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center text-2xl font-black shrink-0"
@@ -203,9 +225,9 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
         </div>
       </section>
 
-      {isStaff && <AdminOffersManager />}
+      {isStaff && !ordersOnly && <AdminOffersManager />}
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
+      <section hidden={!ordersOnly} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
         <h2 className="text-base font-bold text-white">Meus pedidos</h2>
         {myOrders.length === 0 ? (
           <p className="text-sm text-zinc-400">Você ainda não realizou pedidos na plataforma.</p>
@@ -236,7 +258,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout }: Profile
         )}
       </section>
 
-      <form onSubmit={handleSave} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
+      <form hidden={ordersOnly} onSubmit={handleSave} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
         <h2 className="text-base font-bold text-white">Dados pessoais</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

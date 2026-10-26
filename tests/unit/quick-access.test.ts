@@ -33,3 +33,34 @@ it('remove os cards de garantia e usa bordas neutras nas descrições dos perfis
   assert.doesNotMatch(landing, /Custódia Protegida|5% OFF Automático no PIX|Envio para Todo o Brasil/);
   assert.doesNotMatch(landing.slice(landing.indexOf('id="perfis"')), /border-red-500\/60|shadow-2xl shadow-red-950/);
 });
+
+it('isola todas as chaves e identidades dos quatro perfis temporários', async () => {
+  const { quickStorageKey, temporaryIdentity } = await import('@/lib/quick-access');
+  const profiles = ['admin', 'athlete', 'coach', 'casual'] as const;
+  for (const key of ['coremotiom_state_v1', 'coremotion_sports_v1', 'coremotion_sports_content_v1', 'coremotion_managed_offers_v1']) {
+    assert.equal(new Set(profiles.map(profile => quickStorageKey(key, profile))).size, 4);
+    assert.equal(quickStorageKey(key, null), key);
+    assert.ok(profiles.every(profile => quickStorageKey(key, profile) !== 'coremotion_quick_state_v1'));
+  }
+  assert.equal(new Set(profiles.map(profile => temporaryIdentity(profile).id)).size, 4);
+  assert.equal(new Set(profiles.map(profile => temporaryIdentity(profile).email)).size, 4);
+  assert.equal(temporaryIdentity('casual').account_type, 'casual');
+  assert.equal(temporaryIdentity('coach').account_type, 'coach');
+  assert.equal(temporaryIdentity('athlete').account_type, 'athlete');
+  assert.equal(temporaryIdentity('admin').role, 'admin');
+});
+
+it('o armazenamento esportivo usa o mesmo namespace do perfil temporário', () => {
+  execFileSync(process.execPath, ['--import', 'tsx', '-e', `
+    const assert = require('node:assert/strict');
+    global.window = { location: { search: '?acesso-rapido=casual' } };
+    const { scopedQuickStorage, quickStorageKey } = require('./lib/quick-access.ts');
+    const values = new Map();
+    const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+    const scoped = scopedQuickStorage(storage);
+    scoped.setItem('coremotion_sports_v1', 'casual-data');
+    assert.equal(scoped.getItem('coremotion_sports_v1'), 'casual-data');
+    assert.equal(storage.getItem(quickStorageKey('coremotion_sports_v1', 'athlete')), null);
+    assert.equal(storage.getItem('coremotion_sports_v1'), null);
+  `]);
+});

@@ -1,5 +1,5 @@
 'use client';
-import { IS_QUICK_ACCESS, QUICK_PROFILE } from './quick-access';
+import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
 import { ACCOUNT_TYPES, type AccountType } from './sports';
 
 import { calculateCheckoutTotals, ShippingMethod } from './checkout';
@@ -180,9 +180,9 @@ interface CoreMotiomContextType {
 
 const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = IS_QUICK_ACCESS ? 'coremotion_quick_state_v1' : 'coremotiom_state_v1';
-const OFFERS_STORAGE_KEY = 'coremotion_managed_offers_v1';
-const ENTERED_SESSION_KEY = IS_QUICK_ACCESS ? 'coremotion_quick_entered_v1' : 'coremotion_entered_session_v2';
+const LOCAL_STORAGE_KEY = quickStorageKey('coremotiom_state_v1');
+const OFFERS_STORAGE_KEY = quickStorageKey('coremotion_managed_offers_v1');
+const ENTERED_SESSION_KEY = quickStorageKey('coremotion_entered_session_v2');
 
 /** Junta duas listas de anúncios por id; os itens de `incoming` prevalecem. */
 function mergeProductsById(current: Product[], incoming: Product[]): Product[] {
@@ -278,9 +278,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           // Com o Supabase ativo a sessão vem do Auth: nunca restaurar usuário/pedidos do navegador.
           if (!isSupabaseConfigured) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
-            if (parsed.user) setUser(parsed.user);
+            if (parsed.user && (!QUICK_PROFILE || parsed.user.id === temporaryIdentity(QUICK_PROFILE).id)) setUser(parsed.user);
+            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(parsed.products);
+            if (IS_QUICK_ACCESS && Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
           }
         }
+
+        // Temporary sessions restore only their own local state; never overwrite it with live data.
+        if (IS_QUICK_ACCESS) return;
 
         // Busca ofertas reais do banco PostgreSQL quando disponível em produção
         try {
@@ -419,12 +424,12 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Persistência local: carrinho e favoritos sempre; sessão e pedidos apenas no modo demonstração sem banco.
   useEffect(() => {
     try {
-      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites };
+      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites, ...(IS_QUICK_ACCESS ? { products, communityPosts } : {}) };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // ignore
     }
-  }, [user, orders, cart, favorites]);
+  }, [user, orders, cart, favorites, products, communityPosts]);
 
   const sportsSessionId = user?.id;
   const sportsAccountType = user?.account_type;
@@ -754,8 +759,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!QUICK_PROFILE) return;
-    if (QUICK_PROFILE === 'admin') loginAsMasterAdmin();
-    else switchRole('user', QUICK_PROFILE);
+    const identity = temporaryIdentity(QUICK_PROFILE);
+    setUser(current => current?.id === identity.id ? current : { ...identity, city: 'Curitiba', state: 'PR', created_at: '2026-01-01T00:00:00Z' });
     enterPlatform('home');
     setAuthModalOpen(false);
   }, [loginAsMasterAdmin, switchRole, enterPlatform, setAuthModalOpen]);
@@ -832,6 +837,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Auth: Logout
   const logout = async () => {
+    if (IS_QUICK_ACCESS) { window.location.assign('/'); return; }
     await AuthService.signOut();
     setUser(null);
     resetPrivateState();
