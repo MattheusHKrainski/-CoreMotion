@@ -63,6 +63,7 @@ export interface Product {
   views?: number;
   likes_count?: number;
   location?: string | null;
+  contact_phone?: string | null;
   shipping_available?: boolean;
   status: 'active' | 'draft' | 'sold' | 'suspended';
   created_at: string;

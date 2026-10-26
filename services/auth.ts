@@ -100,6 +100,7 @@ export class AuthService {
     const meta = data.user.user_metadata || {};
     return this.finishSession(data.user.id, cleanEmail, {
       name: (typeof meta.name === 'string' && meta.name) || cleanEmail.split('@')[0],
+      sport: typeof meta.sport === 'string' ? meta.sport : undefined,
       avatar: typeof meta.avatar_url === 'string' ? meta.avatar_url : undefined,
     });
   }
@@ -108,7 +109,7 @@ export class AuthService {
    * Cria a conta no Supabase Auth. O papel não é escolhido pelo cliente: contas nascem como atleta
    * e o servidor aplica o papel de conta-mestre no sincronismo.
    */
-  static async signUpWithEmail(email: string, pass: string, name: string, accountType: import("@/lib/sports").AccountType = "casual"): Promise<AuthResponse<UserProfile>> {
+  static async signUpWithEmail(email: string, pass: string, name: string, accountType: import("@/lib/sports").AccountType = "casual", sport?: string): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
     const sb = getSupabaseClient();
 
@@ -116,14 +117,14 @@ export class AuthService {
       if (!DEMO_MODE) {
         return { success: false, error: 'Cadastro indisponível: o Supabase não está configurado.' };
       }
-      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name });
+      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name, sport });
     }
 
     try {
       const { data, error } = await sb.auth.signUp({
         email: cleanEmail,
         password: pass,
-        options: { data: { name, account_type: accountType } },
+        options: { data: { name, account_type: accountType, sport: sport?.trim() } },
       });
       if (error) {
         const exists = error.message?.toLowerCase().includes('already');
@@ -139,7 +140,7 @@ export class AuthService {
         // Confirmação de e-mail pendente: sem sessão não há como sincronizar o perfil ainda.
         return { success: false, error: 'Conta criada. Confirme seu e-mail e depois entre.' };
       }
-      return this.finishSession(data.user.id, cleanEmail, { name });
+      return this.finishSession(data.user.id, cleanEmail, { name, sport });
     } catch {
       return { success: false, error: 'Não foi possível conectar ao servidor de autenticação.' };
     }

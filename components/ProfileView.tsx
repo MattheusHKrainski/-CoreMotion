@@ -197,7 +197,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnl
             {roleLabel}
           </span>
         </div>
-        <p className="mt-4 text-sm text-zinc-300 leading-relaxed">{roleDescription}</p>
+        <p className="mt-4 text-sm text-zinc-300 leading-relaxed">{roleDescription}</p><p className="mt-3 text-red-400 text-sm font-bold">{user.sport_interests?.join(' • ')}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
           {isStaff && (
