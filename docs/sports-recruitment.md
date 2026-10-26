@@ -36,3 +36,11 @@ Os campos de contato e currículo são intencionalmente publicados para outros p
 Sem Supabase configurado, `fixtures/sports-preview.ts` preenche as áreas com 8 currículos de atletas, 5 profissionais, 6 seletivas e 3 interações de inscrição/convocação. As datas são futuras no momento da primeira carga; os contatos usam o domínio reservado `.example.test` e não representam canais reais. As informações não correspondem a eventos ou pessoas verificados.
 
 A carga é feita uma única vez por navegador (`coremotion_sports_content_v1`) e respeita os dados anteriores. Edições e exclusões continuam preservadas. Com Supabase configurado, essa carga não é executada e nenhum desses registros é enviado ao banco. Substituir por publicações reais quando disponíveis.
+
+## Acesso rápido temporário no site publicado
+
+O modal oferece Admin, Atleta, Treinador e Casual também com Supabase configurado. Nesse caso, o botão abre uma sessão local isolada usando `?acesso-rapido=admin` (ou `athlete`, `coach`, `casual`). Nessa sessão, o cliente Supabase fica desativado e `authedFetch` bloqueia chamadas protegidas, sem obter nem transmitir o token de uma conta real. A autenticação do servidor permanece intacta. O perfil Admin temporário é somente para experimentar as ferramentas locais; não administra o banco de produção.
+
+O aviso inferior permite sair da sessão temporária e recarregar o acesso normal. O estado de usuário/carrinho e a entrada da plataforma usam chaves próprias para não substituir o estado da conta normal. Os botões não são cadastro nem autenticação reais.
+
+Para remover o recurso ao terminar o período temporário, configure `NEXT_PUBLIC_QUICK_ACCESS_ENABLED=false` e faça novo build/deploy. Por padrão, ele fica visível enquanto esta versão estiver em uso.
