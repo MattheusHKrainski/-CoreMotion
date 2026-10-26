@@ -109,7 +109,7 @@ export default function SellC2CView() {
         location,
         shipping_available: shippingAvailable,
         status: 'active',
-        tags: [sport, category, 'Compra Garantida'],
+        tags: [sport, category, 'Anúncio de Atleta'],
       });
 
       setTitle('');
@@ -133,13 +133,13 @@ export default function SellC2CView() {
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-wider mb-1.5">
             <Tag className="w-3.5 h-3.5" />
-            <span>Venda com Segurança</span>
+            <span>Anuncie seu equipamento</span>
           </div>
           <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
             Quero Vender meu Equipamento
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
-            Publique seus equipamentos novos ou seminovos em poucos minutos e venda com Compra Garantida para atletas de todo o Brasil.
+            Publique seus equipamentos novos ou seminovos em poucos minutos e conecte-se com atletas de todo o Brasil.
           </p>
         </div>
       </div>
@@ -434,10 +434,10 @@ export default function SellC2CView() {
             <div className="p-5 rounded-3xl bg-red-600/10 border border-red-500/20 space-y-2">
               <h4 className="font-bold text-red-400 text-xs flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Compra Protegida CoreMotion</span>
+                <span>Negociação entre as partes</span>
               </h4>
               <p className="text-zinc-300 leading-relaxed text-xs">
-                Transações seguras entre atletas com acompanhamento do pedido desde a confirmação até o recebimento pelo comprador.
+                A CoreMotion hospeda o anúncio. Combine pagamento e entrega com o comprador e confira as condições antes de negociar.
               </p>
             </div>
           </div>

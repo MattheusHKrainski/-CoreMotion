@@ -11,8 +11,8 @@ import AdminOffersManager from '@/components/admin/AdminOffersManager';
 import { LogOut, Save, ShieldCheck, Tag, UserCircle2 } from 'lucide-react';
 
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
-  user: 'Atleta: compra com garantia, anuncia seus próprios equipamentos, aproveita ofertas com desconto e participa da comunidade.',
-  seller: 'Vendedor Verificado: anuncia equipamentos esportivos com Compra Garantida e participa da comunidade.',
+  user: 'Atleta: encontra equipamentos, anuncia seus próprios equipamentos, aproveita ofertas com desconto e participa da comunidade.',
+  seller: 'Vendedor Verificado: anuncia equipamentos esportivos na plataforma e participa da comunidade.',
   supervisor:
     'Supervisor: modera a comunidade, os anúncios e os pedidos da plataforma. Não altera papéis nem exclui contas.',
   admin: 'Administrador: acesso total de gestão da plataforma, incluindo permissões de usuários, catálogo e pedidos.',
@@ -29,7 +29,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Pagamento protegido',
+  escrow_locked: 'Pagamento registrado',
   preparing: 'Em preparação',
   shipped: 'Enviado',
   delivered: 'Entregue',

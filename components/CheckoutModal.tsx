@@ -114,7 +114,7 @@ export default function CheckoutModal() {
               <h3 className="text-sm sm:text-base font-extrabold text-white">
                 {step === 'cart' && 'Meu Carrinho'}
                 {step === 'shipping' && 'Endereço de Entrega'}
-                {step === 'payment' && 'Pagamento Seguro'}
+                {step === 'payment' && 'Dados de pagamento'}
                 {step === 'success' && 'Pedido Confirmado'}
               </h3>
               <p className="text-xs text-zinc-400">
