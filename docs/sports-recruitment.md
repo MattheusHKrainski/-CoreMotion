@@ -15,7 +15,7 @@ Aplicar `supabase/migrations/20261023130000_sports_recruitment.sql` depois das m
 
 Os metadados da categoria acompanham o cadastro, inclusive quando há confirmação de e-mail. Contas antigas sem categoria não ganham acesso esportivo automaticamente.
 
-Os quatro acessos rápidos aparecem somente sem Supabase configurado. Nenhum deles concede acesso administrativo a um banco real. Remova esse bloco de AuthModal ao encerrar o período temporário. Nesse ambiente, os registros esportivos ficam no localStorage do navegador e não são compartilhados entre dispositivos. Com Supabase configurado, os registros são lidos e gravados no banco, sem fallback silencioso para armazenamento local em caso de erro.
+Os quatro acessos rápidos aparecem também no site publicado enquanto o recurso temporário estiver habilitado; com Supabase configurado, abrem uma sessão local isolada. Nenhum deles concede acesso administrativo a um banco real. Remova esse bloco de AuthModal ao encerrar o período temporário. Nesse ambiente, os registros esportivos ficam no localStorage do navegador e não são compartilhados entre dispositivos. Com Supabase configurado, os registros são lidos e gravados no banco, sem fallback silencioso para armazenamento local em caso de erro.
 
 ## Fluxos
 
