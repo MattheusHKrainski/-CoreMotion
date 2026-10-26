@@ -36,7 +36,7 @@ import {
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Pagamento protegido',
+  escrow_locked: 'Pagamento registrado',
   preparing: 'Em preparação',
   shipped: 'Enviado',
   delivered: 'Entregue',
@@ -378,7 +378,7 @@ export default function AdminDashboard() {
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
                 <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Proteção C2C</span>
-                <span className="text-emerald-400 font-bold text-xs mt-0.5 block">Custódia ativa</span>
+                <span className="text-emerald-400 font-bold text-xs mt-0.5 block">Pedido registrado</span>
               </div>
               <div className="p-3 bg-zinc-950/80 rounded-2xl border border-zinc-800/80">
                 <span className="text-zinc-500 block text-[10px] font-semibold uppercase">Desconto PIX</span>

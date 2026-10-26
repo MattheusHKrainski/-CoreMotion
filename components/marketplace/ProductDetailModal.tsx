@@ -186,7 +186,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
               <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                 <div className="rounded-md border border-[#232836] bg-[#12151C]/90 px-2.5 py-1 text-xs font-semibold text-[#E5E7EB] shadow-md backdrop-blur-sm">
-                  Compra 100% Garantida
+                  Anúncio de atleta
                 </div>
               </div>
 

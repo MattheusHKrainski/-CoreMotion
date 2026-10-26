@@ -42,7 +42,7 @@ export default function WelcomeLandingPage() {
   } = useCoreMotiom();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedRoleTab, setSelectedRoleTab] = useState<'atleta' | 'treinador' | 'casual' | 'visitante'>('atleta');
+  const [selectedRoleTab, setSelectedRoleTab] = useState<'atleta' | 'treinador' | 'casual'>('atleta');
 
   const c2cCount = products.filter((p) => p.product_type === 'c2c' && p.status === 'active').length;
 
@@ -130,10 +130,10 @@ export default function WelcomeLandingPage() {
               </button>
               <button
                 type="button"
-                onClick={() => scrollToSection('seguranca')}
+                onClick={() => scrollToSection('comecar')}
                 className="hover:text-white transition-colors"
               >
-                Compra Garantida
+                Anúncios entre atletas
               </button>
             </nav>
           </div>
@@ -271,7 +271,7 @@ export default function WelcomeLandingPage() {
             </h1>
 
             <p className="max-w-2xl mx-auto text-base sm:text-xl text-zinc-300 leading-relaxed font-normal">
-              As modalidades e os desafios evoluem, mas a dedicação permanece. Na CoreMotion, clientes, atletas e treinadores se unem em uma única plataforma segura.
+              As modalidades e os desafios evoluem, mas a dedicação permanece. Na CoreMotion, clientes, atletas e treinadores se unem em uma única plataforma de anúncios e conexões esportivas.
             </p>
 
             {/* BARRA CENTRAL DE ESCOLHA DIRETA: CADASTRAR, LOGAR OU ENTRAR COMO VISITANTE */}
@@ -316,7 +316,7 @@ export default function WelcomeLandingPage() {
                   <ShoppingBag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
                 <p className="text-2xl font-black text-white mt-1">{c2cCount}</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5">Equipamentos com Compra Garantida</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">Equipamentos anunciados por atletas</p>
               </button>
 
               <button
@@ -380,7 +380,7 @@ export default function WelcomeLandingPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-4 flex flex-col justify-end">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">De Atletas</span>
-                  <p className="text-sm font-bold text-white">Seminovos revisados com garantia</p>
+                  <p className="text-sm font-bold text-white">Novos e seminovos entre atletas</p>
                 </div>
               </div>
 
@@ -444,7 +444,7 @@ export default function WelcomeLandingPage() {
                 Tudo o que move sua rotina esportiva reunido em um só lugar
               </h2>
               <p className="text-sm sm:text-base text-zinc-300 leading-relaxed">
-                Quem pratica esporte sabe como tudo costumava ficar espalhado: promoções difíceis de achar, grupos inseguros para negociar material usado e falta de referência na hora de escolher um bom treinador. A <strong className="text-white">CoreMotion</strong> nasceu para resolver exatamente isso com transparência, economia e segurança.
+                Quem pratica esporte sabe como tudo costumava ficar espalhado: promoções difíceis de achar, grupos inseguros para negociar material usado e falta de referência na hora de escolher um bom treinador. A <strong className="text-white">CoreMotion</strong> nasceu para resolver exatamente isso reunindo anúncios, ofertas e perfis esportivos em um só lugar.
               </p>
             </div>
 
@@ -455,7 +455,7 @@ export default function WelcomeLandingPage() {
                 </div>
                 <h3 className="text-lg font-bold text-white">Compra e Venda Entre Atletas</h3>
                 <p className="text-sm text-zinc-400 leading-relaxed">
-                  Tem um equipamento parado em ótimo estado ou quer subir de nível pagando menos? Negocie kimonos, raquetes, tênis, chuteiras, relógios GPS e bikes com pagamento em custódia e entrega rastreada.
+                  Tem um equipamento parado em ótimo estado ou quer subir de nível pagando menos? Negocie kimonos, raquetes, tênis, chuteiras, relógios GPS e bikes diretamente com outros atletas. Pagamento e entrega são combinados entre comprador e anunciante.
                 </p>
               </div>
 
@@ -515,9 +515,9 @@ export default function WelcomeLandingPage() {
                 },
                 {
                   step: '03',
-                  title: 'Pague com segurança',
+                  title: 'Combine as condições',
                   description:
-                    'Nos equipamentos de atletas, finalize com PIX (5% de desconto automático), cartão ou boleto e frete PAC/SEDEX protegido.',
+                    'Converse com o anunciante e confira o estado do equipamento, o preço, o pagamento e a entrega. A CoreMotion não garante a transação.',
                   icon: Lock,
                 },
                 {
@@ -591,27 +591,17 @@ export default function WelcomeLandingPage() {
                   Treinador
                 </button>
                 <button type="button" onClick={() => setSelectedRoleTab('casual')} className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold ${selectedRoleTab === 'casual' ? 'bg-red-600 text-white' : 'text-zinc-400'}`}>Casual</button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedRoleTab('visitante')}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    selectedRoleTab === 'visitante'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Visitante
-                </button>
+
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-4">{Object.entries(ACCOUNT_TYPES).map(([key, value]) => <article key={key} className={`rounded-2xl border bg-zinc-950 p-6 space-y-3 ${selectedRoleTab === ({ athlete: 'atleta', coach: 'treinador', casual: 'casual' } as Record<string, string>)[key] ? 'border-zinc-600' : 'border-zinc-800'}`}><h3 className="text-xl font-bold text-white">{value.label}</h3><p className="text-sm text-zinc-400 leading-relaxed">{value.description}</p><button type="button" className="text-red-400 text-sm font-bold" onClick={() => { setAuthAccountType(key as keyof typeof ACCOUNT_TYPES); handleOpenRegister(); }}>Criar perfil {value.label}</button></article>)}</div>
-            <p className="text-sm text-zinc-400">O visitante navega sem conta. O perfil Casual é uma conta para compras, comunidade e atividades de rotina, sem acesso ao recrutamento. Atletas personalizam altura, peso, idade, tempo de prática, posição, estatísticas, medalhas e histórico. Treinadores apresentam formação, certificações, equipe e metodologia. Nas seletivas, veja endereço, data, horário, categoria SUB e a rotina de treinos após aprovação. Publique somente informações que deseja compartilhar.</p>
+            <div className="grid sm:grid-cols-3 gap-4">{Object.entries(ACCOUNT_TYPES).map(([key, value]) => <article key={key} className={`rounded-2xl border bg-zinc-950 p-6 space-y-3 transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none ${selectedRoleTab === ({ athlete: 'atleta', coach: 'treinador', casual: 'casual' } as Record<string, string>)[key] ? 'border-zinc-600' : 'border-zinc-800'}`}><h3 className="text-xl font-bold text-white">{value.label}</h3><p className="text-sm text-zinc-400 leading-relaxed">{value.description}</p><button type="button" className="text-red-400 text-sm font-bold" onClick={() => { setAuthAccountType(key as keyof typeof ACCOUNT_TYPES); handleOpenRegister(); }}>Criar perfil {value.label}</button></article>)}</div>
+            <p className="text-sm text-zinc-400">O perfil Casual é uma conta para compras, comunidade e atividades de rotina, sem acesso ao recrutamento. Atletas personalizam altura, peso, idade, tempo de prática, posição, estatísticas, medalhas e histórico. Treinadores apresentam formação, certificações, equipe e metodologia. Nas seletivas, veja endereço, data, horário, categoria SUB e a rotina de treinos após aprovação. Publique somente informações que deseja compartilhar.</p>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* CARD 1: CLIENTES & ATLETAS */}
               <div
                 id="atletas"
-                className={`rounded-3xl p-6 sm:p-8 border transition-all flex flex-col justify-between space-y-6 ${
+                className={`rounded-3xl p-6 sm:p-8 border transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none flex flex-col justify-between space-y-6 ${
                   selectedRoleTab === 'atleta'
                     ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-zinc-600'
                     : 'bg-zinc-900/60 border-zinc-800'
@@ -634,7 +624,7 @@ export default function WelcomeLandingPage() {
                     <li className="flex items-start gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span>
-                        <strong className="text-white">Comprar com Compra Garantida:</strong> adquira equipamentos novos e seminovos com PIX (5% OFF), cartão ou boleto e custódia até o recebimento.
+                        <strong className="text-white">Encontrar equipamentos:</strong> consulte anúncios de novos e seminovos e combine preço, pagamento e entrega diretamente com o anunciante.
                       </span>
                     </li>
                     <li className="flex items-start gap-2.5">
@@ -680,7 +670,7 @@ export default function WelcomeLandingPage() {
               {/* CARD 2: TREINADORES & ASSESSORIAS */}
               <div
                 id="treinadores"
-                className={`rounded-3xl p-6 sm:p-8 border transition-all flex flex-col justify-between space-y-6 ${
+                className={`rounded-3xl p-6 sm:p-8 border transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none flex flex-col justify-between space-y-6 ${
                   selectedRoleTab === 'treinador'
                     ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-zinc-600'
                     : 'bg-zinc-900/60 border-zinc-800'
@@ -721,7 +711,7 @@ export default function WelcomeLandingPage() {
                     <li className="flex items-start gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span>
-                        <strong className="text-white">Renovação de materiais esportivos:</strong> compre acessórios de treino com desconto ou anuncie materiais seminovos da sua assessoria com segurança.
+                        <strong className="text-white">Renovação de materiais esportivos:</strong> compre acessórios de treino com desconto ou anuncie materiais seminovos da sua assessoria na plataforma.
                       </span>
                     </li>
                   </ul>
@@ -747,40 +737,11 @@ export default function WelcomeLandingPage() {
               </div>
             </div>
 
-            {/* FAIXA DEDICADA: O QUE O VISITANTE PODE FAZER SEM CONTA */}
-            <div
-              className={`rounded-3xl p-6 sm:p-7 border transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 ${
-                selectedRoleTab === 'visitante'
-                  ? 'bg-zinc-900 border-zinc-600'
-                  : 'bg-zinc-900/50 border-zinc-800'
-              }`}
-            >
-              <div className="space-y-1.5 max-w-2xl">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  Prefere só conhecer primeiro?
-                </span>
-                <h3 className="text-lg sm:text-xl font-bold text-white">
-                  Entrando como Visitante, você navega livremente sem precisar criar conta agora
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                  Veja todos os equipamentos de atletas, abra ofertas selecionadas, consulte perfis de treinadores e leia os relatos da comunidade. Se depois quiser comprar, anunciar ou publicar, você entra ou se cadastra em um clique.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleEnterAsVisitor('home')}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-extrabold text-xs sm:text-sm whitespace-nowrap transition-colors shrink-0"
-              >
-                <span>Entrar agora como visitante</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
           </div>
         </section>
 
-        {/* SEÇÃO 4: GARANTIAS + CHAMADA FINAL COM AS 3 OPÇÕES CLARAS */}
-        <section id="seguranca" className="py-20 sm:py-24 bg-[#0B0C10]">
+        {/* SEÇÃO 4: CHAMADA FINAL COM AS 3 OPÇÕES CLARAS */}
+        <section id="comecar" className="py-20 sm:py-24 bg-[#0B0C10]">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <div className="rounded-3xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 p-8 sm:p-12 text-center space-y-6 shadow-2xl">
               <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">

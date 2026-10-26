@@ -193,7 +193,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
             ) : (
               <span className="mb-0.5 flex items-center gap-1 text-[10px] text-emerald-400">
                 <ShieldCheck className="h-3 w-3" />
-                Compra Garantida
+                Anunciado por atleta
               </span>
             )}
             <span className="text-lg font-extrabold tracking-tight text-white">

@@ -151,7 +151,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
           </div>
           <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Equipamentos e Ofertas Esportivas</h1>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-400 sm:text-sm">
-            Encontre descontos nas melhores lojas esportivas ou compre equipamentos novos e seminovos direto de outros atletas com Compra Garantida.
+            Encontre descontos nas melhores lojas esportivas ou compre equipamentos novos e seminovos direto de outros atletas por meio de anúncios publicados na plataforma.
           </p>
         </div>
         <button

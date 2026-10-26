@@ -2861,7 +2861,7 @@ export const INITIAL_NEWS: NewsArticle[] = [
     id: 'news-1',
     title: 'Economia Circular no Esporte: Busca por Equipamentos Seminovos de Atletas Cresce 52% no Brasil',
     summary: 'Relógios GPS, raquetes de carbono, halteres e tênis com baixa quilometragem lideram os desapegos entre praticantes.',
-    content: 'Trocar de modalidade ou subir de nível no treino deixou de significar equipamento encostado no armário. Com a venda direta entre atletas protegida por Compra Garantida, quem está começando economiza até metade do valor de loja em itens muito bem cuidados.',
+    content: 'Trocar de modalidade ou subir de nível no treino deixou de significar equipamento encostado no armário. Com a venda direta entre atletas por meio de anúncios, quem está começando economiza até metade do valor de loja em itens muito bem cuidados.',
     category: 'Mercado Esportivo',
     image_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1000&q=80',
     published_at: '2026-10-21T14:00:00Z',
