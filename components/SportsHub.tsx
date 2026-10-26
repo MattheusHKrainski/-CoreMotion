@@ -1,4 +1,5 @@
 'use client';
+import { scopedQuickStorage } from '@/lib/quick-access';
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { canAccessSports, canRecruit, type SportsRecord } from '@/lib/sports';
@@ -37,7 +38,7 @@ export default function SportsHub({ view }: { view: 'trials' | 'talents' | 'spor
         else setRecords(data || []);
       });
     } else {
-      try { setRecords(loadSportsPreview(localStorage)); }
+      try { setRecords(loadSportsPreview(scopedQuickStorage(localStorage))); }
       catch { setError('Não foi possível ler os dados locais.'); }
     }
     return () => { active = false; };
@@ -54,7 +55,7 @@ export default function SportsHub({ view }: { view: 'trials' | 'talents' | 'spor
         if (error || !data?.length) throw new Error('Operação não autorizada ou indisponível. Tente novamente.');
       }
       const next = remove ? records.filter(r => r.id !== record.id) : [...records.filter(r => r.id !== record.id), record];
-      if (!client) localStorage.setItem('coremotion_sports_v1', JSON.stringify(next));
+      if (!client) scopedQuickStorage(localStorage).setItem('coremotion_sports_v1', JSON.stringify(next));
       setRecords(next);
       addToast('Salvo', remove ? 'Publicação removida.' : 'Dados atualizados com sucesso.', 'success');
       return true;
