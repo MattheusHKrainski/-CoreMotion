@@ -69,33 +69,32 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     {
       id: 'home',
       label: 'Início',
-      description: 'Destaques & Novidades',
+      description: 'Destaques e novidades',
       icon: Compass,
     },
     {
       id: 'marketplace',
       label: 'Marketplace',
-      description: 'Catálogo de Produtos',
+      description: 'Equipamentos e ofertas',
       icon: ShoppingBag,
     },
     {
       id: 'sell',
       label: 'Quero Vender',
-      description: 'Anuncie seus Equipamentos',
+      description: 'Publique e gerencie anúncios',
       icon: PlusCircle,
-      badge: 'Anunciar',
       highlight: true,
     },
     {
       id: 'coaches',
       label: 'Treinadores',
-      description: 'Planilhas & Assessoria',
+      description: 'Encontre orientação para treinar',
       icon: Users,
     },
     {
       id: 'community',
       label: 'Comunidade',
-      description: 'Feed de Atletas',
+      description: 'Relatos e trocas entre atletas',
       icon: Layers,
     },
     ...(canAccessSports(user) ? [
@@ -143,7 +142,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   }, []);
 
   const renderSidebarContent = (isMobileDrawer = false) => (
-    <div className="flex flex-col h-full justify-between">
+    <div className="flex flex-col min-h-full justify-between gap-6">
       {/* Top Section: Brand & Search & Navigation */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2 pt-1">
@@ -209,17 +208,30 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         </div>
 
         {/* Main Function Navigation Menu */}
-        <div className="px-1 space-y-1">
-          <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-            Navegação Principal
-          </div>
-          {navItems.map((item) => {
+        <nav aria-label="Navegação da plataforma" className="px-1 space-y-4">
+          {[
+            { title: 'Explorar', description: 'Descubra a plataforma', ids: ['home', 'marketplace', 'community'] },
+            { title: 'Anunciar e treinar', description: 'Equipamentos e orientação', ids: ['sell', 'coaches'] },
+            { title: 'Carreira esportiva', description: 'Oportunidades e trajetória', ids: ['trials', 'talents', 'sports-profile'] },
+            { title: 'Gestão', description: 'Ferramentas da equipe', ids: ['admin'] },
+          ].map((section) => {
+            const items = navItems.filter((item) => section.ids.includes(item.id));
+            if (!items.length) return null;
+            return (
+              <section key={section.title} aria-label={section.title} className="border-t border-zinc-800 pt-3 first:border-t-0 first:pt-0">
+                <div className="px-3 pb-2">
+                  <h2 className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">{section.title}</h2>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">{section.description}</p>
+                </div>
+                <div className="space-y-1">
+          {items.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
+                aria-current={isActive ? 'page' : undefined}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all group ${
                   isActive
                     ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-950/40 font-semibold'
@@ -241,8 +253,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                       {item.label}
                     </div>
                     <div
-                      className={`text-[10px] truncate ${
-                        isActive ? 'text-white/80' : 'text-zinc-500 group-hover:text-zinc-400'
+                      className={`text-[11px] leading-relaxed mt-1 whitespace-normal ${
+                        isActive ? 'text-white/80' : 'text-zinc-400 group-hover:text-zinc-300'
                       }`}
                     >
                       {item.description}
@@ -266,12 +278,16 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               </button>
             );
           })}
-        </div>
+                </div>
+              </section>
+            );
+          })}
+        </nav>
 
         {/* Quick Function Utilities (Cart & Favorites) */}
         <div className="px-1 pt-1 space-y-1">
           <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-            Ações Rápidas
+            Minhas compras
           </div>
 
           <button
@@ -333,7 +349,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       </div>
 
       {/* Bottom Section: Profile & Authentication */}
-      <div className="pt-4 border-t border-zinc-800/80 px-2 space-y-2">
+      <div className="shrink-0 pt-4 border-t border-zinc-800/80 px-2 space-y-2">
         {isVisitor ? (
           <div className="p-3 rounded-2xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 space-y-2.5">
             <div className="flex items-center gap-2">
