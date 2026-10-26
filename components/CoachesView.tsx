@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import CoachProfiles from './CoachProfiles';
 import { Coach } from '@/lib/types';
 import { INITIAL_COACHES } from '@/fixtures/initial-data';
 import {
@@ -20,6 +21,10 @@ import {
 } from 'lucide-react';
 
 const SPORTS_FILTERS = [
+  'Pilates',
+  'Ginástica',
+  'Alongamento',
+  'Yoga',
   'Jiu-Jitsu',
   'Basquete',
   'Karatê',
@@ -162,6 +167,8 @@ export default function CoachesView() {
           </button>
         ))}
       </div>
+
+      <CoachProfiles sport={selectedSport} search={searchTerm} />
 
       {/* Coaches Grid */}
       {filteredCoaches.length === 0 ? (

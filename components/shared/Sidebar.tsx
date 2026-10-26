@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { canAccessSports } from '@/lib/sports';
 import BrandMark from '@/components/shared/BrandMark';
 import {
   Search,
@@ -43,7 +44,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setSearchQuery,
     logout,
     switchRole,
-    openWelcomePage,
     addToast,
   } = useCoreMotiom();
 
@@ -98,6 +98,11 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       description: 'Feed de Atletas',
       icon: Layers,
     },
+    ...(canAccessSports(user) ? [
+      { id: 'trials' as const, label: 'Seletivas e treinos', description: 'Oportunidades e inscrições', icon: Users },
+      { id: 'talents' as const, label: 'Banco de atletas', description: 'Currículos e convocações', icon: Users },
+      { id: 'sports-profile' as const, label: 'Meu perfil esportivo', description: 'Formação e conquistas', icon: User },
+    ] : []),
     ...(userIsStaff
       ? [
           {
@@ -170,18 +175,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             </button>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            setIsMobileOpen(false);
-            openWelcomePage();
-          }}
-          className="mx-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800/90 text-[11px] font-semibold text-zinc-300 hover:text-white flex items-center justify-between transition-colors"
-        >
-          <span>Página inicial & Como funciona</span>
-          <span className="text-red-400">↗</span>
-        </button>
 
         {/* Global Instant Search Box */}
         <div className="px-2">

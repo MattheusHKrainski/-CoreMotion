@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
@@ -56,4 +57,12 @@ describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
       );
     }
   });
+});
+
+it('remove o atalho lateral e centraliza a abertura da autenticação na página inicial', () => {
+  const sidebar = readFileSync('components/shared/Sidebar.tsx', 'utf8');
+  const store = readFileSync('lib/store.tsx', 'utf8');
+  assert.doesNotMatch(sidebar, /Página inicial & Como funciona/);
+  assert.match(store, /if \(open\) \{\s*openWelcomePage\(\);/);
+  assert.match(store, /setAuthModalOpenState\(open\)/);
 });
