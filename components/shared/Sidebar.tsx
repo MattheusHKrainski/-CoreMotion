@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
-import { canAccessSports } from '@/lib/sports';
+import { IS_QUICK_ACCESS } from '@/lib/quick-access';
+import { ACCOUNT_TYPES, canAccessSports } from '@/lib/sports';
 import BrandMark from '@/components/shared/BrandMark';
 import {
   Search,
   ShoppingBag,
-  Heart,
   User,
   PlusCircle,
   ShieldCheck,
@@ -36,7 +36,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     isVisitor,
     cartCount,
     cart,
-    favorites,
     setAuthModalOpen,
     setAuthModalMode,
     setCheckoutOpen,
@@ -52,7 +51,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
   const userIsAdmin = user?.role === 'admin';
   const userIsStaff = isStaffRole(user?.role);
-  const showRoleMenu = !isSupabaseConfigured && userIsStaff;
+  const showRoleMenu = !isSupabaseConfigured && !IS_QUICK_ACCESS && userIsStaff;
 
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
@@ -317,34 +316,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             )}
           </button>
 
-          {!isVisitor && (
-            <button
-              onClick={() => {
-                setActiveView('profile');
-                setIsMobileOpen(false);
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 text-zinc-300 hover:text-white transition-all group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-rose-600/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-                  <Heart className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left">
-                  <div className="text-xs font-semibold text-zinc-200 group-hover:text-white">
-                    Meus Favoritos
-                  </div>
-                  <div className="text-[10px] text-zinc-400">
-                    {favorites.length} {favorites.length === 1 ? 'item salvo' : 'itens salvos'}
-                  </div>
-                </div>
-              </div>
-              {favorites.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-bold text-[10px]">
-                  {favorites.length}
-                </span>
-              )}
-            </button>
-          )}
+
         </div>
       </div>
 
@@ -387,7 +359,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         ) : (
           <div className="p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2.5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
+              <button type="button" onClick={() => handleNavClick('profile')} aria-label="Abrir minha conta" className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-80">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center font-bold text-xs shadow shrink-0">
                   {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </div>
@@ -395,7 +367,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   <p className="text-xs font-bold text-white truncate leading-tight">{user?.name}</p>
                   <p className="text-[10px] text-zinc-400 truncate">{user?.email}</p>
                 </div>
-              </div>
+              </button>
 
               <button
                 onClick={logout}
@@ -436,7 +408,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 ) : (
                   <>
                     <CheckCircle2 className="w-2.5 h-2.5" />
-                    <span>{ROLE_LABELS.user}</span>
+                    <span>{user?.account_type ? ACCOUNT_TYPES[user.account_type].label : ROLE_LABELS.user}</span>
                   </>
                 )}
               </span>
@@ -453,6 +425,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               )}
             </div>
 
+            <button type="button" onClick={() => handleNavClick('profile')} className="w-full text-left text-xs font-bold text-red-400 border-t border-zinc-800 pt-2">Minha conta →</button>
             {showRoleMenu && showRoleSwitcher && (
               <div className="pt-2 border-t border-zinc-800/80 animate-in fade-in duration-150">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">

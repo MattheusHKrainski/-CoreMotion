@@ -44,3 +44,9 @@ O modal oferece Admin, Atleta, Treinador e Casual também com Supabase configura
 O aviso inferior permite sair da sessão temporária e recarregar o acesso normal. O estado de usuário/carrinho e a entrada da plataforma usam chaves próprias para não substituir o estado da conta normal. Os botões não são cadastro nem autenticação reais.
 
 Para remover o recurso ao terminar o período temporário, configure `NEXT_PUBLIC_QUICK_ACCESS_ENABLED=false` e faça novo build/deploy. Por padrão, ele fica visível enquanto esta versão estiver em uso.
+
+### Isolamento por perfil temporário
+
+Cada acesso (`admin`, `athlete`, `coach`, `casual`) agora abre por navegação completa e usa identidade, e-mail e chaves próprias no namespace `coremotion_quick_v2_<perfil>_*`. Carrinho, favoritos, pedidos, anúncios, comunidade, ofertas gerenciadas e registros esportivos locais não são compartilhados entre os quatro acessos. O estado temporário antigo não é migrado porque misturava dados de perfis diferentes. Contas reais mantêm o fluxo de autenticação existente.
+
+O bloco de avatar/nome na barra lateral abre **Minha conta**. Nessa área, favoritos são produtos salvos pelo coração no Marketplace; produtos à venda e pedidos são filtrados pelo proprietário. O currículo esportivo aparece apenas para os perfis autorizados; o Casual mantém acesso às compras e à comunidade, sem recrutamento. A saída de um acesso temporário recarrega o acesso normal.

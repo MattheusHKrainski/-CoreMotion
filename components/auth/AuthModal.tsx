@@ -1,5 +1,4 @@
 'use client';
-import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
 import React, { useEffect, useState } from 'react';
@@ -29,8 +28,6 @@ export default function AuthModal() {
     enterPlatform,
     loginWithEmail,
     signUpWithEmail,
-    loginAsMasterAdmin,
-    switchRole,
     openWelcomePage,
   } = useCoreMotiom();
 
@@ -54,25 +51,8 @@ export default function AuthModal() {
     setErrorMsg('');
     setInfoMsg('');
     setLoading(true);
-    if (isSupabaseConfigured) {
-      window.location.assign(`/?acesso-rapido=${type}`);
-      return;
-    }
-    try {
-      if (type === 'admin') {
-        loginAsMasterAdmin();
-        enterPlatform('home');
-        setAuthModalOpen(false);
-      } else {
-        switchRole('user', type);
-        enterPlatform('home');
-        setAuthModalOpen(false);
-      }
-    } catch {
-      setErrorMsg('Falha ao conectar com perfil selecionado.');
-    } finally {
-      setLoading(false);
-    }
+    // Full navigation isolates every temporary profile, with or without Supabase.
+    window.location.assign(`/?acesso-rapido=${type}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
