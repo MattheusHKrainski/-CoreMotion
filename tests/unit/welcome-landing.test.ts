@@ -41,7 +41,7 @@ describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
     assert.match(html, /Como funciona a CoreMotion/);
     assert.match(html, /Para Clientes e Atletas/);
     assert.match(html, /Para Treinadores e Assessorias/);
-    assert.match(html, /Custódia Protegida/);
+    assert.doesNotMatch(html, /Custódia Protegida|5% OFF Automático no PIX|Envio para Todo o Brasil/);
 
     // Zero formulários/inputs na tela inicial pública para nunca acionar falso-positivo de Safe Browsing
     assert.equal(/<form[\s>]/i.test(html), false);

@@ -5,6 +5,7 @@ import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
 import SportsHub from '@/components/SportsHub';
+import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 import Sidebar from '@/components/shared/Sidebar';
 import Footer from '@/components/shared/Footer';
 import WelcomeLandingPage from '@/components/WelcomeLandingPage';
@@ -83,6 +84,7 @@ export default function CoreMotiomApp() {
   return (
     <div className="min-h-screen flex flex-col bg-[#0B0C10] text-[#F8FAFC] selection:bg-red-600 selection:text-white antialiased">
       <Sidebar />
+      {IS_QUICK_ACCESS && <aside className="fixed bottom-3 left-3 right-3 z-[70] mx-auto max-w-xl rounded-2xl border border-amber-500/40 bg-zinc-950 p-3 text-xs text-amber-200 shadow-xl flex items-center justify-between gap-3"><span>Acesso temporário • alterações apenas neste navegador.</span><button type="button" className="font-bold underline shrink-0" onClick={() => window.location.assign('/')}>Sair e usar conta real</button></aside>}
 
       <div className="flex-1 flex flex-col min-w-0 lg:pl-64 xl:pl-72 transition-all">
         <main className="flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8">

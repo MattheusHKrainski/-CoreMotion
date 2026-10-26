@@ -23,7 +23,6 @@ import {
   Sparkles,
   Tag,
   TrendingUp,
-  Truck,
   UserCheck,
   UserPlus,
   Users,
@@ -606,7 +605,7 @@ export default function WelcomeLandingPage() {
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-4">{Object.entries(ACCOUNT_TYPES).map(([key, value]) => <article key={key} className={`rounded-2xl border bg-zinc-950 p-6 space-y-3 ${selectedRoleTab === ({ athlete: 'atleta', coach: 'treinador', casual: 'casual' } as Record<string, string>)[key] ? 'border-red-500 shadow-lg shadow-red-950/20' : 'border-zinc-800'}`}><h3 className="text-xl font-bold text-white">{value.label}</h3><p className="text-sm text-zinc-400 leading-relaxed">{value.description}</p><button type="button" className="text-red-400 text-sm font-bold" onClick={() => { setAuthAccountType(key as keyof typeof ACCOUNT_TYPES); handleOpenRegister(); }}>Criar perfil {value.label}</button></article>)}</div>
+            <div className="grid sm:grid-cols-3 gap-4">{Object.entries(ACCOUNT_TYPES).map(([key, value]) => <article key={key} className={`rounded-2xl border bg-zinc-950 p-6 space-y-3 ${selectedRoleTab === ({ athlete: 'atleta', coach: 'treinador', casual: 'casual' } as Record<string, string>)[key] ? 'border-zinc-600' : 'border-zinc-800'}`}><h3 className="text-xl font-bold text-white">{value.label}</h3><p className="text-sm text-zinc-400 leading-relaxed">{value.description}</p><button type="button" className="text-red-400 text-sm font-bold" onClick={() => { setAuthAccountType(key as keyof typeof ACCOUNT_TYPES); handleOpenRegister(); }}>Criar perfil {value.label}</button></article>)}</div>
             <p className="text-sm text-zinc-400">O visitante navega sem conta. O perfil Casual é uma conta para compras, comunidade e atividades de rotina, sem acesso ao recrutamento. Atletas personalizam altura, peso, idade, tempo de prática, posição, estatísticas, medalhas e histórico. Treinadores apresentam formação, certificações, equipe e metodologia. Nas seletivas, veja endereço, data, horário, categoria SUB e a rotina de treinos após aprovação. Publique somente informações que deseja compartilhar.</p>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* CARD 1: CLIENTES & ATLETAS */}
@@ -614,7 +613,7 @@ export default function WelcomeLandingPage() {
                 id="atletas"
                 className={`rounded-3xl p-6 sm:p-8 border transition-all flex flex-col justify-between space-y-6 ${
                   selectedRoleTab === 'atleta'
-                    ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-red-500/60 shadow-2xl shadow-red-950/20'
+                    ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-zinc-600'
                     : 'bg-zinc-900/60 border-zinc-800'
                 }`}
               >
@@ -683,7 +682,7 @@ export default function WelcomeLandingPage() {
                 id="treinadores"
                 className={`rounded-3xl p-6 sm:p-8 border transition-all flex flex-col justify-between space-y-6 ${
                   selectedRoleTab === 'treinador'
-                    ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-red-500/60 shadow-2xl shadow-red-950/20'
+                    ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-zinc-600'
                     : 'bg-zinc-900/60 border-zinc-800'
                 }`}
               >
@@ -752,7 +751,7 @@ export default function WelcomeLandingPage() {
             <div
               className={`rounded-3xl p-6 sm:p-7 border transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 ${
                 selectedRoleTab === 'visitante'
-                  ? 'bg-zinc-900 border-red-500/60 shadow-xl'
+                  ? 'bg-zinc-900 border-zinc-600'
                   : 'bg-zinc-900/50 border-zinc-800'
               }`}
             >
@@ -783,36 +782,6 @@ export default function WelcomeLandingPage() {
         {/* SEÇÃO 4: GARANTIAS + CHAMADA FINAL COM AS 3 OPÇÕES CLARAS */}
         <section id="seguranca" className="py-20 sm:py-24 bg-[#0B0C10]">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-white">Custódia Protegida</h4>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    Valor retido com segurança até o comprador confirmar o recebimento do equipamento.
-                  </p>
-                </div>
-              </div>
-              <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-3">
-                <Tag className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-white">5% OFF Automático no PIX</h4>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    Economia imediata no checkout em equipamentos anunciados na plataforma.
-                  </p>
-                </div>
-              </div>
-              <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-3">
-                <Truck className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-white">Envio para Todo o Brasil</h4>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    Opções PAC e SEDEX calculadas automaticamente no fechamento do pedido.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             <div className="rounded-3xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 p-8 sm:p-12 text-center space-y-6 shadow-2xl">
               <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
                 Pronto para entrar na CoreMotion?
