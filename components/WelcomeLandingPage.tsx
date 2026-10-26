@@ -267,11 +267,11 @@ export default function WelcomeLandingPage() {
             </div>
 
             <h1 className="text-4xl sm:text-6xl lg:text-[64px] font-extrabold tracking-[-0.03em] leading-[1.07] text-white max-w-4xl mx-auto">
-              O futuro de quem vive o esporte acontece em conjunto
+              Seu esporte, suas conexões, seu próximo passo
             </h1>
 
             <p className="max-w-2xl mx-auto text-base sm:text-xl text-zinc-300 leading-relaxed font-normal">
-              As modalidades e os desafios evoluem, mas a dedicação permanece. Na CoreMotion, clientes, atletas e treinadores se unem em uma única plataforma de anúncios e conexões esportivas.
+              Encontre equipamentos, publique anúncios e conecte-se com atletas e treinadores. Explore primeiro ou crie o perfil que combina com você.
             </p>
 
             {/* BARRA CENTRAL DE ESCOLHA DIRETA: CADASTRAR, LOGAR OU ENTRAR COMO VISITANTE */}
@@ -303,6 +303,12 @@ export default function WelcomeLandingPage() {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+
+            <nav aria-label="Conheça a CoreMotion" className="flex flex-wrap justify-center gap-2 pt-3">
+              {[['proposta', '01 · Explore a plataforma'], ['como-funciona', '02 · Entenda como funciona'], ['perfis', '03 · Escolha seu perfil']].map(([id, label]) => (
+                <button key={id} type="button" onClick={() => scrollToSection(id)} className="rounded-full border border-zinc-700 px-4 py-2 text-xs text-zinc-300 hover:border-red-500 hover:text-white transition-colors">{label}</button>
+              ))}
+            </nav>
 
             {/* FAIXA DE DADOS VIVOS DA PLATAFORMA (ORDEM: ENTRE ATLETAS -> OFERTAS -> TREINADORES -> COMUNIDADE) */}
             <div className="pt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-left max-w-4xl mx-auto">
@@ -551,7 +557,7 @@ export default function WelcomeLandingPage() {
           </div>
         </section>
 
-        {/* SEÇÃO 3: O QUE CADA PERFIL PODE FAZER (CLIENTE/ATLETA, TREINADOR E VISITANTE) */}
+        {/* SEÇÃO 3: PERFIS E FERRAMENTAS */}
         <section id="perfis" className="py-20 sm:py-24 bg-[#0e1017] border-b border-zinc-800/80">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -570,7 +576,8 @@ export default function WelcomeLandingPage() {
               <div className="inline-flex flex-wrap p-1 rounded-2xl bg-zinc-900 border border-zinc-800 self-start">
                 <button
                   type="button"
-                  onClick={() => setSelectedRoleTab('atleta')}
+                  onClick={() => { setSelectedRoleTab('atleta'); scrollToSection('atletas'); }}
+                  aria-pressed={selectedRoleTab === 'atleta'}
                   className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     selectedRoleTab === 'atleta'
                       ? 'bg-red-600 text-white shadow-md'
@@ -581,7 +588,8 @@ export default function WelcomeLandingPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectedRoleTab('treinador')}
+                  onClick={() => { setSelectedRoleTab('treinador'); scrollToSection('treinadores'); }}
+                  aria-pressed={selectedRoleTab === 'treinador'}
                   className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     selectedRoleTab === 'treinador'
                       ? 'bg-red-600 text-white shadow-md'
@@ -590,22 +598,29 @@ export default function WelcomeLandingPage() {
                 >
                   Treinador
                 </button>
-                <button type="button" onClick={() => setSelectedRoleTab('casual')} className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold ${selectedRoleTab === 'casual' ? 'bg-red-600 text-white' : 'text-zinc-400'}`}>Casual</button>
+                <button type="button" onClick={() => { setSelectedRoleTab('casual'); scrollToSection('perfil-casual'); }} aria-pressed={selectedRoleTab === 'casual'} className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold ${selectedRoleTab === 'casual' ? 'bg-red-600 text-white' : 'text-zinc-400'}`}>Casual</button>
 
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-4">{Object.entries(ACCOUNT_TYPES).map(([key, value]) => <article key={key} className={`rounded-2xl border bg-zinc-950 p-6 space-y-3 transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none ${selectedRoleTab === ({ athlete: 'atleta', coach: 'treinador', casual: 'casual' } as Record<string, string>)[key] ? 'border-zinc-600' : 'border-zinc-800'}`}><h3 className="text-xl font-bold text-white">{value.label}</h3><p className="text-sm text-zinc-400 leading-relaxed">{value.description}</p><button type="button" className="text-red-400 text-sm font-bold" onClick={() => { setAuthAccountType(key as keyof typeof ACCOUNT_TYPES); handleOpenRegister(); }}>Criar perfil {value.label}</button></article>)}</div>
-            <p className="text-sm text-zinc-400">O perfil Casual é uma conta para compras, comunidade e atividades de rotina, sem acesso ao recrutamento. Atletas personalizam altura, peso, idade, tempo de prática, posição, estatísticas, medalhas e histórico. Treinadores apresentam formação, certificações, equipe e metodologia. Nas seletivas, veja endereço, data, horário, categoria SUB e a rotina de treinos após aprovação. Publique somente informações que deseja compartilhar.</p>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {Object.entries(ACCOUNT_TYPES).map(([key, value]) => (
+                <article key={key} id={`perfil-${key}`} style={{ scrollMarginTop: '6rem' }} className="rounded-2xl border border-zinc-700 bg-zinc-950 p-6 flex flex-col gap-4 transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none">
+                  <h3 className="text-xl font-bold text-white">{value.label}</h3>
+                  <p className="text-sm text-zinc-400 leading-relaxed flex-1">{value.description}</p>
+                  <button type="button" className="text-red-400 text-sm font-bold text-left pt-3 border-t border-zinc-800" onClick={() => { setAuthAccountType(key as keyof typeof ACCOUNT_TYPES); handleOpenRegister(); }}>Criar perfil {value.label} →</button>
+                </article>
+              ))}
+            </div>
+            <div className="border-t border-zinc-800 pt-8 space-y-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-white">Conheça as ferramentas de cada caminho</h3>
+              <p className="text-sm text-zinc-400 leading-relaxed max-w-2xl">Atletas e treinadores têm ferramentas esportivas específicas. Para explorar equipamentos e participar da comunidade sem recrutamento, escolha Casual.</p>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* CARD 1: CLIENTES & ATLETAS */}
               <div
-                id="atletas"
-                className={`rounded-3xl p-6 sm:p-8 border transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none flex flex-col justify-between space-y-6 ${
-                  selectedRoleTab === 'atleta'
-                    ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-zinc-600'
-                    : 'bg-zinc-900/60 border-zinc-800'
-                }`}
+                id="atletas" style={{ scrollMarginTop: '6rem' }}
+                className={`rounded-3xl p-6 sm:p-8 border transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none flex flex-col justify-between space-y-6 bg-zinc-900/60 border-zinc-700`}
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-2">
@@ -669,12 +684,8 @@ export default function WelcomeLandingPage() {
 
               {/* CARD 2: TREINADORES & ASSESSORIAS */}
               <div
-                id="treinadores"
-                className={`rounded-3xl p-6 sm:p-8 border transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none flex flex-col justify-between space-y-6 ${
-                  selectedRoleTab === 'treinador'
-                    ? 'bg-gradient-to-b from-zinc-900 to-zinc-950 border-zinc-600'
-                    : 'bg-zinc-900/60 border-zinc-800'
-                }`}
+                id="treinadores" style={{ scrollMarginTop: '6rem' }}
+                className={`rounded-3xl p-6 sm:p-8 border transition-all duration-300 hover:border-red-500/70 hover:shadow-lg hover:shadow-red-950/20 focus-within:border-red-500/70 motion-reduce:transition-none flex flex-col justify-between space-y-6 bg-zinc-900/60 border-zinc-700`}
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-2">
