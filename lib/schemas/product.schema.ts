@@ -1,3 +1,4 @@
+import { normalizePhone, validPhone } from '@/lib/seller-contact';
 import { z } from 'zod';
 import { PRODUCT_CONDITIONS, PRODUCT_STATUSES } from '@/lib/api-utils';
 
@@ -45,6 +46,7 @@ export const productCreateSchema = z.object({
   images,
   stock: z.number().int().min(1, 'Estoque mínimo de 1.').max(9999).default(1),
   location: location.nullish(),
+  contact_phone: z.string().trim().refine(validPhone, 'Informe um telefone válido com DDD.').transform(normalizePhone),
   shipping_available: z.boolean().default(true),
   brand: brand.nullish(),
   tags: tags.default([]),
@@ -60,6 +62,7 @@ export const productUpdateSchema = z.object({
   images: images.optional(),
   stock: z.number().int().min(0, 'Estoque não pode ser negativo.').max(9999).optional(),
   location: location.nullish(),
+  contact_phone: z.string().trim().refine(validPhone, 'Telefone inválido.').transform(normalizePhone).optional(),
   shipping_available: z.boolean().optional(),
   brand: brand.nullish(),
   tags: tags.optional(),

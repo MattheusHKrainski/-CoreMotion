@@ -194,6 +194,7 @@ interface DbProductRow {
   views: number | null;
   likes_count: number | null;
   location: string | null;
+  contact_phone?: string | null;
   shipping_available: boolean | null;
   status: string | null;
   brand: string | null;
@@ -229,6 +230,7 @@ function mapDbProductToModel(row: DbProductRow): Product {
     views: row.views ?? 0,
     likes_count: row.likes_count ?? 0,
     location: row.location || 'São Paulo, SP',
+    contact_phone: row.contact_phone,
     shipping_available: row.shipping_available ?? true,
     status: (row.status as Product['status']) || 'active',
     brand: row.brand || undefined,
@@ -318,6 +320,7 @@ interface NewProductInput {
   seller_avatar?: string | null;
   stock?: number;
   location?: string | null;
+  contact_phone?: string | null;
   shipping_available?: boolean;
   status?: 'active' | 'draft';
   brand?: string | null;
@@ -331,12 +334,12 @@ export async function createProductInDb(product: NewProductInput, sellerId: stri
       title, description, price, original_price, category, sport, condition,
       product_type, images, seller_id, seller_name, seller_avatar, store_id,
       store_name, is_verified_store, stock, views, likes_count, location,
-      shipping_available, status, brand, tags, created_at, updated_at
+      shipping_available, status, brand, tags, contact_phone, created_at, updated_at
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7,
       $8, $9, $10, $11, $12, NULL,
       NULL, false, $13, 0, 0, $14,
-      $15, $16, $17, $18, NOW(), NOW()
+      $15, $16, $17, $18, $19, NOW(), NOW()
     ) RETURNING *`,
     [
       product.title,
@@ -357,6 +360,7 @@ export async function createProductInDb(product: NewProductInput, sellerId: stri
       product.status || 'active',
       product.brand || null,
       product.tags || [],
+      product.contact_phone || null,
     ]
   );
   return mapDbProductToModel(rows[0]);
@@ -371,6 +375,7 @@ export const OWNER_EDITABLE_PRODUCT_FIELDS = [
   'stock',
   'location',
   'shipping_available',
+  'contact_phone',
   'brand',
   'tags',
   'images',

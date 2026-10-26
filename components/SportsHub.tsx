@@ -1,5 +1,7 @@
 'use client';
 import { scopedQuickStorage } from '@/lib/quick-access';
+import SportPicker from '@/components/shared/SportPicker';
+import { matchesSport } from '@/lib/modalities';
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { canAccessSports, canRecruit, type SportsRecord } from '@/lib/sports';
@@ -73,7 +75,7 @@ export default function SportsHub({ view }: { view: 'trials' | 'talents' | 'spor
   const listKind = view === 'trials' ? 'trial' : view === 'talents' ? 'athlete' : kind;
   const visible = records.filter(r => r.kind === listKind && (view !== 'sports-profile' || r.owner === owner)).filter(r => {
     const d = r.data;
-    return d.sport?.toLowerCase().includes(filters.sport.toLowerCase()) && d.city?.toLowerCase().includes(filters.city.toLowerCase()) &&
+    return matchesSport(d.sport, filters.sport) && (!filters.city || (d.city || '').toLowerCase().includes(filters.city.toLowerCase())) &&
       (!filters.age || (r.kind === 'trial' ? Number(filters.age) >= Number(d.minAge) && Number(filters.age) <= Number(d.maxAge) : Number(d.age) === Number(filters.age))) &&
       (!filters.experience || Number(d.experience) >= Number(filters.experience)) && (!filters.date || d.date >= filters.date) && (!filters.category || d.category?.toLowerCase().includes(filters.category.toLowerCase()));
   });
@@ -83,7 +85,7 @@ export default function SportsHub({ view }: { view: 'trials' | 'talents' | 'spor
       <p className="text-xs uppercase tracking-widest text-red-400">CoreMotion • Conexões esportivas</p>
       <h1 className="text-3xl font-black">{view === 'trials' ? 'Seletivas e treinos' : view === 'talents' ? 'Banco de atletas' : 'Meu perfil esportivo'}</h1>
       <p className="text-sm text-zinc-400">{view === 'trials' ? 'Encontre sua próxima equipe. Confira requisitos e a rotina de treinos antes de se inscrever.' : view === 'talents' ? 'Currículos publicados pelos próprios atletas. Treinadores podem filtrar talentos e enviar convocações.' : 'Personalize seu currículo. Somente dados publicados aqui serão exibidos no banco esportivo.'}</p>
-      {((view === 'trials' && canRecruit(user)) || view === 'sports-profile') && <button className={button} onClick={() => { const mine = records.find(r => r.owner === owner && r.kind === kind); setForm(view === 'sports-profile' ? mine?.data || {} : {}); setEditing(view === 'sports-profile' ? mine?.id || null : null); setShowForm(true); }}>{view === 'trials' ? 'Publicar seletiva / treino' : 'Editar meu currículo'}</button>}
+      {((view === 'trials' && canRecruit(user)) || view === 'sports-profile') && <button className={button} onClick={() => { const mine = records.find(r => r.owner === owner && r.kind === kind); setForm(view === 'sports-profile' ? mine?.data || { name: user?.name || '', sport: user?.sport_interests?.[0] || '', city: [user?.city, user?.state].filter(Boolean).join(' / ') } : {}); setEditing(view === 'sports-profile' ? mine?.id || null : null); setShowForm(true); }}>{view === 'trials' ? 'Publicar seletiva / treino' : 'Editar meu currículo'}</button>}
     </header>
     {error && <p role="alert" className="text-red-300 border border-red-900 p-4 rounded-xl">{error}</p>}
     {showForm && <form onSubmit={submit} className="grid sm:grid-cols-2 gap-4 p-6 rounded-2xl bg-zinc-900 border border-zinc-800">
@@ -93,7 +95,8 @@ export default function SportsHub({ view }: { view: 'trials' | 'talents' | 'spor
       <label className="text-sm sm:col-span-2"><input type="checkbox" required /> Concordo com a publicação destes dados para os participantes da área esportiva.</label>
       <div className="flex gap-3"><button disabled={busy} className={button}>Salvar e publicar</button><button type="button" onClick={() => setShowForm(false)}>Cancelar</button></div>
     </form>}
-    {view !== 'sports-profile' && <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{Object.keys(filters).filter(k => view === 'trials' ? k !== 'experience' : !['date', 'category'].includes(k)).map(k => <label className="text-xs text-zinc-400" key={k}>{{ sport: 'Esporte', city: 'Cidade / UF', age: view === 'trials' ? 'Sua idade' : 'Idade', experience: 'Experiência mínima (anos)', date: 'A partir de', category: 'Categoria / SUB' }[k]}<input className={input} type={k === 'date' ? 'date' : ['age', 'experience'].includes(k) ? 'number' : 'text'} min="0" value={filters[k as keyof typeof filters]} onChange={e => setFilters({ ...filters, [k]: e.target.value })} /></label>)}</div>}
+    {view !== 'sports-profile' && <section aria-label="Filtros esportivos" className="rounded-2xl border border-zinc-800 p-4 space-y-4"><SportPicker value={filters.sport} onChange={sport => setFilters({ ...filters, sport })} options={records.map(r => r.data.sport).filter(Boolean)} /><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{Object.keys(filters).filter(k => k !== 'sport' && (view === 'trials' ? k !== 'experience' : !['date', 'category'].includes(k))).map(k => <label className="text-xs text-zinc-400 space-y-2" key={k}>{{ city: 'Cidade / UF', age: view === 'trials' ? 'Sua idade' : 'Idade', experience: 'Experiência mínima (anos)', date: 'A partir de', category: 'Categoria / SUB' }[k]}<input className={input} type={k === 'date' ? 'date' : ['age', 'experience'].includes(k) ? 'number' : 'text'} min="0" value={filters[k as keyof typeof filters]} onChange={e => setFilters({ ...filters, [k]: e.target.value })} /></label>)}</div><div className="flex justify-between gap-3 text-sm text-zinc-400"><span role="status">{visible.length} resultados</span><button type="button" className="text-red-400" onClick={() => setFilters({ sport: '', city: '', age: '', experience: '', date: '', category: '' })}>Limpar filtros</button></div></section>}
+    {visible.length === 0 && <p role="status" className="rounded-2xl border border-zinc-800 p-6 text-sm text-zinc-400">Nenhum resultado encontrado. Experimente outra modalidade, cidade ou limpe os filtros.</p>}
     <div className="grid md:grid-cols-2 gap-4">{visible.map(r => <article key={r.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 space-y-3">
       <h2 className="text-xl font-bold">{r.data.name}</h2><p className="text-red-400 text-sm">{r.data.sport} • {r.data.city}</p>
       <dl className="text-sm space-y-2">{Object.entries(r.data).filter(([key]) => !['name', 'sport', 'city'].includes(key)).map(([key, value]) => <div key={key}><dt className="text-zinc-500">{(fields[r.kind === 'trial' ? 'trial' : r.kind === 'coach' ? 'coach' : 'athlete'] as Record<string,string>)[key] || key}</dt><dd className="break-words whitespace-pre-wrap">{value}</dd></div>)}</dl>

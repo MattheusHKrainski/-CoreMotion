@@ -108,7 +108,7 @@ interface CoreMotiomContextType {
   adminSyncSupabase: () => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
   loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string }>;
+  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (newRole: UserRole, accountType?: AccountType) => void;
@@ -158,6 +158,7 @@ interface CoreMotiomContextType {
   communityPosts: CommunityPost[];
   /** Devolve true quando a publicação foi criada (o formulário só é limpo nesse caso). */
   createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string }) => Promise<boolean>;
+  likedCommunityPosts: string[];
   likeCommunityPost: (postId: string) => Promise<void>;
   addCommunityComment: (postId: string, content: string) => Promise<void>;
   reportCommunityPost: (postId: string, reason: string) => Promise<void>;
@@ -214,6 +215,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [likedCommunityPosts, setLikedCommunityPosts] = useState<string[]>([]);
+  const likesInFlight = useRef(new Set<string>());
+  const likesReady = useRef(false);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(INITIAL_COMMUNITY_POSTS);
   const [coaches] = useState<Coach[]>(INITIAL_COACHES);
   const [athletes] = useState<Athlete[]>(INITIAL_ATHLETES);
@@ -357,6 +361,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           const result = await AuthService.getProfileOrCreate(sessionUser.id, email, {
             name: sessionUser.user_metadata?.name || sessionUser.user_metadata?.full_name || email.split('@')[0],
             avatar_url: sessionUser.user_metadata?.avatar_url,
+            sport_interests: sessionUser.user_metadata?.sport ? [sessionUser.user_metadata.sport] : [],
           });
           if (!isMounted) return;
           if (result.success && result.data) {
@@ -796,17 +801,19 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     email: string,
     pass: string,
     name: string,
-    accountType: AccountType = 'casual'
+    accountType: AccountType = 'casual',
+    sport?: string
   ): Promise<{ success: boolean; error?: string }> => {
+    if (accountType !== 'casual' && (!sport?.trim() || sport.trim().length > 60)) return { success: false, error: 'Escolha sua modalidade principal.' };
     manualAuthRef.current = true;
     let res: Awaited<ReturnType<typeof AuthService.signUpWithEmail>>;
     try {
-      res = await AuthService.signUpWithEmail(email, pass, name, accountType);
+      res = await AuthService.signUpWithEmail(email, pass, name, accountType, sport);
     } finally {
       manualAuthRef.current = false;
     }
     if (res.success && res.data) {
-      const profile = { ...res.data, account_type: accountType };
+      const profile = { ...res.data, account_type: accountType, sport_interests: sport ? [sport.trim()] : res.data.sport_interests };
       setUser(profile);
       if (!isSupabaseConfigured) setAllUsers((prev) => [profile, ...prev]);
       addToast('Conta Criada', `Bem-vindo ao CoreMotion, ${name}! (${profile.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
@@ -1080,16 +1087,35 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  useEffect(() => {
+    let active = true;
+    likesReady.current = false;
+    setLikedCommunityPosts([]);
+    if (!user?.id) return;
+    if (isSupabaseConfigured) {
+      CommunityService.getMyLikes().then(ids => { if (active) { setLikedCommunityPosts(ids); likesReady.current = true; } }).catch(() => { if (active) addToast('Curtidas indisponíveis', 'Não foi possível carregar suas curtidas. Tente recarregar a página.', 'error'); });
+    } else {
+      try { const ids = JSON.parse(localStorage.getItem(quickStorageKey(`community_likes_${user.id}`)) || '[]'); setLikedCommunityPosts(Array.isArray(ids) ? ids : []); } catch { setLikedCommunityPosts([]); }
+      likesReady.current = true;
+    }
+    return () => { active = false; };
+  }, [user?.id, addToast]);
+
   const likeCommunityPost = async (postId: string): Promise<void> => {
     if (!requireLogin('Entre para curtir publicações da comunidade.')) return;
-    const result = await CommunityService.likePost(postId);
-    if (!result.success) {
-      addToast('Curtida não registrada', result.error || 'Tente novamente.', 'error');
-      return;
-    }
-    setCommunityPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, likes_count: result.likes_count ?? p.likes_count + 1 } : p))
-    );
+    if (!likesReady.current || likesInFlight.current.has(postId)) return;
+    likesInFlight.current.add(postId);
+    const liked = !likedCommunityPosts.includes(postId);
+    try {
+      const result = await CommunityService.likePost(postId, liked);
+      if (!result.success) { addToast('Curtida não registrada', result.error || 'Tente novamente.', 'error'); return; }
+      setLikedCommunityPosts(prev => {
+        const next = liked ? [...new Set([...prev, postId])] : prev.filter(id => id !== postId);
+        if (!isSupabaseConfigured && user) { try { localStorage.setItem(quickStorageKey(`community_likes_${user.id}`), JSON.stringify(next)); } catch { /* storage unavailable */ } }
+        return next;
+      });
+      setCommunityPosts(prev => prev.map(p => p.id === postId ? { ...p, likes_count: result.likes_count ?? Math.max(0, p.likes_count + (liked ? 1 : -1)) } : p));
+    } finally { likesInFlight.current.delete(postId); }
   };
 
   const addCommunityComment = async (postId: string, content: string): Promise<void> => {
@@ -1417,6 +1443,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         fetchOfferMetadata,
         communityPosts,
         createCommunityPost,
+        likedCommunityPosts,
         likeCommunityPost,
         addCommunityComment,
         reportCommunityPost,

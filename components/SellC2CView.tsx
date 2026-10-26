@@ -1,5 +1,6 @@
 'use client';
 
+import { normalizePhone, validPhone } from '@/lib/seller-contact';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { Product, ProductCondition } from '@/lib/types';
@@ -35,6 +36,7 @@ export default function SellC2CView() {
 
   const [activeTab, setActiveTab] = useState<'create' | 'active' | 'sales' | 'drafts'>('create');
   
+  const [phone, setPhone] = useState(user?.phone || '');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -89,6 +91,7 @@ export default function SellC2CView() {
       return;
     }
 
+    if (!validPhone(phone)) { addToast('Telefone obrigatório', 'Informe o WhatsApp com DDD para receber contatos sobre o anúncio.', 'error'); return; }
     setLoading(true);
     try {
       await createProduct({
@@ -107,6 +110,7 @@ export default function SellC2CView() {
         seller_avatar: user?.avatar_url,
         stock: 1,
         location,
+        contact_phone: normalizePhone(phone),
         shipping_available: shippingAvailable,
         status: 'active',
         tags: [sport, category, 'Anúncio de Atleta'],
@@ -200,6 +204,8 @@ export default function SellC2CView() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
           <form onSubmit={handlePublishListing} className="lg:col-span-2 bg-zinc-900/60 p-6 sm:p-8 rounded-3xl border border-zinc-800/80 shadow-xl space-y-5 text-xs">
+            <label className="block text-sm text-zinc-300 space-y-2">WhatsApp de contato com DDD *<input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} maxLength={25} placeholder="(41) 99999-9999" className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 text-white" /><span className="block text-xs text-zinc-500">Este número será público no anúncio para negociar preço, pagamento e entrega.</span></label>
+
             <h3 className="text-xs font-bold uppercase tracking-wider text-white pb-3 border-b border-zinc-800/80 flex items-center gap-2">
               <Layers className="w-4 h-4 text-red-400" />
               <span>Especificações Técnicas do Equipamento</span>
