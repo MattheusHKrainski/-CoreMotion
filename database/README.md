@@ -69,15 +69,15 @@ O checkout permanece demonstrativo: a migração bloqueia itens B2C, mas nenhum 
 
 ## 6. Scripts auxiliares
 
-- `scripts/seed-all-products.mjs` contém exemplos C2C e pode ser usado em desenvolvimento depois de revisar o conteúdo e configurar o banco.
-- `scripts/seed-data.mjs`, `seed-extended-catalog.mjs`, `seed-50-stores.mjs`, `seed-catalog.mjs` e `seed-rich-catalog.mjs` são seeds históricos de lojas/B2C, **desativados por padrão**. Não os habilite em dados de produção.
+- `scripts/seed-all-products.mjs` contém anúncios C2C demonstrativos. Use apenas em banco local/de teste, depois de revisar o script e confirmar o ambiente.
+- Os antigos seeds de lojas oficiais e catálogo B2C foram removidos porque o fluxo de lojas foi aposentado e alguns scripts substituíam dados de produtos de forma destrutiva.
 - `scripts/update-product-images.mjs` altera imagens de registros existentes; revise antes de executar.
 - `scripts/inspect-db.mjs` é somente leitura; `scripts/smoke-api.sh` testa sessão nas rotas sem depender do banco.
 - `database/legacy/` contém utilitários antigos mantidos apenas como referência.
 
 ## 7. Testes
 
-A suíte `database/tests/rls.test.mjs` usa PGlite para executar o esquema e as quatro migrações. Os **62 cenários** incluem papéis/RLS, C2C, rejeição de novas linhas B2C, ocultação e preservação de dados B2C legados, revogação do acesso à tabela `stores`, checkout C2C, pedidos, comunidade e `TRUNCATE`.
+Os testes em `database/tests/` usam PGlite e dados temporários para verificar políticas, regras de negócio e migrações específicas. Confira os arquivos de teste para saber quais migrações cada suíte executa; isso não garante que todas as migrações do repositório tenham sido validadas em conjunto.
 
 ```bash
 npm run test:db
