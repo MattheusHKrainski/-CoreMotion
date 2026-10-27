@@ -1,3 +1,4 @@
+import { ATHLETE_CATALOG_PHONE } from '@/lib/athlete-contact';
 import { CATALOG_PRODUCTS, CATALOG_STORES } from './catalog';
 import { ATHLETE_C2C_LISTINGS } from './athlete-listings';
 import { Product, Store, Coach, Athlete, NewsArticle, CommunityPost, UserProfile } from '@/lib/types';
@@ -1184,7 +1185,7 @@ export const INITIAL_STORES: Store[] = [
   }
 ];
 
-export const INITIAL_PRODUCTS: Product[] = [
+const CATALOG_ATHLETE_PRODUCTS: Product[] = [
   ...ATHLETE_C2C_LISTINGS,
   ...CATALOG_PRODUCTS,
 
@@ -2596,6 +2597,12 @@ export const INITIAL_PRODUCTS: Product[] = [
   }
 
 ];
+
+export const INITIAL_PRODUCTS: Product[] = CATALOG_ATHLETE_PRODUCTS.map(product =>
+  product.product_type === 'c2c' && !product.contact_phone
+    ? { ...product, contact_phone: ATHLETE_CATALOG_PHONE }
+    : product
+);
 
 export const INITIAL_COACHES: Coach[] = [
   {

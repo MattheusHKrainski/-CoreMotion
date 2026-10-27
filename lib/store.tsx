@@ -1,5 +1,6 @@
 'use client';
 import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
+import { refreshSeededContacts } from './athlete-contact';
 import { ACCOUNT_TYPES, type AccountType } from './sports';
 
 import { calculateCheckoutTotals, ShippingMethod } from './checkout';
@@ -283,7 +284,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           if (!isSupabaseConfigured) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
             if (parsed.user && (!QUICK_PROFILE || parsed.user.id === temporaryIdentity(QUICK_PROFILE).id)) setUser(parsed.user);
-            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(parsed.products);
+            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(parsed.products, INITIAL_PRODUCTS));
             if (IS_QUICK_ACCESS && Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
           }
         }
