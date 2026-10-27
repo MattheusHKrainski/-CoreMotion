@@ -6,7 +6,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
-import { getOfferDiscountPercent } from '@/fixtures/demo-offers';
+import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
 import {

@@ -19,6 +19,9 @@ const MIGRATION_ORDER = [
   'supabase/migrations/20261008000000_roles_hierarchy_and_security.sql',
   'supabase/migrations/20261009000000_security_fixes.sql',
   'supabase/migrations/20261020000000_retire_store_b2c_marketplace.sql',
+  'supabase/migrations/20261023000000_external_offers_management.sql',
+  'supabase/migrations/20261023130000_sports_recruitment.sql',
+  'supabase/migrations/20261026160000_seller_contact_and_unique_likes.sql',
 ];
 
 export default function SupabaseConfigModal() {
@@ -66,7 +69,7 @@ export default function SupabaseConfigModal() {
 
         <section className="space-y-2">
           <h3 className="text-sm font-bold text-white flex items-center gap-2"><Server className="w-4 h-4 text-red-400" /> 2. Estrutura do banco</h3>
-          <p className="text-xs text-zinc-400">Execute os scripts abaixo, nesta ordem, no SQL Editor do Supabase (ou via <code className="text-zinc-200">psql</code>):</p>
+          <p className="text-xs text-zinc-400">Execute as migrações pendentes na ordem abaixo, no SQL Editor do Supabase (ou via <code className="text-zinc-200">psql</code>). Confira antes quais já foram aplicadas; não reaplique scripts manualmente sem verificar o estado do banco:</p>
           <ol className="list-decimal pl-5 text-xs text-zinc-300 space-y-1">
             {MIGRATION_ORDER.map((file) => (
               <li key={file}><code>{file}</code></li>
