@@ -1,6 +1,6 @@
 # Banco de dados do CoreMotiom
 
-Este documento descreve o PostgreSQL/Supabase usado pelo aplicativo, suas migrações, regras de acesso e testes. A versão atual mantém o esquema histórico de lojas para compatibilidade, mas retirou os perfis de loja da experiência pública. A vitrine B2C atual é composta por fixtures fictícias; o catálogo interno e o checkout aceitam apenas C2C.
+Este documento descreve o PostgreSQL/Supabase usado pelo aplicativo, suas migrações, regras de acesso e testes. A versão atual mantém o esquema histórico de lojas para compatibilidade, mas retirou os perfis de loja da experiência pública. A vitrine de ofertas externas usa `public.external_offers`; anúncios de equipamentos entre usuários e o checkout interno aceitam apenas C2C. Fixtures de demonstração permanecem separadas dos registros persistidos.
 
 ## 1. Ordem de execução
 
@@ -9,9 +9,12 @@ Aplique as migrações **nesta ordem** pelo SQL Editor do Supabase ou com `psql`
 1. [`20250101000000_coremotiom_initial_schema.sql`](../supabase/migrations/20250101000000_coremotiom_initial_schema.sql) — esquema inicial e tabelas.
 2. [`20261008000000_roles_hierarchy_and_security.sql`](../supabase/migrations/20261008000000_roles_hierarchy_and_security.sql) — hierarquia de papéis, RLS e privilégios.
 3. [`20261009000000_security_fixes.sql`](../supabase/migrations/20261009000000_security_fixes.sql) — correções incrementais para produtos, pedidos e comunidade.
-4. [`20261020000000_retire_store_b2c_marketplace.sql`](../supabase/migrations/20261020000000_retire_store_b2c_marketplace.sql) — migração aditiva que desativa as rotas públicas de loja e a publicação/compra de produtos B2C.
+4. [`20261020000000_retire_store_b2c_marketplace.sql`](../supabase/migrations/20261020000000_retire_store_b2c_marketplace.sql) — desativa as rotas públicas de loja e a publicação/compra de produtos B2C.
+5. [`20261023000000_external_offers_management.sql`](../supabase/migrations/20261023000000_external_offers_management.sql) — tabela e políticas para ofertas externas gerenciadas.
+6. [`20261023130000_sports_recruitment.sql`](../supabase/migrations/20261023130000_sports_recruitment.sql) — perfis esportivos, seletivas, candidaturas e convites.
+7. [`20261026160000_seller_contact_and_unique_likes.sql`](../supabase/migrations/20261026160000_seller_contact_and_unique_likes.sql) — contato de anúncios C2C, curtidas únicas e modalidade do cadastro.
 
-As migrações existentes não foram reescritas. A última migração é idempotente e **não apaga nem transforma registros legados**: mantém tabelas, CNPJs, campos, referências e produtos B2C antigos, mas revoga o acesso REST a `stores`, oculta anúncios B2C e impede novas publicações B2C e pedidos que os incluam.
+A lista acima descreve a ordem dos arquivos no repositório, não confirma quais foram aplicados ao projeto remoto. As migrações 5–7 precisam ser verificadas no histórico/estado real antes de qualquer aplicação. As migrações existentes não foram reescritas. A última migração é idempotente e **não apaga nem transforma registros legados**: mantém tabelas, CNPJs, campos, referências e produtos B2C antigos, mas revoga o acesso REST a `stores`, oculta anúncios B2C e impede novas publicações B2C e pedidos que os incluam.
 
 ## 2. Modelo de dados
 
