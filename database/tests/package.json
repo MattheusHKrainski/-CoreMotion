@@ -5,7 +5,7 @@
   "description": "Testes de RLS, triggers e papéis do banco CoreMotiom (PostgreSQL em memória via PGlite).",
   "type": "module",
   "scripts": {
-    "test": "node rls.test.mjs"
+    "test": "node rls.test.mjs && node offer-refresh.test.mjs && node social-contact.test.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.2"

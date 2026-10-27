@@ -5,30 +5,33 @@ import { useCoreMotiom } from '@/lib/store';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
-import type { Order, UserProfile, UserRole } from '@/lib/types';
-import { LogOut, Save, ShieldCheck, Store, UserCircle2 } from 'lucide-react';
+import ProductCard from '@/components/marketplace/ProductCard';
+import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
+import type { Product, Order, UserProfile, UserRole } from '@/lib/types';
+import { ACCOUNT_TYPES, canAccessSports } from '@/lib/sports';
+import AdminOffersManager from '@/components/admin/AdminOffersManager';
+import { LogOut, Save, ShieldCheck, Tag, UserCircle2 } from 'lucide-react';
 
-/** Descrição curta do que cada papel pode fazer (espelha lib/permissions.ts). */
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
-  user: 'Atleta: compra produtos, anuncia equipamentos entre atletas e participa da comunidade. Para vender como loja oficial, crie uma loja na seção Lojas.',
-  seller: 'Lojista: gerencia a própria loja e os produtos oficiais, além das funções de atleta.',
+  user: 'Atleta: encontra equipamentos, anuncia seus próprios equipamentos, aproveita ofertas com desconto e participa da comunidade.',
+  seller: 'Vendedor Verificado: anuncia equipamentos esportivos na plataforma e participa da comunidade.',
   supervisor:
-    'Supervisor: modera a comunidade e os anúncios, gerencia pedidos, verifica lojas e suspende atletas e lojistas. Não altera papéis nem exclui contas.',
-  admin: 'Administrador: acesso total, incluindo alteração de papéis e exclusão de contas (contas-mestre são protegidas).',
+    'Supervisor: modera a comunidade, os anúncios e os pedidos da plataforma. Não altera papéis nem exclui contas.',
+  admin: 'Administrador: acesso total de gestão da plataforma, incluindo permissões de usuários, catálogo e pedidos.',
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
   pending: 'Aguardando pagamento',
   approved: 'Aprovado',
   paid: 'Pago',
-  failed: 'Falhou',
+  failed: 'Não autorizado',
   refunded: 'Reembolsado',
   cancelled: 'Cancelado',
 };
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   pending_payment: 'Aguardando pagamento',
-  escrow_locked: 'Pagamento simulado',
+  escrow_locked: 'Pagamento registrado',
   preparing: 'Em preparação',
   shipped: 'Enviado',
   delivered: 'Entregue',
@@ -49,7 +52,10 @@ const inputClass =
   'w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-600/60';
 
 export default function ProfileView() {
-  const { user, isVisitor, setAuthModalOpen, updateUserProfile, setActiveView, logout, orders } = useCoreMotiom();
+  const { user, isVisitor, setAuthModalOpen, updateUserProfile, setActiveView, logout, orders, favorites, products, setCheckoutOpen } = useCoreMotiom();
+
+  const [section, setSection] = useState<'details' | 'favorites' | 'orders' | 'products'>('details');
+  const [selected, setSelected] = useState<Product | null>(null);
 
   if (isVisitor || !user) {
     return (
@@ -68,32 +74,49 @@ export default function ProfileView() {
     );
   }
 
-  // Ao salvar, o store atualiza `user`; a chave muda e o formulário é recriado com os dados salvos.
   const formKey = [user.id, user.name, user.phone ?? '', user.city ?? '', user.state ?? ''].join('|');
 
   return (
-    <ProfileContent
+    <>
+    <div className="max-w-5xl mx-auto mb-8 space-y-5">
+      <header><h1 className="text-2xl sm:text-3xl font-black text-white">Minha conta</h1><p className="text-sm text-zinc-400 mt-2">Seus dados, equipamentos e atividades em um só lugar.</p></header>
+      <nav aria-label="Opções da minha conta" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {([['details', 'Dados da conta'], ['favorites', `Meus favoritos (${favorites.length})`], ['orders', 'Pedidos feitos']] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={section === id} onClick={() => setSection(id)} className={`rounded-xl border p-4 text-left text-sm font-bold transition-colors ${section === id ? 'border-red-500 bg-red-950/30 text-white' : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-red-500'}`}>{label}</button>)}
+        <button type="button" onClick={() => setCheckoutOpen(true)} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meu carrinho</button>
+        <button type="button" onClick={() => setSection('products')} aria-pressed={section === 'products'} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meus produtos à venda</button>
+        {canAccessSports(user) && <button type="button" onClick={() => setActiveView('sports-profile')} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">{user.account_type === 'coach' ? 'Meu perfil profissional' : 'Criar ou editar currículo de atleta'}</button>}
+        <button type="button" onClick={() => logout()} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left text-red-400">Sair da conta</button>
+      </nav>
+      {section === 'favorites' && <section aria-label="Meus favoritos" className="space-y-4">
+        <h2 className="text-xl font-bold">Meus favoritos</h2>
+        {products.filter(p => favorites.includes(p.id)).length === 0 ? <div className="rounded-2xl border border-zinc-800 p-6 text-zinc-400"><p>Nenhum produto salvo disponível. Toque no coração dos produtos no Marketplace para salvar aqui.</p><button type="button" onClick={() => setActiveView('marketplace')} className="text-red-400 font-bold mt-4">Explorar Marketplace →</button></div> : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => favorites.includes(p.id)).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div>}
+      </section>}
+      {section === 'products' && <section aria-label="Meus produtos à venda" className="space-y-4"><h2 className="text-xl font-bold">Meus produtos à venda</h2><button type="button" onClick={() => setActiveView('sell')} className="text-red-400 font-bold text-sm">Anunciar ou gerenciar meus produtos →</button>{products.some(p => p.seller_id === user.id) ? <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => p.seller_id === user.id).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div> : <p className="rounded-2xl border border-zinc-800 p-6 text-zinc-400">Você ainda não publicou produtos.</p>}</section>}
+    </div>
+    <ProductDetailModal product={selected} onClose={() => setSelected(null)} />
+    {(section === 'details' || section === 'orders') && <ProfileContent
       key={formKey}
+      ordersOnly={section === 'orders'}
       user={user}
-      storeOrders={orders}
+      orders={orders}
       onSave={updateUserProfile}
-      onOpenStores={() => setActiveView('stores')}
       onOpenAdmin={() => setActiveView('admin')}
       onLogout={() => logout()}
-    />
+    />}
+    </>
   );
 }
 
 interface ProfileContentProps {
+  ordersOnly: boolean;
   user: UserProfile;
-  storeOrders: Order[];
+  orders: Order[];
   onSave: (data: Partial<UserProfile>) => void;
-  onOpenStores: () => void;
   onOpenAdmin: () => void;
   onLogout: () => void;
 }
 
-function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, onLogout }: ProfileContentProps) {
+function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnly }: ProfileContentProps) {
   const [form, setForm] = useState({
     name: user.name ?? '',
     phone: user.phone ?? '',
@@ -103,8 +126,6 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
   const [error, setError] = useState<string | null>(null);
   const [remoteOrders, setRemoteOrders] = useState<Order[]>([]);
 
-  // Com Supabase, os pedidos vêm do banco (a RLS devolve apenas os do próprio comprador).
-  // Sem Supabase (demonstração), usa os pedidos mantidos pelo store.
   const userId = user.id;
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -117,11 +138,11 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
     };
   }, [userId]);
 
-  const myOrders = isSupabaseConfigured ? remoteOrders : storeOrders.filter((o) => o.user_id === userId);
+  const myOrders = isSupabaseConfigured ? remoteOrders : orders.filter((o) => o.user_id === userId);
 
   const role = (user.role === 'visitor' ? 'user' : user.role) as Exclude<UserRole, 'visitor'>;
-  const roleLabel = ROLE_LABELS[user.role] ?? 'Atleta';
-  const roleDescription = ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
+  const roleLabel = user.role === 'admin' ? 'Administrador' : user.account_type ? ACCOUNT_TYPES[user.account_type].label : ROLE_LABELS[user.role] ?? 'Usuário';
+  const roleDescription = user.role === 'admin' ? ROLE_DESCRIPTIONS.admin : user.account_type ? ACCOUNT_TYPES[user.account_type].description : ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -139,11 +160,17 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
     onSave({ name, phone: form.phone.trim(), city: form.city.trim(), state });
   };
 
+  const isStaff = isStaffRole(user.role);
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className={`${isStaff ? 'max-w-5xl' : 'max-w-3xl'} mx-auto space-y-6`}>
       <div>
-        <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">Meu perfil</h1>
-        <p className="text-sm text-zinc-400 mt-1">Dados da sua conta e papel no sistema.</p>
+        <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">{ordersOnly ? 'Pedidos feitos' : 'Dados da conta'}</h1>
+        <p className="text-sm text-zinc-400 mt-1">
+          {isStaff
+            ? 'Dados da conta administrativa, gestão completa de ofertas/afiliados e acesso ao painel central.'
+            : 'Dados da sua conta, histórico de pedidos e preferências.'}
+        </p>
       </div>
 
       {user.is_banned && (
@@ -153,7 +180,7 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
         </div>
       )}
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6">
+      <section hidden={ordersOnly} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div
             className="w-16 h-16 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center text-2xl font-black shrink-0"
@@ -170,36 +197,40 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
             {roleLabel}
           </span>
         </div>
-        <p className="mt-4 text-sm text-zinc-300 leading-relaxed">{roleDescription}</p>
+        <p className="mt-4 text-sm text-zinc-300 leading-relaxed">{roleDescription}</p><p className="mt-3 text-red-400 text-sm font-bold">{user.sport_interests?.join(' • ')}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {(user.role === 'seller' || user.role === 'admin') && (
-            <button
-              type="button"
-              onClick={onOpenStores}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold"
-            >
-              <Store className="w-4 h-4" aria-hidden="true" />
-              Minha loja
-            </button>
-          )}
-          {isStaffRole(user.role) && (
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold"
-            >
-              <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-              Painel de gestão
-            </button>
+          {isStaff && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById('admin-offers-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold shadow-lg shadow-red-950/40"
+              >
+                <Tag className="w-4 h-4" aria-hidden="true" />
+                Gerenciar ofertas e afiliados
+              </button>
+              <button
+                type="button"
+                onClick={onOpenAdmin}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold"
+              >
+                <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+                Painel de gestão completo
+              </button>
+            </>
           )}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
+      {isStaff && !ordersOnly && <AdminOffersManager />}
+
+      <section hidden={!ordersOnly} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
         <h2 className="text-base font-bold text-white">Meus pedidos</h2>
         {myOrders.length === 0 ? (
-          <p className="text-sm text-zinc-400">Você ainda não fez pedidos. Eles aparecem aqui depois da finalização da compra.</p>
+          <p className="text-sm text-zinc-400">Você ainda não realizou pedidos na plataforma.</p>
         ) : (
           <ul className="divide-y divide-zinc-800">
             {myOrders.map((order) => {
@@ -227,7 +258,7 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
         )}
       </section>
 
-      <form onSubmit={handleSave} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
+      <form hidden={ordersOnly} onSubmit={handleSave} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
         <h2 className="text-base font-bold text-white">Dados pessoais</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
