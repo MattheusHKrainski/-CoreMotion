@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
-import { getOfferDiscountPercent } from '@/fixtures/demo-offers';
+import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from '@/components/marketplace/ProductCard';
 import ExternalOfferCard from '@/components/marketplace/ExternalOfferCard';
 import {
