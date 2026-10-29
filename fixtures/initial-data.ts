@@ -1,3 +1,4 @@
+import { ATHLETE_CATALOG_PHONE } from '@/lib/athlete-contact';
 import { ATHLETE_C2C_LISTINGS } from './athlete-listings';
 import { Product, Coach, Athlete, NewsArticle, CommunityPost, UserProfile } from '@/lib/types';
 
