@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEMO_OFFERS, getOfferDiscountPercent } from '../../fixtures/demo-offers';
+import { DEMO_OFFERS } from '../../fixtures/demo-offers';
+import { getOfferDiscountPercent } from '../../lib/offer-utils';
 
 describe('DEMO_OFFERS', () => {
   it('marca cada oferta como fictícia e usa somente domínios reservados .test', () => {
