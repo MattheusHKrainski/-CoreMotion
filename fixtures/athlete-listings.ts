@@ -1,8 +1,8 @@
 import type { Product } from '@/lib/types';
 
 /**
- * Anúncios reais e variados de equipamentos anunciados por atletas (novos sem uso, seminovos e usados),
- * com tempo de uso explícito, estado detalhado, preços realistas de desapego e fotos exclusivas sem repetição.
+ * Anúncios C2C fictícios para demonstração da plataforma; não são publicações reais de usuários.
+ * Cobrem itens novos sem uso, seminovos e usados, com dados ilustrativos de estado e tempo de uso.
  */
 export const ATHLETE_C2C_LISTINGS: Product[] = [
   {
