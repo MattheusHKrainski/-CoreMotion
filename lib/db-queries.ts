@@ -30,7 +30,6 @@ interface DbProfileRow {
   city: string | null;
   state: string | null;
   sport_interests: string[] | null;
-  account_type: string | null;
   store_id: string | null;
   is_banned: boolean;
   ban_reason: string | null;
@@ -52,9 +51,6 @@ function mapDbProfileToUser(row: DbProfileRow): UserProfile {
     city: row.city || undefined,
     state: row.state || undefined,
     sport_interests: row.sport_interests || [],
-    account_type: row.account_type === 'athlete' || row.account_type === 'coach' || row.account_type === 'casual'
-      ? row.account_type
-      : undefined,
     created_at: toIso(row.created_at),
     // Associação legada com loja é mantida no banco, mas não enviada pela API do app.
     is_banned: Boolean(row.is_banned),
@@ -87,17 +83,15 @@ export async function upsertOwnProfile(input: {
   state?: string;
   phone?: string;
   sport?: string;
-  accountType?: string;
 }): Promise<UserProfile> {
   const email = input.email.trim().toLowerCase();
   const name = input.name?.trim() || email.split('@')[0];
   const role: UserRole = isMasterAdminEmail(email) ? 'admin' : 'user';
 
   const rows = await queryDb<DbProfileRow>(
-    `INSERT INTO public.profiles (id, email, name, avatar_url, phone, role, city, state, sport_interests, account_type, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'São Paulo'), COALESCE($8, 'SP'), $9, $10, NOW(), NOW())
+    `INSERT INTO public.profiles (id, email, name, avatar_url, phone, role, city, state, sport_interests, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'São Paulo'), COALESCE($8, 'SP'), $9, NOW(), NOW())
      ON CONFLICT (id) DO UPDATE SET
-       account_type = COALESCE(public.profiles.account_type, EXCLUDED.account_type),
        email = EXCLUDED.email,
        name = COALESCE(NULLIF(public.profiles.name, ''), EXCLUDED.name),
        avatar_url = COALESCE(public.profiles.avatar_url, EXCLUDED.avatar_url),
@@ -117,9 +111,6 @@ export async function upsertOwnProfile(input: {
       input.city || null,
       input.state || null,
       input.sport ? [input.sport] : ['Corrida', 'Alta Performance'],
-      input.accountType === 'athlete' || input.accountType === 'coach' || input.accountType === 'casual'
-        ? input.accountType
-        : null,
     ]
   );
   return mapDbProfileToUser(rows[0]);
