@@ -84,7 +84,7 @@ export function getDefaultUsageTime(condition: Product['condition']): string {
 }
 
 export default function ProductCard({ product, onSelect }: ProductCardProps) {
-  const { addToCart, setCheckoutOpen, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { addToCart, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const isFavorite = favorites.includes(product.id);
 
   if (product.product_type !== 'c2c') return null;
@@ -95,6 +95,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/60 shadow-xl shadow-black/30 transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900/90">
+      {product.image_is_reference && <span className="absolute left-3 top-12 z-10 rounded-md bg-black/80 px-2 py-1 text-[10px] text-zinc-200 pointer-events-none">Imagem de referência</span>}
       <button
         type="button"
         onClick={selectProduct}
@@ -157,10 +158,10 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
           </button>
 
           {/* Tempo de uso explícito logo no card */}
-          <div className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950/80 px-2.5 py-1 text-[11px] font-medium text-zinc-300">
+          {!product.image_is_reference && <div className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950/80 px-2.5 py-1 text-[11px] font-medium text-zinc-300">
             <Clock className="h-3 w-3 shrink-0 text-red-400" />
             <span className="truncate">{usageLabel}</span>
-          </div>
+          </div>}
 
           {/* Trecho realista do relato do dono */}
           <p className="line-clamp-2 text-[11px] leading-relaxed text-zinc-400">
@@ -212,13 +213,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
             </button>
             <button
               type="button"
-              onClick={() => {
-                if (onSelect) onSelect(product);
-                else {
-                  addToCart(product, 1);
-                  setCheckoutOpen(true);
-                }
-              }}
+              onClick={selectProduct}
               className="inline-flex items-center gap-1 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-red-950/40 transition hover:scale-105 hover:bg-red-500"
             >
               Ver detalhes

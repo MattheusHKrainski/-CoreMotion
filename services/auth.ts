@@ -37,6 +37,16 @@ function localDemoProfile(supabaseId: string, email: string, metadata?: SyncMeta
   };
 }
 
+/** Read the authenticated user's own trusted DB profile; never infer privileges from metadata. */
+async function readOwnSupabaseProfile(userId: string): Promise<UserProfile> {
+  const client = getSupabaseClient();
+  if (!client) throw new Error('Supabase não configurado.');
+  const { data, error } = await client.from('profiles').select('*').eq('id', userId).single();
+  if (error || !data || data.id !== userId) throw new Error('Não foi possível carregar o perfil da conta.');
+  if (data.is_banned) throw new Error('Esta conta está suspensa.');
+  return { ...data, supabase_id: data.id } as UserProfile;
+}
+
 /**
  * Sincroniza a sessão com public.users. O servidor identifica o usuário pelo token e decide o papel.
  * Fora do modo demonstração, falha de sincronização é erro (nunca um perfil inventado).
@@ -54,6 +64,7 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
       }),
     });
   } catch {
+    if (getSupabaseClient()) return readOwnSupabaseProfile(supabaseId);
     if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
     throw new Error('Não foi possível conectar ao servidor. Tente novamente.');
   }
@@ -62,7 +73,8 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
   if (res.ok && data?.success && data.user) {
     return data.user as UserProfile;
   }
-  if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
+  if (res.status >= 500 && getSupabaseClient()) return readOwnSupabaseProfile(supabaseId);
+  if (DEMO_MODE && !getSupabaseClient()) return localDemoProfile(supabaseId, email, metadata);
   throw new Error(data?.error || 'Não foi possível concluir o acesso. Tente novamente.');
 }
 
@@ -124,7 +136,7 @@ export class AuthService {
       const { data, error } = await sb.auth.signUp({
         email: cleanEmail,
         password: pass,
-        options: { data: { name, account_type: accountType, sport: sport?.trim() } },
+        options: { data: { name, account_type: accountType, sport: sport?.trim() }, ...(typeof window !== 'undefined' ? { emailRedirectTo: `${window.location.origin}/auth/callback` } : {}) },
       });
       if (error) {
         const exists = error.message?.toLowerCase().includes('already');

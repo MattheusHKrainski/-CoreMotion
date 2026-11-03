@@ -38,5 +38,18 @@ await db.exec("SELECT set_config('request.jwt.claims','{}',false)");
 await assert.rejects(db.query(`INSERT INTO products(title,description,price,category,sport,condition,product_type,seller_id,seller_name) VALUES ('Tênis','Usado',10,'Calçados','Corrida','usado_bom','c2c',$1,'Atleta')`,[a]),/telefone/);
 const product = await db.query(`INSERT INTO products(title,description,price,category,sport,condition,product_type,seller_id,seller_name,contact_phone) VALUES ('Tênis','Usado',10,'Calçados','Corrida','usado_bom','c2c',$1,'Atleta','5541999999999') RETURNING contact_phone`,[a]);
 assert.equal(product.rows[0].contact_phone,'5541999999999');
+// Apply the same additive content sync used on the connected project.
+await db.exec(readFileSync(new URL('../../supabase/migrations/20261023000000_external_offers_management.sql', import.meta.url), 'utf8'));
+const syncProducts = readFileSync(new URL('../../supabase/migrations/20261103150000_sync_athlete_catalog.sql', import.meta.url), 'utf8');
+const syncOffers = readFileSync(new URL('../../supabase/migrations/20261103150100_sync_external_offers.sql', import.meta.url), 'utf8');
+await db.exec(syncProducts);
+await db.exec(syncOffers);
+assert.equal((await db.query('SELECT count(*)::int n FROM products WHERE catalog_key IS NOT NULL')).rows[0].n, 24);
+assert.equal((await db.query('SELECT count(*)::int n FROM external_offers')).rows[0].n, 14);
+await db.exec("UPDATE products SET price=321 WHERE catalog_key='c2c-bone-nike-aerobill-preto'");
+await db.exec(syncProducts);
+await db.exec(syncOffers);
+assert.equal(Number((await db.query("SELECT price FROM products WHERE catalog_key='c2c-bone-nike-aerobill-preto'")).rows[0].price), 321);
+assert.equal((await db.query('SELECT count(*)::int n FROM products WHERE catalog_key IS NOT NULL')).rows[0].n, 24);
 await db.close();
 console.log('PASS: signup sport, unique/idempotent likes, RLS, count bypass, banned account and required seller phone');

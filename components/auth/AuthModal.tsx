@@ -1,5 +1,7 @@
 'use client';
-import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
+import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
+import { getSupabaseClient } from '@/services/supabaseClient';
+import { IS_QUICK_ACCESS, QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
 import SportPicker from '@/components/shared/SportPicker';
 import React, { useEffect, useState } from 'react';
@@ -53,6 +55,14 @@ export default function AuthModal() {
   const handleQuickLogin = async (type: 'admin' | AccountType) => {
     setErrorMsg('');
     setInfoMsg('');
+    if (type === 'admin') {
+      if (IS_QUICK_ACCESS) { window.location.assign('/?login=admin'); return; }
+      setEmail(ADMIN_LOGIN_EMAIL);
+      setPassword('');
+      setAuthModalMode('login');
+      setInfoMsg('Administrador: entre com a senha da sua conta real.');
+      return;
+    }
     setLoading(true);
     // Full navigation isolates every temporary profile, with or without Supabase.
     window.location.assign(`/?acesso-rapido=${type}`);
@@ -87,7 +97,11 @@ export default function AuthModal() {
           setAuthModalOpen(false);
         }
       } else if (authModalMode === 'forgot') {
-        setInfoMsg('Instruções de recuperação de senha preparadas para o seu e-mail.');
+        const client = getSupabaseClient();
+        if (!client) throw new Error('Conecte o Supabase para recuperar sua senha.');
+        const { error } = await client.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/auth/reset-password` });
+        if (error) throw new Error('Não foi possível enviar a recuperação. Aguarde e tente novamente.');
+        setInfoMsg('Se o endereço estiver cadastrado, você receberá um link para redefinir a senha.');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro na autenticação.';
