@@ -56,3 +56,7 @@ Cada oferta usa a primeira foto da galeria; cada novo anúncio de atleta usa uma
 - As seis ofertas novas são adicionadas uma vez a catálogos já existentes, no navegador e no banco. O lote de banco usa uma chave única e uma operação atômica. Ofertas editadas não são sobrescritas e exclusões posteriores não são restauradas.
 - O catálogo inicial dos atletas continua independente de anúncios reais publicados por usuários; números de contato de terceiros não são substituídos.
 - Nenhum banco remoto foi alterado durante esta tarefa. A inclusão no banco acontece pelo mecanismo existente de inicialização da API, após deploy com acesso de banco configurado.
+
+### Atualização posterior: sincronização remota concluída
+
+Em 03/11/2026 os dados foram efetivamente sincronizados com o projeto conectado CoreMotion. A sincronização posterior substitui a observação anterior de que nenhum banco remoto havia sido alterado e o mecanismo de semeadura automática na leitura: agora o banco é a fonte do catálogo conectado e as inclusões são migrações explícitas. Consulte `supabase-sincronizado-2026-11.md` para contagens verificadas e migrações aplicadas.

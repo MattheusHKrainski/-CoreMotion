@@ -74,6 +74,12 @@ export async function ensureExternalOffersTable(): Promise<void> {
     );
   `);
 
+  tableBootstrapped = true;
+}
+
+/** Explicit maintenance operation; never seed as a side effect of a public read. */
+export async function seedInitialExternalOffers(): Promise<void> {
+  await ensureExternalOffersTable();
   // Atomic replacement of unchanged legacy seeds only. Never overwrite custom records or corrected destinations.
   await queryDb(`
     WITH retired AS (
@@ -116,7 +122,6 @@ export async function ensureExternalOffersTable(): Promise<void> {
     ON CONFLICT (id) DO NOTHING
   `, [JSON.stringify(EXPANSION_OFFERS)]);
 
-  tableBootstrapped = true;
 }
 
 export async function getExternalOffersFromDb(includeInactive = false): Promise<ExternalOffer[]> {

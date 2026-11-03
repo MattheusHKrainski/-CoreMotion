@@ -29,6 +29,7 @@ interface DbProfileRow {
   role: string;
   city: string | null;
   state: string | null;
+  account_type?: UserProfile['account_type'];
   sport_interests: string[] | null;
   store_id: string | null;
   is_banned: boolean;
@@ -50,6 +51,7 @@ function mapDbProfileToUser(row: DbProfileRow): UserProfile {
     role,
     city: row.city || undefined,
     state: row.state || undefined,
+    account_type: row.account_type,
     sport_interests: row.sport_interests || [],
     created_at: toIso(row.created_at),
     // Associação legada com loja é mantida no banco, mas não enviada pela API do app.
@@ -194,6 +196,8 @@ interface DbProductRow {
   views: number | null;
   likes_count: number | null;
   location: string | null;
+  image_is_reference?: boolean;
+  usage_time?: string | null;
   contact_phone?: string | null;
   shipping_available: boolean | null;
   status: string | null;
@@ -230,6 +234,8 @@ function mapDbProductToModel(row: DbProductRow): Product {
     views: row.views ?? 0,
     likes_count: row.likes_count ?? 0,
     location: row.location || 'São Paulo, SP',
+    image_is_reference: Boolean(row.image_is_reference),
+    usage_time: row.usage_time || undefined,
     contact_phone: row.contact_phone,
     shipping_available: row.shipping_available ?? true,
     status: (row.status as Product['status']) || 'active',
