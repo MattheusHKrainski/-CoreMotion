@@ -29,7 +29,6 @@ export default function AuthModal() {
     enterPlatform,
     loginWithEmail,
     signUpWithEmail,
-    requestPasswordReset,
     signInWithGoogle,
     openWelcomePage,
   } = useCoreMotiom();
@@ -83,19 +82,12 @@ export default function AuthModal() {
         const res = await signUpWithEmail(email, password, name, accountType, accountType === 'casual' ? undefined : sport.trim());
         if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
-        } else if (res.requiresEmailConfirmation) {
-          setInfoMsg('Cadastro criado. Confira sua caixa de entrada e confirme o e-mail antes de entrar.');
         } else {
           enterPlatform('home');
           setAuthModalOpen(false);
         }
       } else if (authModalMode === 'forgot') {
-        const res = await requestPasswordReset(email);
-        if (res.success) {
-          setInfoMsg('Se houver uma conta com esse e-mail, enviaremos um link para redefinir a senha.');
-        } else {
-          setErrorMsg(res.error || 'Não foi possível enviar o e-mail de recuperação.');
-        }
+        setInfoMsg('Instruções de recuperação de senha preparadas para o seu e-mail.');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro na autenticação.';
@@ -272,7 +264,6 @@ export default function AuthModal() {
                   <input
                     type="password"
                     required
-                    minLength={authModalMode === 'register' ? 8 : undefined}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
