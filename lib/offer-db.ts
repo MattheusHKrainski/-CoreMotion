@@ -6,7 +6,7 @@
 import crypto from 'node:crypto';
 import { queryDb } from './db';
 import type { ExternalOffer } from './types';
-import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS } from '@/fixtures/real-offers';
+import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS, EXPANSION_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 
 interface DbExternalOfferRow {
@@ -74,6 +74,12 @@ export async function ensureExternalOffersTable(): Promise<void> {
     );
   `);
 
+  tableBootstrapped = true;
+}
+
+/** Explicit maintenance operation; never seed as a side effect of a public read. */
+export async function seedInitialExternalOffers(): Promise<void> {
+  await ensureExternalOffersTable();
   // Atomic replacement of unchanged legacy seeds only. Never overwrite custom records or corrected destinations.
   await queryDb(`
     WITH retired AS (
@@ -95,7 +101,27 @@ export async function ensureExternalOffersTable(): Promise<void> {
     ON CONFLICT (id) DO NOTHING
   `, [JSON.stringify(LEGACY_SEARCH_OFFERS), JSON.stringify(INITIAL_EXTERNAL_OFFERS)]);
 
-  tableBootstrapped = true;
+  // Claim the release atomically: additions appear on existing installations, but deletions stay deleted.
+  await queryDb(`CREATE TABLE IF NOT EXISTS public.catalog_seed_batches (
+    id text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT NOW()
+  );
+  REVOKE ALL ON public.catalog_seed_batches FROM anon, authenticated;`);
+  await queryDb(`
+    WITH claimed AS (
+      INSERT INTO public.catalog_seed_batches(id) VALUES ('offers-2026-11-03')
+      ON CONFLICT DO NOTHING RETURNING id
+    )
+    INSERT INTO public.external_offers
+      (id, title, description, store_name, category, sport, price, image_url, source_url, is_active, created_at)
+    SELECT seed.id, seed.title, seed.description, seed.store_name, seed.category, seed.sport,
+      seed.price, seed.image_url, seed.source_url, seed.is_active, seed.created_at
+    FROM jsonb_to_recordset($1::jsonb) AS seed(
+      id text, title text, description text, store_name text, category text, sport text,
+      price numeric, image_url text, source_url text, is_active boolean, created_at timestamptz
+    ) WHERE EXISTS (SELECT 1 FROM claimed)
+    ON CONFLICT (id) DO NOTHING
+  `, [JSON.stringify(EXPANSION_OFFERS)]);
+
 }
 
 export async function getExternalOffersFromDb(includeInactive = false): Promise<ExternalOffer[]> {

@@ -2,7 +2,7 @@ import { Product, ProductCondition, ProductType } from '@/lib/types';
 import { INITIAL_PRODUCTS } from '@/fixtures/initial-data';
 import { DEMO_MODE } from '@/lib/demo-mode';
 import { authedFetch, readResult, type ApiResult } from '@/lib/auth-fetch';
-import { isSupabaseConfigured } from './supabaseClient';
+import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
 
 interface ProductFilters {
   category?: string;
@@ -51,6 +51,16 @@ export class ProductService {
       }
     } catch (err) {
       console.warn('[ProductService] Fetch from /api/products failed, using local cache:', err);
+    }
+
+    // Public reads can use Supabase REST if the SQL API is not configured. RLS still applies.
+    const client = getSupabaseClient();
+    if (client) {
+      let request = client.from('products').select('*').eq('product_type', 'c2c');
+      if (filters?.status !== 'all') request = request.eq('status', filters?.status || 'active');
+      const { data, error } = await request.order('created_at', { ascending: false });
+      if (error) throw new Error('Não foi possível carregar os anúncios do Supabase.');
+      return this.applyLocalFilters(data as Product[], filters?.status === 'all' ? { ...filters, status: undefined } : filters);
     }
 
     // C9: dados de demonstração só com NEXT_PUBLIC_DEMO_MODE=true; sem isso, catálogo vazio.

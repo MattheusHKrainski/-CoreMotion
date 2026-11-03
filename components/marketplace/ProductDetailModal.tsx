@@ -8,9 +8,8 @@ import {
   X,
   ShoppingBag,
   Heart,
-  Truck,
   MapPin,
-  Zap,
+  MessageCircle,
   Share2,
   ChevronLeft,
   ChevronRight,
@@ -29,7 +28,6 @@ interface ProductDetailModalProps {
 export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
   const {
     addToCart,
-    setCheckoutOpen,
     favorites,
     toggleFavorite,
     isVisitor,
@@ -38,9 +36,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
   } = useCoreMotiom();
 
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string>('41 BR');
-  const [cep, setCep] = useState('');
-  const [shippingCalculated, setShippingCalculated] = useState(false);
 
   if (!product || product.product_type !== 'c2c') return null;
 
@@ -60,14 +55,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
       addToast('Link Copiado', 'Link do produto copiado para a área de transferência.', 'success');
-    }
-  };
-
-  const handleCalculateShipping = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (cep.length >= 8) {
-      setShippingCalculated(true);
-      addToast('Frete Calculado', 'Opções de entrega disponíveis para o CEP informado.', 'info');
     }
   };
 
@@ -100,8 +87,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     return genericLabels[idx] || `Foto ${idx + 1}`;
   };
 
-  const shoeSizes = ['38 BR', '39 BR', '40 BR', '41 BR', '42 BR', '43 BR', '44 BR'];
-  const apparelSizes = ['P', 'M', 'G', 'GG'];
+  const contactUrl = sellerContactUrl(product.contact_phone, product.title);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in overflow-y-auto">
@@ -141,8 +127,9 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
           
-          {/* Left Column: Multi-Angle Image Gallery */}
+          {/* Left Column: Product Gallery */}
           <div className="space-y-4">
+            {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência do produto.</p>}
             <div className="group relative aspect-square w-full bg-[#0E1017] rounded-xl overflow-hidden border border-[#232836] shadow-inner">
               <img
                 key={selectedImgIndex}
@@ -294,17 +281,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 <div className="text-2xl sm:text-3xl font-black text-white">
                   {formatPrice(product.price)}
                 </div>
-                <p className="text-xs text-[#9CA3AF] mt-1">
-                  ou 12x de {formatPrice(product.price / 12)} sem juros no cartão
-                </p>
-                <div className="mt-2 text-xs text-red-400 font-semibold flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>5% de desconto no pagamento via PIX</span>
-                </div>
               </div>
 
               {/* Ficha de Estado & Tempo de Uso */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {!product.image_is_reference && <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div className="p-3 rounded-xl bg-[#0E1017] border border-[#232836]">
                   <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
                     <Clock className="w-3.5 h-3.5 text-red-400" />
@@ -323,58 +303,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     {getConditionMeta(product.condition).detail}
                   </span>
                 </div>
-              </div>
-
-              {/* Size Selector if shoes / apparel */}
-              {product.category === 'Calçados' && (
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span className="font-semibold text-white">Selecione a Numeração (BR)</span>
-                    <span className="text-[#9CA3AF] text-[11px]">Tabela de Medidas</span>
-                  </div>
-                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                    {shoeSizes.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setSelectedSize(s)}
-                        className={`py-2 rounded-lg text-xs font-semibold border transition-all ${
-                          selectedSize === s
-                            ? 'bg-red-600 border-red-500 text-white shadow-md shadow-red-950/40'
-                            : 'bg-[#0E1017] border-[#232836] text-[#9CA3AF] hover:border-[#3B4252]'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {(product.category === 'Vestuário' || product.category === 'Roupas') && (
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span className="font-semibold text-white">Selecione o Tamanho</span>
-                    <span className="text-[#9CA3AF] text-[11px]">Guia de Caimento</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {apparelSizes.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setSelectedSize(s)}
-                        className={`py-2 rounded-lg text-xs font-semibold border transition-all ${
-                          selectedSize === s
-                            ? 'bg-red-600 border-red-500 text-white shadow-md shadow-red-950/40'
-                            : 'bg-[#0E1017] border-[#232836] text-[#9CA3AF] hover:border-[#3B4252]'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              </div>}
 
               {/* Description */}
               <div>
@@ -386,51 +315,15 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 </p>
               </div>
 
-              {/* Shipping Estimator */}
-              <div className="pt-3 border-t border-[#232836]">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-2 flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5 text-red-400" />
-                  Calcular frete e prazo de entrega
-                </h4>
-                <form onSubmit={handleCalculateShipping} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={cep}
-                    onChange={(e) => setCep(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                    placeholder="Digite seu CEP (ex: 01310100)"
-                    className="flex-1 px-3 py-2 bg-[#0E1017] text-xs text-white rounded-lg border border-[#232836] focus:border-red-500 focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-[#1E232F] hover:bg-[#2A3142] text-xs font-semibold text-white rounded-lg transition-colors border border-[#232836]"
-                  >
-                    Calcular
-                  </button>
-                </form>
-
-                {shippingCalculated && (
-                  <div className="mt-2.5 p-3 rounded-lg bg-[#0E1017] border border-[#232836] space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>SEDEX Expresso (1 a 2 dias úteis)</span>
-                      <span className="font-semibold text-white">R$ 42,50</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>PAC Encomenda (4 a 6 dias úteis)</span>
-                      <span className="font-semibold text-white">R$ 24,90</span>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
 
-            <section className="rounded-xl border border-red-500/30 bg-red-950/20 p-4 space-y-3"><h3 className="text-sm font-bold">Converse com o vendedor antes de comprar</h3><p className="text-xs text-zinc-400">Confirme o estado do produto e combine preço, pagamento e entrega. Nunca envie senhas ou códigos de segurança.</p>{sellerContactUrl(product.contact_phone, product.title) ? <a href={sellerContactUrl(product.contact_phone, product.title)!} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-xl bg-green-700 hover:bg-green-600 px-4 py-3 text-sm font-bold text-white">Negociar com o vendedor pelo WhatsApp ↗</a> : <p className="text-xs text-amber-300">Este anúncio antigo ainda não tem telefone de contato. Aguarde a atualização pelo anunciante antes de negociar.</p>}</section>
             {/* Action Buttons */}
             <div className="pt-4 border-t border-[#232836] space-y-2.5">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => {
-                    addToCart(product, 1, selectedSize);
+                    addToCart(product, 1);
                   }}
                   className="py-3 px-4 rounded-xl bg-[#0E1017] hover:bg-[#181B22] border border-[#232836] hover:border-[#3B4252] text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
                 >
@@ -438,18 +331,21 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   <span>Adicionar ao Carrinho</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    addToCart(product, 1, selectedSize);
-                    onClose();
-                    setCheckoutOpen(true);
-                  }}
-                  className="py-3 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  <Zap className="w-4 h-4" />
-                  <span>Comprar Agora</span>
-                </button>
+                {contactUrl ? (
+                  <a
+                    href={contactUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-3 px-4 rounded-xl bg-green-700 hover:bg-green-600 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4 shrink-0" />
+                    <span>Falar com o atleta pelo WhatsApp</span>
+                  </a>
+                ) : (
+                  <span className="py-3 px-4 rounded-xl border border-zinc-700 text-zinc-400 text-xs text-center">
+                    WhatsApp não informado pelo atleta
+                  </span>
+                )}
               </div>
 
               <button

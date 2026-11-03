@@ -1,5 +1,7 @@
 'use client';
+import { ADMIN_LOGIN_EMAIL } from './admin-account';
 import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
+import { refreshAthleteCatalog } from './athlete-catalog';
 import { refreshSeededContacts } from './athlete-contact';
 import { ACCOUNT_TYPES, type AccountType } from './sports';
 
@@ -27,7 +29,7 @@ import {
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
-import { refreshLegacyOffers } from './offer-catalog';
+import { appendExpansionOffers, refreshLegacyOffers } from './offer-catalog';
 import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 import { DEMO_MODE } from '@/lib/demo-mode';
@@ -210,8 +212,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
   const [allUsers, setAllUsers] = useState<UserProfile[]>(DEMO_MODE ? INITIAL_USERS : []);
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'));
-  const [offers, setOffers] = useState<ExternalOffer[]>(INITIAL_EXTERNAL_OFFERS);
+  const [products, setProducts] = useState<Product[]>(isSupabaseConfigured ? [] : INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'));
+  const [offers, setOffers] = useState<ExternalOffer[]>(isSupabaseConfigured ? [] : INITIAL_EXTERNAL_OFFERS);
   const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -219,7 +221,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [likedCommunityPosts, setLikedCommunityPosts] = useState<string[]>([]);
   const likesInFlight = useRef(new Set<string>());
   const likesReady = useRef(false);
-  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(INITIAL_COMMUNITY_POSTS);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(isSupabaseConfigured ? [] : INITIAL_COMMUNITY_POSTS);
   const [coaches] = useState<Coach[]>(INITIAL_COACHES);
   const [athletes] = useState<Athlete[]>(INITIAL_ATHLETES);
   const [news] = useState<NewsArticle[]>(INITIAL_NEWS);
@@ -266,14 +268,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           setHasEnteredPlatform(true);
         }
         const savedOffers = localStorage.getItem(OFFERS_STORAGE_KEY);
-        if (savedOffers && isMounted) {
+        if (savedOffers && isMounted && !isSupabaseConfigured) {
           const parsedOffers = JSON.parse(savedOffers);
           if (Array.isArray(parsedOffers)) {
-            const refreshed = refreshLegacyOffers(parsedOffers);
+            const refreshed = appendExpansionOffers(refreshLegacyOffers(parsedOffers), localStorage.getItem(quickStorageKey('coremotion_offers_expansion_2026_11_03')) === '1');
             setOffers(refreshed);
             localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(refreshed));
           }
         }
+
+        localStorage.setItem(quickStorageKey('coremotion_offers_expansion_2026_11_03'), '1');
 
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && isMounted) {
@@ -284,7 +288,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           if (!isSupabaseConfigured) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
             if (parsed.user && (!QUICK_PROFILE || parsed.user.id === temporaryIdentity(QUICK_PROFILE).id)) setUser(parsed.user);
-            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(parsed.products, INITIAL_PRODUCTS));
+            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(refreshAthleteCatalog(parsed.products, parsed.athleteCatalogVersion === 2), INITIAL_PRODUCTS));
             if (IS_QUICK_ACCESS && Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
           }
         }
@@ -292,18 +296,22 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         // Temporary sessions restore only their own local state; never overwrite it with live data.
         if (IS_QUICK_ACCESS) return;
 
-        // Busca ofertas reais do banco PostgreSQL quando disponível em produção
-        try {
-          const offersRes = await fetch('/api/offers');
-          if (offersRes.ok) {
-            const offersData = await offersRes.json();
-            if (isMounted && Array.isArray(offersData.offers)) {
-              setOffers(offersData.offers);
-              localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(offersData.offers));
-            }
+        // Prefer Supabase's public REST reads when configured; no separate SQL password is needed to read.
+        if (isSupabaseConfigured) {
+          const client = getSupabase();
+          if (client) {
+            const { data, error } = await client.from('external_offers').select('*').eq('is_active', true).order('created_at', { ascending: false });
+            if (error) addToast('Ofertas indisponíveis', 'Não foi possível carregar as ofertas do Supabase.', 'error');
+            else if (isMounted) setOffers(data || []);
           }
-        } catch {
-          // Ambiente local sem DATABASE_URL mantém as ofertas salvas em localStorage / INITIAL_EXTERNAL_OFFERS
+        } else {
+          try {
+            const response = await fetch('/api/offers');
+            if (response.ok) {
+              const data = await response.json();
+              if (isMounted && Array.isArray(data.offers)) setOffers(data.offers);
+            }
+          } catch { /* local catalog remains available without a connected database */ }
         }
 
         const conn = await testSupabaseConnection();
@@ -315,29 +323,19 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         ]);
 
         if (isMounted) {
-          if (liveProducts.length > 0) {
-            const curatedC2C = INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c');
-            // Mantém no topo apenas anúncios realmente publicados por usuários recentemente (sem os seeds antigos repetidos).
-            const recentUserListings = liveProducts.filter((item) => {
-              if (item.id.startsWith('20000000-0000-4000-8000-')) return false;
-              if (item.title.endsWith('— Seminovo')) return false;
-              const createdMs = new Date(item.created_at).getTime();
-              return Number.isFinite(createdMs) && createdMs >= new Date('2026-10-22T00:00:00Z').getTime();
-            });
-            setProducts((prev) =>
-              mergeProductsById(
-                prev.filter((p) => p.status !== 'active'),
-                mergeProductsById(recentUserListings, curatedC2C)
-              )
-            );
+          if (isSupabaseConfigured) {
+            // The database is authoritative, including empty results and older published listings.
+            setProducts(liveProducts);
+            setCommunityPosts(livePosts);
           }
-          if (livePosts.length > 0) {
+          if (!isSupabaseConfigured && livePosts.length > 0) {
             const liveIds = new Set(livePosts.map((p) => p.id));
             setCommunityPosts([...livePosts, ...INITIAL_COMMUNITY_POSTS.filter((p) => !liveIds.has(p.id))]);
           }
         }
       } catch (err) {
         console.warn('[CoreMotiom] Error loading live database records:', err);
+        if (isMounted && isSupabaseConfigured) addToast('Catálogo indisponível', 'Não foi possível carregar o conteúdo do Supabase. Tente recarregar a página.', 'error');
       }
     };
 
@@ -430,7 +428,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Persistência local: carrinho e favoritos sempre; sessão e pedidos apenas no modo demonstração sem banco.
   useEffect(() => {
     try {
-      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites, ...(IS_QUICK_ACCESS ? { products, communityPosts } : {}) };
+      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites, ...(IS_QUICK_ACCESS ? { products, communityPosts, athleteCatalogVersion: 2 } : {}) };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // ignore
@@ -765,11 +763,19 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!QUICK_PROFILE) return;
+    if (QUICK_PROFILE === 'admin') { window.location.replace('/?login=admin'); return; }
     const identity = temporaryIdentity(QUICK_PROFILE);
     setUser(current => current?.id === identity.id ? current : { ...identity, city: 'Curitiba', state: 'PR', created_at: '2026-01-01T00:00:00Z' });
     enterPlatform('home');
     setAuthModalOpen(false);
   }, [loginAsMasterAdmin, switchRole, enterPlatform, setAuthModalOpen]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('login') !== 'admin') return;
+    setPrefillAuthEmail(ADMIN_LOGIN_EMAIL);
+    setAuthModalMode('login');
+    setAuthModalOpen(true);
+  }, [setAuthModalOpen]);
 
   // Auth: Email Login
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
