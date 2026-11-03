@@ -29,6 +29,7 @@ export default function AuthModal() {
     prefillAuthEmail,
     setPrefillAuthEmail,
     enterPlatform,
+    resumeAdminSession,
     loginWithEmail,
     signUpWithEmail,
     openWelcomePage,
@@ -56,10 +57,14 @@ export default function AuthModal() {
     setInfoMsg('');
     if (type === 'admin') {
       if (IS_QUICK_ACCESS) { window.location.assign('/?login=admin'); return; }
+      setLoading(true);
+      const resumed = await resumeAdminSession();
+      setLoading(false);
+      if (resumed) return;
       setEmail(ADMIN_LOGIN_EMAIL);
       setPassword('');
       setAuthModalMode('login');
-      setInfoMsg('Administrador: entre com a senha da sua conta real.');
+      setInfoMsg('Entre uma vez com sua conta Admin. Nos próximos acessos, este navegador usará sua sessão enquanto ela for válida.');
       return;
     }
     setLoading(true);

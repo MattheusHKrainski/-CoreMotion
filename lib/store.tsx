@@ -1,5 +1,6 @@
 'use client';
 import { ADMIN_LOGIN_EMAIL } from './admin-account';
+import { readSavedAdminProfile } from './admin-session';
 import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
 import { refreshAthleteCatalog } from './athlete-catalog';
 import { refreshSeededContacts } from './athlete-contact';
@@ -82,6 +83,7 @@ interface CoreMotiomContextType {
   setAuthModalMode: (mode: 'login' | 'register' | 'forgot' | 'switch') => void;
   authAccountType: AccountType;
   setAuthAccountType: (type: AccountType) => void;
+  resumeAdminSession: () => Promise<boolean>;
   prefillAuthEmail: string;
   setPrefillAuthEmail: (email: string) => void;
   hasEnteredPlatform: boolean;
@@ -770,12 +772,37 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setAuthModalOpen(false);
   }, [loginAsMasterAdmin, switchRole, enterPlatform, setAuthModalOpen]);
 
+  const resumeAdminSession = useCallback(async () => {
+    const sb = isSupabaseConfigured ? getSupabase() : null;
+    if (!sb) return false;
+    const profile = await readSavedAdminProfile(
+      async () => {
+        const { data, error } = await sb.auth.getUser();
+        return error ? null : data.user;
+      },
+      async (id, email) => {
+        const result = await AuthService.getProfileOrCreate(id, email);
+        return result.success && result.data ? result.data : null;
+      },
+    );
+    if (!profile) return false;
+    setUser(profile);
+    enterPlatform('home');
+    setAuthModalOpen(false);
+    return true;
+  }, [enterPlatform, setAuthModalOpen]);
+
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('login') !== 'admin') return;
-    setPrefillAuthEmail(ADMIN_LOGIN_EMAIL);
-    setAuthModalMode('login');
-    setAuthModalOpen(true);
-  }, [setAuthModalOpen]);
+    let cancelled = false;
+    void (async () => {
+      if (await resumeAdminSession() || cancelled) return;
+      setPrefillAuthEmail(ADMIN_LOGIN_EMAIL);
+      setAuthModalMode('login');
+      setAuthModalOpen(true);
+    })();
+    return () => { cancelled = true; };
+  }, [setAuthModalOpen, resumeAdminSession]);
 
   // Auth: Email Login
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
@@ -1392,6 +1419,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         setAuthModalMode,
         authAccountType,
         setAuthAccountType,
+        resumeAdminSession,
         prefillAuthEmail,
         setPrefillAuthEmail,
         hasEnteredPlatform,

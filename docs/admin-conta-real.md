@@ -11,11 +11,15 @@ No projeto conectado CoreMotion:
 
 ## Atalhos
 
-O botão **Admin** do acesso rápido abre o formulário de login da conta real com e-mail preenchido e senha vazia. Nunca autentica sozinho nem contém uma senha embutida. Links antigos `?acesso-rapido=admin` redirecionam para `?login=admin`, sem criar uma sessão administrativa local.
+O botão **Admin** do acesso rápido retoma a mesma conta real se o navegador já tiver uma sessão válida. O usuário é validado pelo Supabase Auth (`getUser`) e o perfil confiável precisa corresponder à identidade, ao e-mail Admin e ao papel administrativo, sem suspensão. Sem sessão válida, abre o formulário com e-mail preenchido e senha vazia. Não contém senha embutida nem concede acesso a visitantes. Links antigos `?acesso-rapido=admin` redirecionam para `?login=admin`, sem criar uma sessão administrativa local.
 
 Atleta, Treinador e Casual continuam com sessões temporárias isoladas. Nenhum desses perfis foi inserido no Supabase.
 
 ## Cadastro e login
+
+O formulário não exibe botão Google nem o texto de criação automática de perfil. A identidade Google preexistente da conta é preservada.
+
+A sessão é persistida no navegador e renovada pelo Supabase. Fechar e reabrir o site não exige outra senha enquanto essa sessão puder ser validada/renovada. Sair da conta, limpar os dados do navegador ou perder a sessão exige novo login. Em dispositivos compartilhados, use **Sair** ao terminar. O atalho não grava senhas nem usa um perfil temporário como administrador real.
 
 O login usa Supabase Auth. Em falha da API SQL por erro de rede/servidor, a leitura do perfil pode usar o próprio Supabase com RLS; os papéis vêm do registro confiável em `profiles`, não de metadados controlados pelo cliente. Respostas 401/403 não acionam esse caminho. Contas suspensas são recusadas.
 
