@@ -1,3 +1,5 @@
+import { IS_QUICK_ACCESS } from './quick-access';
+
 /**
  * Catálogo inicial local ativado automaticamente quando não há banco externo configurado
  * ou quando NEXT_PUBLIC_DEMO_MODE=true. Com Supabase configurado, permanece desativado por padrão.
@@ -7,5 +9,6 @@ const hasSupabaseEnv = Boolean(
 );
 
 export const DEMO_MODE =
+  IS_QUICK_ACCESS ||
   process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ||
   (!hasSupabaseEnv && process.env.NEXT_PUBLIC_DEMO_MODE !== 'false');

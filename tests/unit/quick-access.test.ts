@@ -64,3 +64,29 @@ it('o armazenamento esportivo usa o mesmo namespace do perfil temporário', () =
     assert.equal(storage.getItem('coremotion_sports_v1'), null);
   `]);
 });
+
+it('os três perfis rápidos têm catálogo e ações locais mesmo com Supabase configurado e modo local desativado', () => {
+  for (const profile of ['athlete', 'coach', 'casual']) {
+    execFileSync(process.execPath, ['--import', 'tsx', '-e', `
+      const assert = require('node:assert/strict');
+      global.window = { location: { search: '?acesso-rapido=${profile}' } };
+      global.fetch = () => { throw new Error('Perfis temporários não devem acessar a rede'); };
+      const { DEMO_MODE } = require('./lib/demo-mode.ts');
+      const { getSupabaseClient } = require('./services/supabaseClient.ts');
+      const { ProductService } = require('./services/products.ts');
+      const { CommunityService } = require('./services/communityService.ts');
+      (async () => {
+        assert.equal(DEMO_MODE, true);
+        assert.equal(getSupabaseClient(), null);
+        const products = await ProductService.getProducts();
+        assert.ok(products.length > 0);
+        const result = await ProductService.createProduct({ ...products[0], title: 'Anúncio local' }, 'quick-${profile}');
+        assert.equal(result.success, true);
+        assert.equal(result.data.seller_id, 'quick-${profile}');
+        assert.ok((await CommunityService.getPosts()).length > 0);
+        assert.equal((await CommunityService.likePost('local-post', true)).success, true);
+        assert.equal((await CommunityService.addComment('local-post', { content: 'Teste' })).success, true);
+      })().catch(e => { console.error(e); process.exit(1); });
+    `], { env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-public-key-for-isolation-check', NEXT_PUBLIC_DEMO_MODE: 'false' } });
+  }
+});

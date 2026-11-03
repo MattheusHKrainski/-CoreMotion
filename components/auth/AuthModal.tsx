@@ -3,6 +3,7 @@ import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { IS_QUICK_ACCESS, QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
+import { useDialogScrollLock } from '@/hooks/useDialogScrollLock';
 import SportPicker from '@/components/shared/SportPicker';
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -49,6 +50,8 @@ export default function AuthModal() {
       setPrefillAuthEmail('');
     }
   }, [isAuthModalOpen, prefillAuthEmail, setPrefillAuthEmail]);
+
+  useDialogScrollLock(isAuthModalOpen);
 
   if (!isAuthModalOpen) return null;
 
@@ -116,28 +119,29 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-zinc-950 text-white rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overscroll-none">
+      <div role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" className="relative w-full max-w-md max-h-[calc(100dvh-2rem)] flex flex-col bg-zinc-950 text-white rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden">
         
         {/* Header decoration */}
-        <div className="h-1 bg-gradient-to-r from-red-800 via-red-600 to-red-500"></div>
+        <div className="h-1 shrink-0 bg-gradient-to-r from-red-800 via-red-600 to-red-500"></div>
 
         {/* Close Button */}
         <button
           onClick={() => setAuthModalOpen(false)}
-          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full transition-colors"
+          aria-label="Fechar formulário"
+          className="absolute top-4 right-4 z-10 p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-6 sm:p-8">
+        <div data-auth-scroll className="min-h-0 overflow-y-auto overscroll-contain p-6 sm:p-8">
           {/* Brand Header */}
           <div className="flex items-center gap-3 mb-6">
             <BrandMark className="w-10 h-10" />
             <div>
-              <h3 className="text-lg font-black text-white">
+              <h3 id="auth-dialog-title" className="text-lg font-black text-white">
                 {authModalMode === 'login' && 'Acessar CoreMotion'}
-                {authModalMode === 'register' && 'Criar Conta de Atleta'}
+                {authModalMode === 'register' && 'Criar Conta'}
                 {authModalMode === 'forgot' && 'Recuperar Senha'}
                 {authModalMode === 'switch' && 'Selecionar Perfil'}
               </h3>
@@ -155,10 +159,10 @@ export default function AuthModal() {
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300 mb-2.5 uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-red-500" />
-                Acesso Rápido Imediato (1 Clique):
+                Acesso Rápido:
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mb-3">Acesso temporário com dados locais. Não altera contas nem registros reais.</p>
+            <p className="text-xs text-zinc-400 mb-3">Admin: sua conta real, com a sessão salva. Atleta, Treinador e Casual: perfis prontos para explorar, com alterações salvas apenas neste navegador.</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {(['admin', 'athlete', 'coach', 'casual'] as const).map(type => <button key={type} disabled={loading} type="button" onClick={() => handleQuickLogin(type)} className="rounded-xl border border-zinc-800 bg-zinc-950 hover:border-red-600 p-3 font-bold text-white">{type === 'admin' ? '👑 Admin' : ACCOUNT_TYPES[type].label}</button>)}
             </div>
