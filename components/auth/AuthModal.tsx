@@ -29,6 +29,7 @@ export default function AuthModal() {
     enterPlatform,
     loginWithEmail,
     signUpWithEmail,
+    signInWithGoogle,
     openWelcomePage,
   } = useCoreMotiom();
 
@@ -91,6 +92,17 @@ export default function AuthModal() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro na autenticação.';
       setErrorMsg(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMsg('');
+    setInfoMsg('');
+    setLoading(true);
+    try {
+      await signInWithGoogle();
     } finally {
       setLoading(false);
     }
@@ -169,6 +181,26 @@ export default function AuthModal() {
             {authModalMode === 'register' && <p className="text-xs text-zinc-400 leading-relaxed">{ACCOUNT_TYPES[accountType].description}</p>}
             <button type="button" className="text-xs text-red-400 underline" onClick={() => { setAuthModalOpen(false); openWelcomePage(); setTimeout(() => document.getElementById('perfis')?.scrollIntoView({ behavior: 'smooth' }), 100); }}>Clique aqui para saber mais sobre os perfis</button>
           </div>}
+
+          {(authModalMode === 'login' || authModalMode === 'register') && (
+            <div className="mb-5 space-y-3">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full py-3 rounded-full bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 text-xs font-bold transition-all flex items-center justify-center gap-2"
+              >
+                <span aria-hidden="true" className="text-sm font-black text-blue-600">G</span>
+                <span>Continuar com Google</span>
+              </button>
+              <div className="text-center text-[11px] text-zinc-500">No primeiro acesso, seu perfil será criado automaticamente.</div>
+              <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-zinc-500">
+                <span className="h-px flex-1 bg-zinc-800" />
+                <span>ou use seu e-mail</span>
+                <span className="h-px flex-1 bg-zinc-800" />
+              </div>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3.5">
