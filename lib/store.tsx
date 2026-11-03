@@ -1,4 +1,5 @@
 'use client';
+import { ADMIN_LOGIN_EMAIL } from './admin-account';
 import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
 import { refreshAthleteCatalog } from './athlete-catalog';
 import { refreshSeededContacts } from './athlete-contact';
@@ -762,11 +763,19 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!QUICK_PROFILE) return;
+    if (QUICK_PROFILE === 'admin') { window.location.replace('/?login=admin'); return; }
     const identity = temporaryIdentity(QUICK_PROFILE);
     setUser(current => current?.id === identity.id ? current : { ...identity, city: 'Curitiba', state: 'PR', created_at: '2026-01-01T00:00:00Z' });
     enterPlatform('home');
     setAuthModalOpen(false);
   }, [loginAsMasterAdmin, switchRole, enterPlatform, setAuthModalOpen]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('login') !== 'admin') return;
+    setPrefillAuthEmail(ADMIN_LOGIN_EMAIL);
+    setAuthModalMode('login');
+    setAuthModalOpen(true);
+  }, [setAuthModalOpen]);
 
   // Auth: Email Login
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {

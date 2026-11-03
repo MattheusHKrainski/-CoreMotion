@@ -17,6 +17,7 @@ import type { UserRole } from './types';
 
 /** E-mails das contas-mestre (Super Admin). Comparação exata, sem prefixos. */
 const MASTER_ADMIN_EMAILS: readonly string[] = [
+  'mattheus.h.krainski@gmail.com',
   'mattheusxmljz@gmail.com',
   'operacaoamd@gmail.com',
   'professorchines2026@gmail.com',
