@@ -1,30 +1,32 @@
 'use client';
 
+import { sellerContactUrl } from '@/lib/seller-contact';
 import React, { useState } from 'react';
 import { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
 import {
   X,
-  ShieldCheck,
   ShoppingBag,
   Heart,
   Truck,
   MapPin,
   Zap,
   Share2,
-  Store,
   ChevronLeft,
   ChevronRight,
   Camera,
+  Clock,
+  ShieldCheck,
+  User,
 } from 'lucide-react';
+import { getConditionMeta, getDefaultUsageTime } from './ProductCard';
 
 interface ProductDetailModalProps {
   product: Product | null;
   onClose: () => void;
-  onOpenStore?: (storeId: string) => void;
 }
 
-export default function ProductDetailModal({ product, onClose, onOpenStore }: ProductDetailModalProps) {
+export default function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
   const {
     addToCart,
     setCheckoutOpen,
@@ -40,12 +42,12 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
   const [cep, setCep] = useState('');
   const [shippingCalculated, setShippingCalculated] = useState(false);
 
-  if (!product) return null;
+  if (!product || product.product_type !== 'c2c') return null;
 
   const isFav = favorites.includes(product.id);
   const galleryImages = product.images && product.images.length > 0
     ? product.images
-    : ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'];
+    : ['/products/image-unavailable.svg'];
 
   const formatPrice = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -65,7 +67,7 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
     e.preventDefault();
     if (cep.length >= 8) {
       setShippingCalculated(true);
-      addToast('Frete Calculado', 'Opções de envio disponíveis para seu endereço.', 'info');
+      addToast('Frete Calculado', 'Opções de entrega disponíveis para o CEP informado.', 'info');
     }
   };
 
@@ -147,12 +149,12 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                 src={galleryImages[selectedImgIndex] || galleryImages[0]}
                 alt={`${product.title} - ${getAngleLabel(selectedImgIndex, product.category)}`}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80';
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/products/image-unavailable.svg';
                 }}
                 className="w-full h-full object-cover transition-opacity duration-300 animate-in fade-in"
               />
 
-              {/* Navigation Arrows for Angles */}
               {galleryImages.length > 1 && (
                 <>
                   <button
@@ -178,27 +180,17 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                 </>
               )}
 
-              {/* Top Angle Indicator Badge */}
               <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 text-white text-[11px] font-semibold backdrop-blur-md border border-white/15 shadow-md">
                 <Camera className="w-3 h-3 text-red-400" />
                 <span>Ângulo {selectedImgIndex + 1}/{galleryImages.length}</span>
               </div>
 
-              {/* Verified badge or C2C tag */}
               <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                {product.is_verified_store ? (
-                  <div className="bg-red-600/90 text-white border border-red-500/50 px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-sm">
-                    <ShieldCheck className="w-4 h-4 text-white" />
-                    <span>Loja Oficial Verificada</span>
-                  </div>
-                ) : (
-                  <div className="bg-[#12151C]/90 text-[#E5E7EB] border border-[#232836] px-2.5 py-1 rounded-md text-xs font-semibold backdrop-blur-sm shadow-md">
-                    <span>Venda entre Atletas (C2C)</span>
-                  </div>
-                )}
+                <div className="rounded-md border border-[#232836] bg-[#12151C]/90 px-2.5 py-1 text-xs font-semibold text-[#E5E7EB] shadow-md backdrop-blur-sm">
+                  Anúncio de atleta
+                </div>
               </div>
 
-              {/* Current Angle Subtitle Pill on bottom */}
               <div className="absolute bottom-3 inset-x-3 text-center pointer-events-none">
                 <span className="inline-block px-3 py-1 rounded-full bg-black/75 text-zinc-300 text-[11px] font-medium backdrop-blur-md border border-zinc-800/80 shadow-md">
                   {getAngleLabel(selectedImgIndex, product.category)}
@@ -206,7 +198,6 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
               </div>
             </div>
 
-            {/* Multi-Angle Thumbnails with Active Red Indicator */}
             {galleryImages.length > 1 && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-zinc-400 font-medium px-0.5">
@@ -231,7 +222,8 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                           src={img}
                           alt=""
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80';
+                            e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/products/image-unavailable.svg';
                           }}
                           className="w-full h-full object-cover"
                         />
@@ -246,41 +238,20 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
             )}
 
             {/* Seller info card */}
-            <div className="p-4 rounded-xl bg-[#0E1017] border border-[#232836] space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[#9CA3AF]">Vendido e Entregue por:</span>
-                {product.store_id && (
-                  <button
-                    onClick={() => {
-                      if (product.store_id && onOpenStore) onOpenStore(product.store_id);
-                    }}
-                    className="text-red-400 font-semibold hover:underline flex items-center gap-1"
-                  >
-                    <Store className="w-3.5 h-3.5" />
-                    <span>Ver Loja</span>
-                  </button>
-                )}
-              </div>
+            <div className="space-y-2 rounded-xl border border-[#232836] bg-[#0E1017] p-4 text-xs">
+              <span className="text-[#9CA3AF]">Vendido por:</span>
               <div className="flex items-center gap-3 pt-1">
-                <div className="w-10 h-10 rounded-full bg-[#181B22] border border-[#232836] overflow-hidden flex items-center justify-center font-bold text-white">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#232836] bg-[#181B22] font-bold text-white">
                   {product.seller_avatar ? (
-                    <img src={product.seller_avatar} alt="" className="w-full h-full object-cover" />
+                    <img src={product.seller_avatar} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <span>{product.seller_name.charAt(0)}</span>
                   )}
                 </div>
                 <div>
-                  <h5 className="font-bold text-white flex items-center gap-1.5">
-                    {product.store_name || product.seller_name}
-                    {product.is_verified_store && (
-                      <span className="text-red-400 text-[11px] font-semibold flex items-center gap-1">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        Verificado
-                      </span>
-                    )}
-                  </h5>
-                  <p className="text-[11px] text-[#9CA3AF] flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-[#6B7280]" />
+                  <h5 className="font-bold text-white">{product.seller_name}</h5>
+                  <p className="flex items-center gap-1 text-[11px] text-[#9CA3AF]">
+                    <MapPin className="h-3 w-3 text-[#6B7280]" />
                     {product.location || 'Brasil'}
                   </p>
                 </div>
@@ -293,10 +264,20 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
             <div className="space-y-4">
               
               {/* Product Header */}
-              <div>
-                <span className="inline-block px-2 py-0.5 rounded bg-[#0E1017] text-[#9CA3AF] text-[11px] uppercase font-semibold tracking-wider border border-[#232836] mb-2">
-                  Condição: {product.condition === 'novo' ? 'Novo (Lacrado)' : product.condition === 'como_novo' ? 'Como Novo' : 'Usado (Excelente Estado)'}
-                </span>
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-950/60 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-sky-200">
+                    <User className="h-3 w-3 text-sky-400" />
+                    Equipamento de Atleta
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+                      getConditionMeta(product.condition).pillClass
+                    }`}
+                  >
+                    {getConditionMeta(product.condition).badge}
+                  </span>
+                </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
                   {product.title}
                 </h2>
@@ -305,11 +286,9 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
               {/* Price Block */}
               <div className="p-4 rounded-xl bg-[#0E1017] border border-[#232836]">
                 {product.original_price && product.original_price > product.price && (
-                  <div className="flex items-center gap-2 text-xs text-[#9CA3AF] line-through mb-0.5">
-                    <span>{formatPrice(product.original_price)}</span>
-                    <span className="text-red-400 no-underline text-[10px] font-bold">
-                      -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}% de desconto
-                    </span>
+                  <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-1">
+                    <span>Valor pago quando novo:</span>
+                    <span className="line-through font-medium">{formatPrice(product.original_price)}</span>
                   </div>
                 )}
                 <div className="text-2xl sm:text-3xl font-black text-white">
@@ -320,7 +299,29 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                 </p>
                 <div className="mt-2 text-xs text-red-400 font-semibold flex items-center gap-1">
                   <Zap className="w-3.5 h-3.5" />
-                  <span>5% de desconto à vista no PIX</span>
+                  <span>5% de desconto no pagamento via PIX</span>
+                </div>
+              </div>
+
+              {/* Ficha de Estado & Tempo de Uso */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="p-3 rounded-xl bg-[#0E1017] border border-[#232836]">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                    <Clock className="w-3.5 h-3.5 text-red-400" />
+                    Tempo de Uso
+                  </span>
+                  <span className="mt-1 block text-xs font-bold text-white">
+                    {product.usage_time || getDefaultUsageTime(product.condition)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#0E1017] border border-[#232836]">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Estado Real
+                  </span>
+                  <span className="mt-1 block text-xs font-bold text-white">
+                    {getConditionMeta(product.condition).detail}
+                  </span>
                 </div>
               </div>
 
@@ -378,7 +379,7 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
               {/* Description */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-1.5">
-                  Descrição do Produto
+                  Relato do Atleta sobre Conservação e Uso
                 </h4>
                 <p className="text-xs text-[#D1D5DB] leading-relaxed whitespace-pre-line">
                   {product.description}
@@ -389,7 +390,7 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
               <div className="pt-3 border-t border-[#232836]">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-2 flex items-center gap-1.5">
                   <Truck className="w-3.5 h-3.5 text-red-400" />
-                  Calcular Frete e Prazo
+                  Calcular frete e prazo de entrega
                 </h4>
                 <form onSubmit={handleCalculateShipping} className="flex gap-2">
                   <input
@@ -410,11 +411,11 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
                 {shippingCalculated && (
                   <div className="mt-2.5 p-3 rounded-lg bg-[#0E1017] border border-[#232836] space-y-1.5 text-xs">
                     <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>SEDEX Express (1-2 dias úteis)</span>
+                      <span>SEDEX Expresso (1 a 2 dias úteis)</span>
                       <span className="font-semibold text-white">R$ 42,50</span>
                     </div>
                     <div className="flex items-center justify-between text-[#D1D5DB]">
-                      <span>PAC Padrão (4-6 dias úteis)</span>
+                      <span>PAC Encomenda (4 a 6 dias úteis)</span>
                       <span className="font-semibold text-white">R$ 24,90</span>
                     </div>
                   </div>
@@ -422,6 +423,7 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
               </div>
             </div>
 
+            <section className="rounded-xl border border-red-500/30 bg-red-950/20 p-4 space-y-3"><h3 className="text-sm font-bold">Converse com o vendedor antes de comprar</h3><p className="text-xs text-zinc-400">Confirme o estado do produto e combine preço, pagamento e entrega. Nunca envie senhas ou códigos de segurança.</p>{sellerContactUrl(product.contact_phone, product.title) ? <a href={sellerContactUrl(product.contact_phone, product.title)!} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-xl bg-green-700 hover:bg-green-600 px-4 py-3 text-sm font-bold text-white">Negociar com o vendedor pelo WhatsApp ↗</a> : <p className="text-xs text-amber-300">Este anúncio antigo ainda não tem telefone de contato. Aguarde a atualização pelo anunciante antes de negociar.</p>}</section>
             {/* Action Buttons */}
             <div className="pt-4 border-t border-[#232836] space-y-2.5">
               <div className="grid grid-cols-2 gap-3">
@@ -472,4 +474,3 @@ export default function ProductDetailModal({ product, onClose, onOpenStore }: Pr
     </div>
   );
 }
-

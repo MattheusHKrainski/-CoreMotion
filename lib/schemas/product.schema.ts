@@ -1,3 +1,4 @@
+import { normalizePhone, validPhone } from '@/lib/seller-contact';
 import { z } from 'zod';
 import { PRODUCT_CONDITIONS, PRODUCT_STATUSES } from '@/lib/api-utils';
 
@@ -41,14 +42,14 @@ export const productCreateSchema = z.object({
   category: z.string().trim().min(1, 'Selecione uma categoria.').max(60),
   sport: z.string().trim().min(1, 'Selecione a modalidade esportiva.').max(60),
   condition,
-  product_type: z.enum(['b2c', 'c2c']).default('c2c'),
+  product_type: z.literal('c2c').default('c2c'),
   images,
   stock: z.number().int().min(1, 'Estoque mínimo de 1.').max(9999).default(1),
   location: location.nullish(),
+  contact_phone: z.string().trim().refine(validPhone, 'Informe um telefone válido com DDD.').transform(normalizePhone),
   shipping_available: z.boolean().default(true),
   brand: brand.nullish(),
   tags: tags.default([]),
-  store_id: z.string().max(64).nullish(),
 });
 
 /** Atualização parcial: sem padrões, para não sobrescrever campos que não vieram na requisição. */
@@ -61,6 +62,7 @@ export const productUpdateSchema = z.object({
   images: images.optional(),
   stock: z.number().int().min(0, 'Estoque não pode ser negativo.').max(9999).optional(),
   location: location.nullish(),
+  contact_phone: z.string().trim().refine(validPhone, 'Telefone inválido.').transform(normalizePhone).optional(),
   shipping_available: z.boolean().optional(),
   brand: brand.nullish(),
   tags: tags.optional(),

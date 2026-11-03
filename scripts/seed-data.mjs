@@ -9,79 +9,83 @@ const client = new Client({
 });
 
 async function seed() {
+  if (process.env.COREMOTIOM_ENABLE_RETIRED_STORE_SEED !== '1') {
+    console.warn('Seed de lojas e anúncios B2C aposentado; nenhum dado foi alterado. Use scripts/seed-all-products.mjs para exemplos C2C.');
+    return;
+  }
   await client.connect();
   console.log('Connected to Supabase DB for seeding...');
 
   // Check if stores already exist
   const existingStores = await client.query('SELECT count(*) FROM public.stores');
   if (parseInt(existingStores.rows[0].count, 10) === 0) {
-    console.log('Seeding official stores...');
+    console.log('Seeding demo store profiles...');
     const stores = [
       {
-        name: 'Motiom Pro Lab',
+        name: 'Perfil de loja demonstrativo 01',
         slug: 'motiom-pro-lab',
-        description: 'Laboratório e boutique oficial de equipamentos esportivos de alta performance, vestuário técnico de compressão e calçados para maratonistas e triatletas.',
+        description: 'Perfil B2C demonstrativo. Produtos, vínculo com marcas, disponibilidade e estoque são ilustrativos e não verificados.',
         logo_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&q=80',
         banner_url: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=1200&q=80',
         category: 'Alta Performance',
-        is_verified: true,
-        verification_status: 'verified',
+        is_verified: false,
+        verification_status: 'none',
         cnpj: '48.912.834/0001-92',
-        contact_email: 'contato@motiompro.com.br',
-        contact_phone: '+55 (11) 98822-1049',
+        contact_email: 'lojista-demo-01@exemplo.test',
+        contact_phone: '(00) 00000-0000',
         location: 'São Paulo, SP',
-        rating: 4.95,
-        sales_count: 842,
-        products_count: 18,
+        rating: 0,
+        sales_count: 0,
+        products_count: 2,
       },
       {
-        name: 'AeroTrack Dynamics',
+        name: 'Perfil de loja demonstrativo 02',
         slug: 'aerotrack-dynamics',
-        description: 'Especialistas em ciclismo de estrada, contra-relógio e componentes aerodinâmicos de carbono certificados para atletas de elite.',
+        description: 'Perfil B2C demonstrativo para ciclismo. Produtos, certificações e disponibilidade não são verificados pela plataforma.',
         logo_url: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400&q=80',
         banner_url: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&q=80',
         category: 'Ciclismo & Triatlo',
-        is_verified: true,
-        verification_status: 'verified',
+        is_verified: false,
+        verification_status: 'none',
         cnpj: '32.145.890/0001-11',
-        contact_email: 'suporte@aerotrack.com.br',
-        contact_phone: '+55 (41) 99123-4567',
+        contact_email: 'lojista-demo-02@exemplo.test',
+        contact_phone: '(00) 00000-0000',
         location: 'Curitiba, PR',
-        rating: 4.88,
-        sales_count: 415,
-        products_count: 12,
+        rating: 0,
+        sales_count: 0,
+        products_count: 1,
       },
       {
-        name: 'Vortex Endurance Store',
+        name: 'Perfil de loja demonstrativo 03',
         slug: 'vortex-endurance',
-        description: 'Roupas técnicas, coletes de hidratação e tecnologia vestível para trail running, montanha e ultramaratonas.',
+        description: 'Perfil B2C demonstrativo para trail e outdoor. Informações e disponibilidade são ilustrativas.',
         logo_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80',
         banner_url: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1200&q=80',
         category: 'Trail & Outdoor',
-        is_verified: true,
-        verification_status: 'verified',
+        is_verified: false,
+        verification_status: 'none',
         cnpj: '19.482.001/0001-44',
-        contact_email: 'vendas@vortexendurance.com',
+        contact_email: 'lojista-demo-03@exemplo.test',
         location: 'Belo Horizonte, MG',
-        rating: 4.92,
-        sales_count: 290,
-        products_count: 9,
+        rating: 0,
+        sales_count: 0,
+        products_count: 1,
       },
       {
-        name: 'Pulse Peak Tech',
+        name: 'Perfil de loja demonstrativo 04',
         slug: 'pulse-peak-tech',
-        description: 'Monitores cardíacos de precisão, sensores de cadência e wearables avançados para biohacking e recuperação muscular.',
+        description: 'Perfil B2C demonstrativo para tecnologia esportiva. Informações e disponibilidade são ilustrativas.',
         logo_url: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80',
         banner_url: 'https://images.unsplash.com/photo-1510519138111-5778a0ff28ac?w=1200&q=80',
         category: 'Tecnologia & Wearables',
         is_verified: false,
-        verification_status: 'pending',
+        verification_status: 'none',
         cnpj: '55.109.432/0001-80',
-        contact_email: 'atendimento@pulsepeak.com',
+        contact_email: 'lojista-demo-04@exemplo.test',
         location: 'Florianópolis, SC',
-        rating: 4.70,
-        sales_count: 64,
-        products_count: 5,
+        rating: 0,
+        sales_count: 0,
+        products_count: 0,
       }
     ];
 
@@ -108,8 +112,8 @@ async function seed() {
 
     const products = [
       {
-        title: 'Tênis de Corrida Nike Alphafly 3 Proto',
-        description: 'Tênis de elite para maratona com placa de carbono Flyplate e amortecimento duplo Zoom Air no antepé.',
+        title: 'Tênis de corrida com placa de carbono (anúncio demonstrativo)',
+        description: 'Anúncio demonstrativo de tênis de corrida. Características, autenticidade, disponibilidade e estoque não são verificados pela plataforma.',
         price: 2199.90,
         original_price: 2499.90,
         category: 'Calçados',
@@ -117,16 +121,16 @@ async function seed() {
         condition: 'novo',
         product_type: 'b2c',
         images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80', 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&q=80'],
-        seller_name: 'Motiom Pro Lab',
+        seller_name: 'Perfil de loja demonstrativo 01',
         store_slug: 'motiom-pro-lab',
-        is_verified_store: true,
+        is_verified_store: false,
         stock: 5,
         brand: 'Nike',
         location: 'São Paulo, SP'
       },
       {
         title: 'Bicicleta de Estrada Cervélo S5 Dura-Ace Di2 (Usada 200km)',
-        description: 'Quadro aero em carbono Torayca, grupo Shimano Dura-Ace Di2 12v e rodas Reserve 52/63 carbono. Estado impecável.',
+        description: 'Anúncio demonstrativo de bicicleta usada. Especificações e condição do item não são verificadas pela plataforma.',
         price: 48500.00,
         original_price: 62000.00,
         category: 'Bicicletas & Componentes',
@@ -143,7 +147,7 @@ async function seed() {
       },
       {
         title: 'Relógio Multiesportivo Garmin Forerunner 965 AMOLED',
-        description: 'Relógio GPS para triatletas e corredores com display AMOLED táctil, mapas integrados e métricas avançadas de prontidão para treino.',
+        description: 'Anúncio demonstrativo de relógio esportivo. Especificações, autenticidade, disponibilidade e estoque não são verificados pela plataforma.',
         price: 4499.00,
         original_price: 4999.00,
         category: 'Eletrônicos & Wearables',
@@ -151,16 +155,16 @@ async function seed() {
         condition: 'novo',
         product_type: 'b2c',
         images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80', 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800&q=80'],
-        seller_name: 'AeroTrack Dynamics',
+        seller_name: 'Perfil de loja demonstrativo 02',
         store_slug: 'aerotrack-dynamics',
-        is_verified_store: true,
+        is_verified_store: false,
         stock: 8,
         brand: 'Garmin',
         location: 'Curitiba, PR'
       },
       {
         title: 'Mochila de Hidratação Salomon Active Skin 8 com Soft Flasks',
-        description: 'Colete de corrida de trilha ultraleve, respirável e com sistema de ajuste Sensifit para conforto absoluto em provas longas.',
+        description: 'Anúncio demonstrativo de mochila esportiva. Características, autenticidade, disponibilidade e estoque não são verificados pela plataforma.',
         price: 649.90,
         original_price: 789.90,
         category: 'Acessórios',
@@ -168,16 +172,16 @@ async function seed() {
         condition: 'novo',
         product_type: 'b2c',
         images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=80'],
-        seller_name: 'Vortex Endurance Store',
+        seller_name: 'Perfil de loja demonstrativo 03',
         store_slug: 'vortex-endurance',
-        is_verified_store: true,
+        is_verified_store: false,
         stock: 12,
         brand: 'Salomon',
         location: 'Belo Horizonte, MG'
       },
       {
         title: 'Traje de Neoprene Huub Varman Triathlon 3:5 (Usado 2x)',
-        description: 'Wetsuit de competição Huub Varman tamanho M. Usado apenas em 2 provas de 70.3. Flutuabilidade perfeita e zero desgaste.',
+        description: 'Anúncio demonstrativo de traje usado. A condição, autenticidade, disponibilidade e estoque não são verificados pela plataforma.',
         price: 3200.00,
         original_price: 4600.00,
         category: 'Vestuário',
@@ -193,8 +197,8 @@ async function seed() {
         location: 'Florianópolis, SC'
       },
       {
-        title: 'Macaquinha de Triatlo Ryzon Myth Aerodynamic Manga Curta',
-        description: 'Traje oficial de triatlo com tecido hidrofóbico e padrão alveolar nos braços para menor arrasto em alta velocidade na bike.',
+        title: 'Macaquinha de triatlo (anúncio demonstrativo)',
+        description: 'Descrição demonstrativa de traje de triatlo; características, disponibilidade e autenticidade não são verificadas.',
         price: 1890.00,
         original_price: 2150.00,
         category: 'Vestuário',
@@ -202,9 +206,9 @@ async function seed() {
         condition: 'novo',
         product_type: 'b2c',
         images: ['https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&q=80'],
-        seller_name: 'Motiom Pro Lab',
+        seller_name: 'Perfil de loja demonstrativo 01',
         store_slug: 'motiom-pro-lab',
-        is_verified_store: true,
+        is_verified_store: false,
         stock: 4,
         brand: 'Ryzon',
         location: 'São Paulo, SP'
