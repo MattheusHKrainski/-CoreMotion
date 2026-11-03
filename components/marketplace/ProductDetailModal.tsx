@@ -141,8 +141,9 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
           
-          {/* Left Column: Multi-Angle Image Gallery */}
+          {/* Left Column: Product Gallery */}
           <div className="space-y-4">
+            {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência do produto. Peça fotos atuais ao anunciante para conferir o estado real antes de negociar.</p>}
             <div className="group relative aspect-square w-full bg-[#0E1017] rounded-xl overflow-hidden border border-[#232836] shadow-inner">
               <img
                 key={selectedImgIndex}

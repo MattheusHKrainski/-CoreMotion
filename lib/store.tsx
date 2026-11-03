@@ -1,5 +1,6 @@
 'use client';
 import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
+import { refreshAthleteCatalog } from './athlete-catalog';
 import { refreshSeededContacts } from './athlete-contact';
 import { ACCOUNT_TYPES, type AccountType } from './sports';
 
@@ -27,7 +28,7 @@ import {
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
-import { refreshLegacyOffers } from './offer-catalog';
+import { appendExpansionOffers, refreshLegacyOffers } from './offer-catalog';
 import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 import { DEMO_MODE } from '@/lib/demo-mode';
@@ -269,11 +270,13 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (savedOffers && isMounted) {
           const parsedOffers = JSON.parse(savedOffers);
           if (Array.isArray(parsedOffers)) {
-            const refreshed = refreshLegacyOffers(parsedOffers);
+            const refreshed = appendExpansionOffers(refreshLegacyOffers(parsedOffers), localStorage.getItem(quickStorageKey('coremotion_offers_expansion_2026_11_03')) === '1');
             setOffers(refreshed);
             localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(refreshed));
           }
         }
+
+        localStorage.setItem(quickStorageKey('coremotion_offers_expansion_2026_11_03'), '1');
 
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && isMounted) {
@@ -284,7 +287,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           if (!isSupabaseConfigured) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
             if (parsed.user && (!QUICK_PROFILE || parsed.user.id === temporaryIdentity(QUICK_PROFILE).id)) setUser(parsed.user);
-            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(parsed.products, INITIAL_PRODUCTS));
+            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(refreshAthleteCatalog(parsed.products, parsed.athleteCatalogVersion === 2), INITIAL_PRODUCTS));
             if (IS_QUICK_ACCESS && Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
           }
         }
@@ -430,7 +433,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Persistência local: carrinho e favoritos sempre; sessão e pedidos apenas no modo demonstração sem banco.
   useEffect(() => {
     try {
-      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites, ...(IS_QUICK_ACCESS ? { products, communityPosts } : {}) };
+      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites, ...(IS_QUICK_ACCESS ? { products, communityPosts, athleteCatalogVersion: 2 } : {}) };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // ignore

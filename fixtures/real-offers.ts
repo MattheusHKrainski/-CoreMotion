@@ -1,3 +1,4 @@
+import { CATALOG_EXPANSION } from './catalog-expansion';
 import type { ExternalOffer } from '@/lib/types';
 
 /** Revisão manual em 25/10/2026: página do produto + foto da própria galeria.
@@ -7,7 +8,15 @@ import type { ExternalOffer } from '@/lib/types';
 const shop = 'https://www.decathlon.com.br/';
 const photo = (id: string, filename: string) => `https://decathlonpro.vtexassets.com/arquivos/ids/${id}/${filename}.jpg`;
 
+export const EXPANSION_OFFERS: ExternalOffer[] = CATALOG_EXPANSION.map((item, index) => ({
+  id: `offer-decathlon-${item.key}`, title: item.title, description: `Referência ${item.key.split('-').at(-1)}. ${item.description}`,
+  store_name: 'Decathlon', category: item.category, sport: item.sport, price: item.price,
+  source_url: item.source_url, image_url: item.image_url, is_active: true, is_demo: false,
+  created_at: new Date(Date.UTC(2026, 10, 3, 12, 0, 0) - index * 1000).toISOString(),
+}));
+
 export const INITIAL_EXTERNAL_OFFERS: ExternalOffer[] = [
+  ...EXPANSION_OFFERS,
   {
     id: 'offer-decathlon-bjj-8920531',
     title: 'Kimono Adulto de Jiu-Jitsu GI Outshock 500 Preto',

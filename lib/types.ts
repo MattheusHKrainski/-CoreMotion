@@ -52,6 +52,7 @@ export interface Product {
   condition: ProductCondition;
   usage_time?: string;
   product_type: ProductType;
+  image_is_reference?: boolean;
   images: string[];
   seller_id?: string | null;
   seller_name: string;

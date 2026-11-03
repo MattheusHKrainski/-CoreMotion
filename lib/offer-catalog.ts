@@ -1,4 +1,4 @@
-import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS } from '@/fixtures/real-offers';
+import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS, EXPANSION_OFFERS } from '@/fixtures/real-offers';
 import type { ExternalOffer } from './types';
 
 /** Migra somente URLs legadas conhecidas. Links editados pelo administrador são preservados. */
@@ -22,4 +22,10 @@ export function isProductDestination(value: string): boolean {
     if (url.hostname.endsWith('olympikus.com.br') && /^\/corre\/?$/.test(url.pathname)) return false;
     return true;
   } catch { return false; }
+}
+
+/** Apply this release once, without restoring offers later removed by an administrator. */
+export function appendExpansionOffers(offers: ExternalOffer[], applied: boolean): ExternalOffer[] {
+  if (applied) return offers;
+  return [...EXPANSION_OFFERS.filter(seed => !offers.some(offer => offer.id === seed.id)), ...offers];
 }
