@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BrandMark from '@/components/shared/BrandMark';
 import { getSupabaseClient } from '@/services/supabaseClient';
@@ -16,17 +16,18 @@ export default function ResetPasswordPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const hasRecoveryMarker =
+      hash.get('type') === 'recovery' ||
+      new URLSearchParams(window.location.search).has('code');
+
     const sb = getSupabaseClient();
     if (!sb) {
       setError('Não foi possível conectar ao serviço de autenticação.');
       setChecking(false);
       return;
     }
-
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const hasRecoveryMarker =
-      hash.get('type') === 'recovery' ||
-      new URLSearchParams(window.location.search).has('code');
+ 
     let active = true;
 
     const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
