@@ -25,6 +25,9 @@ export async function POST(req: NextRequest) {
       state: str(body.state, 2) || undefined,
       phone: str(body.phone, 30) || undefined,
       sport: str(body.sport, 60) || undefined,
+      accountType: ['athlete', 'coach', 'casual'].includes(str(body.account_type, 20))
+        ? str(body.account_type, 20)
+        : undefined,
     });
     return NextResponse.json({ success: true, user });
   } catch (err: unknown) {
