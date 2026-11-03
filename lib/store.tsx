@@ -109,8 +109,7 @@ interface CoreMotiomContextType {
   adminSyncSupabase: () => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
   loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string) => Promise<{ success: boolean; error?: string; requiresEmailConfirmation?: boolean }>;
-  requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
+  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (newRole: UserRole, accountType?: AccountType) => void;
@@ -805,7 +804,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     name: string,
     accountType: AccountType = 'casual',
     sport?: string
-  ): Promise<{ success: boolean; error?: string; requiresEmailConfirmation?: boolean }> => {
+  ): Promise<{ success: boolean; error?: string }> => {
     if (accountType !== 'casual' && (!sport?.trim() || sport.trim().length > 60)) return { success: false, error: 'Escolha sua modalidade principal.' };
     manualAuthRef.current = true;
     let res: Awaited<ReturnType<typeof AuthService.signUpWithEmail>>;
@@ -813,9 +812,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       res = await AuthService.signUpWithEmail(email, pass, name, accountType, sport);
     } finally {
       manualAuthRef.current = false;
-    }
-    if (res.success && res.requiresEmailConfirmation) {
-      return { success: true, requiresEmailConfirmation: true };
     }
     if (res.success && res.data) {
       const profile = { ...res.data, account_type: accountType, sport_interests: sport ? [sport.trim()] : res.data.sport_interests };
@@ -827,10 +823,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
 
     return { success: false, error: res.error || 'Não foi possível cadastrar a conta.' };
-  };
-
-  const requestPasswordReset = async (email: string) => {
-    return AuthService.requestPasswordReset(email);
   };
 
   // Auth: Google OAuth
@@ -1422,7 +1414,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         loginAsMasterAdmin,
         loginWithEmail,
         signUpWithEmail,
-        requestPasswordReset,
         signInWithGoogle,
         logout,
         switchRole,
