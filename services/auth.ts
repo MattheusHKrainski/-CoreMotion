@@ -10,6 +10,7 @@ interface AuthResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
+  requiresEmailConfirmation?: boolean;
 }
 
 type SyncMetadata = {
@@ -17,6 +18,7 @@ type SyncMetadata = {
   avatar?: string;
   city?: string;
   sport?: string;
+  accountType?: string;
 };
 
 /** Perfil local, usado somente no modo demonstração quando o servidor não responde. */
@@ -51,6 +53,7 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
         avatar: metadata?.avatar,
         city: metadata?.city,
         sport: metadata?.sport,
+        account_type: metadata?.accountType,
       }),
     });
   } catch {
@@ -102,6 +105,7 @@ export class AuthService {
       name: (typeof meta.name === 'string' && meta.name) || cleanEmail.split('@')[0],
       sport: typeof meta.sport === 'string' ? meta.sport : undefined,
       avatar: typeof meta.avatar_url === 'string' ? meta.avatar_url : undefined,
+      accountType: typeof meta.account_type === 'string' ? meta.account_type : undefined,
     });
   }
 
@@ -138,9 +142,25 @@ export class AuthService {
       }
       if (!data.session) {
         // Confirmação de e-mail pendente: sem sessão não há como sincronizar o perfil ainda.
-        return { success: false, error: 'Conta criada. Confirme seu e-mail e depois entre.' };
+        return { success: true, requiresEmailConfirmation: true };
       }
-      return this.finishSession(data.user.id, cleanEmail, { name, sport });
+      return this.finishSession(data.user.id, cleanEmail, { name, sport, accountType });
+    } catch {
+      return { success: false, error: 'Não foi possível conectar ao servidor de autenticação.' };
+    }
+  }
+
+  /** Envia o link de redefinição sem revelar se o e-mail existe. */
+  static async requestPasswordReset(email: string): Promise<AuthResponse<void>> {
+    const sb = getSupabaseClient();
+    if (!sb) return { success: false, error: 'Recuperação indisponível: o Supabase não está configurado.' };
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const { error } = await sb.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${origin}/auth/reset-password`,
+      });
+      if (error) return { success: false, error: 'Não foi possível enviar o e-mail agora. Tente novamente.' };
+      return { success: true };
     } catch {
       return { success: false, error: 'Não foi possível conectar ao servidor de autenticação.' };
     }
@@ -175,6 +195,7 @@ export class AuthService {
       avatar: fallbackData?.avatar_url,
       city: fallbackData?.city,
       sport: fallbackData?.sport_interests?.[0],
+      accountType: fallbackData?.account_type,
     });
   }
 
