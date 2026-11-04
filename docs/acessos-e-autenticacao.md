@@ -12,7 +12,7 @@ revogação, perda da sessão ou limpeza dos dados do navegador, pede login.
 ## Três perfis rápidos
 
 Atleta, Treinador e Casual usam identidades distintas e armazenamento local
-separado por perfil (`coremotion_quick_v3_<perfil>_...`). Não são contas
+separado por perfil (`coremotion_quick_v2_<perfil>_...`). Não são contas
 inseridas no Supabase. O modo local funciona mesmo com variáveis públicas do
 Supabase configuradas e modo local global desativado. Nesse acesso, o cliente
 Supabase não é criado e chamadas protegidas são bloqueadas, preservando a

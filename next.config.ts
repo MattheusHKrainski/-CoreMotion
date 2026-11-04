@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants';
 
 /**
  * CSP em modo relatório: registra violações sem bloquear nada. Não há X-Frame-Options nem
@@ -20,6 +21,14 @@ const CSP_REPORT_ONLY = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: ['*.e2b.app'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
   async headers() {
     return [
       {
@@ -35,4 +44,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Keep builds from deleting the CSS/chunks served by the live development preview.
+export default function config(phase: string): NextConfig {
+  return {
+    ...nextConfig,
+    distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.cache/next-dev' : '.next',
+  };
+}

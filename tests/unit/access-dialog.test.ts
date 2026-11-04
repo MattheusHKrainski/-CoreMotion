@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
 import { readSavedAdminProfile } from '@/lib/admin-session';
-import { quickStorageKey, temporaryProfileFromSearch } from '@/lib/quick-access';
+import { quickStorageKey, quickProfileFromSearch } from '@/lib/quick-access';
 import type { UserProfile } from '@/lib/types';
 
 const identity = { id: 'verified-id', email: ADMIN_LOGIN_EMAIL };
@@ -36,8 +36,10 @@ it('oferece quatro atalhos, sem botão Google, com scroll interno e bloqueio do 
   assert.match(store, /setTimeout\(async \(\) =>/);
 });
 it('isola o armazenamento dos perfis temporários e nunca cria Admin temporário', () => {
-  assert.equal(temporaryProfileFromSearch('?acesso-rapido=admin'), null);
-  const keys = ['athlete', 'coach', 'casual'].map(type => quickStorageKey('state', temporaryProfileFromSearch(`?acesso-rapido=${type}`)));
+  assert.equal(quickProfileFromSearch('?acesso-rapido=admin'), 'admin');
+  const store = readFileSync('lib/store.tsx', 'utf8');
+  assert.match(store, /QUICK_PROFILE === 'admin'.*window.location.replace/);
+  const keys = ['athlete', 'coach', 'casual'].map(type => quickStorageKey('state', quickProfileFromSearch(`?acesso-rapido=${type}`)));
   assert.equal(new Set(keys).size, 3);
 });
 it('cada perfil rápido funciona com Supabase configurado sem criar cliente ou enviar alterações reais', () => {

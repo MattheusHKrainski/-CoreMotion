@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 /**
  * Ações de moderação e de perfil:
  *  - updateRole     → somente administrador
- *  - ban / unban    → administrador (qualquer conta não-mestre) ou supervisor (atletas e lojistas)
+ *  - ban / unban    → administrador (qualquer conta não-mestre) ou supervisor (atletas e anunciantes C2C)
  *  - updateProfile  → o próprio usuário, ou administrador
  */
 export async function PATCH(req: NextRequest) {

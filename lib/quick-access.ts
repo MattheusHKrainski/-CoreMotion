@@ -1,18 +1,31 @@
-export type TemporaryProfile = 'athlete' | 'coach' | 'casual';
+/** Temporary UI-only sessions. Never grants a Supabase token or server permissions. */
 export const QUICK_ACCESS_ENABLED = process.env.NEXT_PUBLIC_QUICK_ACCESS_ENABLED !== 'false';
-export function temporaryProfileFromSearch(search: string): TemporaryProfile | null {
+export type QuickProfile = 'admin' | 'athlete' | 'coach' | 'casual';
+export function quickProfileFromSearch(search: string): QuickProfile | null {
   if (!QUICK_ACCESS_ENABLED) return null;
-  const value = new URLSearchParams(search).get('acesso-rapido');
-  return value === 'athlete' || value === 'coach' || value === 'casual' ? value : null;
+  const profile = new URLSearchParams(search).get('acesso-rapido');
+  return profile && ['admin', 'athlete', 'coach', 'casual'].includes(profile) ? profile as QuickProfile : null;
 }
-export const QUICK_PROFILE = typeof window === 'undefined' ? null : temporaryProfileFromSearch(window.location.search);
+export const QUICK_PROFILE = typeof window !== 'undefined' ? quickProfileFromSearch(window.location.search) : null;
 export const IS_QUICK_ACCESS = QUICK_PROFILE !== null;
-export function quickStorageKey(key: string, profile = QUICK_PROFILE) {
-  return profile ? `coremotion_quick_v3_${profile}_${key}` : key;
+
+/** v2 intentionally does not migrate the old shared temporary state. */
+export function quickStorageKey(key: string, profile: QuickProfile | null = QUICK_PROFILE): string {
+  return profile ? `coremotion_quick_v2_${profile}_${key}` : key;
 }
-export function temporaryIdentity(profile: TemporaryProfile) {
-  const names = { athlete: 'Carlos Ramos', coach: 'Marina Duarte', casual: 'Ana Silva' };
-  const sports = { athlete: ['Corrida'], coach: ['Preparação física', 'Pilates'], casual: ['Caminhada'] };
-  return { id: `quick-${profile}`, email: `${profile}@exemplo.test`, name: names[profile], role: 'user' as const,
-    account_type: profile, sport_interests: sports[profile], city: 'Curitiba', state: 'PR', created_at: '2026-11-04T00:00:00Z' };
+export function scopedQuickStorage(storage: Pick<Storage, 'getItem' | 'setItem'>) {
+  return {
+    getItem: (key: string) => storage.getItem(quickStorageKey(key)),
+    setItem: (key: string, value: string) => storage.setItem(quickStorageKey(key), value),
+  };
+}
+
+export function temporaryIdentity(profile: QuickProfile) {
+  const identities = {
+    admin: { name: 'Mattheus (Admin)', email: 'admin@coremotion.com.br', sport_interests: [] },
+    athlete: { name: 'Carlos Eduardo Ramos', email: 'carlos.atleta@coremotion.com.br', sport_interests: ['Corrida', 'Ciclismo'] },
+    coach: { name: 'Marina Duarte', email: 'marina.treinadora@coremotion.com.br', sport_interests: ['Preparação física', 'Pilates'] },
+    casual: { name: 'Ana Silva', email: 'ana.casual@coremotion.com.br', sport_interests: ['Caminhada', 'Ginástica'] },
+  };
+  return { ...identities[profile], id: `quick-${profile}`, role: profile === 'admin' ? 'admin' as const : 'user' as const, account_type: profile === 'admin' ? undefined : profile };
 }
