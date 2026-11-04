@@ -29,5 +29,5 @@ it('o formulário oferece Google OAuth e mantém o callback de sessão Supabase'
   assert.match(source, /Continuar com Google/);
   assert.match(source, /signInWithGoogle/);
   const callback = readFileSync('app/auth/callback/page.tsx', 'utf8');
-  assert.match(callback, /exchangeCodeForSession\(code\)/);
+  assert.match(callback, /auth\.getSession\(\)/);
 });
