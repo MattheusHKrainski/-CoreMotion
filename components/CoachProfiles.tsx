@@ -1,7 +1,7 @@
 'use client';
 import { matchesSport } from '@/lib/modalities';
 import { scopedQuickStorage } from '@/lib/quick-access';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { loadSportsPreview } from '@/fixtures/sports-preview';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import type { SportsRecord } from '@/lib/sports';

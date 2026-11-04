@@ -6,31 +6,31 @@ import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import CoachProfiles from './CoachProfiles';
 import { Coach } from '@/lib/types';
-import { INITIAL_COACHES } from '@/fixtures/initial-data';
 import {
   Users,
   ShieldCheck,
   Star,
-  Award,
   CheckCircle2,
   X,
   ArrowRight,
   Search,
   MapPin,
-  Clock,
-  Calendar,
 } from 'lucide-react';
 
 export default function CoachesView() {
-  const { coaches, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
+  const { coaches, athletes, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
   const [selectedSport, setSelectedSport] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const activeCoaches = coaches;
+  const [athleteSport, setAthleteSport] = useState('all');
   const [bookingCoach, setBookingCoach] = useState<Coach | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'consultation' | 'season'>('monthly');
 
-  const activeCoaches = coaches.length > 0 ? coaches : INITIAL_COACHES;
+  const sportsList = [...new Set(coaches.flatMap(coach => coach.sports))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const athleteSports = [...new Set(athletes.map(athlete => athlete.sport))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const filteredAthletes = athletes.filter(athlete => athleteSport === 'all' || athlete.sport === athleteSport);
 
   const filteredCoaches = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -98,33 +98,15 @@ export default function CoachesView() {
           </div>
         </div>
 
-        {/* Highlights Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-zinc-800/80 text-xs">
-          <div className="flex items-center gap-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 px-4 py-3">
-            <ShieldCheck className="w-4 h-4 text-red-400 shrink-0" />
-            <div>
-              <span className="font-bold text-white block">{activeCoaches.length} Profissionais Ativos</span>
-              <span className="text-[11px] text-zinc-400">Confira a formação no perfil</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 px-4 py-3">
-            <Calendar className="w-4 h-4 text-red-400 shrink-0" />
-            <div>
-              <span className="font-bold text-white block">Presencial ou Online</span>
-              <span className="text-[11px] text-zinc-400">Aulas avulsas, mensais ou por temporada</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 px-4 py-3">
-            <Star className="w-4 h-4 text-amber-400 shrink-0" />
-            <div>
-              <span className="font-bold text-white block">Avaliação Média 4,97 / 5</span>
-              <span className="text-[11px] text-zinc-400">Avaliados por alunos reais da plataforma</span>
-            </div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-zinc-300 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-red-500" />
+            <span className="font-semibold">{coaches.length} treinadores · {athletes.length} atletas</span>
           </div>
         </div>
       </div>
 
-      <section aria-label="Filtros de treinadores" className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3"><SportPicker value={selectedSport} onChange={setSelectedSport} options={activeCoaches.flatMap(c => c.sports)} /><label className="block text-xs text-zinc-400 space-y-2">Ordenar catálogo<select value={sortBy} onChange={e => setSortBy(e.target.value)} className="block rounded-xl border border-zinc-700 bg-zinc-950 p-2.5 text-white"><option value="name">Nome: A–Z</option><option value="rating">Melhores avaliações</option></select></label><div className="flex flex-wrap justify-between gap-3 text-sm text-zinc-400"><span>{filteredCoaches.length} treinadores no catálogo • perfis da comunidade abaixo</span><button type="button" onClick={() => { setSelectedSport('all'); setSearchTerm(''); setSortBy('name'); }} className="text-red-400">Limpar filtros</button></div></section>
+      <section aria-label="Filtros de treinadores" className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3"><SportPicker value={selectedSport} onChange={setSelectedSport} options={sportsList} /><label className="block text-xs text-zinc-400 space-y-2">Ordenar catálogo<select value={sortBy} onChange={e => setSortBy(e.target.value)} className="block rounded-xl border border-zinc-700 bg-zinc-950 p-2.5 text-white"><option value="name">Nome: A–Z</option><option value="rating">Melhores avaliações</option></select></label><div className="flex flex-wrap justify-between gap-3 text-sm text-zinc-400"><span>{filteredCoaches.length} treinadores no catálogo • perfis da comunidade abaixo</span><button type="button" onClick={() => { setSelectedSport('all'); setSearchTerm(''); setSortBy('name'); }} className="text-red-400">Limpar filtros</button></div></section>
 
       <CoachProfiles sport={selectedSport} search={searchTerm} />
 
@@ -167,7 +149,7 @@ export default function CoachesView() {
                   <div className="space-y-0.5 min-w-0">
                     <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5 group-hover:text-red-400 transition-colors">
                       <span className="truncate">{coach.name}</span>
-                      <ShieldCheck className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                      {coach.is_certified && <ShieldCheck className="w-3.5 h-3.5 text-red-500 shrink-0" />}
                     </h3>
                     <span className="text-xs text-red-400 block font-semibold line-clamp-1">{coach.title}</span>
                     <span className="text-[11px] text-zinc-500 flex items-center gap-1 truncate">
@@ -176,29 +158,12 @@ export default function CoachesView() {
                     </span>
                   </div>
                 </div>
-
-                {/* Rating & Specialty */}
-                <div className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-zinc-950/70 border border-zinc-800 text-xs">
-                  <div className="flex items-center gap-1 text-amber-400 font-bold shrink-0">
-                    <Star className="w-3.5 h-3.5 fill-current" />
-                    <span>{coach.rating.toFixed(2)}</span>
-                    <span className="text-zinc-500 font-normal text-[11px]">({coach.reviews_count})</span>
-                  </div>
-                  <div className="text-red-400 font-bold text-[11px] flex items-center gap-1 truncate">
-                    <Award className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{coach.specialty}</span>
-                  </div>
-                </div>
-
-                {/* Bio */}
-                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
-                  {coach.bio}
-                </p>
-
-                {/* Availability */}
-                <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-                  <Clock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                  <span className="truncate">{coach.availability}</span>
+              {/* Rating and active badge */}
+              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-zinc-950/70 border border-zinc-800 text-xs">
+                <div className="flex items-center gap-1 text-amber-400 font-bold">
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  <span>{coach.reviews_count > 0 ? coach.rating : 'Sem avaliações'}</span>
+                  <span className="text-zinc-500 font-normal text-[11px]">({coach.reviews_count})</span>
                 </div>
 
                 {/* Sports Pills */}
@@ -217,6 +182,10 @@ export default function CoachesView() {
                     </span>
                   )}
                 </div>
+              </div>
+
+                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">{coach.bio}</p>
+                <p className="text-xs text-zinc-400">{coach.availability}</p>
               </div>
 
               {/* Price & Booking Button */}
@@ -245,6 +214,42 @@ export default function CoachesView() {
           ))}
         </div>
       )}
+
+      <section id="atletas" aria-labelledby="athletes-title" className="space-y-5 pt-6 border-t border-zinc-700">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <h2 id="athletes-title" className="text-xl font-black text-white">Perfis de atletas</h2>
+            <p className="mt-1 text-sm text-zinc-400">Conheça modalidades, rotinas e objetivos esportivos.</p>
+          </div>
+          <label className="text-xs text-zinc-400 space-y-1">
+            <span className="block">Modalidade dos atletas</span>
+            <select value={athleteSport} onChange={event => setAthleteSport(event.target.value)} className="w-full sm:max-w-72 rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-white">
+              <option value="all">Todas as modalidades</option>
+              {athleteSports.map(sport => <option key={sport} value={sport}>{sport}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredAthletes.map(athlete => (
+            <article key={athlete.id} className="rounded-3xl border border-zinc-700 bg-zinc-900/60 p-5 space-y-4 hover:border-red-500/60 transition-colors">
+              <div className="flex items-center gap-3">
+                <img src={athlete.avatar_url} alt={athlete.name} loading="lazy" className="w-14 h-14 rounded-2xl object-cover shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-bold text-white">{athlete.name}</h3>
+                  <p className="text-xs text-red-400">{athlete.sport}</p>
+                  <p className="text-xs text-zinc-400">{athlete.location}</p>
+                </div>
+              </div>
+              <p className="text-xs font-semibold text-zinc-300">{athlete.category}</p>
+              <p className="text-sm leading-relaxed text-zinc-400">{athlete.bio}</p>
+              <ul className="space-y-2 text-xs text-zinc-300">
+                {athlete.achievements.map(item => <li key={item} className="flex items-start gap-2"><CheckCircle2 aria-hidden="true" className="w-3.5 h-3.5 shrink-0 text-red-400 mt-0.5" />{item}</li>)}
+              </ul>
+            </article>
+          ))}
+        </div>
+        {filteredAthletes.length === 0 && <p className="text-sm text-zinc-400">Nenhum atleta encontrado nesta modalidade.</p>}
+      </section>
 
       {/* Booking Modal */}
       {bookingCoach && (
