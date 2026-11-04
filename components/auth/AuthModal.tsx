@@ -17,6 +17,7 @@ import {
   ArrowRight,
   AlertCircle,
   SlidersHorizontal,
+  Chrome,
 } from 'lucide-react';
 
 export default function AuthModal() {
@@ -33,6 +34,7 @@ export default function AuthModal() {
     resumeAdminSession,
     loginWithEmail,
     signUpWithEmail,
+    signInWithGoogle,
     openWelcomePage,
   } = useCoreMotiom();
 
@@ -73,6 +75,18 @@ export default function AuthModal() {
     setLoading(true);
     // Full navigation isolates every temporary profile, with or without Supabase.
     window.location.assign(`/?acesso-rapido=${type}`);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMsg('');
+    setInfoMsg('');
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } finally {
+      // O OAuth navega para o provedor quando iniciado com sucesso.
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -192,6 +206,25 @@ export default function AuthModal() {
             {authModalMode === 'register' && <p className="text-xs text-zinc-400 leading-relaxed">{ACCOUNT_TYPES[accountType].description}</p>}
             <button type="button" className="text-xs text-red-400 underline" onClick={() => { setAuthModalOpen(false); openWelcomePage(); setTimeout(() => document.getElementById('perfis')?.scrollIntoView({ behavior: 'smooth' }), 100); }}>Clique aqui para saber mais sobre os perfis</button>
           </div>}
+
+          {authModalMode !== 'forgot' && (
+            <div className="mb-4 space-y-3">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full py-3 rounded-full border border-zinc-700 bg-white text-zinc-900 hover:bg-zinc-100 disabled:opacity-50 text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                <Chrome className="w-4 h-4" />
+                Continuar com Google
+              </button>
+              <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider text-zinc-500">
+                <span className="h-px flex-1 bg-zinc-800" />
+                ou use seu e-mail
+                <span className="h-px flex-1 bg-zinc-800" />
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
             {authModalMode === 'register' && (
