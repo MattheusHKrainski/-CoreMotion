@@ -24,7 +24,7 @@ it('recuperação chama Supabase e não confirma envios inexistentes', () => {
   const reset = readFileSync('app/auth/reset-password/page.tsx','utf8');
   assert.match(reset, /auth.updateUser\(\{password\}\)/);
 });
-it('o formulário oferece Google OAuth e o callback troca o código PKCE por sessão', () => {
+it('o formulário oferece Google OAuth e mantém o callback de sessão Supabase', () => {
   const source = readFileSync('components/auth/AuthModal.tsx', 'utf8');
   assert.match(source, /Continuar com Google/);
   assert.match(source, /signInWithGoogle/);
