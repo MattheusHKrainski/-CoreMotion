@@ -190,6 +190,13 @@ describe('AuthService: credenciais e sincronização (C1)', () => {
     }
   });
 
+  it('cadastro com senha curta informa o mínimo sem criar sessão', async () => {
+    const result = await auth.AuthService.signUpWithEmail('pessoa@gmail.com', '12345', 'Pessoa');
+    assert.equal(result.success, false);
+    assert.equal(result.error, 'A senha deve ter no mínimo 6 caracteres.');
+    assert.equal(result.data, undefined);
+  });
+
   it('cadastro com e-mail já existente é recusado', async () => {
     const res = await auth.AuthService.signUpWithEmail('existente@x.com', 'senha-nova', 'Existente');
     assert.equal(res.success, false);

@@ -1,3 +1,4 @@
+import { MIN_PASSWORD_LENGTH, signupErrorMessage } from '@/lib/signup-validation';
 import { getSupabaseClient } from './supabaseClient';
 import { UserProfile } from '@/lib/types';
 
@@ -106,6 +107,7 @@ export class AuthService {
    * e o servidor aplica o papel de conta-mestre no sincronismo.
    */
   static async signUpWithEmail(email: string, pass: string, name: string, accountType: import("@/lib/sports").AccountType = "casual", sport?: string): Promise<AuthResponse<UserProfile>> {
+    if (pass.length < MIN_PASSWORD_LENGTH) return { success: false, error: 'A senha deve ter no mínimo 6 caracteres.' };
     const cleanEmail = email.trim();
     if (!isValidEmailAddress(cleanEmail)) return { success: false, error: 'Informe um e-mail completo e válido, como nome@gmail.com.' };
     const sb = getSupabaseClient();
@@ -119,11 +121,7 @@ export class AuthService {
         options: { data: { name, account_type: accountType, sport: sport?.trim() }, ...(typeof window !== 'undefined' ? { emailRedirectTo: `${window.location.origin}/auth/callback` } : {}) },
       });
       if (error) {
-        const exists = error.message?.toLowerCase().includes('already');
-        return {
-          success: false,
-          error: exists ? 'Já existe uma conta com este e-mail.' : 'Não foi possível criar a conta. Verifique os dados.',
-        };
+        return { success: false, error: signupErrorMessage(error) };
       }
       if (!data.user) {
         return { success: false, error: 'Não foi possível criar a conta.' };

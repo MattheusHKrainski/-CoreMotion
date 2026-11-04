@@ -1,4 +1,5 @@
 'use client';
+import { MIN_PASSWORD_LENGTH } from '@/lib/signup-validation';
 import { isValidEmailAddress } from '@/lib/email-validation';
 import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
 import { getSupabaseClient } from '@/services/supabaseClient';
@@ -97,6 +98,7 @@ export default function AuthModal() {
           setAuthModalOpen(false);
         }
       } else if (authModalMode === 'register') {
+        if (password.length < MIN_PASSWORD_LENGTH) { setErrorMsg('A senha deve ter no mínimo 6 caracteres.'); return; }
         if (!name.trim()) {
           setErrorMsg('Por favor, informe seu nome completo.');
           setLoading(false);
@@ -260,6 +262,8 @@ export default function AuthModal() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     autoComplete={authModalMode === 'register' ? 'new-password' : 'current-password'}
+                    minLength={authModalMode === 'register' ? MIN_PASSWORD_LENGTH : undefined}
+                    aria-describedby={authModalMode === 'register' ? 'signup-password-help' : undefined}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -270,6 +274,7 @@ export default function AuthModal() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {authModalMode === 'register' && <p id="signup-password-help" className={`mt-2 text-xs ${password.length > 0 && password.length < MIN_PASSWORD_LENGTH ? 'text-red-400' : 'text-zinc-400'}`}>Mínimo de 6 caracteres.</p>}
               </div>
             )}
 
