@@ -48,7 +48,7 @@ const server = http.createServer(async (req, res) => {
 
   if (url.startsWith('/auth/v1/token?grant_type=password')) {
     const { email, password } = JSON.parse(body || '{}');
-    if (password !== GOOD_PASSWORD) {
+    if (password !== GOOD_PASSWORD || email === 'naocadastrado@gmail.com') {
       return json(400, { error: 'invalid_grant', error_description: 'Invalid login credentials' });
     }
     return json(200, session(email));
@@ -117,6 +117,16 @@ describe('AuthService: credenciais e sincronização (C1)', () => {
     assert.equal(res.error, 'E-mail ou senha inválidos.');
     assert.equal(res.data, undefined);
     assert.equal(syncCalls, 0);
+  });
+
+  it('Admin com senha errada e conta inexistente não entram nem sincronizam perfil', async () => {
+    for (const [email, password] of [['mattheus.h.krainski@gmail.com', 'qualquer-senha'], ['naocadastrado@gmail.com', GOOD_PASSWORD]]) {
+      syncCalls = 0;
+      const result = await auth.AuthService.loginWithEmail(email, password);
+      assert.equal(result.success, false);
+      assert.equal(result.data, undefined);
+      assert.equal(syncCalls, 0);
+    }
   });
 
   it('credencial válida entra e usa o perfil devolvido pelo servidor', async () => {

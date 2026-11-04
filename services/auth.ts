@@ -1,9 +1,8 @@
 import { getSupabaseClient } from './supabaseClient';
 import { UserProfile } from '@/lib/types';
 
-import { isMasterAdminEmail as isMasterAdmin } from '@/lib/permissions';
+import { isValidEmailAddress } from '@/lib/email-validation';
 import { authedFetch, readResult, type ApiResult } from '@/lib/auth-fetch';
-import { DEMO_MODE } from '@/lib/demo-mode';
 
 
 interface AuthResponse<T = unknown> {
@@ -18,24 +17,6 @@ type SyncMetadata = {
   city?: string;
   sport?: string;
 };
-
-/** Perfil local, usado somente no modo demonstração quando o servidor não responde. */
-function localDemoProfile(supabaseId: string, email: string, metadata?: SyncMetadata): UserProfile {
-  return {
-    id: supabaseId || String(Date.now()),
-    supabase_id: supabaseId,
-    name: metadata?.name || email.split('@')[0],
-    email,
-    avatar_url:
-      metadata?.avatar ||
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-    role: isMasterAdmin(email) ? 'admin' : 'user',
-    city: metadata?.city || 'São Paulo',
-    state: 'SP',
-    sport_interests: metadata?.sport ? [metadata.sport] : ['Corrida', 'Alta Performance'],
-    created_at: new Date().toISOString(),
-  };
-}
 
 /** Read the authenticated user's own trusted DB profile; never infer privileges from metadata. */
 async function readOwnSupabaseProfile(userId: string): Promise<UserProfile> {
@@ -52,6 +33,7 @@ async function readOwnSupabaseProfile(userId: string): Promise<UserProfile> {
  * Fora do modo demonstração, falha de sincronização é erro (nunca um perfil inventado).
  */
 async function syncSessionWithDb(supabaseId: string, email: string, metadata?: SyncMetadata): Promise<UserProfile> {
+  if (!getSupabaseClient()) throw new Error('Supabase não configurado. Nenhuma sessão foi criada.');
   let res: Response;
   try {
     res = await authedFetch('/api/auth/sync', {
@@ -65,7 +47,6 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
     });
   } catch {
     if (getSupabaseClient()) return readOwnSupabaseProfile(supabaseId);
-    if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
     throw new Error('Não foi possível conectar ao servidor. Tente novamente.');
   }
 
@@ -74,7 +55,6 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
     return data.user as UserProfile;
   }
   if (res.status >= 500 && getSupabaseClient()) return readOwnSupabaseProfile(supabaseId);
-  if (DEMO_MODE && !getSupabaseClient()) return localDemoProfile(supabaseId, email, metadata);
   throw new Error(data?.error || 'Não foi possível concluir o acesso. Tente novamente.');
 }
 
@@ -85,15 +65,10 @@ export class AuthService {
    */
   static async loginWithEmail(email: string, pass: string): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
+    if (!isValidEmailAddress(cleanEmail)) return { success: false, error: 'Informe um e-mail completo e válido, como nome@gmail.com.' };
     const sb = getSupabaseClient();
 
-    if (!sb) {
-      // Sem Supabase configurado, só o modo demonstração entra (sessão local).
-      if (!DEMO_MODE || !pass) {
-        return { success: false, error: 'Login indisponível: o Supabase não está configurado.' };
-      }
-      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name: cleanEmail.split('@')[0] });
-    }
+    if (!sb) return { success: false, error: 'Login indisponível: configure a conexão com o Supabase. Nenhuma sessão foi criada.' };
 
     let result: { data: { user: { id: string; user_metadata?: Record<string, unknown> } | null }; error: { message: string } | null };
     try {
@@ -123,14 +98,10 @@ export class AuthService {
    */
   static async signUpWithEmail(email: string, pass: string, name: string, accountType: import("@/lib/sports").AccountType = "casual", sport?: string): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
+    if (!isValidEmailAddress(cleanEmail)) return { success: false, error: 'Informe um e-mail completo e válido, como nome@gmail.com.' };
     const sb = getSupabaseClient();
 
-    if (!sb) {
-      if (!DEMO_MODE) {
-        return { success: false, error: 'Cadastro indisponível: o Supabase não está configurado.' };
-      }
-      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name, sport });
-    }
+    if (!sb) return { success: false, error: 'Cadastro indisponível: configure a conexão com o Supabase. Nenhuma conta foi criada.' };
 
     try {
       const { data, error } = await sb.auth.signUp({

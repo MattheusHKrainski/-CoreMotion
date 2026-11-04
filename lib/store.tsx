@@ -289,7 +289,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           // Com o Supabase ativo a sessão vem do Auth: nunca restaurar usuário/pedidos do navegador.
           if (!isSupabaseConfigured) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
-            if (parsed.user && (!QUICK_PROFILE || parsed.user.id === temporaryIdentity(QUICK_PROFILE).id)) setUser(parsed.user);
+            if (IS_QUICK_ACCESS && QUICK_PROFILE && QUICK_PROFILE !== 'admin' && parsed.user?.id === temporaryIdentity(QUICK_PROFILE).id) setUser(parsed.user);
             if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(refreshAthleteCatalog(parsed.products, parsed.athleteCatalogVersion === 2), INITIAL_PRODUCTS));
             if (IS_QUICK_ACCESS && Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
           }
@@ -489,6 +489,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
   const switchRole = useCallback((newRole: UserRole, accountType?: AccountType) => {
+    if (!IS_QUICK_ACCESS) { addToast('Entre na sua conta', 'O papel de uma conta real vem da autenticação.', 'info'); return; }
     if (isSupabaseConfigured) {
       addToast('Alteração indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
       return;
@@ -750,18 +751,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   }, [addToast]);
 
   const loginAsMasterAdmin = useCallback(() => {
-    if (isSupabaseConfigured) {
-      addToast('Acesso indisponível', 'Entre com suas credenciais de administrador.', 'info');
-      return;
-    }
-    const masterAdmin = INITIAL_USERS[0];
-    setUser(masterAdmin);
-    setAllUsers((prev) => {
-      const exists = prev.some((u) => u.email.toLowerCase() === masterAdmin.email.toLowerCase());
-      return exists ? prev : [masterAdmin, ...prev];
-    });
-    addToast('Sessão Super Admin', 'Conectado como Administrador da plataforma.', 'success');
-  }, [addToast]);
+    window.location.assign('/?login=admin');
+  }, []);
 
   useEffect(() => {
     if (!QUICK_PROFILE) return;

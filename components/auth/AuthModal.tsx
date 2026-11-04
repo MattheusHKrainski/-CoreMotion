@@ -1,4 +1,5 @@
 'use client';
+import { isValidEmailAddress } from '@/lib/email-validation';
 import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { IS_QUICK_ACCESS, QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
@@ -11,6 +12,8 @@ import { ACCOUNT_TYPES, type AccountType } from '@/lib/sports';
 import BrandMark from '@/components/shared/BrandMark';
 import {
   X,
+  Eye,
+  EyeOff,
   Mail,
   Lock,
   User,
@@ -38,6 +41,8 @@ export default function AuthModal() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  useEffect(() => { setShowPassword(false); }, [authModalMode, isAuthModalOpen]);
   const [name, setName] = useState('');
   const [sport, setSport] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,6 +84,7 @@ export default function AuthModal() {
     e.preventDefault();
     setErrorMsg('');
     setInfoMsg('');
+    if (!isValidEmailAddress(email)) { setErrorMsg('Informe um e-mail completo e válido, como nome@gmail.com.'); return; }
     setLoading(true);
 
     try {
@@ -185,8 +191,8 @@ export default function AuthModal() {
             </div>
           )}
 
-          {authModalMode !== 'forgot' && <div className="mb-5 space-y-3">
-            <p className="text-xs font-bold text-zinc-400 uppercase">{authModalMode === 'register' ? 'Escolha seu perfil' : 'Novo por aqui? Crie seu perfil'}</p>
+          {authModalMode === 'register' && <div className="mb-5 space-y-3">
+            <p className="text-xs font-bold text-zinc-400 uppercase">Escolha seu perfil</p>
             <div className="grid grid-cols-3 gap-2">{(Object.keys(ACCOUNT_TYPES) as AccountType[]).map(type => <button key={type} type="button" onClick={() => { setAccountType(type); setAuthModalMode('register'); }} className={`p-3 rounded-xl border text-xs font-bold ${accountType === type && authModalMode === 'register' ? 'bg-red-950 border-red-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-300'}`}>{ACCOUNT_TYPES[type].label}</button>)}</div>
             {authModalMode === 'register' && accountType !== 'casual' && <SportPicker value={sport} onChange={setSport} label="Sua modalidade principal" required />}
             {authModalMode === 'register' && <p className="text-xs text-zinc-400 leading-relaxed">{ACCOUNT_TYPES[accountType].description}</p>}
@@ -252,13 +258,17 @@ export default function AuthModal() {
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-3 w-4 h-4 text-zinc-500" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete={authModalMode === 'register' ? 'new-password' : 'current-password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
+                    className="w-full pl-10 pr-12 py-2.5 bg-zinc-900 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                   />
+                  <button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Ver senha'} aria-pressed={showPassword} className="absolute right-3 top-2 p-1 text-zinc-400 hover:text-white focus-visible:outline focus-visible:outline-red-500 rounded">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             )}
@@ -293,7 +303,7 @@ export default function AuthModal() {
                   onClick={() => { setAuthModalMode('register'); setErrorMsg(''); }}
                   className="text-red-400 font-bold hover:underline"
                 >
-                  Cadastre-se gratuitamente
+                  Cadastre-se
                 </button>
               </p>
             ) : (

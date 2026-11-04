@@ -19,9 +19,24 @@ Supabase não é criado e chamadas protegidas são bloqueadas, preservando a
 sessão da conta real para o retorno. Os perfis permitem explorar os recursos
 locais disponíveis; não realizam pagamentos ou outras integrações externas.
 
+## Autenticação real obrigatória
+
+Formulários de login/cadastro nunca geram perfis locais, mesmo com modo local
+ativo. Sem Supabase configurado, falham explicitamente. E-mail desconhecido ou
+senha errada não iniciam sessão; isso também vale para a conta Admin. Estados
+antigos do navegador não restauram identidades reais ou administrativas.
+Apenas os três atalhos temporários podem restaurar sua própria identidade local.
+
+O formato do e-mail é validado no formulário e no serviço: exige domínio
+completo (Gmail, Hotmail, Outlook, outros provedores ou domínio próprio).
+Isso não comprova a existência da caixa postal. A confirmação do endereço
+continua obrigatória no Supabase antes do primeiro login de novas contas.
+Não foram criadas contas reais durante os testes.
+
 ## Formulário
 
-Sem botão Google. Login e cadastro compartilham um diálogo limitado à altura
+Sem botão Google. O seletor de perfis aparece só no cadastro; o link de entrada
+usa “Cadastre-se”. Ambos os formulários têm botão de ver/ocultar senha. Login e cadastro compartilham um diálogo limitado à altura
 da viewport dinâmica, com scroll interno contido. O fundo fica fixo enquanto
 o diálogo está aberto; a posição e os estilos anteriores são restaurados ao
 fechar. O botão de fechar permanece fora da área rolável.
@@ -44,7 +59,7 @@ fechar. O botão de fechar permanece fora da área rolável.
 
 ## Validação
 
-14 testes unitários, checagem de tipos e build aprovados; lint sem erros.
+83 testes unitários, checagem de tipos e build aprovados; lint sem erros.
 18 verificações das rotas de API aprovadas. Teste de navegador em viewport
 móvel confirmou scroll interno em login/cadastro, bloqueio/restauração do fundo,
 ausência do Google e isolamento dos três perfis com catálogo e comunidade.
