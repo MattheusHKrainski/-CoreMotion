@@ -9,7 +9,7 @@ import { CoreMotiomProvider } from '@/lib/store';
 import CoachesView from '@/components/CoachesView';
 
 it('amplia os perfis sem substituir os exemplos anteriores ou repetir identificadores', () => {
-  assert.equal(INITIAL_COACHES.length, 9);
+  assert.equal(INITIAL_COACHES.length, 15);
   assert.equal(INITIAL_ATHLETES.length, 10);
   for (const list of [INITIAL_COACHES, INITIAL_ATHLETES]) {
     assert.equal(new Set(list.map(profile => profile.id)).size, list.length);
@@ -36,7 +36,11 @@ it('novos perfis têm avatares locais e dados completos sem contatos ou credenci
 });
 it('mostra treinadores e atletas com filtros de modalidade mesmo sem ativar dados locais das demais áreas', () => {
   const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(CoachesView)));
-  assert.match(html, /9 treinadores/);
+  assert.ok(html.includes(`${INITIAL_COACHES.length} treinadores`));
+  assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
+  assert.match(html, /Buscar treinador por nome, cidade ou especialidade/);
+  assert.match(html, /Ordenar catálogo/);
+  assert.match(html, /Profissionais da comunidade/);
   assert.match(html, /10 atletas/);
   assert.match(html, /Modalidade dos atletas/);
   for (const profile of [...ADDITIONAL_COACHES, ...ADDITIONAL_ATHLETES]) assert.ok(html.includes(profile.name));
