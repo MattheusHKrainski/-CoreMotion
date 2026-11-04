@@ -218,13 +218,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [likedCommunityPosts, setLikedCommunityPosts] = useState<string[]>([]);
-  const likesInFlight = useRef(new Set<string>());
-  const likesReady = useRef(false);
-  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(isSupabaseConfigured ? [] : INITIAL_COMMUNITY_POSTS);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(DEMO_MODE ? INITIAL_COMMUNITY_POSTS : []);
   const [coaches] = useState<Coach[]>(INITIAL_COACHES);
   const [athletes] = useState<Athlete[]>(INITIAL_ATHLETES);
-  const [news] = useState<NewsArticle[]>(INITIAL_NEWS);
+  const [news] = useState<NewsArticle[]>(DEMO_MODE ? INITIAL_NEWS : []);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
 

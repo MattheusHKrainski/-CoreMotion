@@ -1,6 +1,5 @@
-import { ATHLETE_CATALOG_PHONE } from '@/lib/athlete-contact';
-import { ATHLETE_C2C_LISTINGS } from './athlete-listings';
-import { Product, Coach, Athlete, NewsArticle, CommunityPost, UserProfile } from '@/lib/types';
+import { ADDITIONAL_COACHES, ADDITIONAL_ATHLETES } from './sports-profiles';
+import { Product, Store, Coach, Athlete, NewsArticle, CommunityPost, UserProfile } from '@/lib/types';
 
 export const INITIAL_USERS: UserProfile[] = [
   {
@@ -201,6 +200,7 @@ export const INITIAL_COACHES: Coach[] = [
     cref_number: 'CBDA / CREF 014980-G/BA',
     availability: 'Manhãs e Noites — Aulas Individuais e Turmas',
   },
+  ...ADDITIONAL_COACHES,
 ];
 
 export const INITIAL_ATHLETES: Athlete[] = [
@@ -236,6 +236,7 @@ export const INITIAL_ATHLETES: Athlete[] = [
     sponsorship_status: 'sponsored',
     instagram: '@gabrielfonseca_tri',
   },
+  ...ADDITIONAL_ATHLETES,
 ];
 
 export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
