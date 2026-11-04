@@ -33,7 +33,16 @@ async function readOwnSupabaseProfile(userId: string): Promise<UserProfile> {
  * Fora do modo demonstração, falha de sincronização é erro (nunca um perfil inventado).
  */
 async function syncSessionWithDb(supabaseId: string, email: string, metadata?: SyncMetadata): Promise<UserProfile> {
-  if (!getSupabaseClient()) throw new Error('Supabase não configurado. Nenhuma sessão foi criada.');
+  const client = getSupabaseClient();
+  if (!client) throw new Error('Supabase não configurado. Nenhuma sessão foi criada.');
+  // Existing accounts already have a profile. Read it with the user's JWT and RLS,
+  // rather than making successful Auth depend on a separately configured SQL API.
+  const { data: ownProfile } = await client.from('profiles').select('*').eq('id', supabaseId).maybeSingle();
+  if (ownProfile) {
+    if (ownProfile.id !== supabaseId) throw new Error('Perfil incompatível com a sessão.');
+    if (ownProfile.is_banned) throw new Error('Esta conta está suspensa.');
+    return { ...ownProfile, supabase_id: supabaseId } as UserProfile;
+  }
   let res: Response;
   try {
     res = await authedFetch('/api/auth/sync', {

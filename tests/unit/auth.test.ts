@@ -10,6 +10,7 @@ import type { AddressInfo } from 'node:net';
 const USER_ID = 'u-123';
 const GOOD_PASSWORD = 'senha-correta';
 let syncMode: 'ok' | 'down' = 'ok';
+let profileMode: 'missing' | 'present' | 'banned' | 'admin' = 'missing';
 let syncCalls = 0;
 
 const session = (email: string) => ({
@@ -59,6 +60,9 @@ const server = http.createServer(async (req, res) => {
       return json(422, { code: 422, error_code: 'user_already_exists', msg: 'User already registered' });
     }
     return json(200, session(email));
+  }
+  if (url.startsWith('/rest/v1/profiles') && profileMode !== 'missing') {
+    return json(200, { id: USER_ID, email: profileMode === 'admin' ? 'mattheus.h.krainski@gmail.com' : 'carlos@atleta.com', name: 'Carlos', role: profileMode === 'admin' ? 'admin' : 'user', is_banned: profileMode === 'banned' });
   }
   if (url === '/api/auth/sync') {
     syncCalls += 1;
@@ -135,6 +139,43 @@ describe('AuthService: credenciais e sincronização (C1)', () => {
     assert.equal(res.success, true);
     assert.equal(res.data?.id, USER_ID);
     assert.equal(syncCalls, 1);
+  });
+
+  it('perfil existente com RLS entra sem depender da API SQL indisponível', async () => {
+    profileMode = 'present';
+    syncMode = 'down';
+    syncCalls = 0;
+    try {
+      const result = await auth.AuthService.loginWithEmail('carlos@atleta.com', GOOD_PASSWORD);
+      assert.equal(result.success, true);
+      assert.equal(result.data?.id, USER_ID);
+      assert.equal(result.data?.supabase_id, USER_ID);
+      assert.equal(syncCalls, 0);
+      const rejected = await auth.AuthService.loginWithEmail('carlos@atleta.com', 'senha-errada');
+      assert.equal(rejected.success, false);
+    } finally { profileMode = 'missing'; syncMode = 'ok'; }
+  });
+
+  it('Admin usa o papel do perfil confiável após validar a senha', async () => {
+    profileMode = 'admin';
+    syncCalls = 0;
+    try {
+      const result = await auth.AuthService.loginWithEmail('mattheus.h.krainski@gmail.com', GOOD_PASSWORD);
+      assert.equal(result.success, true);
+      assert.equal(result.data?.role, 'admin');
+      assert.equal(syncCalls, 0);
+    } finally { profileMode = 'missing'; }
+  });
+
+  it('perfil suspenso não usa sincronização SQL para contornar a suspensão', async () => {
+    profileMode = 'banned';
+    syncCalls = 0;
+    try {
+      const result = await auth.AuthService.loginWithEmail('carlos@atleta.com', GOOD_PASSWORD);
+      assert.equal(result.success, false);
+      assert.match(result.error || '', /suspensa/);
+      assert.equal(syncCalls, 0);
+    } finally { profileMode = 'missing'; }
   });
 
   it('falha de sincronização com o servidor não vira sucesso', async () => {

@@ -59,7 +59,16 @@ fechar. O botão de fechar permanece fora da área rolável.
 
 ## Validação
 
-83 testes unitários, checagem de tipos e build aprovados; lint sem erros.
+86 testes unitários, checagem de tipos e build aprovados; lint sem erros.
 18 verificações das rotas de API aprovadas. Teste de navegador em viewport
 móvel confirmou scroll interno em login/cadastro, bloqueio/restauração do fundo,
 ausência do Google e isolamento dos três perfis com catálogo e comunidade.
+
+### Perfil existente após login
+
+Depois da validação de senha pelo Supabase Auth, o perfil existente é lido
+diretamente de `profiles` com o token do próprio usuário e RLS. Uma API SQL
+mal configurada não deve impedir esse carregamento. Contas suspensas continuam
+recusadas. Somente contas ainda sem perfil usam a rota de sincronização; erros
+401/403 dessa rota não são transformados em sucesso ou perfil inventado.
+Os testes usam um servidor controlado; não equivalem a login real na produção.
