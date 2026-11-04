@@ -1,3 +1,4 @@
+import { ADDITIONAL_COACHES, ADDITIONAL_ATHLETES } from './sports-profiles';
 import { Product, Store, Coach, Athlete, NewsArticle, CommunityPost, UserProfile } from '@/lib/types';
 
 export const INITIAL_USERS: UserProfile[] = [
@@ -2756,6 +2757,7 @@ export const INITIAL_COACHES: Coach[] = [
     cref_number: 'CREF simulado',
     availability: 'Treinos de campo mensais e periodização individualizada',
   },
+  ...ADDITIONAL_COACHES,
 ];
 
 export const INITIAL_ATHLETES: Athlete[] = [
@@ -2791,6 +2793,7 @@ export const INITIAL_ATHLETES: Athlete[] = [
     sponsorship_status: 'sponsored',
     instagram: '@gabrielfonseca_tt',
   },
+  ...ADDITIONAL_ATHLETES,
 ];
 
 export const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
