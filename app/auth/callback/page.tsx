@@ -16,7 +16,17 @@ export default function AuthCallbackPage() {
           throw new Error('Supabase não inicializado.');
         }
 
-        // Supabase client automatically parses hash tokens (access_token, refresh_token) or PKCE code
+        // PKCE returns a one-time code. Exchange it explicitly before reading the session.
+        const callbackUrl = new URL(window.location.href);
+        const code = callbackUrl.searchParams.get('code');
+        if (code) {
+          const { error: exchangeError } = await sb.auth.exchangeCodeForSession(code);
+          if (exchangeError) throw exchangeError;
+          callbackUrl.searchParams.delete('code');
+          window.history.replaceState({}, document.title, callbackUrl.pathname + callbackUrl.search + callbackUrl.hash);
+        }
+
+        // Hash-token flows are also supported for existing Supabase configurations.
         const { data, error } = await sb.auth.getSession();
 
         if (error) {
