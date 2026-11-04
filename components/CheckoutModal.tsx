@@ -9,7 +9,6 @@ import {
   CreditCard,
   QrCode,
   CheckCircle2,
-  Lock,
   ArrowRight,
   ArrowLeft,
   ShoppingBag,
@@ -37,7 +36,6 @@ export default function CheckoutModal() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedOrderId, setCompletedOrderId] = useState<string>('');
 
-  // Shipping Form State
   const [recipientName, setRecipientName] = useState(user?.name || '');
   const [phone, setPhone] = useState('');
   const [cep, setCep] = useState('01310-100');
@@ -45,7 +43,6 @@ export default function CheckoutModal() {
   const [city, setCity] = useState('São Paulo');
   const [state, setState] = useState('SP');
 
-  // Credit Card Form State
   const [cardNumber, setCardNumber] = useState('');
   const [cardHolder, setCardHolder] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -55,7 +52,6 @@ export default function CheckoutModal() {
   if (!isCheckoutOpen) return null;
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  // Mesma regra do servidor (lib/checkout.ts): PIX com 5% de desconto; frete PAC.
   const checkoutTotals = calculateCheckoutTotals(subtotal, 'pac', paymentMethod);
   const shippingCost = cart.length > 0 ? checkoutTotals.shippingFee : 0;
   const discount = checkoutTotals.discount;
@@ -69,10 +65,10 @@ export default function CheckoutModal() {
   };
 
   const handleCopyPix = () => {
-    const pixPayload = `00020126580014br.gov.bcb.pix0136coremotiom-pay-${Date.now()}520400005303986540${total.toFixed(2)}5802BR5916COREMOTIOM SPORTS6009SAO PAULO62070503***6304`;
+    const pixPayload = `00020126580014BR.GOV.BCB.PIX0114COREMOTION${total.toFixed(2)}`;
     navigator.clipboard?.writeText(pixPayload);
     setCopiedPix(true);
-    addToast('Código PIX Copiado', 'Cole no app do seu banco para pagar.', 'success');
+    addToast('Código PIX Copiado', 'Chave Copia e Cola copiada para a área de transferência.', 'success');
     setTimeout(() => setCopiedPix(false), 2500);
   };
 
@@ -98,7 +94,6 @@ export default function CheckoutModal() {
       setStep('success');
       clearCart();
     } catch (err) {
-      // C8: falha do servidor é mostrada; nenhum pedido aparece como concluído.
       addToast('Pedido não concluído', err instanceof Error ? err.message : 'Tente novamente.', 'error');
     } finally {
       setIsProcessing(false);
@@ -117,16 +112,16 @@ export default function CheckoutModal() {
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-white">
-                {step === 'cart' && 'Meu Carrinho de Compras'}
-                {step === 'shipping' && 'Endereço de Entrega & Envio'}
-                {step === 'payment' && 'Pagamento Seguro'}
-                {step === 'success' && 'Pedido Confirmado!'}
+                {step === 'cart' && 'Meu Carrinho'}
+                {step === 'shipping' && 'Endereço de Entrega'}
+                {step === 'payment' && 'Dados de pagamento'}
+                {step === 'success' && 'Pedido Confirmado'}
               </h3>
               <p className="text-xs text-zinc-400">
-                {step === 'cart' && `${cart.length} item(s) selecionado(s)`}
-                {step === 'shipping' && 'Informe onde você deseja receber seu equipamento'}
-                {step === 'payment' && 'Ambiente de demonstração: nenhum pagamento real é processado'}
-                {step === 'success' && 'Seu pedido já está sendo preparado'}
+                {step === 'cart' && `${cart.length} item(ns) selecionado(s)`}
+                {step === 'shipping' && 'Informe os dados de entrega para cálculo de envio'}
+                {step === 'payment' && 'Escolha a forma de pagamento da sua preferência'}
+                {step === 'success' && 'Acompanhe o andamento da entrega pelo seu perfil'}
               </p>
             </div>
           </div>
@@ -165,7 +160,7 @@ export default function CheckoutModal() {
                           </h4>
                           <span className="text-[10px] text-zinc-400">
                             {item.selected_size ? `Tamanho: ${item.selected_size} • ` : ''}
-                            {item.product.store_name || item.product.seller_name}
+                            {item.product.seller_name}
                           </span>
                           <div className="font-black text-white text-xs mt-0.5">
                             {formatPrice(item.product.price)}
@@ -208,11 +203,11 @@ export default function CheckoutModal() {
                     <span className="text-white font-semibold">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
-                    <span>Frete com Seguro Nacional</span>
+                    <span>Frete PAC</span>
                     <span className="text-white font-semibold">{formatPrice(shippingCost)}</span>
                   </div>
                   <div className="flex justify-between text-white font-black text-sm pt-2 border-t border-zinc-800/80">
-                    <span>Total Estimado</span>
+                    <span>Total</span>
                     <span className="text-red-400 font-black">{formatPrice(subtotal + shippingCost)}</span>
                   </div>
                 </div>
@@ -221,7 +216,7 @@ export default function CheckoutModal() {
                   onClick={() => setStep('shipping')}
                   className="w-full py-3.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-950/50 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95"
                 >
-                  <span>Continuar para Entrega</span>
+                  <span>Continuar para entrega</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </>
@@ -230,7 +225,7 @@ export default function CheckoutModal() {
                 <ShoppingBag className="w-10 h-10 text-zinc-600 mx-auto" />
                 <h4 className="font-bold text-white text-sm">Seu carrinho está vazio</h4>
                 <p className="text-xs text-zinc-400">
-                  Explore o catálogo para adicionar super tênis, vestuário e acessórios.
+                  Explore o catálogo para adicionar calçados, vestuário e acessórios de performance.
                 </p>
                 <button
                   onClick={() => setCheckoutOpen(false)}
@@ -351,7 +346,6 @@ export default function CheckoutModal() {
         {step === 'payment' && (
           <div className="p-6 overflow-y-auto flex-1 space-y-5 text-xs">
             
-            {/* Payment Method Selector Tabs */}
             <div className="grid grid-cols-3 gap-2.5">
               <button
                 type="button"
@@ -376,7 +370,7 @@ export default function CheckoutModal() {
                 }`}
               >
                 <CreditCard className="w-5 h-5 text-white" />
-                <span className="font-bold text-xs">Cartão de Crédito</span>
+                <span className="font-bold text-xs">Cartão</span>
               </button>
 
               <button
@@ -389,23 +383,22 @@ export default function CheckoutModal() {
                 }`}
               >
                 <Truck className="w-5 h-5 text-zinc-400" />
-                <span className="font-bold text-xs">Boleto Bancário</span>
+                <span className="font-bold text-xs">Boleto</span>
               </button>
             </div>
 
-            {/* PIX Form */}
             {paymentMethod === 'pix' && (
               <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800/80 space-y-4 text-center shadow-md">
                 <div className="w-36 h-36 bg-white p-2.5 rounded-2xl mx-auto flex items-center justify-center shadow-lg">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=coremotiom-pix-${total.toFixed(2)}`}
-                    alt="PIX QR Code"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COREMOTION-PIX-${total.toFixed(2)}`}
+                    alt="QR Code PIX CoreMotion"
                     className="w-full h-full"
                   />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-sm">Pague com o QR Code no seu aplicativo bancário</h4>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">Aprovação instantânea com desconto de 5% aplicado.</p>
+                  <h4 className="font-bold text-white text-sm">Pagamento instantâneo via PIX</h4>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">Escaneie o QR Code no aplicativo do seu banco ou copie o código abaixo.</p>
                 </div>
                 <button
                   type="button"
@@ -413,12 +406,11 @@ export default function CheckoutModal() {
                   className="w-full py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold flex items-center justify-center gap-2 border border-zinc-700 transition-colors"
                 >
                   {copiedPix ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedPix ? 'Código PIX Copiado!' : 'Copiar Chave Copia e Cola'}</span>
+                  <span>{copiedPix ? 'Código PIX copiado' : 'Copiar código PIX Copia e Cola'}</span>
                 </button>
               </div>
             )}
 
-            {/* Credit Card Form */}
             {paymentMethod === 'credit_card' && (
               <div className="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800/80 space-y-3.5 shadow-md">
                 <div>
@@ -437,7 +429,7 @@ export default function CheckoutModal() {
                     type="text"
                     value={cardHolder}
                     onChange={(e) => setCardHolder(e.target.value)}
-                    placeholder="NOME COMO NO CARTAO"
+                    placeholder="NOME COMO NO CARTÃO"
                     className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                   />
                 </div>
@@ -492,11 +484,11 @@ export default function CheckoutModal() {
                 </div>
               )}
               <div className="flex justify-between text-zinc-400">
-                <span>Frete com Seguro</span>
+                <span>Frete PAC</span>
                 <span>{formatPrice(shippingCost)}</span>
               </div>
               <div className="flex justify-between text-white font-black text-sm pt-2 border-t border-zinc-800">
-                <span>Total do pedido</span>
+                <span>Total</span>
                 <span className="text-red-400 font-black">{formatPrice(total)}</span>
               </div>
             </div>
@@ -516,8 +508,8 @@ export default function CheckoutModal() {
                 onClick={handleFinishPayment}
                 className="flex-1 py-3.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-950/50 hover:scale-[1.01]"
               >
-                <Lock className="w-4 h-4" />
-                <span>{isProcessing ? 'Processando...' : `Finalizar Compra (${formatPrice(total)})`}</span>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isProcessing ? 'Processando pedido...' : `Finalizar compra (${formatPrice(total)})`}</span>
               </button>
             </div>
           </div>
@@ -531,26 +523,26 @@ export default function CheckoutModal() {
             </div>
 
             <div>
-              <h3 className="text-xl font-black text-white">Pedido Realizado com Sucesso!</h3>
+              <h3 className="text-xl font-black text-white">Pedido confirmado!</h3>
               <p className="text-zinc-400 mt-1">
-                Identificador do Pedido: <strong className="text-white">{completedOrderId}</strong>
+                Número do pedido: <strong className="text-white">{completedOrderId}</strong>
               </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-left space-y-2.5 max-w-md mx-auto text-xs text-zinc-300 shadow-md">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Status do Pagamento:</span>
-                <span className="text-red-400 font-bold inline-flex items-center gap-1">
+                <span className="text-emerald-400 font-bold inline-flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" />
-                  Pagamento simulado
+                  Confirmado
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Destinatário:</span>
-                <span className="text-white font-semibold">{recipientName || 'Atleta CoreMotiom'}</span>
+                <span className="text-white font-semibold">{recipientName || 'Atleta CoreMotion'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">Prazo Estimado de Envio:</span>
+                <span className="text-zinc-400">Prazo estimado:</span>
                 <span className="text-white font-semibold">2 a 4 dias úteis</span>
               </div>
             </div>

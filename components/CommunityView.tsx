@@ -12,13 +12,13 @@ import {
   Flag,
 } from 'lucide-react';
 
-/** Motivos fixos para denúncias (enviados ao moderador junto com a publicação). */
 const REPORT_REASONS = ['Spam', 'Conteúdo ofensivo', 'Informação falsa', 'Outro'];
 
 export default function CommunityView() {
   const {
     communityPosts,
     createCommunityPost,
+    likedCommunityPosts,
     likeCommunityPost,
     addCommunityComment,
     reportCommunityPost,
@@ -36,11 +36,11 @@ export default function CommunityView() {
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
 
   const categories: { label: string; value: CommunityPost['category'] }[] = [
-    { label: 'Equipamentos & Tênis', value: 'equipamento' },
-    { label: 'Dicas de Treino & Planilhas', value: 'treino' },
-    { label: 'Eventos & Provas', value: 'evento' },
-    { label: 'Dúvidas Técnicas', value: 'duvida' },
-    { label: 'Conquistas & Recordes', value: 'conquista' },
+    { label: 'Equipamentos & Reviews', value: 'equipamento' },
+    { label: 'Treinos & Técnica', value: 'treino' },
+    { label: 'Campeonatos & Jogos', value: 'evento' },
+    { label: 'Dúvidas da Galera', value: 'duvida' },
+    { label: 'Graduações & Conquistas', value: 'conquista' },
   ];
 
   const filteredPosts = communityPosts.filter((p) => {
@@ -48,7 +48,7 @@ export default function CommunityView() {
     return true;
   });
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isVisitor) {
       setAuthModalOpen(true);
@@ -60,18 +60,18 @@ export default function CommunityView() {
       return;
     }
 
-    createCommunityPost({
-      title: newPostTitle,
-      content: newPostContent,
+    const created = await createCommunityPost({
+      title: newPostTitle.trim(),
+      content: newPostContent.trim(),
       category: newPostCategory,
     });
-
-    setNewPostTitle('');
-    setNewPostContent('');
-    addToast('Post Publicado', 'Seu relato já está no feed da comunidade.', 'success');
+    if (created) {
+      setNewPostTitle('');
+      setNewPostContent('');
+    }
   };
 
-  const handleSendComment = (postId: string) => {
+  const handleSendComment = async (postId: string) => {
     if (isVisitor) {
       setAuthModalOpen(true);
       return;
@@ -79,7 +79,7 @@ export default function CommunityView() {
 
     if (!commentText.trim()) return;
 
-    addCommunityComment(postId, commentText);
+    await addCommunityComment(postId, commentText.trim());
     setCommentText('');
     setActiveCommentPostId(null);
   };
@@ -94,10 +94,10 @@ export default function CommunityView() {
           <span>Comunidade & Feed de Atletas</span>
         </div>
         <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-          Feed de Reviews & Experiências
+          Comunidade Esportiva
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-          Compartilhe percepções reais sobre tênis com placa de carbono, ritmos de prova e periodização de treinos.
+          Troque experiências sobre Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida, equipamentos e rotinas de treino.
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export default function CommunityView() {
         <form onSubmit={handleCreatePost} className="space-y-3">
           <input
             type="text"
-            placeholder="Título do seu relato (Ex: Testei o Vaporfly 3 nos 21k de SP)"
+            placeholder="Título do post (Ex: Qual melhor kimono trançado custo-benefício? / Dicas de saque no Tênis)"
             value={newPostTitle}
             onChange={(e) => setNewPostTitle(e.target.value)}
             className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
@@ -187,7 +187,6 @@ export default function CommunityView() {
             key={post.id}
             className="bg-zinc-900/60 rounded-3xl border border-zinc-800/80 hover:border-zinc-700/80 p-5 sm:p-6 space-y-4 shadow-xl transition-all"
           >
-            {/* Author header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0">
@@ -220,7 +219,6 @@ export default function CommunityView() {
               </span>
             </div>
 
-            {/* Post Content */}
             <div className="space-y-2">
               <h3 className="font-extrabold text-sm sm:text-base text-white">{post.title}</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed whitespace-pre-line">
@@ -233,14 +231,15 @@ export default function CommunityView() {
               )}
             </div>
 
-            {/* Actions Bar */}
             <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 text-xs">
               <div className="flex items-center gap-4">
                 <button
-                  onClick={() => likeCommunityPost(post.id)}
+                  onClick={() => void likeCommunityPost(post.id)}
+                  aria-pressed={likedCommunityPosts.includes(post.id)}
+                  aria-label={likedCommunityPosts.includes(post.id) ? 'Remover curtida' : 'Curtir publicação'}
                   className="flex items-center gap-1.5 text-zinc-400 hover:text-red-400 transition-colors"
                 >
-                  <Heart className="w-4 h-4 text-red-500 fill-red-500/20" />
+                  <Heart className={`w-4 h-4 text-red-500 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500' : ''}`} />
                   <span className="font-bold text-white text-xs">{post.likes_count}</span>
                 </button>
 
@@ -278,7 +277,6 @@ export default function CommunityView() {
               </button>
             </div>
 
-            {/* Report Area: a denúncia marca a publicação para moderação (supervisor ou administrador) */}
             {reportingPostId === post.id && (
               <div className="pt-3 border-t border-zinc-800/80 space-y-2">
                 <p className="text-xs text-zinc-400">Por que você está denunciando esta publicação?</p>
@@ -300,10 +298,8 @@ export default function CommunityView() {
               </div>
             )}
 
-            {/* Comments Expand Area */}
             {activeCommentPostId === post.id && (
               <div className="pt-3 border-t border-zinc-800/80 space-y-3">
-                {/* Comments List */}
                 {post.comments && post.comments.length > 0 && (
                   <div className="space-y-2">
                     {post.comments.map((comm) => (
@@ -323,7 +319,6 @@ export default function CommunityView() {
                   </div>
                 )}
 
-                {/* Comment Input */}
                 <div className="flex items-center gap-2">
                   <input
                     type="text"

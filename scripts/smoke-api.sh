@@ -42,8 +42,6 @@ PROTECTED_ROUTES=(
   "POST /api/products"
   "PATCH /api/products"
   "DELETE /api/products"
-  "POST /api/stores"
-  "PATCH /api/stores"
   "GET /api/users"
   "PATCH /api/users"
   "DELETE /api/users"

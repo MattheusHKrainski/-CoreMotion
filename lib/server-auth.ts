@@ -16,6 +16,7 @@ interface AuthContext {
   email: string;
   role: UserRole;
   isBanned: boolean;
+  banReason?: string;
 }
 
 function getBearerToken(req: NextRequest): string | null {
@@ -45,8 +46,8 @@ async function getAuthContext(req: NextRequest): Promise<AuthContext | null> {
   const verified = await verifyAccessToken(token);
   if (!verified) return null;
 
-  const rows = await queryDb<{ email: string; role: string; is_banned: boolean }>(
-    `SELECT email, role, is_banned FROM public.profiles WHERE id = $1 LIMIT 1`,
+  const rows = await queryDb<{ email: string; role: string; is_banned: boolean; ban_reason: string | null }>(
+    `SELECT email, role, is_banned, ban_reason FROM public.profiles WHERE id = $1 LIMIT 1`,
     [verified.id]
   );
   const profile = rows[0];
@@ -58,6 +59,7 @@ async function getAuthContext(req: NextRequest): Promise<AuthContext | null> {
     email,
     role,
     isBanned: Boolean(profile?.is_banned),
+    banReason: profile?.ban_reason || undefined,
   };
 }
 
@@ -87,9 +89,13 @@ export async function requireAuth(req: NextRequest, allowedRoles?: UserRole[]): 
   }
 
   if (ctx.isBanned) {
+    const reason = ctx.banReason ? ` Motivo: ${ctx.banReason}` : '';
     return {
       ok: false,
-      response: NextResponse.json({ success: false, error: 'Conta suspensa pela moderação.' }, { status: 403 }),
+      response: NextResponse.json(
+        { success: false, error: `Conta suspensa pela moderação.${reason}` },
+        { status: 403 }
+      ),
     };
   }
 
