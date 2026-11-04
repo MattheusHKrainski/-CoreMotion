@@ -120,8 +120,8 @@ function ProfileContent({ user, storeOrders, onSave, onOpenStores, onOpenAdmin, 
   const myOrders = isSupabaseConfigured ? remoteOrders : storeOrders.filter((o) => o.user_id === userId);
 
   const role = (user.role === 'visitor' ? 'user' : user.role) as Exclude<UserRole, 'visitor'>;
-  const roleLabel = ROLE_LABELS[user.role] ?? 'Atleta';
-  const roleDescription = ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
+  const roleLabel = user.account_type === 'coach' ? 'Treinador' : user.account_type === 'casual' ? 'Casual' : ROLE_LABELS[user.role] ?? 'Atleta';
+  const roleDescription = user.account_type === 'coach' ? 'Treinador: acompanhe seus alunos, modalidades e rotina de treinos.' : user.account_type === 'casual' ? 'Casual: explore equipamentos, ofertas e a comunidade no seu ritmo.' : ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

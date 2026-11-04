@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 import { useCoreMotiom } from '@/lib/store';
 import { Product } from '@/lib/types';
 import Sidebar from '@/components/shared/Sidebar';
@@ -48,6 +49,7 @@ export default function CoreMotiomApp() {
       
       {/* Left Sidebar Function Bar */}
       <Sidebar />
+      {IS_QUICK_ACCESS && <aside className="fixed bottom-3 left-3 right-3 z-[70] mx-auto max-w-xl rounded-2xl border border-zinc-700 bg-zinc-950 p-3 text-xs text-zinc-300 flex items-center justify-between gap-3"><span>Acesso temporário · alterações apenas neste navegador.</span><button type="button" className="font-bold underline" onClick={() => window.location.assign('/')}>Usar conta real</button></aside>}
 
       {/* Main Dynamic View Content & Footer (Offset on desktop for left sidebar) */}
       <div className="flex-1 flex flex-col min-w-0 lg:pl-64 xl:pl-72 transition-all">

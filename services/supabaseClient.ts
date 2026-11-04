@@ -1,3 +1,4 @@
+import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -14,7 +15,7 @@ function isAllowedSupabaseUrl(url: string): boolean {
   return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(url);
 }
 
-export const isSupabaseConfigured = Boolean(isAllowedSupabaseUrl(supabaseUrl) && supabaseAnonKey.length > 15);
+export const isSupabaseConfigured = !IS_QUICK_ACCESS && Boolean(isAllowedSupabaseUrl(supabaseUrl) && supabaseAnonKey.length > 15);
 
 let browserClient: SupabaseClient | null = null;
 

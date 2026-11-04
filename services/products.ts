@@ -2,7 +2,8 @@ import { Product, ProductCondition, ProductType } from '@/lib/types';
 import { INITIAL_PRODUCTS } from '@/fixtures/initial-data';
 import { DEMO_MODE } from '@/lib/demo-mode';
 import { authedFetch } from '@/lib/auth-fetch';
-import { isSupabaseConfigured } from './supabaseClient';
+import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
+import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 
 interface ProductFilters {
   category?: string;
@@ -26,6 +27,7 @@ export class ProductService {
    * Gracefully falls back to local products if offline.
    */
   static async getProducts(filters?: ProductFilters): Promise<Product[]> {
+    if (IS_QUICK_ACCESS) return this.applyLocalFilters(INITIAL_PRODUCTS, filters);
     try {
       const params = new URLSearchParams();
       if (filters?.category) params.set('category', filters.category);
@@ -39,15 +41,24 @@ export class ProductService {
       if (filters?.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
       if (filters?.status) params.set('status', filters.status);
 
-      const res = await fetch(`/api/products?${params.toString()}`);
+      const res = await authedFetch(`/api/products?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+        if (data.success && Array.isArray(data.products) && (data.products.length > 0 || isSupabaseConfigured)) {
           return data.products as Product[];
         }
       }
     } catch (err) {
       console.warn('[ProductService] Fetch from /api/products failed, using local cache:', err);
+    }
+
+    const client = getSupabaseClient();
+    if (client) {
+      let request = client.from('products').select('*').eq('product_type', 'c2c');
+      if (filters?.status !== 'all') request = request.eq('status', filters?.status || 'active');
+      const { data, error } = await request.order('created_at', { ascending: false });
+      if (error) throw new Error('Não foi possível carregar os anúncios do Supabase. Tente novamente.');
+      return this.applyLocalFilters((data || []).map(row => ({ ...row, price: Number(row.price) })) as Product[], filters?.status === 'all' ? { ...filters, status: undefined } : filters);
     }
 
     // C9: dados de demonstração só com NEXT_PUBLIC_DEMO_MODE=true; sem isso, catálogo vazio.

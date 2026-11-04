@@ -1,4 +1,6 @@
 'use client';
+import { readSavedAdminProfile } from './admin-session';
+import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
 
 import { calculateCheckoutTotals, ShippingMethod } from './checkout';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -97,6 +99,7 @@ interface CoreMotiomContextType {
   adminUpdateOrderStatus: (orderId: string, order_status: Order['order_status'], payment_status?: Order['payment_status']) => void;
   adminToggleProductStatus: (productId: string, newStatus: Product['status']) => void;
   adminSyncSupabase: () => Promise<{ success: boolean; count?: number; error?: string }>;
+  resumeAdminSession: () => Promise<boolean>;
   loginAsMasterAdmin: () => void;
   loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   signUpWithEmail: (email: string, pass: string, name: string) => Promise<{ success: boolean; error?: string }>;
@@ -158,7 +161,7 @@ interface CoreMotiomContextType {
 
 const CoreMotiomContext = createContext<CoreMotiomContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'coremotiom_state_v1';
+const LOCAL_STORAGE_KEY = quickStorageKey('coremotiom_state_v1');
 
 export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Navigation & views
@@ -187,7 +190,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [news] = useState<NewsArticle[]>(DEMO_MODE ? INITIAL_NEWS : []);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
-  const [, setIsHydrated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Toast system
   const addToast = useCallback((title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -248,13 +251,18 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && isMounted) {
           const parsed = JSON.parse(saved);
-          if (parsed.orders) setOrders(parsed.orders);
+          if (!isSupabaseConfigured && parsed.orders) setOrders(parsed.orders);
           if (parsed.cart) setCart(parsed.cart);
           if (parsed.favorites) setFavorites(parsed.favorites);
-          if (parsed.user) setUser(parsed.user);
+          if (IS_QUICK_ACCESS && parsed.user?.id === `quick-${QUICK_PROFILE}`) setUser(parsed.user);
+          if (IS_QUICK_ACCESS) {
+            if (Array.isArray(parsed.products)) setProducts(parsed.products);
+            if (Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
+          }
         }
         if (isMounted) setIsHydrated(true);
 
+        if (IS_QUICK_ACCESS) return;
         const conn = await testSupabaseConnection();
         if (isMounted) setIsSupabaseLive(conn.connected);
 
@@ -263,7 +271,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           ProductService.getProducts(),
           StoreService.getStores(),
           CommunityService.getPosts(),
-          fetch('/api/users?include_internal=true').then((r) => r.json()).catch(() => null),
+          authedFetch('/api/users?include_internal=true').then((r) => r.json()).catch(() => null),
         ]);
 
         if (isMounted) {
@@ -305,7 +313,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           if (isMounted) setIsSupabaseLive(false);
         });
 
-        const { data: authListener } = sb.auth.onAuthStateChange(async (event, session) => {
+        const { data: authListener } = sb.auth.onAuthStateChange((event, session) => {
+          setTimeout(async () => {
           if (session?.user && isMounted) {
             const u = session.user;
             const email = u.email || '';
@@ -318,6 +327,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           } else if (event === 'SIGNED_OUT' && isMounted) {
             setUser(null);
           }
+          }, 0);
         });
 
         if (authListener?.subscription) {
@@ -337,8 +347,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const saveState = useCallback(() => {
     try {
       const payload = {
-        user,
-        allUsers,
+        user: isSupabaseConfigured ? null : user,
+        allUsers: isSupabaseConfigured ? [] : allUsers,
         products,
         stores,
         orders,
@@ -637,6 +647,32 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     addToast('Sessão Super Admin', 'Conectado como Administrador (perfil de demonstração).', 'success');
   }, [addToast]);
 
+  const resumeAdminSession = useCallback(async () => {
+    const sb = getSupabase();
+    if (!sb) return false;
+    const profile = await readSavedAdminProfile(
+      async () => {
+        const { data, error } = await sb.auth.getUser();
+        return error ? null : data.user;
+      },
+      (id, email) => AuthService.getProfileOrCreate(id, email),
+    );
+    if (!profile) return false;
+    setUser(profile);
+    setAuthModalOpen(false);
+    return true;
+  }, []);
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get('acesso-rapido') === 'admin') { window.location.replace('/?login=admin'); return; }
+    if (QUICK_PROFILE) {
+      const profile = QUICK_PROFILE;
+      setUser(current => current?.id === `quick-${profile}` ? current : temporaryIdentity(profile));
+      setAuthModalOpen(false);
+    } else if (query.get('login') === 'admin') setAuthModalOpen(true);
+  }, []);
+
   // Auth: Email Login
   const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     const res = await AuthService.loginWithEmail(email, pass);
@@ -694,6 +730,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Auth: Logout
   const logout = async () => {
+    if (IS_QUICK_ACCESS) { window.location.assign('/'); return; }
     await AuthService.signOut();
     setUser(null);
     setActiveView('home');
@@ -1054,6 +1091,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         adminUpdateOrderStatus,
         adminToggleProductStatus,
         adminSyncSupabase,
+        resumeAdminSession,
         loginAsMasterAdmin,
         loginWithEmail,
         signUpWithEmail,
@@ -1095,7 +1133,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         removeToast,
       }}
     >
-      {children}
+      {isHydrated ? children : <div aria-label="Carregando CoreMotion" />}
     </CoreMotiomContext.Provider>
   );
 }

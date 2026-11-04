@@ -37,6 +37,15 @@ function localDemoProfile(supabaseId: string, email: string, metadata?: SyncMeta
   };
 }
 
+/** Own profile under RLS: never derive administrative authority from client metadata. */
+async function readOwnProfile(userId: string): Promise<UserProfile> {
+  const client = getSupabaseClient();
+  if (!client) throw new Error('Supabase não configurado.');
+  const { data, error } = await client.from('profiles').select('*').eq('id', userId).single();
+  if (error || !data || data.id !== userId || data.is_banned) throw new Error('Não foi possível carregar seu perfil ou a conta está suspensa.');
+  return { ...data, supabase_id: userId } as UserProfile;
+}
+
 /**
  * Sincroniza a sessão com public.users. O servidor identifica o usuário pelo token e decide o papel.
  * Fora do modo demonstração, falha de sincronização é erro (nunca um perfil inventado).
@@ -54,6 +63,7 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
       }),
     });
   } catch {
+    if (getSupabaseClient()) return readOwnProfile(supabaseId);
     if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
     throw new Error('Não foi possível conectar ao servidor. Tente novamente.');
   }
@@ -62,7 +72,8 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
   if (res.ok && data?.success && data.user) {
     return data.user as UserProfile;
   }
-  if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
+  if (res.status >= 500 && getSupabaseClient()) return readOwnProfile(supabaseId);
+  if (DEMO_MODE && !getSupabaseClient()) return localDemoProfile(supabaseId, email, metadata);
   throw new Error(data?.error || 'Não foi possível concluir o acesso. Tente novamente.');
 }
 

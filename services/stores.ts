@@ -1,3 +1,4 @@
+import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 import { Store } from '@/lib/types';
 import { INITIAL_STORES } from '@/fixtures/initial-data';
 import { DEMO_MODE } from '@/lib/demo-mode';
@@ -28,6 +29,7 @@ export class StoreService {
 
   /** Lista lojas do banco (ou dados de demonstração quando o banco não está configurado). */
   static async getStores(): Promise<Store[]> {
+    if (IS_QUICK_ACCESS) return INITIAL_STORES;
     try {
       const res = await fetch('/api/stores');
       if (res.ok) {
@@ -43,6 +45,7 @@ export class StoreService {
   }
 
   static async getStoreBySlug(slug: string): Promise<Store | null> {
+    if (IS_QUICK_ACCESS) return INITIAL_STORES.find(store => store.slug === slug) || null;
     try {
       const res = await fetch(`/api/stores?slug=${encodeURIComponent(slug)}`);
       if (res.ok) {

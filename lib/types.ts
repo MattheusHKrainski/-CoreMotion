@@ -1,6 +1,7 @@
 export type UserRole = 'visitor' | 'user' | 'seller' | 'supervisor' | 'admin';
 
 export interface UserProfile {
+  account_type?: 'athlete' | 'coach' | 'casual';
   id: string;
   supabase_id?: string;
   email: string;

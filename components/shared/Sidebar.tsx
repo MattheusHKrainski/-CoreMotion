@@ -1,4 +1,5 @@
 'use client';
+import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 
 import React, { useState, useEffect } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -56,7 +57,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   // Papel vem sempre da conta autenticada (banco) ou do perfil de demonstração.
   const userIsAdmin = user?.role === 'admin';
   const userIsStaff = isStaffRole(user?.role);
-  const showDemoSwitcher = !isSupabaseConfigured;
+  const showDemoSwitcher = !isSupabaseConfigured && !IS_QUICK_ACCESS;
 
   // Calculate cart subtotal
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
@@ -455,7 +456,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 ) : (
                   <>
                     <CheckCircle2 className="w-2.5 h-2.5" />
-                    <span>{ROLE_LABELS.user}</span>
+                    <span>{user?.account_type === 'coach' ? 'Treinador' : user?.account_type === 'casual' ? 'Casual' : ROLE_LABELS.user}</span>
                   </>
                 )}
               </span>

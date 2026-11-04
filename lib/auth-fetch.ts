@@ -1,3 +1,4 @@
+import { IS_QUICK_ACCESS } from './quick-access';
 /**
  * Utilitário de cliente: anexa o token de sessão do Supabase às chamadas de API protegidas.
  * Visitantes (sem sessão) recebem a resposta 401 do servidor e o app trata o erro.
@@ -16,6 +17,7 @@ async function getAccessToken(): Promise<string | null> {
 }
 
 export async function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  if (IS_QUICK_ACCESS) return Response.json({ success: false, error: 'As alterações deste perfil ficam apenas neste navegador.' }, { status: 403 });
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
