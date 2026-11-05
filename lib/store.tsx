@@ -396,6 +396,34 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     };
   }, [addToast, resetPrivateState]);
 
+  // Atualizações em tempo real para dados compartilhados. O RLS continua controlando as linhas visíveis.
+  useEffect(() => {
+    if (!isSupabaseConfigured || IS_QUICK_ACCESS) return;
+    const client = getSupabase();
+    if (!client) return;
+    let disposed = false;
+    const refreshSharedData = async (table: 'products' | 'external_offers' | 'community_posts') => {
+      try {
+        if (table === 'products') {
+          const rows = await ProductService.getProducts();
+          if (!disposed) setProducts(rows);
+        } else if (table === 'external_offers') {
+          const { data, error } = await client.from('external_offers').select('*').eq('is_active', true).order('created_at', { ascending: false });
+          if (!error && !disposed) setOffers(data || []);
+        } else {
+          const rows = await CommunityService.getPosts();
+          if (!disposed) setCommunityPosts(rows);
+        }
+      } catch (error) { console.warn('[CoreMotion Realtime] Falha ao atualizar', table, error); }
+    };
+    const channel = client.channel('coremotion-live-data')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => { void refreshSharedData('products'); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'external_offers' }, () => { void refreshSharedData('external_offers'); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => { void refreshSharedData('community_posts'); })
+      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[CoreMotion Realtime] Canal indisponível:', status); });
+    return () => { disposed = true; void client.removeChannel(channel); };
+  }, []);
+
   // Dados privados da conta logada: staff vê todos os pedidos/contas/anúncios; os demais, só os seus.
   const userId = user?.id;
   const userRole = user?.role;
