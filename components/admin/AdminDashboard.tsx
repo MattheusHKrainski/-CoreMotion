@@ -19,7 +19,6 @@ import {
   canSuspendTarget,
   isAdminRole,
   isStaffRole,
-  isMasterAdminEmail,
   ROLE_LABELS,
 } from '@/lib/permissions';
 import { AuthService } from '@/services/auth';
@@ -88,7 +87,7 @@ function AccountRoleEditor({
   onSave: (role: string, type: AccountType) => void;
 }) {
   const [role, setRole] = useState(
-    account.role === 'supervisor' ? 'supervisor' : 'user'
+    account.role === 'admin' ? 'admin' : account.role === 'supervisor' ? 'supervisor' : 'user'
   );
   const [type, setType] = useState<AccountType>(
     account.account_type || 'casual'
@@ -109,6 +108,7 @@ function AccountRoleEditor({
       >
         <option value="user">Conta comum</option>
         <option value="supervisor">Supervisor</option>
+        <option value="admin">Administrador</option>
       </select>
       <select
         aria-label={`Tipo de perfil de ${account.name}`}
@@ -521,10 +521,7 @@ export default function AdminDashboard() {
             {accounts
               .filter((a) => matches(a.name, a.email, a.role, a.account_type))
               .map((a) => {
-                const protectedAccount =
-                  a.id === user!.id ||
-                  a.role === 'admin' ||
-                  isMasterAdminEmail(a.email);
+                const protectedAccount = a.id === user!.id;
                 const suspend =
                   !protectedAccount &&
                   canSuspendTarget(user!.role, a.role, a.email);
@@ -536,7 +533,7 @@ export default function AdminDashboard() {
                           {a.name}{' '}
                           {protectedAccount && (
                             <span className="text-xs text-zinc-500">
-                              • conta protegida
+                              • sua conta em uso
                             </span>
                           )}
                         </h3>

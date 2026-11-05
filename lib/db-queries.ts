@@ -6,7 +6,6 @@
  */
 import { queryDb } from './db';
 import { Product, UserProfile, UserRole } from './types';
-import { isMasterAdminEmail } from './permissions';
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80';
@@ -39,8 +38,8 @@ interface DbProfileRow {
 }
 
 function mapDbProfileToUser(row: DbProfileRow): UserProfile {
-  // A conta-mestre é sempre administradora, independentemente do valor gravado.
-  const role: UserRole = isMasterAdminEmail(row.email) ? 'admin' : ((row.role as UserRole) || 'user');
+  // A permissão acompanha o papel persistido, sem exceções por e-mail.
+  const role: UserRole = (row.role as UserRole) || 'user';
   return {
     id: row.id,
     supabase_id: row.id,
@@ -72,7 +71,7 @@ export async function listProfiles(): Promise<UserProfile[]> {
 
 /**
  * Cria ou atualiza o perfil do usuário autenticado. O papel NÃO é recebido do cliente:
- * novos perfis nascem como 'user' (ou 'admin' para contas-mestre) e papéis existentes
+ * novos perfis nascem como 'user' e papéis existentes
  * são preservados. Dados já preenchidos (nome, avatar, telefone, cidade) nunca são
  * sobrescritos pelo login: edições do usuário no perfil prevalecem.
  */
@@ -88,7 +87,7 @@ export async function upsertOwnProfile(input: {
 }): Promise<UserProfile> {
   const email = input.email.trim().toLowerCase();
   const name = input.name?.trim() || email.split('@')[0];
-  const role: UserRole = isMasterAdminEmail(email) ? 'admin' : 'user';
+  const role: UserRole = 'user';
 
   const rows = await queryDb<DbProfileRow>(
     `INSERT INTO public.profiles (id, email, name, avatar_url, phone, role, city, state, sport_interests, created_at, updated_at)
@@ -100,7 +99,7 @@ export async function upsertOwnProfile(input: {
        phone = COALESCE(public.profiles.phone, EXCLUDED.phone),
        city = COALESCE(public.profiles.city, EXCLUDED.city),
        state = COALESCE(public.profiles.state, EXCLUDED.state),
-       role = CASE WHEN public.is_master_email(EXCLUDED.email) THEN 'admin' ELSE public.profiles.role END,
+       role = public.profiles.role,
        updated_at = NOW()
      RETURNING *`,
     [

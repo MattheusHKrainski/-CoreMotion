@@ -18,6 +18,9 @@ await db.exec(`ALTER TRIGGER on_auth_user_created ON auth.users RENAME TO on_aut
 CREATE FUNCTION public.handle_new_auth_user() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.email_confirmed_at=now(); RETURN NEW; END $$;
 CREATE TRIGGER on_auth_user_created BEFORE INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();`);
 for (const file of ['20261104130000_moderation_workspace.sql','20261104131000_supervisor_sports_moderation.sql','20261104132000_validate_sports_records.sql','20261104133000_harden_profile_guard.sql']) await migrate(file);
+// Reproduce the legacy production constraint from the reported error.
+await db.exec("ALTER TABLE profiles DROP CONSTRAINT profiles_role_check; ALTER TABLE profiles ADD CONSTRAINT profiles_role_check CHECK(role IN ('admin','merchant','seller','user'))");
+await migrate('20261104220000_administrator_account_management.sql');
 const ids = { admin:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',supervisor:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',athlete:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',coach:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',casual:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' };
 for (const [role,id] of Object.entries(ids)) {
  await db.query('INSERT INTO auth.users(id,email) VALUES($1,$2)',[id,`${role}@test.invalid`]);
@@ -25,13 +28,13 @@ for (const [role,id] of Object.entries(ids)) {
 }
 let checks=0;
 function check(value) { assert.ok(value); checks++; }
-async function as(name,sql,params=[]) {
+async function as(name,sql,params=[],extraClaims={}) {
  await db.exec('RESET ROLE');
- await db.query("SELECT set_config('request.jwt.claims',$1,false)",[JSON.stringify(name==='anon'?{}:{sub:ids[name],email:`${name}@test.invalid`,role:'authenticated'})]);
+ await db.query("SELECT set_config('request.jwt.claims',$1,false)",[JSON.stringify(name==='anon'?{}:{sub:ids[name],email:`${name}@test.invalid`,role:'authenticated',...extraClaims})]);
  await db.exec(`SET ROLE ${name==='anon'?'anon':'authenticated'}`);
  try { return await db.query(sql,params); } finally { await db.exec('RESET ROLE'); await db.query("SELECT set_config('request.jwt.claims','{}',false)"); }
 }
-async function denied(name,sql,params=[],pattern=/permission denied|Somente|permitid|restrit|protegid|policy|check|privilege/i) { await assert.rejects(as(name,sql,params),pattern); checks++; }
+async function denied(name,sql,params=[],pattern=/permission denied|Somente|permitid|restrit|protegid|não moderam|policy|check|privilege/i) { await assert.rejects(as(name,sql,params),pattern); checks++; }
 check((await db.query('SELECT count(*)::int AS n FROM profiles')).rows[0].n===5);
 check((await db.query('SELECT email_confirmed_at FROM auth.users WHERE id=$1',[ids.athlete])).rows[0].email_confirmed_at===null);
 check((await db.query("SELECT count(*)::int AS n FROM pg_trigger WHERE tgrelid='auth.users'::regclass AND tgname='on_auth_user_profile_created'")).rows[0].n===1);
@@ -92,10 +95,25 @@ await as('admin',"SELECT moderate_account($1,'role','supervisor','athlete')",[id
 check((await as('admin','SELECT role FROM profiles WHERE id=$1',[ids.athlete])).rows[0].role==='supervisor');
 await as('admin',"SELECT moderate_account($1,'role','user','casual')",[ids.athlete]);
 check((await as('admin','SELECT account_type FROM profiles WHERE id=$1',[ids.athlete])).rows[0].account_type==='casual');
+// Administrators can manage other administrators, but never delete themselves.
+await as('admin',"SELECT moderate_account($1,'role','admin','coach')",[ids.coach]);
+check((await as('coach','SELECT public.is_admin() AS allowed')).rows[0].allowed===true);
+await denied('supervisor',"SELECT moderate_account($1,'delete')",[ids.coach]);
+await denied('admin',"SELECT moderate_account($1,'delete')",[ids.admin]);
+check((await as('admin','DELETE FROM profiles WHERE id=$1 RETURNING id',[ids.admin])).rows.length===0);
+await as('admin',"SELECT moderate_account($1,'role','user','coach')",[ids.coach]);
+check((await as('coach','SELECT public.is_admin() AS allowed',[],{email:'professorchines2026@gmail.com'})).rows[0].allowed===false);
+await as('admin',"SELECT moderate_account($1,'role','admin','coach')",[ids.coach]);
 await as('admin',"SELECT moderate_account($1,'delete')",[ids.coach]);
 check((await db.query('SELECT * FROM auth.users WHERE id=$1',[ids.coach])).rows.length===0);
 check((await db.query('SELECT * FROM profiles WHERE id=$1',[ids.coach])).rows.length===0);
 check((await as('supervisor','SELECT * FROM moderation_audit')).rows.length>=7);
 await denied('anon','SELECT moderation_diagnostics()');
+// Recreated historical admin email and metadata never auto-promote a new signup.
+const recreated='ffffffff-ffff-4fff-8fff-ffffffffffff';
+await db.query(`INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES($1,'admin@coremotiom.com','{"role":"admin","account_type":"coach","sport":"Vôlei"}')`,[recreated]);
+const recreatedProfile=(await db.query('SELECT role,account_type,sport_interests FROM profiles WHERE id=$1',[recreated])).rows[0];
+check(recreatedProfile.role==='user' && recreatedProfile.account_type==='coach');
+check(recreatedProfile.sport_interests.includes('Vôlei'));
 await db.close();
 console.log(`PASS: ${checks} moderation authorization/persistence checks, including real PostgreSQL RLS and supervisor restrictions.`);

@@ -647,8 +647,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const adminDeleteUser = useCallback(
     async (userId: string) => {
       const target = allUsers.find((u) => u.id === userId);
-      if (!canDeleteTarget(user?.role, target?.email)) {
-        addToast('Operação Não Permitida', 'Somente administradores podem excluir contas; contas-mestre são protegidas.', 'error');
+      if (userId === user?.id || !canDeleteTarget(user?.role, target?.email)) {
+        addToast('Operação Não Permitida', 'Somente administradores podem excluir outras contas.', 'error');
         return;
       }
       try {

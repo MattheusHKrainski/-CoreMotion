@@ -6,7 +6,7 @@
 - Publicação, alteração e exclusão de anúncios usam o cliente autenticado e RLS. Oferta externa conectada também só apresenta sucesso depois da confirmação do banco: erro de conexão não vira uma oferta local publicada.
 - Abas da central: **Contas**, **Produtos de atletas**, **Ofertas externas**, **Comunidade**, **Talentos e seletivas**, **Denúncias e feedback**, **Pedidos** e **Banco de dados**.
 - Contas são consultadas automaticamente a cada 15 segundos e ao retornar à janela. São perfis reais criados pelo trigger de Auth, não atalhos temporários. A listagem distingue erro de consulta de uma lista vazia.
-- Administradores podem promover a supervisor e escolher Atleta, Treinador ou Casual, suspender/reativar e excluir uma conta. Contas da administração e a própria conta são protegidas contra ações destrutivas na central.
+- Administradores podem promover outras contas a Administrador ou Supervisor e escolher Atleta, Treinador ou Casual, suspender/reativar e excluir qualquer outra conta, inclusive de administrador. Somente a própria conta em uso é protegida na central e na RPC. Não há exceção por e-mail histórico.
 - Supervisores moderam anúncios, ofertas, comunidade, talentos, seletivas e pedidos, e suspendem contas comuns. Não podem excluir contas nem alterar papel ou tipo, inclusive chamando o banco diretamente. Supervisores não moderam outras contas da equipe.
 - As denúncias estão nos detalhes de produtos e ofertas, nas publicações da comunidade e nos cartões esportivos. Categorias: marketplace externo, anúncios de atletas, banco de talentos, seletivas/treinos e comunidade.
 - Responder a uma denúncia gera uma notificação ao denunciante. Pedir correção a um anunciante gera uma notificação à conta proprietária. Um anúncio legado sem conta vinculada não pode receber notificação interna: o banco informa essa impossibilidade em vez de inventar um destinatário.
@@ -23,6 +23,7 @@ Aplicadas ao projeto conectado, com cópias versionadas em `supabase/migrations`
 2. `20261104131000_supervisor_sports_moderation.sql`: moderação esportiva por supervisor e tipos esportivos lidos do perfil confiável, não dos metadados editáveis de Auth.
 3. `20261104132000_validate_sports_records.sql`: validação das identidades, currículos, seletivas e respostas esportivas.
 4. `20261104133000_harden_profile_guard.sql`: bloqueia edição por conta suspensa e alteração de vínculo de loja sem privilégio administrativo.
+5. `20261104220000_administrator_account_management.sql`: corrige o CHECK legado que rejeitava supervisor; libera promoção a administrador e gestão de outros administradores, preservando o bloqueio de autoexclusão. Privilégios passam a depender somente do papel persistido: recriar um e-mail histórico não restaura administração.
 
 Também foi removido o trigger legado **BEFORE INSERT** que confirmava automaticamente todo e-mail, contradizendo a configuração de Auth. O trigger **AFTER INSERT** de criação de perfil permanece. A migração versionada identifica especificamente o trigger legado para não remover um trigger de criação de perfil com o mesmo nome em instalações antigas.
 
@@ -30,10 +31,17 @@ Nenhuma chave privilegiada ou senha é necessária no navegador. Exclusão de co
 
 ## Verificação
 
-- `npm run test:unit`: 100 testes, incluindo gravação com JWT, campos permitidos, identidade divergente, ausência de linhas afetadas, erro de consulta e escrita sem sucesso falso.
-- `npm run test:db`: suíte existente de 77 cenários, testes de ofertas/contatos/curtidas e **45 verificações adicionais de moderação** com PostgreSQL/PGlite, papéis reais, RLS, triggers e RPCs. Nenhuma conta de teste é criada no projeto de produção.
+- `npm run test:unit`: 103 testes, incluindo gravação com JWT, campos permitidos, identidade divergente, ausência de linhas afetadas, erro de consulta e escrita sem sucesso falso.
+- `npm run test:db`: suíte existente de 77 cenários, testes de ofertas/contatos/curtidas e **52 verificações adicionais de moderação** com PostgreSQL/PGlite, papéis reais, RLS, triggers e RPCs. Nenhuma conta de teste é criada no projeto de produção.
 - Verificação de interface com Chromium e respostas HTTP controladas: abas, permissões de administrador e supervisor, feedback, análise, denúncia pública, diagnóstico, notificações, salvamento do perfil e retorno ao login no logout. Essa verificação não equivale a um login real contra o provedor.
 - `npm run type-check`, `npm run lint` e `npm run build`.
 - Consulta de conferência ao banco conectado: 4 perfis, 26 anúncios de atletas e 14 ofertas; trigger de perfil e validação esportiva presentes; bypass de confirmação ausente. Denúncias/notificações inicialmente vazias, sem dados de teste publicados.
 
 A atualização das migrações no Supabase é independente da publicação do frontend. A prévia usa os arquivos locais; GitHub/Vercel só mudam após publicação específica.
+
+## Limpeza autorizada dos pedidos antigos
+
+Foram removidos do banco conectado somente os dois registros mostrados pelo usuário:
+`95d3cd1a-2b7e-47ec-b5df-d1bf4c6500b9` e
+`76d89828-648d-4e06-8c4c-42e3e874b407`.
+A exclusão usou IDs explícitos, não uma limpeza geral da tabela. Novos pedidos não são removidos por carregamento da interface nem pela migração de permissões.

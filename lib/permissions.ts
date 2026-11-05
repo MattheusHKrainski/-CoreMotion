@@ -10,12 +10,12 @@
  *   visitor    → Visitante: navegação pública (sem login).
  *
  * Este módulo é puro (sem dependências de servidor/navegador) para poder ser usado
- * tanto no cliente quanto nas rotas de API. A função SQL public.is_master_email()
- * (migrações em supabase/migrations) deve manter a mesma lista de e-mails.
+ * tanto no cliente quanto nas rotas de API. A lista histórica de e-mails não concede privilégios: o papel persistido
+ * no banco é a autoridade para autenticação e autorização.
  */
 import type { UserRole } from './types';
 
-/** E-mails das contas-mestre (Super Admin). Comparação exata, sem prefixos. */
+/** E-mails históricos para atalhos e compatibilidade; não substituem o papel no banco. */
 const MASTER_ADMIN_EMAILS: readonly string[] = [
   'mattheus.h.krainski@gmail.com',
   'mattheusxmljz@gmail.com',
@@ -31,7 +31,7 @@ export function isMasterAdminEmail(email?: string | null): boolean {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   visitor: 'Visitante',
-  user: 'Atleta',
+  user: 'Conta comum',
   seller: 'Anunciante C2C',
   supervisor: 'Supervisor',
   admin: 'Administrador',
@@ -92,25 +92,29 @@ export function isStaffRole(role?: UserRole | null): boolean {
 
 /**
  * Um ator pode suspender/reativar um alvo?
- * - Ninguém age sobre contas-mestre.
- * - Administradores agem sobre qualquer conta (exceto mestre).
+ * - Administradores agem sobre outras contas, inclusive da administração.
+ * - A RPC e a interface protegem a conta em uso.
  * - Supervisores agem apenas sobre atletas e anunciantes.
  */
 export function canSuspendTarget(actorRole: UserRole | null | undefined, targetRole: UserRole, targetEmail?: string | null): boolean {
-  if (isMasterAdminEmail(targetEmail)) return false;
   if (actorRole === 'admin') return true;
+  if (isMasterAdminEmail(targetEmail)) return false;
   if (actorRole === 'supervisor') return targetRole === 'user' || targetRole === 'seller';
   return false;
 }
 
-/** Excluir conta: somente administradores, nunca contas-mestre. */
-export function canDeleteTarget(actorRole: UserRole | null | undefined, targetEmail?: string | null): boolean {
-  return actorRole === 'admin' && !isMasterAdminEmail(targetEmail);
+/** Excluir outra conta: somente administradores; a própria conta é bloqueada pela RPC. */
+export function canDeleteTarget(actorRole: UserRole | null | undefined, _targetEmail?: string | null): boolean {
+  // Compatibility parameter only: an email neither grants nor prevents administration.
+  void _targetEmail;
+  return actorRole === 'admin';
 }
 
-/** Alterar papel: somente administradores; contas-mestre permanecem administradoras. */
-export function canChangeRoleOf(actorRole: UserRole | null | undefined, targetEmail?: string | null): boolean {
-  return actorRole === 'admin' && !isMasterAdminEmail(targetEmail);
+/** Alterar papel de outra conta: somente administradores. */
+export function canChangeRoleOf(actorRole: UserRole | null | undefined, _targetEmail?: string | null): boolean {
+  // Compatibility parameter only: an email neither grants nor prevents administration.
+  void _targetEmail;
+  return actorRole === 'admin';
 }
 
 const ASSIGNABLE_ROLES: readonly UserRole[] = ['user', 'seller', 'supervisor', 'admin'];
