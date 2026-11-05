@@ -34,18 +34,19 @@ it('novos perfis têm avatares locais e dados completos sem contatos ou credenci
   }
   assert.ok(ADDITIONAL_ATHLETES.every(athlete => athlete.achievements.length > 0 && !athlete.instagram));
 });
-it('mostra treinadores e atletas com filtros de modalidade mesmo sem ativar dados locais das demais áreas', () => {
+it('mostra treinadores recreativos sem expor o banco de atletas', () => {
   const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(CoachesView)));
   assert.ok(html.includes(`${INITIAL_COACHES.length} treinadores`));
   assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
   assert.match(html, /Buscar treinador por nome, cidade ou especialidade/);
   assert.match(html, /Ordenar catálogo/);
   assert.match(html, /Profissionais da comunidade/);
-  assert.match(html, /10 atletas/);
-  assert.match(html, /Modalidade dos atletas/);
-  for (const profile of [...ADDITIONAL_COACHES, ...ADDITIONAL_ATHLETES]) assert.ok(html.includes(profile.name));
+  assert.doesNotMatch(html, /10 atletas|Modalidade dos atletas/);
+  assert.match(html, /associações esportivas/);
+  for (const profile of ADDITIONAL_COACHES) assert.ok(html.includes(profile.name));
+  for (const profile of ADDITIONAL_ATHLETES) assert.ok(!html.includes(profile.name));
   for (const sport of ['Pilates', 'Natação', 'Musculação', 'Futebol', 'Vôlei', 'Tênis']) assert.ok(html.includes(sport));
   const source = readFileSync('components/CoachesView.tsx', 'utf8');
   assert.match(source, /new Set\(coaches.flatMap/);
-  assert.match(source, /athlete.sport === athleteSport/);
+  assert.doesNotMatch(source, /athlete.sport === athleteSport/);
 });

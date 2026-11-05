@@ -1,8 +1,7 @@
 'use client';
-import { AuthService } from '@/services/auth';
-import { MIN_PASSWORD_LENGTH } from '@/lib/signup-validation';
-import { isValidEmailAddress } from '@/lib/email-validation';
 import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
+import { MIN_PASSWORD_LENGTH } from '@/lib/signup-validation';
+import { isValidEmailAddress, isAllowedSignupEmail, SIGNUP_EMAIL_HELP } from '@/lib/email-validation';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { IS_QUICK_ACCESS, QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
@@ -50,6 +49,7 @@ export default function AuthModal() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
+  const [pendingSignupEmail, setPendingSignupEmail] = useState('');
 
   useEffect(() => {
     if (isAuthModalOpen && prefillAuthEmail) {
@@ -69,14 +69,10 @@ export default function AuthModal() {
       if (IS_QUICK_ACCESS) { window.location.assign('/?login=admin'); return; }
       setLoading(true);
       try {
-        const resumed = await resumeAdminSession();
-        if (resumed) return;
+        if (await resumeAdminSession()) return;
         setEmail(ADMIN_LOGIN_EMAIL);
         setPassword('');
         setAuthModalMode('login');
-        const result = await AuthService.requestAdminAccessLink();
-        if (!result.success) setErrorMsg(result.error || 'Não foi possível enviar o link.');
-        else setInfoMsg(`Link de acesso enviado para ${ADMIN_LOGIN_EMAIL}. Abra o e-mail neste navegador para entrar sem senha. Nos próximos acessos, o atalho usará sua sessão enquanto ela for válida.`);
       } finally { setLoading(false); }
       return;
     }
@@ -90,6 +86,11 @@ export default function AuthModal() {
     setErrorMsg('');
     setInfoMsg('');
     if (!isValidEmailAddress(email)) { setErrorMsg('Informe um e-mail completo e válido, como nome@gmail.com.'); return; }
+    if (authModalMode === 'register' && pendingSignupEmail === email.trim().toLowerCase()) {
+      setInfoMsg('Confira a mensagem de confirmação e a pasta de spam. Depois, faça login. Não é necessário cadastrar este endereço novamente.');
+      return;
+    }
+    if (authModalMode === 'register' && !isAllowedSignupEmail(email)) { setErrorMsg(SIGNUP_EMAIL_HELP); return; }
     setLoading(true);
 
     try {
@@ -109,7 +110,11 @@ export default function AuthModal() {
           return;
         }
         const res = await signUpWithEmail(email, password, name, accountType, accountType === 'casual' ? undefined : sport.trim());
-        if (!res.success) {
+        if (res.confirmationRequired) {
+          setPendingSignupEmail(email.trim().toLowerCase());
+          setPassword('');
+          setInfoMsg('Confira seu e-mail e a pasta de spam para confirmar o endereço. Depois, faça login. Se já possui conta, use o login ou a recuperação de senha.');
+        } else if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
         } else {
           enterPlatform('home');
@@ -119,7 +124,7 @@ export default function AuthModal() {
         const client = getSupabaseClient();
         if (!client) throw new Error('Conecte o Supabase para recuperar sua senha.');
         const { error } = await client.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/auth/reset-password` });
-        if (error) throw new Error('Não foi possível enviar a recuperação. Aguarde e tente novamente.');
+        if (error) throw new Error(error.code === 'email_address_not_authorized' || error.code === 'over_email_send_rate_limit' ? 'Não foi possível enviar a recuperação. O serviço de e-mail precisa ser configurado ou atingiu o limite de envios. Entre em contato com o responsável pela plataforma.' : 'Não foi possível enviar a recuperação. Aguarde e tente novamente.');
         setInfoMsg('Se o endereço estiver cadastrado, você receberá um link para redefinir a senha.');
       }
     } catch (err: unknown) {
@@ -174,7 +179,7 @@ export default function AuthModal() {
                 Acesso Rápido:
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mb-3">Admin: sessão salva ou link por e-mail, sem digitar senha. Atleta, Treinador e Casual: perfis prontos para explorar, com alterações salvas apenas neste navegador.</p>
+            <p className="text-xs text-zinc-400 mb-3">Admin: conta oficial, com entrada pela sessão salva quando válida. Atleta, Treinador e Casual: perfis temporários com dados isolados neste navegador.</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {(['admin', 'athlete', 'coach', 'casual'] as const).map(type => <button key={type} disabled={loading} type="button" onClick={() => handleQuickLogin(type)} className="rounded-xl border border-zinc-800 bg-zinc-950 hover:border-red-600 p-3 font-bold text-white">{type === 'admin' ? '👑 Admin' : ACCOUNT_TYPES[type].label}</button>)}
             </div>
@@ -205,7 +210,7 @@ export default function AuthModal() {
             <button type="button" className="text-xs text-red-400 underline" onClick={() => { setAuthModalOpen(false); openWelcomePage(); setTimeout(() => document.getElementById('perfis')?.scrollIntoView({ behavior: 'smooth' }), 100); }}>Clique aqui para saber mais sobre os perfis</button>
           </div>}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          {authModalMode !== 'switch' && <form onSubmit={handleSubmit} className="space-y-3.5">
             {authModalMode === 'register' && (
               <>
                 <div>
@@ -239,11 +244,14 @@ export default function AuthModal() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu.email@exemplo.com"
+                  placeholder="seu.email@gmail.com"
+                  aria-describedby={authModalMode === 'register' ? 'signup-email-help' : undefined}
                   className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
                 />
               </div>
             </div>
+
+            {authModalMode === 'register' && <p id="signup-email-help" className="text-xs text-zinc-400">{SIGNUP_EMAIL_HELP}</p>}
 
             {authModalMode !== 'forgot' && (
               <div>
@@ -284,7 +292,7 @@ export default function AuthModal() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (authModalMode === 'register' && pendingSignupEmail === email.trim().toLowerCase())}
               className="w-full py-3 rounded-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-red-950/50 transition-all flex items-center justify-center gap-2 mt-2 hover:scale-[1.01] active:scale-95"
             >
               {loading ? (
@@ -293,14 +301,14 @@ export default function AuthModal() {
                 <>
                   <span>
                     {authModalMode === 'login' && 'Entrar na Plataforma'}
-                    {authModalMode === 'register' && 'Concluir Cadastro'}
+                    {authModalMode === 'register' && (pendingSignupEmail === email.trim().toLowerCase() ? 'Confira seu e-mail para continuar' : 'Concluir Cadastro')}
                     {authModalMode === 'forgot' && 'Enviar E-mail de Recuperação'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
-          </form>
+          </form>}
 
           {/* Mode Switcher Footer */}
           <div className="mt-6 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-400">

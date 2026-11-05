@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
+import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { OrderService } from '@/services';
 import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
@@ -52,7 +53,7 @@ const inputClass =
   'w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-600/60';
 
 export default function ProfileView() {
-  const { user, isVisitor, setAuthModalOpen, updateUserProfile, setActiveView, logout, orders, favorites, products, setCheckoutOpen } = useCoreMotiom();
+  const { user, isVisitor, setAuthModalOpen, setAuthModalMode, updateUserProfile, setActiveView, logout, orders, favorites, products, setCheckoutOpen } = useCoreMotiom();
 
   const [section, setSection] = useState<'details' | 'favorites' | 'orders' | 'products'>('details');
   const [selected, setSelected] = useState<Product | null>(null);
@@ -102,6 +103,7 @@ export default function ProfileView() {
       onSave={updateUserProfile}
       onOpenAdmin={() => setActiveView('admin')}
       onLogout={() => logout()}
+      onSwitchAccount={() => { setAuthModalMode('switch'); setAuthModalOpen(true); }}
     />}
     </>
   );
@@ -114,9 +116,10 @@ interface ProfileContentProps {
   onSave: (data: Partial<UserProfile>) => Promise<boolean>;
   onOpenAdmin: () => void;
   onLogout: () => void;
+  onSwitchAccount: () => void;
 }
 
-function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnly }: ProfileContentProps) {
+function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchAccount, ordersOnly }: ProfileContentProps) {
   const [form, setForm] = useState({
     name: user.name ?? '',
     phone: user.phone ?? '',
@@ -342,6 +345,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnl
               <LogOut className="w-4 h-4" aria-hidden="true" />
               Sair
             </button>
+            {QUICK_ACCESS_ENABLED && <button type="button" disabled={saving} onClick={onSwitchAccount} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm font-bold">Trocar conta</button>}
             <button
               type="submit"
               disabled={saving}

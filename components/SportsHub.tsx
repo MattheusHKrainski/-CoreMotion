@@ -3,7 +3,8 @@ import { notifyOwner } from '@/services/moderation';
 import ReportButton from '@/components/shared/ReportButton';
 import { scopedQuickStorage } from '@/lib/quick-access';
 import SportPicker from '@/components/shared/SportPicker';
-import { matchesSport } from '@/lib/modalities';
+import { matchesSportsRecord } from '@/lib/sports-workflow';
+import SportsActivityView from './SportsActivityView';
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { canAccessSports, canRecruit, type SportsRecord } from '@/lib/sports';
@@ -27,7 +28,7 @@ const fields = {
     achievements: 'Medalhas e conquistas',
     history: 'Equipes anteriores e estatísticas',
     availability: 'Disponibilidade para treinar',
-    contact: 'Contato profissional (será público)',
+    contact: 'Contato para treinadores',
   },
   coach: {
     name: 'Nome profissional',
@@ -68,7 +69,7 @@ export default function SportsHub({
   targetId?: string;
   refreshToken?: number;
 }) {
-  const { user, addToast } = useCoreMotiom();
+  const { user, addToast, setActiveView } = useCoreMotiom();
   const [records, setRecords] = useState<SportsRecord[]>([]);
   const [form, setForm] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<string | null>(null);
@@ -76,12 +77,7 @@ export default function SportsHub({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [filters, setFilters] = useState({
-    sport: '',
-    city: '',
-    age: '',
-    experience: '',
-    date: '',
-    category: '',
+    name: '', sport: '', age: '', city: '', category: '',
   });
   const client = getSupabaseClient();
   const owner = user?.supabase_id || user?.id || '';
@@ -95,6 +91,7 @@ export default function SportsHub({
           ? 'coach'
           : 'athlete';
   const sportsAllowed = canAccessSports(user);
+  const recruiting = canRecruit(user);
   useEffect(() => {
     setRecords([]);
     setError('');
@@ -104,7 +101,7 @@ export default function SportsHub({
   }, [owner, view]);
   useEffect(() => {
     let active = true;
-    if (!sportsAllowed) return;
+    if (!sportsAllowed || (view === 'talents' && !recruiting)) return;
     if (client) {
       client
         .from('sports_records')
@@ -130,13 +127,15 @@ export default function SportsHub({
     return () => {
       active = false;
     };
-  }, [owner, view, client, sportsAllowed, refreshToken]);
+  }, [owner, view, client, sportsAllowed, refreshToken, recruiting]);
   if (!canAccessSports(user))
     return (
       <div className="p-8 text-zinc-300">
         Esta área é exclusiva para atletas, treinadores e administradores.
       </div>
     );
+
+  if (view === 'talents' && !recruiting) return <SportsActivityView />;
 
   async function persist(record: SportsRecord, remove = false) {
     setBusy(true);
@@ -218,24 +217,7 @@ export default function SportsHub({
         (!targetId || r.id === targetId) &&
         (view !== 'sports-profile' || r.owner === owner)
     )
-    .filter((r) => {
-      const d = r.data;
-      return (
-        matchesSport(d.sport, filters.sport) &&
-        (!filters.city ||
-          (d.city || '').toLowerCase().includes(filters.city.toLowerCase())) &&
-        (!filters.age ||
-          (r.kind === 'trial'
-            ? Number(filters.age) >= Number(d.minAge) &&
-              Number(filters.age) <= Number(d.maxAge)
-            : Number(d.age) === Number(filters.age))) &&
-        (!filters.experience ||
-          Number(d.experience) >= Number(filters.experience)) &&
-        (!filters.date || d.date >= filters.date) &&
-        (!filters.category ||
-          d.category?.toLowerCase().includes(filters.category.toLowerCase()))
-      );
-    });
+    .filter(r => matchesSportsRecord(r, filters));
   const myProfile = records.find(
     (r) => r.owner === owner && r.kind === 'athlete'
   );
@@ -250,14 +232,14 @@ export default function SportsHub({
             ? 'Seletivas e treinos'
             : view === 'talents'
               ? 'Banco de atletas'
-              : 'Meu perfil esportivo'}
+              : user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Meu currículo esportivo'}
         </h1>
         <p className="text-sm text-zinc-400">
           {view === 'trials'
             ? 'Encontre sua próxima equipe. Confira requisitos e a rotina de treinos antes de se inscrever.'
             : view === 'talents'
               ? 'Currículos publicados pelos próprios atletas. Treinadores podem filtrar talentos e enviar convocações.'
-              : 'Personalize seu currículo. Somente dados publicados aqui serão exibidos no banco esportivo.'}
+              : user?.account_type === 'coach' ? 'Apresente sua formação, modalidades, metodologia e horários para a comunidade. Este é seu perfil profissional, não um currículo de atleta.' : 'Personalize seu currículo. Seu perfil é visível a treinadores e à equipe de moderação.'}
         </p>
         {((view === 'trials' && canRecruit(user)) ||
           view === 'sports-profile') && (
@@ -284,7 +266,7 @@ export default function SportsHub({
           >
             {view === 'trials'
               ? 'Publicar seletiva / treino'
-              : 'Editar meu currículo'}
+              : user?.account_type === 'coach' ? 'Editar meu perfil profissional' : 'Editar meu currículo'}
           </button>
         )}
       </header>
@@ -368,42 +350,10 @@ export default function SportsHub({
             options={records.map((r) => r.data.sport).filter(Boolean)}
           />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {Object.keys(filters)
-              .filter(
-                (k) =>
-                  k !== 'sport' &&
-                  (view === 'trials'
-                    ? k !== 'experience'
-                    : !['date', 'category'].includes(k))
-              )
-              .map((k) => (
-                <label className="text-xs text-zinc-400 space-y-2" key={k}>
-                  {
-                    {
-                      city: 'Cidade / UF',
-                      age: view === 'trials' ? 'Sua idade' : 'Idade',
-                      experience: 'Experiência mínima (anos)',
-                      date: 'A partir de',
-                      category: 'Categoria / SUB',
-                    }[k]
-                  }
-                  <input
-                    className={input}
-                    type={
-                      k === 'date'
-                        ? 'date'
-                        : ['age', 'experience'].includes(k)
-                          ? 'number'
-                          : 'text'
-                    }
-                    min="0"
-                    value={filters[k as keyof typeof filters]}
-                    onChange={(e) =>
-                      setFilters({ ...filters, [k]: e.target.value })
-                    }
-                  />
-                </label>
-              ))}
+            {(view === 'trials' ? ['city', 'category'] as const : ['name', 'age'] as const).map(k => <label className="text-xs text-zinc-400 space-y-2" key={k}>
+              <span className="block">{{ name: 'Nome do atleta', age: 'Idade', city: 'Local (cidade)', category: 'SUB / categoria' }[k]}</span>
+              <input className={input} type={k === 'age' ? 'number' : 'text'} min={k === 'age' ? '1' : undefined} max={k === 'age' ? '120' : undefined} value={filters[k]} onChange={e => setFilters({ ...filters, [k]: e.target.value })} placeholder={k === 'category' ? 'Ex.: SUB-17' : undefined} />
+            </label>)}
           </div>
           <div className="flex justify-between gap-3 text-sm text-zinc-400">
             <span role="status">{visible.length} resultados</span>
@@ -411,14 +361,7 @@ export default function SportsHub({
               type="button"
               className="text-red-400"
               onClick={() =>
-                setFilters({
-                  sport: '',
-                  city: '',
-                  age: '',
-                  experience: '',
-                  date: '',
-                  category: '',
-                })
+                setFilters({ name: '', sport: '', age: '', city: '', category: '' })
               }
             >
               Limpar filtros
@@ -431,8 +374,7 @@ export default function SportsHub({
           role="status"
           className="rounded-2xl border border-zinc-800 p-6 text-sm text-zinc-400"
         >
-          Nenhum resultado encontrado. Experimente outra modalidade, cidade ou
-          limpe os filtros.
+          Nenhum resultado encontrado. Ajuste os filtros ou limpe a busca.
         </p>
       )}
       <div className="grid md:grid-cols-2 gap-4">
@@ -500,6 +442,7 @@ export default function SportsHub({
                           recipient: r.owner,
                           name: user!.name,
                           profile: myProfile.id,
+                          targetName: r.data.name,
                         },
                       });
                     }}
@@ -540,6 +483,7 @@ export default function SportsHub({
                         recipient: r.owner,
                         name: user!.name,
                         message,
+                        targetName: r.data.name,
                       },
                     });
                 }}
@@ -621,53 +565,7 @@ export default function SportsHub({
           perfil.
         </p>
       )}
-      <aside className="p-6 border border-zinc-800 rounded-2xl space-y-3">
-        <h2 className="font-bold">Inscrições e convocações</h2>
-        {records
-          .filter(
-            (r) =>
-              ['application', 'invite'].includes(r.kind) &&
-              (r.owner === owner ||
-                r.data.recipient === owner ||
-                ['admin', 'supervisor'].includes(user?.role || ''))
-          )
-          .map((r) => (
-            <div
-              key={r.id}
-              className="p-3 bg-zinc-900 rounded-xl text-sm space-y-2"
-            >
-              <p>
-                {r.kind === 'invite' ? 'Convocação' : 'Inscrição'} •{' '}
-                {r.data.name}
-              </p>
-              <p>
-                {r.data.message ||
-                  records.find((t) => t.id === r.data.target)?.data.name}
-              </p>
-              <p className="text-zinc-400">
-                {r.data.status || 'Aguardando resposta'}
-              </p>
-              {r.data.recipient === owner && !r.data.status && (
-                <div className="flex gap-4">
-                  {['Aceito', 'Recusado'].map((status) => (
-                    <button
-                      disabled={busy}
-                      key={status}
-                      onClick={() =>
-                        void persist({ ...r, data: { ...r.data, status } })
-                      }
-                    >
-                      {status === 'Aceito' ? 'Aceitar' : 'Recusar'}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        <p className="text-xs text-zinc-500">
-          Acompanhe suas respostas aqui. Uma inscrição não garante aprovação.
-        </p>
-      </aside>
+      <aside className="p-6 border border-zinc-700 rounded-2xl space-y-3"><h2 className="font-bold">Acompanhe suas atividades</h2><button className="text-sm text-red-400 font-bold" onClick={() => setActiveView(recruiting ? 'sports-activity' : 'talents')}>{recruiting ? 'Ver minhas convocações e inscritos →' : 'Ver convocações e minhas inscrições →'}</button></aside>
     </section>
   );
 }

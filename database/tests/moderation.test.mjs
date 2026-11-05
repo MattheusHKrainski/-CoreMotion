@@ -22,6 +22,7 @@ for (const file of ['20261104130000_moderation_workspace.sql','20261104131000_su
 await db.exec("ALTER TABLE profiles DROP CONSTRAINT profiles_role_check; ALTER TABLE profiles ADD CONSTRAINT profiles_role_check CHECK(role IN ('admin','merchant','seller','user'))");
 await migrate('20261104220000_administrator_account_management.sql');
 await migrate('20261104223000_delete_moderation_report.sql');
+await migrate('20261105010000_private_athlete_directory.sql');
 const ids = { admin:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',supervisor:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',athlete:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',coach:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',casual:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' };
 for (const [role,id] of Object.entries(ids)) {
  await db.query('INSERT INTO auth.users(id,email) VALUES($1,$2)',[id,`${role}@test.invalid`]);
@@ -87,6 +88,33 @@ const profile=(await as('athlete',`INSERT INTO sports_records(owner,kind,data) V
 await as('supervisor',`UPDATE sports_records SET data=jsonb_set(data,'{city}','"Londrina"') WHERE id=$1`,[profile.id]);
 check((await as('supervisor',"SELECT data->>'city' AS city FROM sports_records WHERE id=$1",[profile.id])).rows[0].city==='Londrina');
 check((await as('casual','SELECT * FROM sports_records WHERE id=$1',[profile.id])).rows.length===0);
+// Athlete directory is private even when queried directly, not only hidden in navigation.
+check((await as('athlete','SELECT id FROM sports_records WHERE id=$1',[profile.id])).rows.length===1);
+check((await as('coach','SELECT id FROM sports_records WHERE id=$1',[profile.id])).rows.length===1);
+await db.query("UPDATE profiles SET account_type='athlete' WHERE id=$1",[ids.casual]);
+check((await as('casual','SELECT id FROM sports_records WHERE id=$1',[profile.id])).rows.length===0);
+await db.query("UPDATE profiles SET account_type='casual' WHERE id=$1",[ids.casual]);
+const invite=(await as('coach',`INSERT INTO sports_records(owner,kind,data) VALUES($1,'invite',$2) RETURNING id`,[ids.coach,JSON.stringify({target:profile.id,recipient:ids.athlete,name:'Treinador',message:'Convocação para treino'})])).rows[0];
+check((await as('athlete','SELECT id FROM sports_records WHERE id=$1',[invite.id])).rows.length===1);
+check((await as('casual','SELECT id FROM sports_records WHERE id=$1',[invite.id])).rows.length===0);
+await denied('coach',`UPDATE sports_records SET data=jsonb_set(data,'{status}','"Aceito"') WHERE id=$1`,[invite.id]);
+await as('athlete',`UPDATE sports_records SET data=jsonb_set(data,'{status}','"Aceito"') WHERE id=$1`,[invite.id]);
+check((await as('coach',"SELECT data->>'status' AS status FROM sports_records WHERE id=$1",[invite.id])).rows[0].status==='Aceito');
+await as('coach','DELETE FROM sports_records WHERE id=$1',[invite.id]);
+// Pending applications can be cancelled by their athlete, not by the recipient or other accounts.
+const trialData={name:'Treino para inscrição',sport:'Vôlei',city:'Curitiba',team:'Equipe',address:'Ginásio',date:'2099-12-31',time:'10:00',minAge:'18',maxAge:'25',category:'SUB-25',requirements:'Documento',deadline:'2099-12-30',trainingDays:'Segunda',trainingTime:'10:00',trainingLocation:'Ginásio',contact:'equipe@example.test'};
+const trial=(await as('coach',"INSERT INTO sports_records(owner,kind,data) VALUES($1,'trial',$2) RETURNING id",[ids.coach,JSON.stringify(trialData)])).rows[0];
+const signup=async()=> (await as('athlete',"INSERT INTO sports_records(owner,kind,data) VALUES($1,'application',$2) RETURNING id",[ids.athlete,JSON.stringify({target:trial.id,recipient:ids.coach,profile:profile.id,name:'Atleta'})])).rows[0];
+const application=await signup();
+const cancelSQL="DELETE FROM sports_records WHERE id=$1 AND kind='application' AND data->>'status' IS NULL RETURNING id";
+for (const actor of ['casual','coach']) check((await as(actor,cancelSQL,[application.id])).rows.length===0);
+check((await as('athlete',cancelSQL,[application.id])).rows.length===1);
+check((await as('coach','SELECT id FROM sports_records WHERE id=$1',[application.id])).rows.length===0);
+const reapplied=await signup();
+await as('coach',`UPDATE sports_records SET data=jsonb_set(data,'{status}','"Aceito"') WHERE id=$1`,[reapplied.id]);
+check((await as('athlete',cancelSQL,[reapplied.id])).rows.length===0);
+await as('supervisor','DELETE FROM sports_records WHERE id=$1',[reapplied.id]);
+await as('coach','DELETE FROM sports_records WHERE id=$1',[trial.id]);
 await as('supervisor','DELETE FROM sports_records WHERE id=$1',[profile.id]);
 check((await as('supervisor','SELECT * FROM sports_records')).rows.length===0);
 await denied('athlete','SELECT moderation_diagnostics()');
@@ -128,5 +156,15 @@ for (const actor of ['supervisor','admin']) {
 check((await as('athlete','SELECT id FROM moderation_reports WHERE id=$1',[report.id])).rows.length===1);
 check((await as('admin',"SELECT id FROM moderation_audit WHERE action='report_deleted'")).rows.length===2);
 check((await db.query('SELECT id FROM products WHERE id=$1',[product.id])).rows.length===1);
+// New signup provider restrictions coexist with existing accounts and role guards.
+await migrate('20261105020000_signup_email_providers.sql');
+for (const email of ['tcc.signup@gmail.com','tcc.signup@hotmail.com','tcc.signup@OUTLOOK.COM']) {
+ const created=(await db.query('INSERT INTO auth.users(email,raw_user_meta_data) VALUES($1,$2) RETURNING id',[email,JSON.stringify({role:'admin',account_type:'athlete'})])).rows[0];
+ check((await db.query('SELECT role FROM profiles WHERE id=$1',[created.id])).rows[0].role==='user');
+}
+for (const email of ['tcc.signup@yahoo.com','tcc.signup@gmail.com.evil.com','tcc.signup@sub.gmail.com','tcc.signup gmail.com','tcc.signup@gmail.com@outlook.com']) {
+ await assert.rejects(db.query('INSERT INTO auth.users(email) VALUES($1)',[email]), /Use um e-mail/); checks++;
+}
+check((await as('admin','SELECT id FROM profiles WHERE id=$1',[ids.admin])).rows.length===1);
 await db.close();
 console.log(`PASS: ${checks} moderation authorization/persistence checks, including real PostgreSQL RLS and supervisor restrictions.`);

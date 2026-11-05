@@ -35,12 +35,12 @@ it('oferece quatro atalhos, sem botão Google, com scroll interno e bloqueio do 
   assert.match(store, /await sb.auth.getUser\(\)/);
   assert.match(store, /setTimeout\(async \(\) =>/);
 });
-it('isola o armazenamento dos perfis temporários e nunca cria Admin temporário', () => {
+it('isola os perfis temporários e direciona Admin à conta oficial', () => {
   assert.equal(quickProfileFromSearch('?acesso-rapido=admin'), 'admin');
   const store = readFileSync('lib/store.tsx', 'utf8');
   assert.match(store, /QUICK_PROFILE === 'admin'.*window.location.replace/);
-  const keys = ['athlete', 'coach', 'casual'].map(type => quickStorageKey('state', quickProfileFromSearch(`?acesso-rapido=${type}`)));
-  assert.equal(new Set(keys).size, 3);
+  const keys = ['admin', 'athlete', 'coach', 'casual'].map(type => quickStorageKey('state', quickProfileFromSearch(`?acesso-rapido=${type}`)));
+  assert.equal(new Set(keys).size, 4);
 });
 it('cada perfil rápido funciona com Supabase configurado sem criar cliente ou enviar alterações reais', () => {
   for (const kind of ['athlete', 'coach', 'casual']) {

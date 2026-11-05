@@ -38,7 +38,7 @@ it('inicializa uma vez e não ressuscita exclusões nem sobrescreve edições', 
 });
 it('preserva perfil próprio já cadastrado antes da carga inicial', () => {
   const store = storage();
-  const mine: SportsRecord = { id: 'existing', owner: 'user-c2c-1-athlete', kind: 'athlete', data: { name: 'Meu currículo' } };
+  const mine: SportsRecord = { id: 'existing', owner: 'quick-athlete', kind: 'athlete', data: { name: 'Meu currículo' } };
   store.setItem('coremotion_sports_v1', JSON.stringify([mine]));
   const records = loadSportsPreview(store);
   assert.deepEqual(records.find(r => r.id === 'existing'), mine);

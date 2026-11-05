@@ -1,7 +1,7 @@
 import { it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { isValidEmailAddress } from '@/lib/email-validation';
+import { isValidEmailAddress, isAllowedSignupEmail } from '@/lib/email-validation';
 
 it('aceita provedores comuns e domínios próprios completos', () => {
   for (const email of ['nome@gmail.com', 'nome@hotmail.com', 'nome@outlook.com', 'nome@yahoo.com.br', 'nome+teste@minhaempresa.com.br']) assert.ok(isValidEmailAddress(email), email);
@@ -36,4 +36,10 @@ it('login não mostra convite de novo perfil e senha pode ser exibida nos dois m
   assert.match(source, /authModalMode === 'register' && <div className="mb-5/);
   assert.match(source, /type=\{showPassword \? 'text' : 'password'\}/);
   assert.match(source, /showPassword \? 'Ocultar senha' : 'Ver senha'/);
+});
+
+it('novos cadastros aceitam apenas os três provedores exatos sem restringir contas existentes', () => {
+ for (const email of ['Pessoa@GMAIL.COM', 'nome+teste@hotmail.com', ' nome@outlook.com ']) assert.equal(isAllowedSignupEmail(email), true);
+ for (const email of ['nome@yahoo.com', 'nome@gmail.com.evil.com', 'nome@sub.gmail.com', 'a@@gmail.com', 'a b@gmail.com']) assert.equal(isAllowedSignupEmail(email), false);
+ assert.equal(isValidEmailAddress('antigo@empresa.com.br'), true);
 });
