@@ -114,3 +114,9 @@ export async function getDiagnostics(): Promise<ModerationDiagnostics> {
     throw new Error(error?.message || 'Diagnóstico indisponível.');
   return data as ModerationDiagnostics;
 }
+
+/** Permanent removal is staff-only; the RPC also writes a moderation audit event. */
+export async function deleteReport(id: string) {
+  const { error } = await moderationClient().rpc('delete_moderation_report', { p_id: id });
+  if (error) throw new Error(error.message);
+}

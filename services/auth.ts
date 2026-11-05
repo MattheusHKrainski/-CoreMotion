@@ -1,3 +1,4 @@
+import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
 import { MIN_PASSWORD_LENGTH, signupErrorMessage } from '@/lib/signup-validation';
 import { getSupabaseClient } from './supabaseClient';
 import { UserProfile } from '@/lib/types';
@@ -69,6 +70,20 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
 }
 
 export class AuthService {
+  /** Passwordless first access still requires proving ownership of the administrator's inbox. */
+  static async requestAdminAccessLink(): Promise<AuthResponse> {
+    const sb = getSupabaseClient();
+    if (!sb || typeof window === 'undefined') return { success: false, error: 'Conexão de autenticação indisponível.' };
+    try {
+      const { error } = await sb.auth.signInWithOtp({ email: ADMIN_LOGIN_EMAIL, options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth/callback?admin=1`,
+      } });
+      if (error) return { success: false, error: /rate|too many|429/i.test(error.message) ? 'Limite de envios atingido. Aguarde antes de pedir outro link ou entre com e-mail e senha.' : 'Não foi possível enviar o link de acesso. Tente novamente ou entre com e-mail e senha.' };
+      return { success: true };
+    } catch { return { success: false, error: 'Não foi possível conectar ao serviço de autenticação. Nenhum acesso foi liberado.' }; }
+  }
+
   /**
    * Entra com e-mail e senha pelo Supabase Auth e sincroniza o perfil.
    * Credencial recusada é falha: nenhuma sessão é criada.

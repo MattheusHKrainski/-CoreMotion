@@ -1,4 +1,5 @@
 'use client';
+import { AuthService } from '@/services/auth';
 import { MIN_PASSWORD_LENGTH } from '@/lib/signup-validation';
 import { isValidEmailAddress } from '@/lib/email-validation';
 import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
@@ -67,13 +68,16 @@ export default function AuthModal() {
     if (type === 'admin') {
       if (IS_QUICK_ACCESS) { window.location.assign('/?login=admin'); return; }
       setLoading(true);
-      const resumed = await resumeAdminSession();
-      setLoading(false);
-      if (resumed) return;
-      setEmail(ADMIN_LOGIN_EMAIL);
-      setPassword('');
-      setAuthModalMode('login');
-      setInfoMsg('Entre uma vez com sua conta Admin. Nos próximos acessos, este navegador usará sua sessão enquanto ela for válida.');
+      try {
+        const resumed = await resumeAdminSession();
+        if (resumed) return;
+        setEmail(ADMIN_LOGIN_EMAIL);
+        setPassword('');
+        setAuthModalMode('login');
+        const result = await AuthService.requestAdminAccessLink();
+        if (!result.success) setErrorMsg(result.error || 'Não foi possível enviar o link.');
+        else setInfoMsg(`Link de acesso enviado para ${ADMIN_LOGIN_EMAIL}. Abra o e-mail neste navegador para entrar sem senha. Nos próximos acessos, o atalho usará sua sessão enquanto ela for válida.`);
+      } finally { setLoading(false); }
       return;
     }
     setLoading(true);
@@ -170,7 +174,7 @@ export default function AuthModal() {
                 Acesso Rápido:
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mb-3">Admin: sua conta real, com a sessão salva. Atleta, Treinador e Casual: perfis prontos para explorar, com alterações salvas apenas neste navegador.</p>
+            <p className="text-xs text-zinc-400 mb-3">Admin: sessão salva ou link por e-mail, sem digitar senha. Atleta, Treinador e Casual: perfis prontos para explorar, com alterações salvas apenas neste navegador.</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {(['admin', 'athlete', 'coach', 'casual'] as const).map(type => <button key={type} disabled={loading} type="button" onClick={() => handleQuickLogin(type)} className="rounded-xl border border-zinc-800 bg-zinc-950 hover:border-red-600 p-3 font-bold text-white">{type === 'admin' ? '👑 Admin' : ACCOUNT_TYPES[type].label}</button>)}
             </div>

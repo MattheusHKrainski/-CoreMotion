@@ -39,7 +39,7 @@ export default function AuthCallbackPage() {
             }, 800);
           } else {
             // If opened directly, redirect to home
-            window.location.href = '/';
+            window.location.href = new URLSearchParams(window.location.search).get('admin') === '1' ? '/?login=admin' : '/';
           }
         } else {
           // Retry briefly for slow hash parsing
@@ -57,7 +57,7 @@ export default function AuthCallbackPage() {
                 );
                 window.close();
               } else {
-                window.location.href = '/';
+                window.location.href = new URLSearchParams(window.location.search).get('admin') === '1' ? '/?login=admin' : '/';
               }
             } else {
               setStatus('error');
@@ -66,7 +66,7 @@ export default function AuthCallbackPage() {
           }, 1000);
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Falha na autenticação OAuth.';
+        const msg = err instanceof Error ? err.message : 'Falha na autenticação.';
         setStatus('error');
         setErrorMessage(msg);
         if (window.opener) {
@@ -92,7 +92,7 @@ export default function AuthCallbackPage() {
         {status === 'loading' && (
           <>
             <div className="w-8 h-8 border-3 border-red-500 border-t-transparent rounded-full animate-spin mx-auto" />
-            <h2 className="text-lg font-bold text-white">Autenticando com Google...</h2>
+            <h2 className="text-lg font-bold text-white">Validando seu acesso...</h2>
             <p className="text-xs text-zinc-400">
               Validando credenciais com o Supabase. Esta janela fechará automaticamente.
             </p>
@@ -121,7 +121,7 @@ export default function AuthCallbackPage() {
             <button
               onClick={() => {
                 if (window.opener) window.close();
-                else window.location.href = '/';
+                else window.location.href = new URLSearchParams(window.location.search).get('admin') === '1' ? '/?login=admin' : '/';
               }}
               className="mt-4 px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-full transition-colors"
             >

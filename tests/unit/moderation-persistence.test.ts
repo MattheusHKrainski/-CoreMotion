@@ -7,6 +7,8 @@ const user = { id, email: 'atleta@test.com', role: 'authenticated', aud: 'authen
 const token = `${Buffer.from('{"alg":"HS256"}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: id, exp: Math.floor(Date.now()/1000)+3600 })).toString('base64url')}.test-signature`;
 let failWrites = false;
 let failReads = false;
+let failOtp = false;
+let otpPayload: Record<string, unknown> = {};
 let deniedRow = false;
 const writes: { path: string; method: string; payload: Record<string, unknown> }[] = [];
 let sqlCalls = 0;
@@ -16,6 +18,7 @@ const server = http.createServer(async (req, res) => {
   const json = (status: number, data: unknown) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(data)); };
   if (path.startsWith('/api/')) { sqlCalls++; return json(503, { error: 'SQL unavailable' }); }
   if (path.startsWith('/auth/v1/token')) return json(200, { user, access_token: token, refresh_token: 'refresh', token_type: 'bearer', expires_in: 3600 });
+  if (path.startsWith('/auth/v1/otp')) { otpPayload=JSON.parse(body || '{}'); return failOtp ? json(429,{message:'Email rate limit exceeded'}) : json(200,{}); }
   if (path.startsWith('/auth/v1/user')) return json(200, user);
   if (path.startsWith('/auth/v1/logout')) return json(200, {});
   if (req.headers.authorization !== `Bearer ${token}`) return json(401, { message: 'Missing JWT' });
@@ -48,7 +51,7 @@ before(async () => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = base;
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'public-test-key-only';
   const data = new Map<string, string>();
-  Object.defineProperty(globalThis, 'window', { configurable: true, value: { localStorage: { getItem: (key: string) => data.get(key) || null, setItem: (key: string, value: string) => data.set(key, value), removeItem: (key: string) => data.delete(key) }, location: { href: base, search: '', hash: '' } } });
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { localStorage: { getItem: (key: string) => data.get(key) || null, setItem: (key: string, value: string) => data.set(key, value), removeItem: (key: string) => data.delete(key) }, location: { origin: base, href: base, search: '', hash: '' } } });
   auth = await import('../../services/auth'); products = await import('../../services/products'); moderation = await import('../../services/moderation');
   sb = (await import('../../services/supabaseClient')).getSupabaseClient();
   const login = await auth.AuthService.loginWithEmail('atleta@test.com', 'correct-password');
@@ -94,6 +97,8 @@ describe('authenticated writes use JWT + RLS, never unavailable SQL or fake succ
   it('persists categorized reports and uses restricted RPCs for feedback and reviews', async () => {
     await moderation.submitReport('trial', id, 'Seletiva', 'Dados incorretos');
     assert.deepEqual(writes.at(-1)?.payload, { category: 'trial', target_id: id, target_title: 'Seletiva', reason: 'Dados incorretos' });
+    await moderation.deleteReport('report-id');
+    assert.ok(writes.at(-1)?.path.includes('/rpc/delete_moderation_report'));
     await moderation.reviewReport('report-id', 'resolved', 'Dados revisados');
     assert.ok(writes.at(-1)?.path.includes('/rpc/review_moderation_report'));
     await moderation.notifyOwner('athlete_listing', id, 'Corrija as fotos');
@@ -106,7 +111,19 @@ describe('authenticated writes use JWT + RLS, never unavailable SQL or fake succ
       assert.equal((await auth.AuthService.updateProfile(id, { name: 'Falha' })).success, false);
       assert.equal((await products.ProductService.updateProduct(id, { title: 'Falha' })).success, false);
       assert.equal((await products.ProductService.deleteProduct(id)).success, false);
+      await assert.rejects(moderation.deleteReport('report-id'), /Database unavailable/);
       await assert.rejects(moderation.submitReport('external_offer', id, 'Oferta', 'Preço incorreto'), /Database unavailable/);
     } finally { failWrites = false; }
   });
+});
+
+it('Admin link never creates an account or grants a session merely by requesting email delivery', async () => {
+  const before = (await sb!.auth.getSession()).data.session?.access_token;
+  assert.equal((await auth.AuthService.requestAdminAccessLink()).success, true);
+  assert.equal(otpPayload.email, 'mattheus.h.krainski@gmail.com');
+  assert.equal(otpPayload.create_user, false);
+  assert.equal((await sb!.auth.getSession()).data.session?.access_token, before);
+  failOtp = true;
+  try { const result=await auth.AuthService.requestAdminAccessLink(); assert.equal(result.success, false); assert.match(result.error || '', /Limite de envios/); }
+  finally { failOtp = false; }
 });

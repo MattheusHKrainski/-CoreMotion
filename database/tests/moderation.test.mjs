@@ -21,6 +21,7 @@ for (const file of ['20261104130000_moderation_workspace.sql','20261104131000_su
 // Reproduce the legacy production constraint from the reported error.
 await db.exec("ALTER TABLE profiles DROP CONSTRAINT profiles_role_check; ALTER TABLE profiles ADD CONSTRAINT profiles_role_check CHECK(role IN ('admin','merchant','seller','user'))");
 await migrate('20261104220000_administrator_account_management.sql');
+await migrate('20261104223000_delete_moderation_report.sql');
 const ids = { admin:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',supervisor:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',athlete:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',coach:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',casual:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' };
 for (const [role,id] of Object.entries(ids)) {
  await db.query('INSERT INTO auth.users(id,email) VALUES($1,$2)',[id,`${role}@test.invalid`]);
@@ -115,5 +116,17 @@ await db.query(`INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES($1,'a
 const recreatedProfile=(await db.query('SELECT role,account_type,sport_interests FROM profiles WHERE id=$1',[recreated])).rows[0];
 check(recreatedProfile.role==='user' && recreatedProfile.account_type==='coach');
 check(recreatedProfile.sport_interests.includes('Vôlei'));
+// Only staff can delete complaints; content and unrelated reports remain intact.
+for (const actor of ['supervisor','admin']) {
+ const disposable=(await as('athlete',"INSERT INTO moderation_reports(category,target_id,target_title,reason) VALUES('community','kept-content','Publicação preservada','Spam ou publicidade indevida') RETURNING id")).rows[0];
+ await denied('athlete','SELECT delete_moderation_report($1)',[disposable.id]);
+ await denied('anon','SELECT delete_moderation_report($1)',[disposable.id]);
+ await as(actor,'SELECT delete_moderation_report($1)',[disposable.id]);
+ check((await as('athlete','SELECT id FROM moderation_reports WHERE id=$1',[disposable.id])).rows.length===0);
+ await denied(actor,'SELECT delete_moderation_report($1)',[disposable.id],/não encontrada/i);
+}
+check((await as('athlete','SELECT id FROM moderation_reports WHERE id=$1',[report.id])).rows.length===1);
+check((await as('admin',"SELECT id FROM moderation_audit WHERE action='report_deleted'")).rows.length===2);
+check((await db.query('SELECT id FROM products WHERE id=$1',[product.id])).rows.length===1);
 await db.close();
 console.log(`PASS: ${checks} moderation authorization/persistence checks, including real PostgreSQL RLS and supervisor restrictions.`);

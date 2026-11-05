@@ -31,8 +31,8 @@ Nenhuma chave privilegiada ou senha é necessária no navegador. Exclusão de co
 
 ## Verificação
 
-- `npm run test:unit`: 103 testes, incluindo gravação com JWT, campos permitidos, identidade divergente, ausência de linhas afetadas, erro de consulta e escrita sem sucesso falso.
-- `npm run test:db`: suíte existente de 77 cenários, testes de ofertas/contatos/curtidas e **52 verificações adicionais de moderação** com PostgreSQL/PGlite, papéis reais, RLS, triggers e RPCs. Nenhuma conta de teste é criada no projeto de produção.
+- `npm run test:unit`: 107 testes, incluindo gravação com JWT, campos permitidos, identidade divergente, ausência de linhas afetadas, erro de consulta e escrita sem sucesso falso.
+- `npm run test:db`: suíte existente de 77 cenários, testes de ofertas/contatos/curtidas e **63 verificações adicionais de moderação** com PostgreSQL/PGlite, papéis reais, RLS, triggers e RPCs. Nenhuma conta de teste é criada no projeto de produção.
 - Verificação de interface com Chromium e respostas HTTP controladas: abas, permissões de administrador e supervisor, feedback, análise, denúncia pública, diagnóstico, notificações, salvamento do perfil e retorno ao login no logout. Essa verificação não equivale a um login real contra o provedor.
 - `npm run type-check`, `npm run lint` e `npm run build`.
 - Consulta de conferência ao banco conectado: 4 perfis, 26 anúncios de atletas e 14 ofertas; trigger de perfil e validação esportiva presentes; bypass de confirmação ausente. Denúncias/notificações inicialmente vazias, sem dados de teste publicados.
@@ -45,3 +45,12 @@ Foram removidos do banco conectado somente os dois registros mostrados pelo usu�
 `95d3cd1a-2b7e-47ec-b5df-d1bf4c6500b9` e
 `76d89828-648d-4e06-8c4c-42e3e874b407`.
 A exclusão usou IDs explícitos, não uma limpeza geral da tabela. Novos pedidos não são removidos por carregamento da interface nem pela migração de permissões.
+
+## Acesso sem senha e exclusão de denúncias
+
+- O atalho Admin tenta primeiro reutilizar a sessão persistida, validando a identidade e o papel no banco. Sem sessão válida, o clique solicita um link de acesso ao e-mail administrativo, com `shouldCreateUser: false`. Não há senha, chave privilegiada ou token fixo no frontend. Pedir um link não cria sessão; é preciso abrir o e-mail no mesmo navegador para concluir PKCE. Login por senha continua disponível como alternativa.
+- A rota de callback reconhece o marcador fixo `admin=1` e encaminha ao atalho que valida o perfil; o parâmetro não concede privilégios. URLs específicas de retorno para produção e para a prévia atual foram adicionadas à configuração do projeto, preservando as existentes.
+- O envio depende do serviço de e-mail e dos limites do Supabase. Falha ou limite de envio aparece como erro, sem informar sucesso falso. Os testes não enviam e-mails reais nem comprovam entrega na caixa postal.
+- Motivos selecionáveis: abuso/assédio, palavras inapropriadas, ódio/discriminação, spam, fraude, informações incorretas, conteúdo impróprio e outro. Detalhes são opcionais, exceto em Outro; a seleção e os detalhes são persistidos no texto da denúncia.
+- `20261104223000_delete_moderation_report.sql` adiciona RPC de exclusão restrita à equipe, com auditoria. Admin e Supervisor podem excluir uma denúncia junto aos controles de análise, mediante confirmação. A ação não remove o conteúdo denunciado nem envia nova notificação; respostas anteriores permanecem. Arquivar e notificar continua sendo a alternativa para explicar a decisão ao denunciante.
+- Chromium com respostas controladas validou o pedido do link Admin sem senha e sem sessão fictícia, a seleção do motivo e a exclusão por supervisor. Os testes PostgreSQL comprovam bloqueio para usuário comum/visitante, exclusão por Admin/Supervisor, auditoria e preservação de outros registros.

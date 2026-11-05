@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { REPORT_REASONS, buildReportReason } from '@/lib/report-reasons';
 import { Flag, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { submitReport, type ReportCategory } from '@/services/moderation';
@@ -17,6 +18,7 @@ export default function ReportButton({
     useCoreMotiom();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [reasonCode, setReasonCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return (
@@ -46,8 +48,9 @@ export default function ReportButton({
             setBusy(true);
             setError('');
             try {
-              await submitReport(category, targetId, title, reason);
+              await submitReport(category, targetId, title, buildReportReason(reasonCode, reason));
               setReason('');
+              setReasonCode('');
               setOpen(false);
               addToast(
                 'Denúncia enviada',
@@ -75,9 +78,16 @@ export default function ReportButton({
           </div>
           <label className="block text-zinc-300">
             Motivo da denúncia
+            <select required value={reasonCode} onChange={e => setReasonCode(e.target.value)} className="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-white">
+              <option value="" disabled>Escolha o motivo</option>
+              {Object.entries(REPORT_REASONS).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+            </select>
+          </label>
+          <label className="block text-zinc-300">
+            {reasonCode === 'other' ? 'Descreva o motivo' : 'Detalhes adicionais (opcional)'}
             <textarea
-              required
-              minLength={5}
+              required={reasonCode === 'other'}
+              minLength={reasonCode === 'other' ? 5 : undefined}
               maxLength={2000}
               value={reason}
               onChange={(e) => setReason(e.target.value)}

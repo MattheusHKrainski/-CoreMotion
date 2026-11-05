@@ -30,6 +30,7 @@ import {
   listReports,
   notifyOwner,
   reviewReport,
+  deleteReport,
   REPORT_CATEGORIES,
   REPORT_STATUSES,
   type ModerationDiagnostics,
@@ -137,11 +138,13 @@ function ReportReview({
   report,
   busy,
   onSave,
+  onDelete,
   onOpen,
 }: {
   report: ModerationReport;
   busy: boolean;
   onSave: (status: Exclude<ReportStatus, 'open'>, response: string) => void;
+  onDelete: () => void;
   onOpen: () => void;
 }) {
   const [status, setStatus] = useState<Exclude<ReportStatus, 'open'>>(
@@ -216,9 +219,11 @@ function ReportReview({
           Salvar a análise envia uma notificação. Remova ou corrija o conteúdo
           na aba correspondente quando necessário.
         </p>
-        <button disabled={busy} className={button}>
-          Salvar análise e notificar
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button disabled={busy} className={button}>Salvar análise e notificar</button>
+          <button type="button" disabled={busy} className={`${button} !text-red-400`} onClick={onDelete}>Excluir denúncia</button>
+        </div>
+        <p className="text-xs text-zinc-500">Excluir remove apenas a denúncia, não o conteúdo denunciado, e não envia uma nova notificação. Para explicar a decisão ao denunciante, use Arquivada e salve a análise.</p>
       </form>
     </article>
   );
@@ -812,6 +817,9 @@ export default function AdminDashboard() {
                     'Análise salva e resposta enviada.'
                   )
                 }
+                onDelete={() => {
+                  if (window.confirm('Excluir definitivamente esta denúncia? O conteúdo denunciado não será removido.')) void act(() => deleteReport(r.id), 'Denúncia excluída.');
+                }}
                 onOpen={() => {
                   const targetTab: Tab =
                     r.category === 'external_offer'
