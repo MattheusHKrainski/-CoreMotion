@@ -24,10 +24,7 @@ it('recuperação chama Supabase e não confirma envios inexistentes', () => {
   const reset = readFileSync('app/auth/reset-password/page.tsx','utf8');
   assert.match(reset, /auth.updateUser\(\{password\}\)/);
 });
-it('o formulário oferece Google OAuth e mantém o callback de sessão Supabase', () => {
+it('o formulário não oferece botão Google nem criação automática por esse provedor', () => {
   const source = readFileSync('components/auth/AuthModal.tsx', 'utf8');
-  assert.match(source, /Continuar com Google/);
-  assert.match(source, /signInWithGoogle/);
-  const callback = readFileSync('app/auth/callback/page.tsx', 'utf8');
-  assert.match(callback, /auth\.getSession\(\)/);
+  assert.doesNotMatch(source, /Continuar com Google|No primeiro acesso, seu perfil será criado automaticamente|signInWithGoogle|signInWithOAuth/);
 });

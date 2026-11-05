@@ -1,4 +1,5 @@
 'use client';
+import ReportButton from '@/components/shared/ReportButton';
 
 import { sellerContactUrl } from '@/lib/seller-contact';
 import React, { useState } from 'react';
@@ -313,6 +314,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 <p className="text-xs text-[#D1D5DB] leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
+                <ReportButton category="athlete_listing" targetId={product.id} title={product.title} />
               </div>
 
             </div>

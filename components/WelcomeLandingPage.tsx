@@ -41,7 +41,6 @@ export default function WelcomeLandingPage() {
   } = useCoreMotiom();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedRoleTab, setSelectedRoleTab] = useState<'atleta' | 'treinador' | 'casual'>('atleta');
 
   const c2cCount = products.filter((p) => p.product_type === 'c2c' && p.status === 'active').length;
 
@@ -110,22 +109,11 @@ export default function WelcomeLandingPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedRoleTab('atleta');
                   scrollToSection('perfis');
                 }}
                 className="hover:text-white transition-colors"
               >
-                Atletas & Clientes
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRoleTab('treinador');
-                  scrollToSection('perfis');
-                }}
-                className="hover:text-white transition-colors"
-              >
-                Treinadores
+                Atletas, Clientes & Treinadores
               </button>
               <button
                 type="button"
@@ -204,17 +192,7 @@ export default function WelcomeLandingPage() {
                 onClick={() => scrollToSection('perfis')}
                 className="p-2.5 rounded-lg bg-zinc-900 text-left hover:text-white"
               >
-                Clientes & Atletas
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRoleTab('treinador');
-                  scrollToSection('perfis');
-                }}
-                className="p-2.5 rounded-lg bg-zinc-900 text-left hover:text-white"
-              >
-                Treinadores
+                Atletas, Clientes & Treinadores
               </button>
             </div>
 
@@ -567,34 +545,7 @@ export default function WelcomeLandingPage() {
                 </p>
               </div>
 
-              <div className="inline-flex flex-wrap p-1 rounded-2xl bg-zinc-900 border border-zinc-800 self-start">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedRoleTab('atleta'); scrollToSection('atletas'); }}
-                  aria-pressed={selectedRoleTab === 'atleta'}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    selectedRoleTab === 'atleta'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Cliente / Atleta
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setSelectedRoleTab('treinador'); scrollToSection('treinadores'); }}
-                  aria-pressed={selectedRoleTab === 'treinador'}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    selectedRoleTab === 'treinador'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Treinador
-                </button>
-                <button type="button" onClick={() => { setSelectedRoleTab('casual'); scrollToSection('perfil-casual'); }} aria-pressed={selectedRoleTab === 'casual'} className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold ${selectedRoleTab === 'casual' ? 'bg-red-600 text-white' : 'text-zinc-400'}`}>Casual</button>
 
-              </div>
             </div>
 
             <div className="grid sm:grid-cols-3 gap-4">

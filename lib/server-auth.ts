@@ -3,12 +3,11 @@
  *
  * 1. O cliente envia "Authorization: Bearer <access_token>" (JWT emitido pelo Supabase Auth).
  * 2. O token é validado pelo próprio Supabase (auth.getUser), sem confiar em dados do navegador.
- * 3. O papel (role) é lido da tabela public.profiles. Contas-mestre são sempre administradoras.
+ * 3. O papel (role) é lido da tabela public.profiles. Sem exceções por e-mail.
  */
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { queryDb } from './db';
-import { isMasterAdminEmail } from './permissions';
 import type { UserRole } from './types';
 
 interface AuthContext {
@@ -52,7 +51,7 @@ async function getAuthContext(req: NextRequest): Promise<AuthContext | null> {
   );
   const profile = rows[0];
   const email = profile?.email || verified.email;
-  const role: UserRole = isMasterAdminEmail(email) ? 'admin' : ((profile?.role as UserRole) || 'user');
+  const role: UserRole = (profile?.role as UserRole) || 'user';
 
   return {
     userId: verified.id,

@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 /**
  * Ações de moderação e de perfil:
  *  - updateRole     → somente administrador
- *  - ban / unban    → administrador (qualquer conta não-mestre) ou supervisor (atletas e anunciantes C2C)
+ *  - ban / unban    → administrador (outras contas) ou supervisor (atletas e anunciantes C2C)
  *  - updateProfile  → o próprio usuário, ou administrador
  */
 export async function PATCH(req: NextRequest) {
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest) {
 
     if (action === 'updateRole') {
       if (!canChangeRoleOf(actor.role, target.email)) {
-        return errorResponse('Somente administradores podem alterar papéis (contas-mestre são protegidas).', 403);
+        return errorResponse('Somente administradores podem alterar papéis.', 403);
       }
       if (!isAssignableRole(body.newRole)) {
         return errorResponse('Papel inválido. Use user, seller, supervisor ou admin.', 400);
@@ -114,7 +114,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-/** Exclusão definitiva de conta: somente administradores (nunca contas-mestre). */
+/** Exclusão definitiva de outra conta: somente administradores. */
 export async function DELETE(req: NextRequest) {
   const auth = await requireAuth(req, ['admin']);
   if (!auth.ok) return auth.response;

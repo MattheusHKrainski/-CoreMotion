@@ -1,4 +1,5 @@
 'use client';
+import { isSupabaseConfigured } from '@/services/supabaseClient';
 
 import { isProductDestination } from '@/lib/offer-catalog';
 import React, { useEffect, useRef, useState } from 'react';
@@ -382,7 +383,7 @@ export default function AdminOffersManager() {
             <span>Nova oferta</span>
           </button>
 
-          {confirmReset ? (
+          {!isSupabaseConfigured && (confirmReset ? (
             <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-950 border border-amber-500/40 text-xs">
               <span className="text-amber-300 font-semibold">Restaurar iniciais?</span>
               <button
@@ -413,7 +414,7 @@ export default function AdminOffersManager() {
               <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
               <span>Restaurar padrão</span>
             </button>
-          )}
+          ))}
         </div>
       </div>
 
