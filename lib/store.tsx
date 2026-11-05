@@ -110,14 +110,14 @@ interface CoreMotiomContextType {
   adminUnbanUser: (userId: string) => void;
   adminUpdateOrderStatus: (orderId: string, order_status: Order['order_status'], payment_status?: Order['payment_status']) => void;
   adminToggleProductStatus: (productId: string, newStatus: Product['status']) => void;
-  adminSyncSupabase: () => Promise<{ success: boolean; count?: number; error?: string }>;
+  adminSyncSupabase: (silent?: boolean) => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
   loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (newRole: UserRole, accountType?: AccountType) => void;
-  updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
 
   // Cart & Orders
   cart: CartItem[];
@@ -210,6 +210,16 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('entrar') === '1') {
+      setHasEnteredPlatform(false);
+      setAuthModalMode('login');
+      setAuthModalOpenState(true);
+      sessionStorage.removeItem(ENTERED_SESSION_KEY);
+      window.history.replaceState(null, '', '/');
+    }
+  }, []);
+
   // Core entities with resilient initializers - SSR safe
   const [user, setUser] = useState<UserProfile | null>(null);
   // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
@@ -289,7 +299,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           // Com o Supabase ativo a sessão vem do Auth: nunca restaurar usuário/pedidos do navegador.
           if (!isSupabaseConfigured) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
-            if (parsed.user && (!QUICK_PROFILE || parsed.user.id === temporaryIdentity(QUICK_PROFILE).id)) setUser(parsed.user);
+            if (IS_QUICK_ACCESS && QUICK_PROFILE && QUICK_PROFILE !== 'admin' && parsed.user?.id === temporaryIdentity(QUICK_PROFILE).id) setUser(parsed.user);
             if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(refreshAthleteCatalog(parsed.products, parsed.athleteCatalogVersion === 2), INITIAL_PRODUCTS));
             if (IS_QUICK_ACCESS && Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
           }
@@ -349,6 +359,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       // O Supabase não pode ser chamado dentro do callback (deadlock): o sync roda em setTimeout.
       const { data } = sb.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT') {
+          userRef.current = null;
+          setHasEnteredPlatform(false);
+          setAuthModalMode('login');
+          setAuthModalOpenState(true);
+          try { sessionStorage.removeItem(ENTERED_SESSION_KEY); } catch {}
           setUser(null);
           resetPrivateState();
           return;
@@ -424,13 +439,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           ProductService.getProducts({ status: 'all' }),
         ]);
         try {
-          const staffOffersRes = await authedFetch('/api/offers?includeInactive=true');
-          if (staffOffersRes.ok) {
-            const staffOffersJson = await staffOffersRes.json();
-            if (!cancelled && Array.isArray(staffOffersJson.offers)) {
-              setOffers(staffOffersJson.offers);
-            }
-          }
+          const { data, error } = await getSupabase()!.from('external_offers').select('*').order('created_at', { ascending: false });
+          if (error) throw error;
+          if (!cancelled && data) setOffers(data.map(o => ({ ...o, is_demo: false })));
+
         } catch {
           // ignore if offline
         }
@@ -449,11 +461,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    void loadPrivateData();
+    void loadPrivateData().catch(err => { if (!cancelled) addToast('Dados não carregados', err instanceof Error ? err.message : 'Verifique sua conexão.', 'error'); });
     return () => {
       cancelled = true;
     };
-  }, [userId, userRole]);
+  }, [userId, userRole, addToast]);
 
   // Persistência local: carrinho e favoritos sempre; sessão e pedidos apenas no modo demonstração sem banco.
   useEffect(() => {
@@ -517,6 +529,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Role switching (for live testing of Admin, Seller, User and Visitor flows)
   const switchRole = useCallback((newRole: UserRole, accountType?: AccountType) => {
+    if (!IS_QUICK_ACCESS) { addToast('Entre na sua conta', 'O papel de uma conta real vem da autenticação.', 'info'); return; }
     if (isSupabaseConfigured) {
       addToast('Alteração indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
       return;
@@ -591,20 +604,23 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const errorText = (err: unknown, fallback: string) =>
     err instanceof Error && err.message ? err.message : fallback;
 
-  const callUsersApi = async (
+  const callUsersApi = useCallback(async (
     method: 'PATCH' | 'DELETE',
     payload: Record<string, unknown> = {},
     query = ''
   ): Promise<void> => {
-    const res = await authedFetch(`/api/users${query}`, {
-      method,
-      ...(method === 'PATCH' ? { body: JSON.stringify(payload) } : {}),
+    const sb = getSupabase();
+    if (!sb) throw new Error('Conexão indisponível.');
+    const targetId = method === 'DELETE' ? new URLSearchParams(query.replace(/^\?/, '')).get('userId') : payload.userId;
+    const { error } = await sb.rpc('moderate_account', {
+      p_target: targetId,
+      p_action: method === 'DELETE' ? 'delete' : payload.action === 'updateRole' ? 'role' : payload.action,
+      p_role: payload.newRole || null,
+      p_account_type: allUsers.find(u => u.id === targetId)?.account_type || 'casual',
+      p_reason: payload.reason || null,
     });
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data?.success) {
-      throw new Error(data?.error || 'Operação recusada pelo servidor.');
-    }
-  };
+    if (error) throw new Error(error.message);
+  }, [allUsers]);
 
   const updateUserRole = useCallback(async (userId: string, newRole: UserRole) => {
     if (!hasCapability(user?.role, 'users.change_role')) {
@@ -623,7 +639,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     } catch (err: unknown) {
       addToast('Falha ao alterar papel', errorText(err, 'Não foi possível alterar o papel.'), 'error');
     }
-  }, [user, addToast]);
+  }, [user, addToast, callUsersApi]);
 
   const adminCreateUser = useCallback(
     (userData: { name: string; email: string; role: UserRole; city?: string; state?: string }) => {
@@ -659,8 +675,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const adminDeleteUser = useCallback(
     async (userId: string) => {
       const target = allUsers.find((u) => u.id === userId);
-      if (!canDeleteTarget(user?.role, target?.email)) {
-        addToast('Operação Não Permitida', 'Somente administradores podem excluir contas; contas-mestre são protegidas.', 'error');
+      if (userId === user?.id || !canDeleteTarget(user?.role, target?.email)) {
+        addToast('Operação Não Permitida', 'Somente administradores podem excluir outras contas.', 'error');
         return;
       }
       try {
@@ -671,7 +687,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         addToast('Falha ao excluir', errorText(err, 'Não foi possível excluir a conta.'), 'error');
       }
     },
-    [user, allUsers, addToast]
+    [user, allUsers, addToast, callUsersApi]
   );
 
   const adminBanUser = useCallback(
@@ -689,7 +705,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         addToast('Falha ao suspender', errorText(err, 'Não foi possível suspender a conta.'), 'error');
       }
     },
-    [user, allUsers, addToast]
+    [user, allUsers, addToast, callUsersApi]
   );
 
   const adminUnbanUser = useCallback(
@@ -707,7 +723,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         addToast('Falha ao reativar', errorText(err, 'Não foi possível reativar a conta.'), 'error');
       }
     },
-    [user, allUsers, addToast]
+    [user, allUsers, addToast, callUsersApi]
   );
 
   const adminUpdateOrderStatus = useCallback(
@@ -752,44 +768,41 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     [user, addToast]
   );
 
-  const adminSyncSupabase = useCallback(async () => {
+  const adminSyncSupabase = useCallback(async (silent = false) => {
+    const actorId = userRef.current?.id;
     try {
-      const [liveProducts, livePosts] = await Promise.all([
-        ProductService.getProducts(),
-        CommunityService.getPosts(),
+      const client = getSupabase();
+      if (!client) throw new Error('Conexão indisponível.');
+      const [liveProducts, postsResult, ordersResult, usersResult, offersResult] = await Promise.all([
+        ProductService.getProducts({ status: 'all' }),
+        client.from('community_posts').select('*').order('created_at', { ascending: false }),
+        client.from('orders').select('*').order('created_at', { ascending: false }),
+        client.from('profiles').select('*').order('created_at', { ascending: false }),
+        client.from('external_offers').select('*').order('created_at', { ascending: false }),
       ]);
-      const c2cProducts = liveProducts.filter((product) => product.product_type === 'c2c');
-      if (c2cProducts.length > 0) {
-        setProducts((prev) => mergeProductsById(prev.filter((p) => p.status !== 'active'), c2cProducts));
+      for (const result of [postsResult, ordersResult, usersResult, offersResult]) {
+        if (result.error) throw new Error(result.error.message);
       }
-      if (livePosts && livePosts.length > 0) setCommunityPosts(livePosts);
+      if (!actorId || userRef.current?.id !== actorId) throw new Error('A sessão mudou durante a consulta.');
+      setProducts(liveProducts);
+      setCommunityPosts((postsResult.data || []).map(CommunityService.mapDbPostToModel));
+      setOrders(ordersResult.data || []);
+      setAllUsers(usersResult.data || []);
+      setOffers((offersResult.data || []).map(o => ({ ...o, is_demo: false })));
       setIsSupabaseLive(true);
-      addToast(
-        'Supabase Sincronizado',
-        `Carregados ${c2cProducts.length} anúncios C2C e ${livePosts?.length || 0} publicações da comunidade.`,
-        'success'
-      );
-      return { success: true, count: c2cProducts.length + (livePosts?.length || 0) };
+      if (!silent) addToast('Dados atualizados', 'As consultas autenticadas foram concluídas.', 'success');
+      return { success: true, count: liveProducts.length + (postsResult.data?.length || 0) };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Falha na sincronização com Supabase';
-      addToast('Aviso de Sincronização', msg, 'info');
+      const msg = err instanceof Error ? err.message : 'Falha ao consultar o banco';
+      setIsSupabaseLive(false);
+      if (!silent) addToast('Atualização não concluída', msg, 'error');
       return { success: false, error: msg };
     }
   }, [addToast]);
 
   const loginAsMasterAdmin = useCallback(() => {
-    if (isSupabaseConfigured) {
-      addToast('Acesso indisponível', 'Entre com suas credenciais de administrador.', 'info');
-      return;
-    }
-    const masterAdmin = INITIAL_USERS[0];
-    setUser(masterAdmin);
-    setAllUsers((prev) => {
-      const exists = prev.some((u) => u.email.toLowerCase() === masterAdmin.email.toLowerCase());
-      return exists ? prev : [masterAdmin, ...prev];
-    });
-    addToast('Sessão Super Admin', 'Conectado como Administrador da plataforma.', 'success');
-  }, [addToast]);
+    window.location.assign('/?login=admin');
+  }, []);
 
   useEffect(() => {
     if (!QUICK_PROFILE) return;
@@ -906,28 +919,32 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   // Auth: Logout
   const logout = async () => {
-    if (IS_QUICK_ACCESS) { window.location.assign('/'); return; }
+    if (IS_QUICK_ACCESS) { window.location.assign('/?entrar=1'); return; }
+    userRef.current = null;
     await AuthService.signOut();
     setUser(null);
     resetPrivateState();
     setActiveView('home');
+    setAuthModalMode('login');
+    setAuthModalOpen(true);
     addToast('Sessão Encerrada', 'Você saiu da sua conta com segurança.', 'info');
   };
 
-  const updateUserProfile = async (data: Partial<UserProfile>): Promise<void> => {
-    if (!user) return;
+  const updateUserProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+    if (!user) return false;
     let saved: Partial<UserProfile> = data;
     if (isSupabaseConfigured) {
       const res = await AuthService.updateProfile(user.id, data);
       if (!res.success) {
         addToast('Perfil não salvo', res.error || 'Não foi possível salvar as alterações.', 'error');
-        return;
+        return false;
       }
       if (res.user) saved = res.user;
     }
     setUser((prev) => (prev ? { ...prev, ...saved } : null));
     setAllUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, ...saved } : u)));
     addToast('Perfil Salvo', 'Suas informações foram atualizadas.', 'success');
+    return true;
   };
 
   // Cart operations
@@ -1257,23 +1274,15 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
     if (isSupabaseConfigured) {
       try {
-        const res = await authedFetch('/api/offers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(input),
-        });
-        const data = await res.json();
-        if (res.ok && data.offer) {
-          persistOffersLocally([data.offer, ...offers]);
-          addToast('Oferta publicada', `"${data.offer.title}" já está ativa na vitrine.`, 'success');
-          return data.offer as ExternalOffer;
-        }
-        if (res.status !== 503) {
-          addToast('Erro ao salvar oferta', data.error || 'Verifique os campos preenchidos.', 'error');
-          return null;
-        }
-      } catch {
-        // Fallback local caso rota esteja offline
+        const { data, error } = await getSupabase()!.from('external_offers').insert({ ...input, id: crypto.randomUUID(), created_by: user!.id }).select('*').single();
+        if (error || !data) throw new Error(error?.message || 'Oferta não salva.');
+        const saved = { ...data, is_demo: false } as ExternalOffer;
+        persistOffersLocally([saved, ...offers]);
+        addToast('Oferta publicada', saved.title, 'success');
+        return saved;
+      } catch (err) {
+        addToast('Oferta não salva', errorText(err, 'Verifique sua conexão.'), 'error');
+        return null;
       }
     }
 
@@ -1306,23 +1315,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
     if (isSupabaseConfigured) {
       try {
-        const res = await authedFetch(`/api/offers?id=${encodeURIComponent(id)}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(input),
-        });
-        const data = await res.json();
-        if (res.ok && data.offer) {
-          persistOffersLocally(offers.map((item) => (item.id === id ? data.offer : item)));
-          addToast('Oferta atualizada', 'As alterações já estão visíveis no site.', 'success');
-          return true;
-        }
-        if (res.status !== 503) {
-          addToast('Erro ao atualizar', data.error || 'Não foi possível salvar as alterações.', 'error');
-          return false;
-        }
-      } catch {
-        // Fallback local
+        const { data, error } = await getSupabase()!.from('external_offers').update(input).eq('id', id).select('*').single();
+        if (error || !data) throw new Error(error?.message || 'Oferta não encontrada ou sem permissão.');
+        persistOffersLocally(offers.map(o => o.id === id ? { ...data, is_demo: false } as ExternalOffer : o));
+        addToast('Oferta atualizada', 'Alterações salvas no banco.', 'success');
+        return true;
+      } catch (err) {
+        addToast('Oferta não salva', errorText(err, 'Verifique sua conexão.'), 'error');
+        return false;
       }
     }
 
@@ -1362,16 +1362,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
     if (isSupabaseConfigured) {
       try {
-        const res = await authedFetch(`/api/offers?id=${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-        });
-        if (!res.ok && res.status !== 503) {
-          const data = await res.json().catch(() => ({}));
-          addToast('Erro ao excluir', data.error || 'Não foi possível remover a oferta.', 'error');
-          return false;
-        }
-      } catch {
-        // Fallback local
+        const { data, error } = await getSupabase()!.from('external_offers').delete().eq('id', id).select('id');
+        if (error || !data?.length) throw new Error(error?.message || 'Oferta não encontrada ou sem permissão.');
+      } catch (err) {
+        addToast('Oferta não excluída', errorText(err, 'Verifique sua conexão.'), 'error');
+        return false;
       }
     }
 
@@ -1388,17 +1383,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const resetDefaultOffers = async (): Promise<void> => {
     if (!isStaffRole(user?.role)) return;
     if (isSupabaseConfigured) {
-      try {
-        const res = await authedFetch('/api/offers?action=reset', { method: 'POST' });
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.offers)) {
-          persistOffersLocally(data.offers);
-          addToast('Catálogo restaurado', 'As ofertas iniciais reais foram restauradas.', 'success');
-          return;
-        }
-      } catch {
-        // Fallback local
-      }
+      addToast('Catálogo preservado', 'Edite ou remova ofertas individualmente. A restauração não substitui dados publicados.', 'info');
+      return;
     }
     persistOffersLocally(INITIAL_EXTERNAL_OFFERS);
     addToast('Catálogo restaurado', 'As ofertas iniciais reais foram restauradas.', 'success');

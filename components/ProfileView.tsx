@@ -111,7 +111,7 @@ interface ProfileContentProps {
   ordersOnly: boolean;
   user: UserProfile;
   orders: Order[];
-  onSave: (data: Partial<UserProfile>) => void;
+  onSave: (data: Partial<UserProfile>) => Promise<boolean>;
   onOpenAdmin: () => void;
   onLogout: () => void;
 }
@@ -124,6 +124,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnl
     state: user.state ?? '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [remoteOrders, setRemoteOrders] = useState<Order[]>([]);
 
   const userId = user.id;
@@ -141,10 +142,10 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnl
   const myOrders = isSupabaseConfigured ? remoteOrders : orders.filter((o) => o.user_id === userId);
 
   const role = (user.role === 'visitor' ? 'user' : user.role) as Exclude<UserRole, 'visitor'>;
-  const roleLabel = user.role === 'admin' ? 'Administrador' : user.account_type ? ACCOUNT_TYPES[user.account_type].label : ROLE_LABELS[user.role] ?? 'Usuário';
-  const roleDescription = user.role === 'admin' ? ROLE_DESCRIPTIONS.admin : user.account_type ? ACCOUNT_TYPES[user.account_type].description : ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
+  const roleLabel = isStaffRole(user.role) ? ROLE_LABELS[user.role] : user.account_type ? ACCOUNT_TYPES[user.account_type].label : ROLE_LABELS[user.role] ?? 'Usuário';
+  const roleDescription = isStaffRole(user.role) ? ROLE_DESCRIPTIONS[role] : user.account_type ? ACCOUNT_TYPES[user.account_type].description : ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS.user;
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const name = form.name.trim();
     const state = form.state.trim().toUpperCase();
@@ -157,7 +158,13 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnl
       return;
     }
     setError(null);
-    onSave({ name, phone: form.phone.trim(), city: form.city.trim(), state });
+    if (saving) return;
+    setSaving(true);
+    try {
+      const saved = await onSave({ name, phone: form.phone.trim(), city: form.city.trim(), state });
+      if (!saved) setError('Não foi possível salvar. Verifique a mensagem de erro e tente novamente.');
+    } catch { setError('Não foi possível salvar. Tente novamente.'); }
+    finally { setSaving(false); }
   };
 
   const isStaff = isStaffRole(user.role);
@@ -337,10 +344,11 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, ordersOnl
             </button>
             <button
               type="submit"
+              disabled={saving}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold"
             >
               <Save className="w-4 h-4" aria-hidden="true" />
-              Salvar alterações
+              {saving ? 'Salvando…' : 'Salvar alterações'}
             </button>
           </div>
         </div>

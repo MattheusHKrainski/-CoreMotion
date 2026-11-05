@@ -105,10 +105,10 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       ? [
           {
             id: 'admin' as const,
-            label: 'Painel Admin',
+            label: userIsAdmin ? 'Painel Admin' : 'Painel Supervisor',
             description: 'Gestão, anúncios e usuários',
             icon: ShieldCheck,
-            badge: 'ADMIN',
+            badge: userIsAdmin ? 'ADMIN' : 'SUPERVISOR',
             highlight: true,
           },
         ]

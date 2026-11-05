@@ -1,9 +1,10 @@
+import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
+import { MIN_PASSWORD_LENGTH, signupErrorMessage } from '@/lib/signup-validation';
 import { getSupabaseClient } from './supabaseClient';
 import { UserProfile } from '@/lib/types';
 
-import { isMasterAdminEmail as isMasterAdmin } from '@/lib/permissions';
-import { authedFetch, readResult, type ApiResult } from '@/lib/auth-fetch';
-import { DEMO_MODE } from '@/lib/demo-mode';
+import { isValidEmailAddress } from '@/lib/email-validation';
+import { authedFetch, type ApiResult } from '@/lib/auth-fetch';
 
 
 interface AuthResponse<T = unknown> {
@@ -18,24 +19,6 @@ type SyncMetadata = {
   city?: string;
   sport?: string;
 };
-
-/** Perfil local, usado somente no modo demonstração quando o servidor não responde. */
-function localDemoProfile(supabaseId: string, email: string, metadata?: SyncMetadata): UserProfile {
-  return {
-    id: supabaseId || String(Date.now()),
-    supabase_id: supabaseId,
-    name: metadata?.name || email.split('@')[0],
-    email,
-    avatar_url:
-      metadata?.avatar ||
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-    role: isMasterAdmin(email) ? 'admin' : 'user',
-    city: metadata?.city || 'São Paulo',
-    state: 'SP',
-    sport_interests: metadata?.sport ? [metadata.sport] : ['Corrida', 'Alta Performance'],
-    created_at: new Date().toISOString(),
-  };
-}
 
 /** Read the authenticated user's own trusted DB profile; never infer privileges from metadata. */
 async function readOwnSupabaseProfile(userId: string): Promise<UserProfile> {
@@ -52,6 +35,16 @@ async function readOwnSupabaseProfile(userId: string): Promise<UserProfile> {
  * Fora do modo demonstração, falha de sincronização é erro (nunca um perfil inventado).
  */
 async function syncSessionWithDb(supabaseId: string, email: string, metadata?: SyncMetadata): Promise<UserProfile> {
+  const client = getSupabaseClient();
+  if (!client) throw new Error('Supabase não configurado. Nenhuma sessão foi criada.');
+  // Existing accounts already have a profile. Read it with the user's JWT and RLS,
+  // rather than making successful Auth depend on a separately configured SQL API.
+  const { data: ownProfile } = await client.from('profiles').select('*').eq('id', supabaseId).maybeSingle();
+  if (ownProfile) {
+    if (ownProfile.id !== supabaseId) throw new Error('Perfil incompatível com a sessão.');
+    if (ownProfile.is_banned) throw new Error('Esta conta está suspensa.');
+    return { ...ownProfile, supabase_id: supabaseId } as UserProfile;
+  }
   let res: Response;
   try {
     res = await authedFetch('/api/auth/sync', {
@@ -65,7 +58,6 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
     });
   } catch {
     if (getSupabaseClient()) return readOwnSupabaseProfile(supabaseId);
-    if (DEMO_MODE) return localDemoProfile(supabaseId, email, metadata);
     throw new Error('Não foi possível conectar ao servidor. Tente novamente.');
   }
 
@@ -74,26 +66,34 @@ async function syncSessionWithDb(supabaseId: string, email: string, metadata?: S
     return data.user as UserProfile;
   }
   if (res.status >= 500 && getSupabaseClient()) return readOwnSupabaseProfile(supabaseId);
-  if (DEMO_MODE && !getSupabaseClient()) return localDemoProfile(supabaseId, email, metadata);
   throw new Error(data?.error || 'Não foi possível concluir o acesso. Tente novamente.');
 }
 
 export class AuthService {
+  /** Passwordless first access still requires proving ownership of the administrator's inbox. */
+  static async requestAdminAccessLink(): Promise<AuthResponse> {
+    const sb = getSupabaseClient();
+    if (!sb || typeof window === 'undefined') return { success: false, error: 'Conexão de autenticação indisponível.' };
+    try {
+      const { error } = await sb.auth.signInWithOtp({ email: ADMIN_LOGIN_EMAIL, options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth/callback?admin=1`,
+      } });
+      if (error) return { success: false, error: /rate|too many|429/i.test(error.message) ? 'Limite de envios atingido. Aguarde antes de pedir outro link ou entre com e-mail e senha.' : 'Não foi possível enviar o link de acesso. Tente novamente ou entre com e-mail e senha.' };
+      return { success: true };
+    } catch { return { success: false, error: 'Não foi possível conectar ao serviço de autenticação. Nenhum acesso foi liberado.' }; }
+  }
+
   /**
    * Entra com e-mail e senha pelo Supabase Auth e sincroniza o perfil.
    * Credencial recusada é falha: nenhuma sessão é criada.
    */
   static async loginWithEmail(email: string, pass: string): Promise<AuthResponse<UserProfile>> {
     const cleanEmail = email.trim();
+    if (!isValidEmailAddress(cleanEmail)) return { success: false, error: 'Informe um e-mail completo e válido, como nome@gmail.com.' };
     const sb = getSupabaseClient();
 
-    if (!sb) {
-      // Sem Supabase configurado, só o modo demonstração entra (sessão local).
-      if (!DEMO_MODE || !pass) {
-        return { success: false, error: 'Login indisponível: o Supabase não está configurado.' };
-      }
-      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name: cleanEmail.split('@')[0] });
-    }
+    if (!sb) return { success: false, error: 'Login indisponível: configure a conexão com o Supabase. Nenhuma sessão foi criada.' };
 
     let result: { data: { user: { id: string; user_metadata?: Record<string, unknown> } | null }; error: { message: string } | null };
     try {
@@ -122,15 +122,12 @@ export class AuthService {
    * e o servidor aplica o papel de conta-mestre no sincronismo.
    */
   static async signUpWithEmail(email: string, pass: string, name: string, accountType: import("@/lib/sports").AccountType = "casual", sport?: string): Promise<AuthResponse<UserProfile>> {
+    if (pass.length < MIN_PASSWORD_LENGTH) return { success: false, error: 'A senha deve ter no mínimo 6 caracteres.' };
     const cleanEmail = email.trim();
+    if (!isValidEmailAddress(cleanEmail)) return { success: false, error: 'Informe um e-mail completo e válido, como nome@gmail.com.' };
     const sb = getSupabaseClient();
 
-    if (!sb) {
-      if (!DEMO_MODE) {
-        return { success: false, error: 'Cadastro indisponível: o Supabase não está configurado.' };
-      }
-      return this.finishSession(`usr_${Date.now()}`, cleanEmail, { name, sport });
-    }
+    if (!sb) return { success: false, error: 'Cadastro indisponível: configure a conexão com o Supabase. Nenhuma conta foi criada.' };
 
     try {
       const { data, error } = await sb.auth.signUp({
@@ -139,11 +136,7 @@ export class AuthService {
         options: { data: { name, account_type: accountType, sport: sport?.trim() }, ...(typeof window !== 'undefined' ? { emailRedirectTo: `${window.location.origin}/auth/callback` } : {}) },
       });
       if (error) {
-        const exists = error.message?.toLowerCase().includes('already');
-        return {
-          success: false,
-          error: exists ? 'Já existe uma conta com este e-mail.' : 'Não foi possível criar a conta. Verifique os dados.',
-        };
+        return { success: false, error: signupErrorMessage(error) };
       }
       if (!data.user) {
         return { success: false, error: 'Não foi possível criar a conta.' };
@@ -198,36 +191,28 @@ export class AuthService {
     data: Partial<UserProfile>
   ): Promise<ApiResult & { user?: UserProfile }> {
     try {
-      // Papéis não são alteráveis por esta via: apenas dados de perfil do próprio usuário.
-      const res = await authedFetch('/api/users', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          action: 'updateProfile',
-          userId,
-          updates: {
-            name: data.name,
-            avatar_url: data.avatar_url,
-            city: data.city,
-            state: data.state,
-            phone: data.phone,
-          },
-        }),
-      });
-      return await readResult<{ user: UserProfile }>(res, 'Não foi possível salvar o perfil.');
+      const sb = getSupabaseClient();
+      if (!sb) return { success: false, error: 'Entre em uma conta real para salvar seu perfil.' };
+      const { data: session, error: sessionError } = await sb.auth.getUser();
+      if (sessionError || session.user?.id !== userId) return { success: false, error: 'Sua sessão expirou. Entre novamente.' };
+      // Only personal fields; privilege columns are also protected by a DB trigger.
+      const allowed = ['name', 'avatar_url', 'city', 'state', 'phone', 'sport_interests'] as const;
+      const updates = Object.fromEntries(allowed.filter(key => data[key] !== undefined).map(key => [key, data[key]]));
+      const { data: profile, error } = await sb.from('profiles').update(updates).eq('id', userId).select('*').single();
+      if (error || !profile) return { success: false, error: error?.message || 'Perfil não encontrado ou sem permissão.' };
+      return { success: true, user: { ...profile, supabase_id: profile.id } as UserProfile };
     } catch {
-      return { success: false, error: 'Não foi possível conectar ao servidor.' };
+      return { success: false, error: 'Não foi possível conectar ao servidor. As alterações não foram salvas.' };
     }
   }
 
-  /** Lista de contas (somente staff; o servidor valida o papel). */
+  /** Real accounts, including newly registered users. RLS restricts this to staff. */
   static async listUsers(): Promise<UserProfile[]> {
-    try {
-      const res = await authedFetch('/api/users');
-      const result = await readResult<{ users: UserProfile[] }>(res);
-      return result.success && Array.isArray(result.users) ? result.users : [];
-    } catch {
-      return [];
-    }
+    const sb = getSupabaseClient();
+    if (!sb) throw new Error('Conexão com o banco indisponível.');
+    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   /**

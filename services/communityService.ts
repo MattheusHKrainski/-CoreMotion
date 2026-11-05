@@ -1,3 +1,4 @@
+import { submitReport } from './moderation';
 import { getSupabaseClient } from './supabaseClient';
 import { CommunityPost } from '@/lib/types';
 import { INITIAL_COMMUNITY_POSTS } from '@/fixtures/initial-data';
@@ -11,24 +12,16 @@ const POST_NOT_FOUND = 'Publicação não encontrada ou sem permissão para alte
 export class CommunityService {
   /** Denúncia: marca a publicação para moderação (RLS: usuário autenticado). */
   static async reportPost(postId: string, reason: string): Promise<{ success: boolean; error?: string }> {
-    const sb = getSupabaseClient();
-    if (!sb) return { success: true };
-    const { data, error } = await sb
-      .from('community_posts')
-      .update({ is_reported: true, report_reason: reason.slice(0, 300) })
-      .eq('id', postId)
-      .select('id');
-    if (error) return { success: false, error: error.message };
-    if (!data || data.length === 0) return { success: false, error: POST_NOT_FOUND };
-    return { success: true };
+    try { await submitReport('community', postId, 'Publicação da comunidade', reason); return { success: true }; }
+    catch (err) { return { success: false, error: err instanceof Error ? err.message : 'Denúncia não gravada.' }; }
   }
 
   /** Remoção por moderação (RLS: autor da publicação, administrador ou supervisor). */
   static async deletePost(postId: string): Promise<{ success: boolean; error?: string }> {
     const sb = getSupabaseClient();
     if (!sb) return { success: true };
-    const { error } = await sb.from('community_posts').delete().eq('id', postId);
-    return error ? { success: false, error: error.message } : { success: true };
+    const { data, error } = await sb.from('community_posts').delete().eq('id', postId).select('id');
+    return error || !data?.length ? { success: false, error: error?.message || POST_NOT_FOUND } : { success: true };
   }
 
   /**
@@ -174,7 +167,7 @@ export class CommunityService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- linha crua do banco; tipada na correção de pedidos/comunidade
-  private static mapDbPostToModel(dbRow: any): CommunityPost {
+  static mapDbPostToModel(dbRow: any): CommunityPost {
     const rawComments = Array.isArray(dbRow.comments) ? dbRow.comments : [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- comentários crus do JSONB; tipados na correção de comunidade
     const comments = rawComments.map((c: any) => ({
