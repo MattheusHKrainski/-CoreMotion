@@ -1,7 +1,7 @@
 import { Product, ProductCondition, ProductType } from '@/lib/types';
 import { INITIAL_PRODUCTS } from '@/fixtures/initial-data';
 import { DEMO_MODE } from '@/lib/demo-mode';
-import { authedFetch, readResult, type ApiResult } from '@/lib/auth-fetch';
+import { type ApiResult } from '@/lib/auth-fetch';
 import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
 
 interface ProductFilters {
@@ -27,30 +27,6 @@ export class ProductService {
   static async getProducts(filters?: ProductFilters): Promise<Product[]> {
     if (!isSupabaseConfigured && DEMO_MODE) {
       return this.applyLocalFilters(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'), filters);
-    }
-
-    try {
-      const params = new URLSearchParams();
-      if (filters?.category) params.set('category', filters.category);
-      if (filters?.sport) params.set('sport', filters.sport);
-      if (filters?.condition) params.set('condition', filters.condition);
-      if (filters?.product_type) params.set('product_type', filters.product_type);
-      if (filters?.seller_id) params.set('seller_id', filters.seller_id);
-      if (filters?.search) params.set('search', filters.search);
-      if (filters?.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
-      if (filters?.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
-      if (filters?.status) params.set('status', filters.status);
-
-      // authedFetch envia o token quando há sessão: necessário para status != 'active'.
-      const res = await authedFetch(`/api/products?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.products) && (data.products.length > 0 || isSupabaseConfigured)) {
-          return (data.products as Product[]).filter((product) => product.product_type === 'c2c');
-        }
-      }
-    } catch (err) {
-      console.warn('[ProductService] Fetch from /api/products failed, using local cache:', err);
     }
 
     // Public reads can use Supabase REST if the SQL API is not configured. RLS still applies.
@@ -89,19 +65,16 @@ export class ProductService {
     if (product.product_type !== 'c2c') {
       throw new Error('Somente anúncios C2C podem ser publicados no catálogo interno.');
     }
-    // O servidor define o vendedor a partir do token da sessão (sellerId é apenas informativo).
-    const res = await authedFetch('/api/products', {
-      method: 'POST',
-      body: JSON.stringify({ ...product, seller_id: sellerId || product.seller_id }),
-    });
-    const data = await res.json().catch(() => null);
-    if (res.ok && data?.success && data.product) {
-      const prod = data.product as Product;
-      return { success: true, data: prod, ...prod };
+    const sb = getSupabaseClient();
+    if (sb) {
+      const { data: auth, error: authError } = await sb.auth.getUser();
+      if (authError || !auth.user) throw new Error('Sua sessão expirou. Entre novamente.');
+      if (!product.contact_phone?.trim()) throw new Error('Informe um telefone de contato para publicar.');
+      const { data, error } = await sb.from('products').insert({ ...product, seller_id: auth.user.id }).select('*').single();
+      if (error || !data) throw new Error(error?.message || 'Não foi possível publicar o anúncio.');
+      return { success: true, data, ...data };
     }
-    if (isSupabaseConfigured) {
-      throw new Error(data?.error || 'Não foi possível publicar o anúncio.');
-    }
+    if (isSupabaseConfigured) throw new Error('Conexão indisponível. O anúncio não foi salvo.');
 
     // Modo demonstração (sem banco de dados): criação apenas local.
     const fallbackProd: Product = {
@@ -123,11 +96,13 @@ export class ProductService {
     updates: Partial<Product>
   ): Promise<ApiResult & { product?: Product }> {
     try {
-      const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updates),
-      });
-      return await readResult<{ product: Product }>(res, 'Não foi possível atualizar o anúncio.');
+      const sb = getSupabaseClient();
+      if (!sb) return { success: false, error: 'Conexão indisponível.' };
+      const allowed = ['title','description','price','original_price','category','sport','condition','usage_time','images','stock','location','contact_phone','shipping_available','status','tags','brand'] as const;
+      const patch = Object.fromEntries(allowed.filter(key => updates[key] !== undefined).map(key => [key, updates[key]]));
+      const { data, error } = await sb.from('products').update(patch).eq('id', id).select('*').single();
+      return error || !data ? { success: false, error: error?.message || 'Anúncio não encontrado ou sem permissão.' } : { success: true, product: data };
+
     } catch {
       return { success: false, error: 'Não foi possível conectar ao servidor.' };
     }
@@ -138,8 +113,11 @@ export class ProductService {
    */
   static async deleteProduct(id: string): Promise<ApiResult> {
     try {
-      const res = await authedFetch(`/api/products?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-      return await readResult(res, 'Não foi possível excluir o anúncio.');
+      const sb = getSupabaseClient();
+      if (!sb) return { success: false, error: 'Conexão indisponível.' };
+      const { data, error } = await sb.from('products').delete().eq('id', id).select('id');
+      return error || !data?.length ? { success: false, error: error?.message || 'Anúncio não encontrado ou sem permissão.' } : { success: true };
+
     } catch {
       return { success: false, error: 'Não foi possível conectar ao servidor.' };
     }

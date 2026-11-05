@@ -72,3 +72,12 @@ mal configurada não deve impedir esse carregamento. Contas suspensas continuam
 recusadas. Somente contas ainda sem perfil usam a rota de sincronização; erros
 401/403 dessa rota não são transformados em sucesso ou perfil inventado.
 Os testes usam um servidor controlado; não equivalem a login real na produção.
+
+### Atualização de persistência e moderação — 04/11/2026
+
+O salvamento de perfil e anúncios agora utiliza diretamente a sessão Supabase
+com RLS. O catálogo também lê diretamente do Supabase, sem uma tentativa inicial
+contra a API SQL ausente. A validação atual tem 100 testes unitários.
+As novas proteções, migrações e verificações de moderação estão descritas em
+[moderação e persistência](moderacao-e-persistencia.md). A contagem de 86 acima
+registra a validação da etapa anterior, não o estado atual da suíte.

@@ -1,4 +1,5 @@
 'use client';
+import ReportButton from '@/components/shared/ReportButton';
 
 import React, { useState } from 'react';
 import ProductImage from '@/components/shared/ProductImage';
@@ -86,7 +87,8 @@ export default function ExternalOfferModal({
           </div>
 
           <h2 className="text-xl font-black text-white leading-tight">{offer.title}</h2>
-          <p className="text-sm text-zinc-300 leading-relaxed">{offer.description}</p><p className="text-xs text-zinc-400">Preço de referência. Confira na loja a cor, o tamanho, o estoque e as condições de pagamento antes de comprar.</p>
+          <p className="text-sm text-zinc-300 leading-relaxed">{offer.description}</p>
+            <ReportButton category="external_offer" targetId={offer.id} title={offer.title} /><p className="text-xs text-zinc-400">Preço de referência. Confira na loja a cor, o tamanho, o estoque e as condições de pagamento antes de comprar.</p>
         </div>
 
         <div className="flex items-baseline justify-between gap-2 pt-3 border-t border-zinc-800">

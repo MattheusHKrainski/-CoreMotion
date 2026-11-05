@@ -3,7 +3,7 @@ import { getSupabaseClient } from './supabaseClient';
 import { UserProfile } from '@/lib/types';
 
 import { isValidEmailAddress } from '@/lib/email-validation';
-import { authedFetch, readResult, type ApiResult } from '@/lib/auth-fetch';
+import { authedFetch, type ApiResult } from '@/lib/auth-fetch';
 
 
 interface AuthResponse<T = unknown> {
@@ -176,36 +176,28 @@ export class AuthService {
     data: Partial<UserProfile>
   ): Promise<ApiResult & { user?: UserProfile }> {
     try {
-      // Papéis não são alteráveis por esta via: apenas dados de perfil do próprio usuário.
-      const res = await authedFetch('/api/users', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          action: 'updateProfile',
-          userId,
-          updates: {
-            name: data.name,
-            avatar_url: data.avatar_url,
-            city: data.city,
-            state: data.state,
-            phone: data.phone,
-          },
-        }),
-      });
-      return await readResult<{ user: UserProfile }>(res, 'Não foi possível salvar o perfil.');
+      const sb = getSupabaseClient();
+      if (!sb) return { success: false, error: 'Entre em uma conta real para salvar seu perfil.' };
+      const { data: session, error: sessionError } = await sb.auth.getUser();
+      if (sessionError || session.user?.id !== userId) return { success: false, error: 'Sua sessão expirou. Entre novamente.' };
+      // Only personal fields; privilege columns are also protected by a DB trigger.
+      const allowed = ['name', 'avatar_url', 'city', 'state', 'phone', 'sport_interests'] as const;
+      const updates = Object.fromEntries(allowed.filter(key => data[key] !== undefined).map(key => [key, data[key]]));
+      const { data: profile, error } = await sb.from('profiles').update(updates).eq('id', userId).select('*').single();
+      if (error || !profile) return { success: false, error: error?.message || 'Perfil não encontrado ou sem permissão.' };
+      return { success: true, user: { ...profile, supabase_id: profile.id } as UserProfile };
     } catch {
-      return { success: false, error: 'Não foi possível conectar ao servidor.' };
+      return { success: false, error: 'Não foi possível conectar ao servidor. As alterações não foram salvas.' };
     }
   }
 
-  /** Lista de contas (somente staff; o servidor valida o papel). */
+  /** Real accounts, including newly registered users. RLS restricts this to staff. */
   static async listUsers(): Promise<UserProfile[]> {
-    try {
-      const res = await authedFetch('/api/users');
-      const result = await readResult<{ users: UserProfile[] }>(res);
-      return result.success && Array.isArray(result.users) ? result.users : [];
-    } catch {
-      return [];
-    }
+    const sb = getSupabaseClient();
+    if (!sb) throw new Error('Conexão com o banco indisponível.');
+    const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   /**
