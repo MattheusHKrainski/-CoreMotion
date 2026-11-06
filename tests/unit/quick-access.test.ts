@@ -90,3 +90,14 @@ it('os quatro perfis rápidos têm catálogo e ações locais mesmo com Supabase
     `], { env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-public-key-for-isolation-check', NEXT_PUBLIC_DEMO_MODE: 'false' } });
   }
 });
+
+it('a fronteira da sessão renderiza o mesmo carregamento no servidor antes de ler o perfil do navegador', async () => {
+  const React = await import('react');
+  const { renderToString } = await import('react-dom/server');
+  const { default: SessionProvider } = await import('@/components/SessionProvider');
+  const html = renderToString(React.createElement(SessionProvider, null, React.createElement('div', null, 'conteúdo dependente de perfil')));
+  assert.match(html, /Carregando CoreMotion/);
+  assert.doesNotMatch(html, /conteúdo dependente de perfil/);
+  const layout = readFileSync('app/layout.tsx', 'utf8');
+  assert.match(layout, /<SessionProvider>/);
+});

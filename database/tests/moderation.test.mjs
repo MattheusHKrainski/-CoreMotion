@@ -117,6 +117,34 @@ await as('supervisor','DELETE FROM sports_records WHERE id=$1',[reapplied.id]);
 await as('coach','DELETE FROM sports_records WHERE id=$1',[trial.id]);
 await as('supervisor','DELETE FROM sports_records WHERE id=$1',[profile.id]);
 check((await as('supervisor','SELECT * FROM sports_records')).rows.length===0);
+// Recreational listings: DB authorization, persistence, immutable ownership and moderation.
+await migrate('20261105030000_coach_activities.sql');
+const activityFields=['class','Pilates no parque','Marina','Pilates','Curitiba','Sábado às 9h','Contato público','Aula recreativa'];
+const insertActivity="INSERT INTO coach_activities(owner,type,title,organizer,sport,city,schedule,contact,description) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id";
+for(const actor of ['athlete','casual'])await denied(actor,insertActivity,[ids[actor],...activityFields]);
+await denied('coach',insertActivity,[ids.athlete,...activityFields]);
+const activity=(await as('coach',insertActivity,[ids.coach,...activityFields])).rows[0];
+for(const actor of ['anon','athlete','casual'])check((await as(actor,'SELECT id FROM coach_activities WHERE id=$1',[activity.id])).rows.length===1);
+for(const actor of ['athlete','casual']){
+ check((await as(actor,"UPDATE coach_activities SET title='Alterado' WHERE id=$1 RETURNING id",[activity.id])).rows.length===0);
+ check((await as(actor,'DELETE FROM coach_activities WHERE id=$1 RETURNING id',[activity.id])).rows.length===0);
+}
+await db.query("UPDATE profiles SET account_type='coach' WHERE id=$1",[ids.casual]);
+check((await as('casual',"UPDATE coach_activities SET title='Outro treinador' WHERE id=$1 RETURNING id",[activity.id])).rows.length===0);
+check((await as('casual','DELETE FROM coach_activities WHERE id=$1 RETURNING id',[activity.id])).rows.length===0);
+await db.query("UPDATE profiles SET account_type='casual' WHERE id=$1",[ids.casual]);
+await denied('coach','UPDATE coach_activities SET owner=$2 WHERE id=$1',[activity.id,ids.athlete],/imutável/i);
+await denied('coach',"UPDATE coach_activities SET title='' WHERE id=$1",[activity.id]);
+await as('coach',"UPDATE coach_activities SET title='Pilates atualizado' WHERE id=$1",[activity.id]);
+check((await as('athlete','SELECT title FROM coach_activities WHERE id=$1',[activity.id])).rows[0].title==='Pilates atualizado');
+await db.query('UPDATE profiles SET is_banned=true WHERE id=$1',[ids.coach]);
+check((await as('coach','SELECT id FROM coach_activities')).rows.length===0);
+await denied('coach',insertActivity,[ids.coach,...activityFields]);
+await db.query('UPDATE profiles SET is_banned=false WHERE id=$1',[ids.coach]);
+await as('supervisor',"UPDATE coach_activities SET title='Revisado pela equipe' WHERE id=$1",[activity.id]);
+check((await as('coach','SELECT title FROM coach_activities WHERE id=$1',[activity.id])).rows[0].title==='Revisado pela equipe');
+check((await as('coach','DELETE FROM coach_activities WHERE id=$1 RETURNING id',[activity.id])).rows.length===1);
+check((await as('anon','SELECT id FROM coach_activities')).rows.length===0);
 await denied('athlete','SELECT moderation_diagnostics()');
 const diagnostics=(await as('supervisor','SELECT moderation_diagnostics() AS result')).rows[0].result;
 check(diagnostics.profiles===5 && diagnostics.reports_open===0 && diagnostics.rls.moderation_reports===true);

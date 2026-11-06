@@ -1,4 +1,5 @@
 'use client';
+import { MULTI_STORE_STORAGE_MARKER } from '@/fixtures/multi-store-offers';
 import { ADMIN_LOGIN_EMAIL } from './admin-account';
 import { readSavedAdminProfile } from './admin-session';
 import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
@@ -30,7 +31,7 @@ import {
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
-import { appendExpansionOffers, refreshLegacyOffers } from './offer-catalog';
+import { appendExpansionOffers, appendMultiStoreOffers, refreshLegacyOffers } from './offer-catalog';
 import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 import { DEMO_MODE } from '@/lib/demo-mode';
@@ -285,12 +286,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           const parsedOffers = JSON.parse(savedOffers);
           if (Array.isArray(parsedOffers)) {
             const refreshed = appendExpansionOffers(refreshLegacyOffers(parsedOffers), localStorage.getItem(quickStorageKey('coremotion_offers_expansion_2026_11_03')) === '1');
-            setOffers(refreshed);
-            localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(refreshed));
+            const expanded = appendMultiStoreOffers(refreshed, localStorage.getItem(quickStorageKey(MULTI_STORE_STORAGE_MARKER)) === '1');
+            setOffers(expanded);
+            localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(expanded));
           }
         }
 
         localStorage.setItem(quickStorageKey('coremotion_offers_expansion_2026_11_03'), '1');
+        localStorage.setItem(quickStorageKey(MULTI_STORE_STORAGE_MARKER), '1');
 
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && isMounted) {

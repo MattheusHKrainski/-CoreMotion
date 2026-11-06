@@ -43,5 +43,29 @@ try {
   await db.query("DELETE FROM public.external_offers WHERE id='expansion'");
   await db.query(expansionSql, expansionParams);
   assert.equal((await db.query("SELECT id FROM public.external_offers WHERE id='expansion'")).rows.length, 0);
-  console.log('PASS Ofertas: substituição legada, preservação de edições/exclusões e primeira carga (7 cenários, incluindo ampliação sem restaurar exclusões).');
+  // A separate batch can be installed without replaying the previous release.
+  const multiSql=[...source.matchAll(/await queryDb\(`(\s*WITH claimed[\s\S]+?)`, \[JSON.stringify\((\w+)\)\]\);/g)].find(match=>match[2]==='MULTI_STORE_OFFERS')[1];
+  const multi=[{...seed,id:'multi-edited',source_url:'https://new-store.test/one',original_price:150},{...seed,id:'multi-new',source_url:'https://new-store.test/two',original_price:170},{...seed,id:'multi-duplicate',source_url:'https://new-store.test/three'}];
+  await db.query("INSERT INTO external_offers(id,title,source_url,is_active) VALUES ('multi-edited','Editado e inativo','https://new-store.test/one',false),('custom-duplicate','Personalizado','https://new-store.test/three',true)");
+  await db.query(multiSql,[JSON.stringify(multi)]);
+  assert.equal((await db.query("SELECT title,is_active FROM external_offers WHERE id='multi-edited'")).rows[0].title,'Editado e inativo');
+  assert.equal((await db.query("SELECT is_active FROM external_offers WHERE id='multi-edited'")).rows[0].is_active,false);
+  assert.equal(Number((await db.query("SELECT original_price FROM external_offers WHERE id='multi-new'")).rows[0].original_price),170);
+  assert.equal((await db.query("SELECT id FROM external_offers WHERE id='multi-duplicate'")).rows.length,0);
+  await db.exec("DELETE FROM external_offers WHERE id='multi-new'");
+  await db.query(multiSql,[JSON.stringify(multi)]);
+  assert.equal((await db.query("SELECT id FROM external_offers WHERE id='multi-new'")).rows.length,0);
+  // Execute the actual deployment migration twice, including a manual edit and deletion.
+  await db.exec("CREATE ROLE anon; CREATE ROLE authenticated; TRUNCATE external_offers; DELETE FROM catalog_seed_batches WHERE id='offers-multi-store-2026-11-05'");
+  const migration=readFileSync(new URL('../../supabase/migrations/20261105040000_multistore_external_offers.sql',import.meta.url),'utf8');
+  await db.exec(migration);
+  const ids=(await db.query('SELECT id FROM external_offers ORDER BY id')).rows.map(r=>r.id);
+  assert.equal(ids.length,8);
+  assert.equal((await db.query('SELECT DISTINCT store_name FROM external_offers')).rows.length,4);
+  await db.query("UPDATE external_offers SET title='Edição mantida' WHERE id=$1",[ids[0]]);
+  await db.query('DELETE FROM external_offers WHERE id=$1',[ids[1]]);
+  await db.exec(migration);
+  assert.equal((await db.query('SELECT title FROM external_offers WHERE id=$1',[ids[0]])).rows[0].title,'Edição mantida');
+  assert.equal((await db.query('SELECT id FROM external_offers WHERE id=$1',[ids[1]])).rows.length,0);
+  console.log('PASS Ofertas: substituição legada, preservação de edições/exclusões e primeira carga (leva multiloja, preços originais e preservação de edições/exclusões).');
 } finally { await db.close(); }

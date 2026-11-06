@@ -4,6 +4,7 @@
  * em produção ainda não tenha recebido a migração manualmente.
  */
 import crypto from 'node:crypto';
+import { MULTI_STORE_OFFERS } from '@/fixtures/multi-store-offers';
 import { queryDb } from './db';
 import type { ExternalOffer } from './types';
 import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS, EXPANSION_OFFERS } from '@/fixtures/real-offers';
@@ -121,6 +122,25 @@ export async function seedInitialExternalOffers(): Promise<void> {
     ) WHERE EXISTS (SELECT 1 FROM claimed)
     ON CONFLICT (id) DO NOTHING
   `, [JSON.stringify(EXPANSION_OFFERS)]);
+
+
+  // Independent release marker: do not replay the previous batch or resurrect deleted offers.
+  await queryDb(`
+    WITH claimed AS (
+      INSERT INTO public.catalog_seed_batches(id) VALUES ('offers-multi-store-2026-11-05')
+      ON CONFLICT DO NOTHING RETURNING id
+    )
+    INSERT INTO public.external_offers
+      (id, title, description, store_name, category, sport, price, original_price, image_url, source_url, is_active, created_at)
+    SELECT seed.id, seed.title, seed.description, seed.store_name, seed.category, seed.sport,
+      seed.price, seed.original_price, seed.image_url, seed.source_url, seed.is_active, seed.created_at
+    FROM jsonb_to_recordset($1::jsonb) AS seed(
+      id text, title text, description text, store_name text, category text, sport text,
+      price numeric, original_price numeric, image_url text, source_url text, is_active boolean, created_at timestamptz
+    ) WHERE EXISTS (SELECT 1 FROM claimed)
+      AND NOT EXISTS (SELECT 1 FROM public.external_offers existing WHERE existing.source_url=seed.source_url)
+    ON CONFLICT (id) DO NOTHING
+  `, [JSON.stringify(MULTI_STORE_OFFERS)]);
 
 }
 

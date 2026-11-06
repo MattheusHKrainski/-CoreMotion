@@ -1,7 +1,10 @@
 'use client';
+import ExternalStoreLink from './ExternalStoreLink';
 import ReportButton from '@/components/shared/ReportButton';
+import { externalOfferDestination } from '@/lib/external-offer-link';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { copyText } from '@/lib/clipboard';
 import ProductImage from '@/components/shared/ProductImage';
 import { Check, Copy, ExternalLink, Pencil, Store, Ticket, Trash2, X } from 'lucide-react';
 import { ExternalOffer } from '@/lib/types';
@@ -21,10 +24,14 @@ export default function ExternalOfferModal({
   onEditOffer,
   onDeleteOffer,
 }: ExternalOfferModalProps) {
+  const destinationInput = useRef<HTMLInputElement>(null);
   const [copiedCoupon, setCopiedCoupon] = useState(false);
+  const [linkNotice, setLinkNotice] = useState('');
+  useEffect(() => { setLinkNotice(''); setCopiedCoupon(false); }, [offer?.id]);
 
   if (!offer) return null;
 
+  const destination = externalOfferDestination(offer.source_url);
   const formatPrice = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
@@ -38,18 +45,23 @@ export default function ExternalOfferModal({
 
   const handleCopyCoupon = async () => {
     if (!offer.coupon_code) return;
-    try {
-      await navigator.clipboard.writeText(offer.coupon_code);
+    if (await copyText(offer.coupon_code)) {
       setCopiedCoupon(true);
       setTimeout(() => setCopiedCoupon(false), 2500);
-    } catch {
-      // ignore clipboard restriction
+    } else {
+      setLinkNotice(`Cupom: ${offer.coupon_code}. Selecione o código para copiar.`);
     }
   };
 
-  const handleAction = () => {
-    if (offer.is_demo) return;
-    window.open(offer.source_url, '_blank', 'noopener,noreferrer');
+  const handleCopyLink = async () => {
+    if (!destination) return;
+    if (await copyText(destination)) {
+      setLinkNotice('Link copiado! Cole no navegador para abrir a loja.');
+    } else {
+      destinationInput.current?.focus({ preventScroll: true });
+      destinationInput.current?.select();
+      setLinkNotice('Endereço selecionado. Pressione Ctrl+C (ou ⌘C no Mac); no celular, toque e segure para copiar.');
+    }
   };
 
 
@@ -100,7 +112,7 @@ export default function ExternalOfferModal({
               </span>
             )}
           </div>
-          {!offer.is_demo && (
+          {destination && (
             <span className="text-[11px] text-zinc-400 truncate max-w-[190px]" title={offer.source_url}>
               Destino: {destinationHost}
             </span>
@@ -127,17 +139,19 @@ export default function ExternalOfferModal({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleAction}
-          className="w-full py-3.5 px-5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-950/50"
-        >
-          <span>Ir para oferta em {offer.store_name}</span>
-          <ExternalLink className="w-4 h-4" />
-        </button>
+        {destination ? <>
+          <ExternalStoreLink href={destination} className="w-full py-3.5 px-5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-950/50">
+            <span>Ir para oferta em {offer.store_name}</span><ExternalLink className="w-4 h-4" />
+          </ExternalStoreLink>
+          <div className="space-y-2">
+            <label className="block text-xs text-zinc-400">Endereço da oferta<input ref={destinationInput} readOnly value={destination} onFocus={event => event.currentTarget.select()} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-xs text-zinc-300" /></label>
+            <button type="button" onClick={handleCopyLink} className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-xs font-bold text-zinc-300 hover:bg-zinc-800"><Copy className="h-4 w-4" />Copiar link da oferta</button>
+            {linkNotice && <p role="status" className="text-xs text-zinc-300">{linkNotice}</p>}
+          </div>
+        </> : <p role="alert" className="rounded-xl border border-red-500/30 p-3 text-sm text-red-300">Esta oferta está sem um link válido. Informe a equipe pelo botão de denúncia.</p>}
 
         <p className="text-[11px] text-zinc-500 text-center leading-relaxed">
-          Você será redirecionado em nova aba para a página da promoção na loja externa. Preço, frete e estoque são confirmados no site de destino.
+          A loja abre em nova aba. Se o navegador bloquear a abertura, copie o endereço acima e abra diretamente. Preço, frete e estoque são confirmados na loja.
         </p>
 
         {canManage && (onEditOffer || onDeleteOffer) && (

@@ -9,8 +9,8 @@ import { LEGACY_ATHLETE_SIGNATURES } from '@/fixtures/legacy-athlete-signatures'
 import { refreshAthleteCatalog } from '@/lib/athlete-catalog';
 import { appendExpansionOffers } from '@/lib/offer-catalog';
 
-it('amplia para 14 ofertas e 24 anúncios com imagens únicas e preços positivos', () => {
-  assert.equal(INITIAL_EXTERNAL_OFFERS.length, 14);
+it('amplia para 22 ofertas e mantém 24 anúncios com imagens únicas e preços positivos', () => {
+  assert.equal(INITIAL_EXTERNAL_OFFERS.length, 22);
   assert.equal(ATHLETE_C2C_LISTINGS.length, 24);
   const images = [...INITIAL_EXTERNAL_OFFERS.map(p => p.image_url), ...ATHLETE_C2C_LISTINGS.flatMap(p => p.images)];
   assert.equal(new Set(images).size, images.length);

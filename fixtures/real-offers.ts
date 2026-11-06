@@ -1,3 +1,4 @@
+import { MULTI_STORE_OFFERS } from './multi-store-offers';
 import { CATALOG_EXPANSION } from './catalog-expansion';
 import type { ExternalOffer } from '@/lib/types';
 
@@ -16,6 +17,7 @@ export const EXPANSION_OFFERS: ExternalOffer[] = CATALOG_EXPANSION.map((item, in
 }));
 
 export const INITIAL_EXTERNAL_OFFERS: ExternalOffer[] = [
+  ...MULTI_STORE_OFFERS,
   ...EXPANSION_OFFERS,
   {
     id: 'offer-decathlon-bjj-8920531',

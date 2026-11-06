@@ -50,3 +50,11 @@ Para remover o recurso ao terminar o período temporário, configure `NEXT_PUBLI
 Cada acesso (`admin`, `athlete`, `coach`, `casual`) agora abre por navegação completa e usa identidade, e-mail e chaves próprias no namespace `coremotion_quick_v2_<perfil>_*`. Carrinho, favoritos, pedidos, anúncios, comunidade, ofertas gerenciadas e registros esportivos locais não são compartilhados entre os quatro acessos. O estado temporário antigo não é migrado porque misturava dados de perfis diferentes. Contas reais mantêm o fluxo de autenticação existente.
 
 O bloco de avatar/nome na barra lateral abre **Minha conta**. Nessa área, favoritos são produtos salvos pelo coração no Marketplace; produtos à venda e pedidos são filtrados pelo proprietário. O currículo esportivo aparece apenas para os perfis autorizados; o Casual mantém acesso às compras e à comunidade, sem recrutamento. A saída de um acesso temporário recarrega o acesso normal.
+
+## Publicações em Treinadores e associações
+
+Contas de treinador podem publicar aulas, grupos de prática e associações esportivas diretamente nessa aba. Cada publicação inclui título, tipo, organizador, modalidade, cidade, horários, descrição/local e contato público. Há edição, exclusão com confirmação, filtro das próprias publicações e integração com a busca/modalidade da aba.
+
+A persistência real usa `public.coach_activities`, criada pela migração `20261105030000_coach_activities.sql`. A leitura é pública; usuários banidos não acessam pelo próprio token. A escrita exige treinador autenticado ou equipe autorizada, com proprietário validado no banco. Treinadores não editam/excluem publicações alheias, enquanto administradores e supervisores podem moderar. Identidade, proprietário e data de criação são imutáveis. O contato publicado é intencionalmente público.
+
+Perfis rápidos usam apenas armazenamento local separado por perfil (`coremotion_coach_activities_v1` dentro do namespace de acesso rápido), sem enviar conteúdo ao projeto Supabase.
