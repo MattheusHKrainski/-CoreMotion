@@ -65,8 +65,8 @@ it('o armazenamento esportivo usa o mesmo namespace do perfil temporário', () =
   `]);
 });
 
-it('os três perfis rápidos têm catálogo e ações locais mesmo com Supabase configurado e modo local desativado', () => {
-  for (const profile of ['athlete', 'coach', 'casual']) {
+it('os quatro perfis rápidos têm catálogo e ações locais mesmo com Supabase configurado e modo local desativado', () => {
+  for (const profile of ['admin', 'athlete', 'coach', 'casual']) {
     execFileSync(process.execPath, ['--import', 'tsx', '-e', `
       const assert = require('node:assert/strict');
       global.window = { location: { search: '?acesso-rapido=${profile}' } };

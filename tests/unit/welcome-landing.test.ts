@@ -63,6 +63,6 @@ it('remove o atalho lateral e centraliza a abertura da autenticação na página
   const sidebar = readFileSync('components/shared/Sidebar.tsx', 'utf8');
   const store = readFileSync('lib/store.tsx', 'utf8');
   assert.doesNotMatch(sidebar, /Página inicial & Como funciona/);
-  assert.match(store, /if \(open\) \{\s*openWelcomePage\(\);/);
+  assert.match(store, /if \(open && \(!userRef.current \|\| userRef.current.role === 'visitor'\)\) \{\s*openWelcomePage\(\);/);
   assert.match(store, /setAuthModalOpenState\(open\)/);
 });

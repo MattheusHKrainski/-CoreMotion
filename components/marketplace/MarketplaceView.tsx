@@ -166,6 +166,9 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         </button>
       </header>
 
+      <label className="block text-sm font-semibold text-zinc-300">Pesquisar no Marketplace
+        <div className="relative mt-2"><Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500" /><input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar produtos ou esportes..." className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm text-white focus:border-red-500 focus:outline-none" /></div>
+      </label>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-2 backdrop-blur-md">
         <div className="flex w-full items-center gap-1.5 overflow-x-auto text-xs scrollbar-none sm:w-auto">
           {([

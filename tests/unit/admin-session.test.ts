@@ -43,7 +43,28 @@ it('atalho valida usuário no servidor e usa a sessão persistente do Supabase',
   assert.match(store, /await readSavedAdminProfile/);
   const modal = readFileSync('components/auth/AuthModal.tsx', 'utf8');
   assert.match(modal, /await resumeAdminSession\(\)/);
+  assert.match(store, /await resumeAdminSession\(\)/);
   const client = readFileSync('services/supabaseClient.ts', 'utf8');
   assert.match(client, /persistSession: true/);
   assert.match(client, /autoRefreshToken: true/);
+});
+
+it('trocar conta mantém a sessão oficial e não exige campos de senha no seletor', () => {
+ const profile = readFileSync('components/ProfileView.tsx', 'utf8');
+ assert.match(profile, /setAuthModalMode\('switch'\)/);
+ assert.match(profile, /Trocar conta/);
+ assert.doesNotMatch(readFileSync('components/shared/Sidebar.tsx', 'utf8'), /Trocar conta/);
+ const modal = readFileSync('components/auth/AuthModal.tsx', 'utf8');
+ assert.match(modal, /authModalMode !== 'switch' && <form/);
+ const handler = modal.slice(modal.indexOf('const handleQuickLogin'), modal.indexOf('const handleSubmit'));
+ assert.doesNotMatch(handler, /signOut|logout|requestAdminAccessLink/);
+});
+
+it('abrir e fechar o seletor não troca usuário nem retorna a conta conectada à página pública', () => {
+ const store=readFileSync('lib/store.tsx','utf8');
+ const handler=store.slice(store.indexOf('  const setAuthModalOpen = useCallback'),store.indexOf('  // Role switching'));
+ assert.match(handler, /open && \(!userRef.current \|\| userRef.current.role === 'visitor'\)/);
+ assert.doesNotMatch(handler, /setUser|signOut|logout|setActiveView/);
+ const modal=readFileSync('components/auth/AuthModal.tsx','utf8');
+ assert.match(modal, /onClick=\{\(\) => setAuthModalOpen\(false\)\}\s*aria-label="Fechar formulário"/);
 });

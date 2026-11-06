@@ -69,7 +69,8 @@ type ActiveView =
   | 'admin'
   | 'trials'
   | 'talents'
-  | 'sports-profile';
+  | 'sports-profile'
+  | 'sports-activity';
 
 interface CoreMotiomContextType {
   // Navigation & UI Modals
@@ -112,8 +113,8 @@ interface CoreMotiomContextType {
   adminToggleProductStatus: (productId: string, newStatus: Product['status']) => void;
   adminSyncSupabase: (silent?: boolean) => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
-  loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
-  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }>;
+  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string) => Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (newRole: UserRole, accountType?: AccountType) => void;
@@ -518,9 +519,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Every authentication entry point opens over the welcome page.
+  // Visitors authenticate over welcome. Signed-in users keep their current screen
+  // and session when opening (or dismissing) the account selector.
   const setAuthModalOpen = useCallback((open: boolean) => {
-    if (open) {
+    if (open && (!userRef.current || userRef.current.role === 'visitor')) {
       openWelcomePage();
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -846,7 +848,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   }, [setAuthModalOpen, resumeAdminSession]);
 
   // Auth: Email Login
-  const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+  const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }> => {
     manualAuthRef.current = true;
     let res: Awaited<ReturnType<typeof AuthService.loginWithEmail>>;
     try {
@@ -878,7 +880,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     name: string,
     accountType: AccountType = 'casual',
     sport?: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }> => {
     if (accountType !== 'casual' && (!sport?.trim() || sport.trim().length > 60)) return { success: false, error: 'Escolha sua modalidade principal.' };
     manualAuthRef.current = true;
     let res: Awaited<ReturnType<typeof AuthService.signUpWithEmail>>;
@@ -887,6 +889,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     } finally {
       manualAuthRef.current = false;
     }
+    if (res.confirmationRequired) return { success: true, confirmationRequired: true };
     if (res.success && res.data) {
       const profile = { ...res.data, account_type: accountType, sport_interests: sport ? [sport.trim()] : res.data.sport_interests };
       setUser(profile);

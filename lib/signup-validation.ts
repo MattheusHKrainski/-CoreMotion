@@ -7,7 +7,8 @@ export function signupErrorMessage(error: { code?: string; message?: string; sta
   if (code === 'user_already_exists' || code === 'email_exists' || message.includes('already')) return 'Já existe uma conta com este e-mail. Faça login ou use “Esqueci minha senha”.';
   if (code === 'weak_password' || message.includes('password')) return 'A senha deve ter no mínimo 6 caracteres e atender aos requisitos de segurança. Escolha uma senha mais forte.';
   if (code === 'email_address_invalid' || code === 'validation_failed' && message.includes('email') || message.includes('invalid email')) return 'O e-mail informado não é válido. Confira o endereço completo, como nome@gmail.com.';
-  if (code === 'email_address_not_authorized') return 'O envio de confirmação para este endereço está restrito pela configuração de e-mail. Entre em contato com o suporte.';
+  if (code === 'email_address_not_authorized') return 'O serviço de confirmação ainda não está configurado para enviar e-mails a este endereço. Isso não significa que seu e-mail seja inválido. Entre em contato com o suporte.';
+  if (code === 'over_email_send_rate_limit') return 'Não foi possível concluir o cadastro: o serviço de confirmação atingiu o limite de envio de e-mails. Este é um problema do serviço, não dos seus dados. Entre em contato com o suporte.';
   if (error.status === 429 || code.includes('rate_limit') || message.includes('rate limit')) return 'Muitas tentativas ou limite de envio de e-mails atingido. Aguarde alguns minutos antes de tentar novamente.';
   if (code === 'signup_disabled') return 'O cadastro de novas contas está temporariamente desativado. Tente novamente mais tarde.';
   if (code === 'email_provider_disabled') return 'O cadastro por e-mail está desativado. Entre em contato com o suporte.';

@@ -56,9 +56,10 @@ const server = http.createServer(async (req, res) => {
   }
   if (url.startsWith('/auth/v1/signup')) {
     const { email } = JSON.parse(body || '{}');
-    if (email === 'existente@x.com') {
+    if (email === 'existente@gmail.com') {
       return json(422, { code: 422, error_code: 'user_already_exists', msg: 'User already registered' });
     }
+    if (email === 'pendente@gmail.com') return json(200, { user: session(email).user, session: null });
     return json(200, session(email));
   }
   if (url.startsWith('/rest/v1/profiles') && profileMode !== 'missing') {
@@ -197,10 +198,37 @@ describe('AuthService: credenciais e sincronização (C1)', () => {
     assert.equal(result.data, undefined);
   });
 
+  it('cadastro rejeita outros provedores sem criar sessão', async () => {
+    syncCalls = 0;
+    for (const email of ['nome@yahoo.com', 'nome@gmail.com.evil.com', 'nome@empresa.com']) {
+      const result = await auth.AuthService.signUpWithEmail(email, '123456', 'Pessoa');
+      assert.equal(result.success, false);
+      assert.match(result.error || '', /@gmail.com/);
+      assert.equal(result.data, undefined);
+    }
+    assert.equal(syncCalls, 0);
+  });
+
+  it('cadastro com seis caracteres recebe sessão e perfil, sem e-mail de confirmação', async () => {
+    const result = await auth.AuthService.signUpWithEmail('cadastro@hotmail.com', '123456', 'Pessoa');
+    assert.equal(result.success, true);
+    assert.equal(result.data?.id, USER_ID);
+    assert.equal(result.confirmationRequired, undefined);
+  });
+
   it('cadastro com e-mail já existente é recusado', async () => {
-    const res = await auth.AuthService.signUpWithEmail('existente@x.com', 'senha-nova', 'Existente');
+    const res = await auth.AuthService.signUpWithEmail('existente@gmail.com', 'senha-nova', 'Existente');
     assert.equal(res.success, false);
     assert.match(res.error ?? '', /Já existe uma conta/);
+  });
+
+  it('confirmação pendente não autentica nem é tratada como erro de cadastro', async () => {
+    syncCalls = 0;
+    const result = await auth.AuthService.signUpWithEmail('pendente@gmail.com', 'senha-segura', 'Pessoa');
+    assert.equal(result.success, true);
+    assert.equal(result.confirmationRequired, true);
+    assert.equal(result.data, undefined);
+    assert.equal(syncCalls, 0);
   });
 
   it('getProfileOrCreate falha (sem perfil) quando o perfil não pode ser sincronizado', async () => {

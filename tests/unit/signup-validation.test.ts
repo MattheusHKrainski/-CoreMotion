@@ -18,3 +18,13 @@ it('traduz erros de cadastro sem expor mensagens internas', () => {
   assert.match(signupErrorMessage({ status: 503 }), /serviço de cadastro/);
   assert.doesNotMatch(signupErrorMessage({ message: 'sensitive internal SQL details' }), /SQL|sensitive|Verifique os dados/);
 });
+
+it('distingue falhas da configuração de envio de erros nos dados do usuário', () => {
+  const quota = signupErrorMessage({ code: 'over_email_send_rate_limit', status: 429 });
+  assert.match(quota, /Não foi possível concluir o cadastro/);
+  assert.match(quota, /problema do serviço, não dos seus dados/);
+  assert.doesNotMatch(quota, /alguns minutos|corrigidos sem reenviar|Conta criada/);
+  const restricted = signupErrorMessage({ code: 'email_address_not_authorized', status: 403 });
+  assert.match(restricted, /serviço de confirmação/);
+  assert.match(restricted, /não significa que seu e-mail seja inválido/);
+});

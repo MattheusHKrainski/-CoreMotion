@@ -5,10 +5,9 @@ import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { IS_QUICK_ACCESS } from '@/lib/quick-access';
-import { ACCOUNT_TYPES, canAccessSports } from '@/lib/sports';
+import { ACCOUNT_TYPES, canAccessSports, canRecruit } from '@/lib/sports';
 import BrandMark from '@/components/shared/BrandMark';
 import {
-  Search,
   ShoppingBag,
   User,
   PlusCircle,
@@ -39,8 +38,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     setAuthModalOpen,
     setAuthModalMode,
     setCheckoutOpen,
-    searchQuery,
-    setSearchQuery,
     logout,
     switchRole,
     addToast,
@@ -86,7 +83,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     },
     {
       id: 'coaches',
-      label: 'Treinadores',
+      label: 'Treinadores e associações',
       description: 'Encontre orientação para treinar',
       icon: Users,
     },
@@ -98,8 +95,9 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     },
     ...(canAccessSports(user) ? [
       { id: 'trials' as const, label: 'Seletivas e treinos', description: 'Oportunidades e inscrições', icon: Users },
-      { id: 'talents' as const, label: 'Banco de atletas', description: 'Currículos e convocações', icon: Users },
-      { id: 'sports-profile' as const, label: 'Meu perfil esportivo', description: 'Formação e conquistas', icon: User },
+      { id: 'talents' as const, label: canRecruit(user) ? 'Banco de atletas' : 'Convocações e inscrições', description: canRecruit(user) ? 'Buscar atletas e convocar' : 'Convites, treinos e respostas', icon: Users },
+      ...(canRecruit(user) ? [{ id: 'sports-activity' as const, label: 'Convocações e inscritos', description: 'Minhas convocações e atletas inscritos', icon: Users }] : []),
+      { id: 'sports-profile' as const, label: user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Meu currículo esportivo', description: user?.account_type === 'coach' ? 'Formação, metodologia e horários' : 'Trajetória e conquistas', icon: User },
     ] : []),
     ...(userIsStaff
       ? [
@@ -174,44 +172,12 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           )}
         </div>
 
-        {/* Global Instant Search Box */}
-        <div className="px-2">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
-              <Search className="w-4 h-4" />
-            </div>
-            <input
-              id="sidebar-search-input"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (activeView !== 'marketplace' && e.target.value.length > 0) {
-                  setActiveView('marketplace');
-                }
-              }}
-              placeholder="Pesquisar produtos ou esportes..."
-              className="w-full pl-9 pr-8 py-2 bg-zinc-900/90 hover:bg-zinc-900 text-xs text-white placeholder-zinc-500 rounded-xl border border-zinc-800 focus:border-red-500/60 focus:bg-zinc-950 focus:outline-none transition-all shadow-inner"
-            />
-            {searchQuery.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Limpar busca"
-                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-zinc-500 hover:text-white transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Main Function Navigation Menu */}
         <nav aria-label="Navegação da plataforma" className="px-1 space-y-4">
           {[
             { title: 'Explorar', description: 'Descubra a plataforma', ids: ['home', 'marketplace', 'community'] },
             { title: 'Anunciar e treinar', description: 'Equipamentos e orientação', ids: ['sell', 'coaches'] },
-            { title: 'Carreira esportiva', description: 'Oportunidades e trajetória', ids: ['trials', 'talents', 'sports-profile'] },
+            { title: 'Carreira esportiva', description: 'Oportunidades e trajetória', ids: ['trials', 'talents', 'sports-profile', 'sports-activity'] },
             { title: 'Gestão', description: 'Ferramentas da equipe', ids: ['admin'] },
           ].map((section) => {
             const items = navItems.filter((item) => section.ids.includes(item.id));
@@ -377,6 +343,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
+
 
             <div className="flex items-center justify-between pt-1">
               <span

@@ -3,12 +3,13 @@ import { MIN_PASSWORD_LENGTH, signupErrorMessage } from '@/lib/signup-validation
 import { getSupabaseClient } from './supabaseClient';
 import { UserProfile } from '@/lib/types';
 
-import { isValidEmailAddress } from '@/lib/email-validation';
+import { isValidEmailAddress, isAllowedSignupEmail, SIGNUP_EMAIL_HELP } from '@/lib/email-validation';
 import { authedFetch, type ApiResult } from '@/lib/auth-fetch';
 
 
 interface AuthResponse<T = unknown> {
   success: boolean;
+  confirmationRequired?: boolean;
   data?: T;
   error?: string;
 }
@@ -125,6 +126,7 @@ export class AuthService {
     if (pass.length < MIN_PASSWORD_LENGTH) return { success: false, error: 'A senha deve ter no mínimo 6 caracteres.' };
     const cleanEmail = email.trim();
     if (!isValidEmailAddress(cleanEmail)) return { success: false, error: 'Informe um e-mail completo e válido, como nome@gmail.com.' };
+    if (!isAllowedSignupEmail(cleanEmail)) return { success: false, error: SIGNUP_EMAIL_HELP };
     const sb = getSupabaseClient();
 
     if (!sb) return { success: false, error: 'Cadastro indisponível: configure a conexão com o Supabase. Nenhuma conta foi criada.' };
@@ -143,7 +145,7 @@ export class AuthService {
       }
       if (!data.session) {
         // Confirmação de e-mail pendente: sem sessão não há como sincronizar o perfil ainda.
-        return { success: false, error: 'Conta criada. Confirme seu e-mail e depois entre.' };
+        return { success: true, confirmationRequired: true };
       }
       return this.finishSession(data.user.id, cleanEmail, { name, sport });
     } catch {
