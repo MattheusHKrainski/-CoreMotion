@@ -1,3 +1,4 @@
+import { MULTI_STORE_OFFERS } from '@/fixtures/multi-store-offers';
 import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS, EXPANSION_OFFERS } from '@/fixtures/real-offers';
 import type { ExternalOffer } from './types';
 
@@ -28,4 +29,10 @@ export function isProductDestination(value: string): boolean {
 export function appendExpansionOffers(offers: ExternalOffer[], applied: boolean): ExternalOffer[] {
   if (applied) return offers;
   return [...EXPANSION_OFFERS.filter(seed => !offers.some(offer => offer.id === seed.id)), ...offers];
+}
+
+/** Add this batch once. Preserve existing records, including inactive/edited offers. */
+export function appendMultiStoreOffers(offers: ExternalOffer[], applied: boolean): ExternalOffer[] {
+  if (applied) return offers;
+  return [...MULTI_STORE_OFFERS.filter(seed => !offers.some(offer => offer.id === seed.id || offer.source_url === seed.source_url)), ...offers];
 }

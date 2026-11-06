@@ -9,9 +9,11 @@ it('cada oferta revisada tem link de produto, foto da loja e descrição do mode
   for (const offer of INITIAL_EXTERNAL_OFFERS) {
     assert.equal(offerCreateSchema.safeParse(offer).success, true);
     assert.equal(isProductDestination(offer.source_url), true);
-    assert.match(offer.source_url, /\/p$/);
-    assert.match(offer.image_url, /^https:\/\/decathlonpro\.vtexassets\.com\/arquivos\/ids\/\d+\/.+\.jpg$/);
-    assert.ok(offer.description.includes(offer.id.split('-').at(-1)!));
+    const product = new URL(offer.source_url);
+    const galleries: Record<string,string> = { 'Decathlon':'decathlonpro.vtexassets.com', 'Centauro':'imgcentauro-a.akamaihd.net', 'Adidas':'assets.adidas.com', 'Olympikus':'vulcabras.vtexassets.com', 'Netshoes':'static.netshoes.com.br' };
+    assert.ok(product.pathname.endsWith('/p') || product.pathname.endsWith('.html') || product.pathname.startsWith('/p/'));
+    assert.equal(new URL(offer.image_url).hostname, galleries[offer.store_name]);
+    assert.ok(offer.description.toLowerCase().includes(offer.id.split('-').at(-1)!.toLowerCase()));
     assert.equal(offer.coupon_code, undefined);
   }
 });

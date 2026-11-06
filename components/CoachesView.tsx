@@ -5,6 +5,7 @@ import { matchesSport } from '@/lib/modalities';
 import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import CoachProfiles from './CoachProfiles';
+import CoachActivities from './CoachActivities';
 import { Coach } from '@/lib/types';
 import {
   Users,
@@ -105,6 +106,7 @@ export default function CoachesView() {
 
       <section aria-label="Filtros de treinadores" className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3"><SportPicker value={selectedSport} onChange={setSelectedSport} options={sportsList} /><label className="block text-xs text-zinc-400 space-y-2">Ordenar catálogo<select value={sortBy} onChange={e => setSortBy(e.target.value)} className="block rounded-xl border border-zinc-700 bg-zinc-950 p-2.5 text-white"><option value="name">Nome: A–Z</option><option value="rating">Melhores avaliações</option></select></label><div className="flex flex-wrap justify-between gap-3 text-sm text-zinc-400"><span>{filteredCoaches.length} treinadores no catálogo • perfis da comunidade abaixo</span><button type="button" onClick={() => { setSelectedSport('all'); setSearchTerm(''); setSortBy('name'); }} className="text-red-400">Limpar filtros</button></div></section>
 
+      <CoachActivities sport={selectedSport} search={searchTerm} />
       <CoachProfiles sport={selectedSport} search={searchTerm} />
 
       <header className="border-t border-zinc-800 pt-6 space-y-2"><h2 className="text-xl font-bold">Catálogo de treinadores</h2><p className="text-sm text-zinc-400">Compare modalidades, localização, formação e planos antes de escolher um profissional.</p></header>
