@@ -250,7 +250,7 @@ export class AuthService {
     const sb = getSupabaseClient();
     if (sb) {
       try {
-        await sb.auth.signOut();
+        await sb.auth.signOut({ scope: 'local' });
       } catch {
         // ignore
       }

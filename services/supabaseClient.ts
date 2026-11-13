@@ -1,4 +1,3 @@
-import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -15,9 +14,30 @@ function isAllowedSupabaseUrl(url: string): boolean {
   return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(url);
 }
 
-export const isSupabaseConfigured = !IS_QUICK_ACCESS && Boolean(isAllowedSupabaseUrl(supabaseUrl) && supabaseAnonKey.length > 15);
+export const isSupabaseConfigured = Boolean(isAllowedSupabaseUrl(supabaseUrl) && supabaseAnonKey.length > 15);
 
+export const SUPABASE_AUTH_STORAGE_KEY = (() => {
+  try { return `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`; } catch { return 'coremotion-auth-token'; }
+})();
 let browserClient: SupabaseClient | null = null;
+
+/** Isolated verification never replaces the currently connected account on failure. */
+let verificationIndex = 0;
+export function createSessionVerifier(): SupabaseClient | null {
+  if (!isSupabaseConfigured) return null;
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `${SUPABASE_AUTH_STORAGE_KEY}-verify-${++verificationIndex}` },
+  });
+}
+
+/** Forget only the active browser context, keeping explicitly remembered sessions valid. */
+export async function detachRememberedSession(): Promise<void> {
+  await browserClient?.auth.stopAutoRefresh();
+  await browserClient?.removeAllChannels();
+  window.localStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+  window.localStorage.removeItem(`${SUPABASE_AUTH_STORAGE_KEY}-code-verifier`);
+  browserClient = null;
+}
 
 /**
  * Retorna o cliente Supabase compartilhado (navegador) ou um cliente sem persistência (servidor).
@@ -38,6 +58,7 @@ export function getSupabaseClient(): SupabaseClient | null {
       browserClient = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           persistSession: true,
+          storageKey: SUPABASE_AUTH_STORAGE_KEY,
           autoRefreshToken: true,
           detectSessionInUrl: true,
           storage: window.localStorage,

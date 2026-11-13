@@ -1,5 +1,8 @@
 # Decisões incluídas no envio ao GitHub
 
+> **Atualização:** o acesso rápido agora contém somente contas reais salvas por consentimento neste navegador. Os atalhos temporários descritos historicamente abaixo foram removidos, inclusive sua ativação por URL. A conta Admin também precisa ser salva explicitamente para aparecer no seletor. Consulte o [fluxo atual de contas salvas](auth/acesso-rapido-contas-salvas.md), incluindo a diferença entre sair de uma conta lembrada e revogar sua sessão. As referências abaixo a atalhos fixos, perfis temporários e comportamento anterior de logout não descrevem mais a interface atual.
+
+
 Envio autorizado pelo usuário. Este documento registra o escopo e a decisão mais recente sobre o acesso administrativo.
 
 - Decisão atual: o atalho Admin usa a conta oficial, retomando apenas uma sessão válida e o perfil administrativo verificado no servidor. Sem sessão válida, abre o login normal com o e-mail preenchido. Não cria um Admin local nem inclui credenciais no código. Os demais perfis rápidos permanecem temporários e isolados.

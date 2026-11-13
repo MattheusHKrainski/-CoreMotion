@@ -9,7 +9,7 @@ it('login e cadastro compartilham dialog limitado à viewport e scroll interno c
   assert.match(modal, /max-h-\[calc\(100dvh-2rem\)\]/);
   assert.match(modal, /data-auth-scroll.*min-h-0 overflow-y-auto overscroll-contain/);
   assert.match(modal, /aria-label="Fechar formulário"/);
-  assert.match(modal, /\['admin', 'athlete', 'coach', 'casual'\]/);
+  assert.match(modal, /<SavedAccounts/);
   const lock = readFileSync('hooks/useDialogScrollLock.ts', 'utf8');
   assert.match(lock, /body.style.position = 'fixed'/);
   assert.match(lock, /root.style.overflow = previous.rootOverflow/);

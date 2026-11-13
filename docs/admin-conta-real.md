@@ -1,5 +1,8 @@
 # Conta administrativa real e acesso rápido
 
+> **Atualização:** o acesso rápido agora contém somente contas reais salvas por consentimento neste navegador. Os atalhos temporários descritos historicamente abaixo foram removidos, inclusive sua ativação por URL. A conta Admin também precisa ser salva explicitamente para aparecer no seletor. Consulte o [fluxo atual de contas salvas](auth/acesso-rapido-contas-salvas.md), incluindo a diferença entre sair de uma conta lembrada e revogar sua sessão. As referências abaixo a atalhos fixos, perfis temporários e comportamento anterior de logout não descrevem mais a interface atual.
+
+
 Em 03/11/2026, foi identificada uma conta **já existente e confirmada pelo Google** para o e-mail solicitado `mattheus.h.krainski@gmail.com`. Não foi criada uma conta duplicada.
 
 No projeto conectado CoreMotion:
