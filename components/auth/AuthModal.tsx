@@ -1,10 +1,10 @@
 'use client';
-import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
 import { MIN_PASSWORD_LENGTH } from '@/lib/signup-validation';
 import { isValidEmailAddress, isAllowedSignupEmail, SIGNUP_EMAIL_HELP } from '@/lib/email-validation';
 import { getSupabaseClient } from '@/services/supabaseClient';
-import { IS_QUICK_ACCESS, QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
+import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
+import SavedAccounts from './SavedAccounts';
 import { useDialogScrollLock } from '@/hooks/useDialogScrollLock';
 import SportPicker from '@/components/shared/SportPicker';
 import React, { useEffect, useState } from 'react';
@@ -20,7 +20,6 @@ import {
   User,
   ArrowRight,
   AlertCircle,
-  SlidersHorizontal,
 } from 'lucide-react';
 
 export default function AuthModal() {
@@ -34,7 +33,7 @@ export default function AuthModal() {
     prefillAuthEmail,
     setPrefillAuthEmail,
     enterPlatform,
-    resumeAdminSession,
+    loginSavedAccount,
     loginWithEmail,
     signUpWithEmail,
     openWelcomePage,
@@ -42,8 +41,10 @@ export default function AuthModal() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberAccount, setRememberAccount] = useState(false);
+  useEffect(() => { setRememberAccount(false); }, [isAuthModalOpen, authModalMode]);
   const [showPassword, setShowPassword] = useState(false);
-  useEffect(() => { setShowPassword(false); }, [authModalMode, isAuthModalOpen]);
+  useEffect(() => { setShowPassword(false); setPassword(''); }, [authModalMode, isAuthModalOpen]);
   const [name, setName] = useState('');
   const [sport, setSport] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,23 +63,23 @@ export default function AuthModal() {
 
   if (!isAuthModalOpen) return null;
 
-  const handleQuickLogin = async (type: 'admin' | AccountType) => {
+  const handleQuickLogin = async (id: string) => {
+    if (loading) return;
+    setLoading(true);
     setErrorMsg('');
     setInfoMsg('');
-    if (type === 'admin') {
-      if (IS_QUICK_ACCESS) { window.location.assign('/?login=admin'); return; }
-      setLoading(true);
-      try {
-        if (await resumeAdminSession()) return;
-        setEmail(ADMIN_LOGIN_EMAIL);
-        setPassword('');
-        setAuthModalMode('login');
-      } finally { setLoading(false); }
-      return;
-    }
-    setLoading(true);
-    // Full navigation isolates every temporary profile, with or without Supabase.
-    window.location.assign(`/?acesso-rapido=${type}`);
+    try {
+      const result = await loginSavedAccount(id);
+      if (!result.success) {
+        setErrorMsg(result.error || 'Não foi possível entrar nesta conta.');
+        if (result.requiresLogin) {
+          setAuthModalMode('login');
+          setEmail(result.email || '');
+          setPassword('');
+        }
+      }
+    } catch { setErrorMsg('Não foi possível acessar a conta. Tente novamente.'); }
+    finally { setLoading(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,10 +96,11 @@ export default function AuthModal() {
 
     try {
       if (authModalMode === 'login') {
-        const res = await loginWithEmail(email, password);
+        const res = await loginWithEmail(email, password, rememberAccount);
         if (!res.success) {
           setErrorMsg(res.error || 'Credenciais inválidas. Verifique seu e-mail e senha.');
         } else {
+          setPassword('');
           enterPlatform('home');
           setAuthModalOpen(false);
         }
@@ -109,14 +111,15 @@ export default function AuthModal() {
           setLoading(false);
           return;
         }
-        const res = await signUpWithEmail(email, password, name, accountType, accountType === 'casual' ? undefined : sport.trim());
+        const res = await signUpWithEmail(email, password, name, accountType, accountType === 'casual' ? undefined : sport.trim(), rememberAccount);
         if (res.confirmationRequired) {
           setPendingSignupEmail(email.trim().toLowerCase());
           setPassword('');
-          setInfoMsg('Confira seu e-mail e a pasta de spam para confirmar o endereço. Depois, faça login. Se já possui conta, use o login ou a recuperação de senha.');
+          setInfoMsg('Confira seu e-mail e a pasta de spam para confirmar o endereço. Depois, faça login. Para salvar no acesso rápido, marque a opção ao entrar após a confirmação.');
         } else if (!res.success) {
           setErrorMsg(res.error || 'Erro ao cadastrar. Tente novamente.');
         } else {
+          setPassword('');
           enterPlatform('home');
           setAuthModalOpen(false);
         }
@@ -160,7 +163,7 @@ export default function AuthModal() {
                 {authModalMode === 'login' && 'Acessar CoreMotion'}
                 {authModalMode === 'register' && 'Criar Conta'}
                 {authModalMode === 'forgot' && 'Recuperar Senha'}
-                {authModalMode === 'switch' && 'Selecionar Perfil'}
+                {authModalMode === 'switch' && 'Selecionar conta'}
               </h3>
               <p className="text-xs text-zinc-400">
                 {authModalMode === 'login' && 'Entre para gerenciar pedidos, compras e vendas.'}
@@ -171,20 +174,7 @@ export default function AuthModal() {
             </div>
           </div>
 
-          {QUICK_ACCESS_ENABLED && (
-          <div className="mb-6 p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800">
-            <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300 mb-2.5 uppercase tracking-wider">
-              <span className="flex items-center gap-1.5 text-zinc-300">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-red-500" />
-                Acesso Rápido:
-              </span>
-            </div>
-            <p className="text-xs text-zinc-400 mb-3">Admin: conta oficial, com entrada pela sessão salva quando válida. Atleta, Treinador e Casual: perfis temporários com dados isolados neste navegador.</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              {(['admin', 'athlete', 'coach', 'casual'] as const).map(type => <button key={type} disabled={loading} type="button" onClick={() => handleQuickLogin(type)} className="rounded-xl border border-zinc-800 bg-zinc-950 hover:border-red-600 p-3 font-bold text-white">{type === 'admin' ? '👑 Admin' : ACCOUNT_TYPES[type].label}</button>)}
-            </div>
-          </div>
-          )}
+          {QUICK_ACCESS_ENABLED && <SavedAccounts busy={loading} onSelect={handleQuickLogin} />}
 
           {/* Error Message if any */}
           {errorMsg && (
@@ -289,6 +279,11 @@ export default function AuthModal() {
                 {authModalMode === 'register' && <p id="signup-password-help" className={`mt-2 text-xs ${password.length > 0 && password.length < MIN_PASSWORD_LENGTH ? 'text-red-400' : 'text-zinc-400'}`}>Mínimo de 6 caracteres.</p>}
               </div>
             )}
+
+            {QUICK_ACCESS_ENABLED && (authModalMode === 'login' || authModalMode === 'register') && <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-xs text-zinc-300">
+              <input type="checkbox" checked={rememberAccount} onChange={event => setRememberAccount(event.target.checked)} disabled={loading} className="mt-0.5 accent-red-600" />
+              <span><strong className="block text-white">Salvar esta conta no acesso rápido</strong><span className="mt-1 block text-zinc-400">Use apenas em um dispositivo de confiança.</span></span>
+            </label>}
 
             <button
               type="submit"

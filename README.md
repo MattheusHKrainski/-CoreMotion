@@ -148,3 +148,8 @@ Projeto desenvolvido por uma equipe de cinco integrantes, com organização de t
 ---
 
 **CoreMotion — Marketplace esportivo para atletas de todos os tipos.**
+
+
+### Contas salvas no acesso rápido
+
+Login e cadastro oferecem a opção **Salvar esta conta no acesso rápido**, desmarcada por padrão. Somente contas reais autenticadas são adicionadas; não há mais perfis rápidos temporários. Os cartões mostram nome/tipo e permitem remover o acesso com confirmação, sem excluir a conta. A lista e os tokens de sessão ficam apenas neste navegador, nunca as senhas. Use somente em um dispositivo de confiança. Consulte [persistência, logout e validação](docs/auth/acesso-rapido-contas-salvas.md).

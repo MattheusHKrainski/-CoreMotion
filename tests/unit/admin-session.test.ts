@@ -42,7 +42,7 @@ it('atalho valida usuário no servidor e usa a sessão persistente do Supabase',
   assert.match(store, /await sb.auth.getUser\(\)/);
   assert.match(store, /await readSavedAdminProfile/);
   const modal = readFileSync('components/auth/AuthModal.tsx', 'utf8');
-  assert.match(modal, /await resumeAdminSession\(\)/);
+  assert.match(modal, /await loginSavedAccount\(id\)/);
   assert.match(store, /await resumeAdminSession\(\)/);
   const client = readFileSync('services/supabaseClient.ts', 'utf8');
   assert.match(client, /persistSession: true/);

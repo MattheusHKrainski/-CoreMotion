@@ -1,11 +1,12 @@
 'use client';
+import { accountListsKey, readAccountLists } from './account-lists';
 import { MULTI_STORE_STORAGE_MARKER } from '@/fixtures/multi-store-offers';
 import { ADMIN_LOGIN_EMAIL } from './admin-account';
 import { readSavedAdminProfile } from './admin-session';
-import { IS_QUICK_ACCESS, QUICK_PROFILE, quickStorageKey, temporaryIdentity } from './quick-access';
-import { refreshAthleteCatalog } from './athlete-catalog';
-import { refreshSeededContacts } from './athlete-contact';
-import { ACCOUNT_TYPES, type AccountType } from './sports';
+import { quickStorageKey } from './quick-access';
+import { isAccountRemembered, rememberCurrentAccount, restoreSavedAccount, rotateSavedSession, savedAccountVault } from '@/services/savedAccounts';
+import { detachRememberedSession } from '@/services/supabaseClient';
+import { type AccountType } from './sports';
 
 import { calculateCheckoutTotals, ShippingMethod } from './checkout';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
@@ -114,8 +115,9 @@ interface CoreMotiomContextType {
   adminToggleProductStatus: (productId: string, newStatus: Product['status']) => void;
   adminSyncSupabase: (silent?: boolean) => Promise<{ success: boolean; count?: number; error?: string }>;
   loginAsMasterAdmin: () => void;
-  loginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }>;
-  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string) => Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }>;
+  loginWithEmail: (email: string, pass: string, remember?: boolean) => Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }>;
+  signUpWithEmail: (email: string, pass: string, name: string, accountType?: AccountType, sport?: string, remember?: boolean) => Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }>;
+  loginSavedAccount: (id: string) => Promise<{ success: boolean; error?: string; email?: string; requiresLogin?: boolean }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (newRole: UserRole, accountType?: AccountType) => void;
@@ -246,6 +248,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // manualAuthRef: true durante login/cadastro manual, que já sincronizam o próprio perfil.
   const userRef = useRef<UserProfile | null>(null);
   const manualAuthRef = useRef(false);
+  const authGeneration = useRef(0);
   useEffect(() => {
     userRef.current = user;
   }, [user]);
@@ -269,6 +272,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setOrders([]);
     setAllUsers([]);
     setProducts((prev) => prev.filter((p) => p.status === 'active'));
+  }, []);
+
+  const restoreAccountLists = useCallback((id: string | null) => {
+    try {
+      const lists = readAccountLists(localStorage, id);
+      setCart(lists.cart);
+      setFavorites(lists.favorites);
+    } catch { setCart([]); setFavorites([]); }
   }, []);
 
   // Dados públicos (anúncios ativos e comunidade), carrinho/favoritos salvos e sessão do Supabase.
@@ -295,22 +306,19 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(quickStorageKey('coremotion_offers_expansion_2026_11_03'), '1');
         localStorage.setItem(quickStorageKey(MULTI_STORE_STORAGE_MARKER), '1');
 
+        if (isSupabaseConfigured) restoreAccountLists(null);
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && isMounted) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed.cart)) setCart(parsed.cart.filter((item: CartItem) => item?.product?.product_type === 'c2c'));
-          if (Array.isArray(parsed.favorites)) setFavorites(parsed.favorites);
+          if (!isSupabaseConfigured && Array.isArray(parsed.cart)) setCart(parsed.cart.filter((item: CartItem) => item?.product?.product_type === 'c2c'));
+          if (!isSupabaseConfigured && Array.isArray(parsed.favorites)) setFavorites(parsed.favorites);
           // Com o Supabase ativo a sessão vem do Auth: nunca restaurar usuário/pedidos do navegador.
           if (!isSupabaseConfigured) {
             if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
-            if (IS_QUICK_ACCESS && QUICK_PROFILE && QUICK_PROFILE !== 'admin' && parsed.user?.id === temporaryIdentity(QUICK_PROFILE).id) setUser(parsed.user);
-            if (IS_QUICK_ACCESS && Array.isArray(parsed.products)) setProducts(refreshSeededContacts(refreshAthleteCatalog(parsed.products, parsed.athleteCatalogVersion === 2), INITIAL_PRODUCTS));
-            if (IS_QUICK_ACCESS && Array.isArray(parsed.communityPosts)) setCommunityPosts(parsed.communityPosts);
           }
         }
 
-        // Temporary sessions restore only their own local state; never overwrite it with live data.
-        if (IS_QUICK_ACCESS) return;
+        // Sessions are restored only through Supabase Auth.
 
         // Prefer Supabase's public REST reads when configured; no separate SQL password is needed to read.
         if (isSupabaseConfigured) {
@@ -362,6 +370,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       // Único ponto de restauração/entrada de sessão (INITIAL_SESSION cobre o F5; SIGNED_IN cobre o OAuth).
       // O Supabase não pode ser chamado dentro do callback (deadlock): o sync roda em setTimeout.
       const { data } = sb.auth.onAuthStateChange((event, session) => {
+        if (session) rotateSavedSession(session);
         if (event === 'SIGNED_OUT') {
           userRef.current = null;
           setHasEnteredPlatform(false);
@@ -370,12 +379,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           try { sessionStorage.removeItem(ENTERED_SESSION_KEY); } catch {}
           setUser(null);
           resetPrivateState();
+          restoreAccountLists(null);
           return;
         }
         if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
         const sessionUser = session?.user;
         if (!sessionUser || manualAuthRef.current || userRef.current?.id === sessionUser.id) return;
 
+        const generation = authGeneration.current;
         setTimeout(async () => {
           const email = sessionUser.email || '';
           const result = await AuthService.getProfileOrCreate(sessionUser.id, email, {
@@ -383,8 +394,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
             avatar_url: sessionUser.user_metadata?.avatar_url,
             sport_interests: sessionUser.user_metadata?.sport ? [sessionUser.user_metadata.sport] : [],
           });
-          if (!isMounted) return;
+          if (!isMounted || manualAuthRef.current || generation !== authGeneration.current) return;
           if (result.success && result.data) {
+            if (userRef.current?.id !== result.data.id) restoreAccountLists(result.data.id);
+            userRef.current = result.data;
             setUser(result.data);
           } else {
             addToast('Não foi possível entrar', result.error || 'Falha ao carregar o seu perfil.', 'error');
@@ -398,11 +411,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       authSubscription?.unsubscribe();
     };
-  }, [addToast, resetPrivateState]);
+  }, [addToast, resetPrivateState, restoreAccountLists]);
 
   // Atualizações em tempo real para dados compartilhados. O RLS continua controlando as linhas visíveis.
   useEffect(() => {
-    if (!isSupabaseConfigured || IS_QUICK_ACCESS) return;
+    if (!isSupabaseConfigured) return;
     const client = getSupabase();
     if (!client) return;
     let disposed = false;
@@ -474,8 +487,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Persistência local: carrinho e favoritos sempre; sessão e pedidos apenas no modo demonstração sem banco.
   useEffect(() => {
     try {
-      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites, ...(IS_QUICK_ACCESS ? { products, communityPosts, athleteCatalogVersion: 2 } : {}) };
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+      const payload = isSupabaseConfigured ? { cart, favorites } : { user, orders, cart, favorites };
+      localStorage.setItem(isSupabaseConfigured ? accountListsKey(user?.id || null) : LOCAL_STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // ignore
     }
@@ -532,73 +545,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     setAuthModalOpenState(open);
   }, [openWelcomePage]);
 
-  // Role switching (for live testing of Admin, Seller, User and Visitor flows)
-  const switchRole = useCallback((newRole: UserRole, accountType?: AccountType) => {
-    if (!IS_QUICK_ACCESS) { addToast('Entre na sua conta', 'O papel de uma conta real vem da autenticação.', 'info'); return; }
-    if (isSupabaseConfigured) {
-      addToast('Alteração indisponível', 'Com o banco conectado, o papel vem da sua conta autenticada.', 'info');
-      return;
-    }
-    if (newRole === 'visitor') {
-      setUser(null);
-      addToast('Modo Visitante', 'Você está navegando como visitante.', 'info');
-      return;
-    }
-
-    const demoProfiles: Record<Exclude<UserRole, 'visitor'>, UserProfile> = {
-      admin: {
-        id: 'usr-admin-mattheus',
-        email: 'mattheus@coremotion.com.br',
-        name: 'Mattheus (Super Admin)',
-        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-        role: 'admin',
-        city: 'Curitiba',
-        state: 'PR',
-        sport_interests: ['Maratona', 'Triatlo', 'Ciclismo'],
-        created_at: '2026-01-01T00:00:00Z',
-      },
-      seller: {
-        id: 'seller-pro-1',
-        email: 'marina.duarte@coremotion.com.br',
-        name: 'Marina Duarte',
-        avatar_url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&q=80',
-        role: 'seller',
-        city: 'São Paulo',
-        state: 'SP',
-        sport_interests: ['Alta Performance', 'Corrida'],
-        created_at: '2026-01-10T08:00:00Z',
-      },
-      supervisor: {
-        id: 'usr-supervisor-1',
-        email: 'rafael.nogueira@coremotion.com.br',
-        name: 'Rafael Nogueira',
-        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
-        role: 'supervisor',
-        city: 'São Paulo',
-        state: 'SP',
-        sport_interests: ['Corrida', 'Ciclismo'],
-        created_at: '2026-02-01T00:00:00Z',
-      },
-      user: {
-        id: 'user-c2c-1',
-        email: 'carlos.ramos@coremotion.com.br',
-        name: 'Carlos Eduardo Ramos',
-        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80',
-        role: 'user',
-        city: 'Campinas',
-        state: 'SP',
-        sport_interests: ['Maratona', 'Trail Running', 'Ciclismo'],
-        created_at: '2026-03-01T10:00:00Z',
-      },
-    };
-
-    const targetProfile = demoProfiles[newRole];
-    setUser({ ...targetProfile, id: accountType ? `${targetProfile.id}-${accountType}` : targetProfile.id, name: accountType === 'coach' ? 'Marina Duarte' : accountType === 'casual' ? 'Ana Silva' : targetProfile.name, account_type: accountType || 'athlete' });
-    addToast(
-      'Perfil Atualizado',
-      `Agora você está operando com permissões de ${accountType ? ACCOUNT_TYPES[accountType].label : newRole === 'admin' ? 'Administrador' : newRole === 'supervisor' ? 'Supervisor' : newRole === 'seller' ? 'Anunciante C2C' : 'Atleta'}.`,
-      'success'
-    );
+  // Role switching cannot create identities or change real account permissions.
+  const switchRole = useCallback(() => {
+    addToast('Entre na sua conta', 'As permissões são verificadas na conta autenticada.', 'info');
   }, [addToast]);
 
   // ---------------------------------------------------------------------------
@@ -809,14 +758,6 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     window.location.assign('/?login=admin');
   }, []);
 
-  useEffect(() => {
-    if (!QUICK_PROFILE) return;
-    if (QUICK_PROFILE === 'admin') { window.location.replace('/?login=admin'); return; }
-    const identity = temporaryIdentity(QUICK_PROFILE);
-    setUser(current => current?.id === identity.id ? current : { ...identity, city: 'Curitiba', state: 'PR', created_at: '2026-01-01T00:00:00Z' });
-    enterPlatform('home');
-    setAuthModalOpen(false);
-  }, [loginAsMasterAdmin, switchRole, enterPlatform, setAuthModalOpen]);
 
   const resumeAdminSession = useCallback(async () => {
     const sb = isSupabaseConfigured ? getSupabase() : null;
@@ -832,11 +773,13 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       },
     );
     if (!profile) return false;
+    if (userRef.current?.id !== profile.id) { resetPrivateState(); restoreAccountLists(profile.id); }
+    userRef.current = profile;
     setUser(profile);
     enterPlatform('home');
     setAuthModalOpen(false);
     return true;
-  }, [enterPlatform, setAuthModalOpen]);
+  }, [enterPlatform, setAuthModalOpen, resetPrivateState, restoreAccountLists]);
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('login') !== 'admin') return;
@@ -851,7 +794,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   }, [setAuthModalOpen, resumeAdminSession]);
 
   // Auth: Email Login
-  const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }> => {
+  const loginWithEmail = async (email: string, pass: string, remember = false): Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }> => {
+    authGeneration.current += 1;
     manualAuthRef.current = true;
     let res: Awaited<ReturnType<typeof AuthService.loginWithEmail>>;
     try {
@@ -861,6 +805,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
     if (res.success && res.data) {
       const profile = res.data;
+      if (remember || isAccountRemembered(profile.id)) {
+        if (!await rememberCurrentAccount(profile)) addToast('Acesso rápido não salvo', 'Você entrou, mas o navegador não permitiu salvar a conta neste dispositivo.', 'info');
+      }
+      if (userRef.current?.id !== profile.id) { resetPrivateState(); restoreAccountLists(profile.id); }
+      userRef.current = profile;
       setUser(profile);
       if (!isSupabaseConfigured) {
         setAllUsers((prev) => {
@@ -882,9 +831,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     pass: string,
     name: string,
     accountType: AccountType = 'casual',
-    sport?: string
+    sport?: string,
+    remember = false
   ): Promise<{ success: boolean; error?: string; confirmationRequired?: boolean }> => {
     if (accountType !== 'casual' && (!sport?.trim() || sport.trim().length > 60)) return { success: false, error: 'Escolha sua modalidade principal.' };
+    authGeneration.current += 1;
     manualAuthRef.current = true;
     let res: Awaited<ReturnType<typeof AuthService.signUpWithEmail>>;
     try {
@@ -895,6 +846,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     if (res.confirmationRequired) return { success: true, confirmationRequired: true };
     if (res.success && res.data) {
       const profile = { ...res.data, account_type: accountType, sport_interests: sport ? [sport.trim()] : res.data.sport_interests };
+      if (remember && !await rememberCurrentAccount(profile)) addToast('Acesso rápido não salvo', 'A conta foi criada, mas o navegador não permitiu salvá-la neste dispositivo.', 'info');
+      if (userRef.current?.id !== profile.id) { resetPrivateState(); restoreAccountLists(profile.id); }
+      userRef.current = profile;
       setUser(profile);
       if (!isSupabaseConfigured) setAllUsers((prev) => [profile, ...prev]);
       addToast('Conta Criada', `Bem-vindo ao CoreMotion, ${name}! (${profile.role === 'admin' ? 'Administrador' : 'Usuário'})`, 'success');
@@ -923,17 +877,50 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Auth: Logout
+  const loginSavedAccount = async (id: string) => {
+    if (manualAuthRef.current) return { success: false, error: 'Aguarde a autenticação em andamento.' };
+    authGeneration.current += 1;
+    manualAuthRef.current = true;
+    try {
+      const result = await restoreSavedAccount(id);
+      if (!result.success) return result;
+      if (userRef.current?.id !== result.profile.id) { resetPrivateState(); restoreAccountLists(result.profile.id); }
+      userRef.current = result.profile;
+      setUser(result.profile);
+      enterPlatform('home');
+      setAuthModalOpen(false);
+      addToast('Conta conectada', `Bem-vindo, ${result.profile.name}!`, 'success');
+      return { success: true };
+    } finally { manualAuthRef.current = false; }
+  };
+
+  // Remembered accounts retain their refresh session until removed or revoked.
   const logout = async () => {
-    if (IS_QUICK_ACCESS) { window.location.assign('/?entrar=1'); return; }
+    authGeneration.current += 1;
+    const current = userRef.current;
+    let remembered = false;
+    try { remembered = Boolean(current && savedAccountVault().tokens(current.id)); } catch { /* storage denied */ }
+    if (remembered && current) {
+      await rememberCurrentAccount(current);
+      try {
+        await detachRememberedSession();
+        try { sessionStorage.removeItem(ENTERED_SESSION_KEY); } catch { /* unavailable */ }
+        window.location.assign('/?entrar=1');
+        return;
+      } catch {
+        // Storage failure must never prevent leaving the account. Revoke below instead.
+      }
+    }
     userRef.current = null;
     await AuthService.signOut();
     setUser(null);
     resetPrivateState();
+    setCart([]); setFavorites([]);
+    openWelcomePage();
     setActiveView('home');
     setAuthModalMode('login');
     setAuthModalOpen(true);
-    addToast('Sessão Encerrada', 'Você saiu da sua conta com segurança.', 'info');
+    addToast('Sessão Encerrada', 'Você saiu da sua conta.', 'info');
   };
 
   const updateUserProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
@@ -1467,6 +1454,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         adminSyncSupabase,
         loginAsMasterAdmin,
         loginWithEmail,
+        loginSavedAccount,
         signUpWithEmail,
         signInWithGoogle,
         logout,

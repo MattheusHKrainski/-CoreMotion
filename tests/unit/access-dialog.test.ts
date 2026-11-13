@@ -1,10 +1,9 @@
 import { it } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { ADMIN_LOGIN_EMAIL } from '@/lib/admin-account';
 import { readSavedAdminProfile } from '@/lib/admin-session';
-import { quickStorageKey, quickProfileFromSearch } from '@/lib/quick-access';
+import { quickProfileFromSearch } from '@/lib/quick-access';
 import type { UserProfile } from '@/lib/types';
 
 const identity = { id: 'verified-id', email: ADMIN_LOGIN_EMAIL };
@@ -23,10 +22,10 @@ it('não retoma perfil suspenso, rebaixado ou de outra identidade', async () => 
     assert.equal(await readSavedAdminProfile(async () => identity, async () => item), null);
   }
 });
-it('oferece quatro atalhos, sem botão Google, com scroll interno e bloqueio do fundo', () => {
+it('oferece contas reais salvas, sem botão Google, com scroll interno e bloqueio do fundo', () => {
   const modal = readFileSync('components/auth/AuthModal.tsx', 'utf8');
   assert.doesNotMatch(modal, /Continuar com Google|handleGoogleAuth|signInWithGoogle/);
-  assert.match(modal, /\['admin', 'athlete', 'coach', 'casual'\]/);
+  assert.match(modal, /<SavedAccounts busy=\{loading\} onSelect=\{handleQuickLogin\}/);
   assert.match(modal, /useDialogScrollLock\(isAuthModalOpen\)/);
   assert.match(modal, /data-auth-scroll.*overflow-y-auto overscroll-contain/);
   assert.match(modal, /max-h-\[calc\(100dvh-2rem\)\]/);
@@ -35,33 +34,7 @@ it('oferece quatro atalhos, sem botão Google, com scroll interno e bloqueio do 
   assert.match(store, /await sb.auth.getUser\(\)/);
   assert.match(store, /setTimeout\(async \(\) =>/);
 });
-it('isola os perfis temporários e direciona Admin à conta oficial', () => {
-  assert.equal(quickProfileFromSearch('?acesso-rapido=admin'), 'admin');
-  const store = readFileSync('lib/store.tsx', 'utf8');
-  assert.match(store, /QUICK_PROFILE === 'admin'.*window.location.replace/);
-  const keys = ['admin', 'athlete', 'coach', 'casual'].map(type => quickStorageKey('state', quickProfileFromSearch(`?acesso-rapido=${type}`)));
-  assert.equal(new Set(keys).size, 4);
-});
-it('cada perfil rápido funciona com Supabase configurado sem criar cliente ou enviar alterações reais', () => {
-  for (const kind of ['athlete', 'coach', 'casual']) {
-    execFileSync(process.execPath, ['--import', 'tsx', '-e', `
-      const assert = require('node:assert/strict');
-      global.window = { location: { search: '?acesso-rapido=${kind}' } };
-      global.fetch = () => { throw new Error('Network must not be called'); };
-      const { getSupabaseClient } = require('./services/supabaseClient.ts');
-      const { temporaryIdentity } = require('./lib/quick-access.ts');
-      const { ProductService } = require('./services/products.ts');
-      const { CommunityService } = require('./services/communityService.ts');
-      (async () => {
-        assert.equal(getSupabaseClient(), null);
-        assert.equal(temporaryIdentity('${kind}').account_type, '${kind}');
-        const items = await ProductService.getProducts();
-        assert.ok(items.length > 0);
-        const result = await ProductService.createProduct({...items[0], title:'Local'}, 'quick-${kind}');
-        assert.ok(result.success);
-        assert.equal(result.data.seller_id, 'quick-${kind}');
-        await CommunityService.likePost('post');
-      })().catch(e => { console.error(e); process.exit(1); });
-    `], { env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-public-key-for-isolation', NEXT_PUBLIC_DEMO_MODE: 'false' } });
-  }
+it('URLs antigas não criam identidades nem desativam Supabase', () => {
+  for (const profile of ['admin', 'athlete', 'coach', 'casual']) assert.equal(quickProfileFromSearch(`?acesso-rapido=${profile}`), null);
+  assert.doesNotMatch(readFileSync('lib/store.tsx', 'utf8'), /temporaryIdentity/);
 });
