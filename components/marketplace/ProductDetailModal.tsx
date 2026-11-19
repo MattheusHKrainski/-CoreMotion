@@ -117,6 +117,8 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               <Share2 className="w-4 h-4" />
             </button>
             <button
+              type="button"
+              aria-label="Fechar detalhes do produto"
               onClick={onClose}
               className="p-2 text-[#9CA3AF] hover:text-white hover:bg-[#232836] rounded-lg transition-colors"
             >

@@ -209,14 +209,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
   const [authAccountType, setAuthAccountType] = useState<AccountType>('casual');
   const [prefillAuthEmail, setPrefillAuthEmail] = useState('');
-  const [hasEnteredPlatform, setHasEnteredPlatform] = useState(false);
+  const [hasEnteredPlatform, setHasEnteredPlatform] = useState(true);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('entrar') === '1') {
-      setHasEnteredPlatform(false);
+      setHasEnteredPlatform(true);
       setAuthModalMode('login');
       setAuthModalOpenState(true);
       sessionStorage.removeItem(ENTERED_SESSION_KEY);
@@ -373,7 +373,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (session) rotateSavedSession(session);
         if (event === 'SIGNED_OUT') {
           userRef.current = null;
-          setHasEnteredPlatform(false);
+          setHasEnteredPlatform(true);
           setAuthModalMode('login');
           setAuthModalOpenState(true);
           try { sessionStorage.removeItem(ENTERED_SESSION_KEY); } catch {}
@@ -527,7 +527,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const openWelcomePage = useCallback(() => {
-    setHasEnteredPlatform(false);
+    setHasEnteredPlatform(true);
     try {
       sessionStorage.removeItem(ENTERED_SESSION_KEY);
     } catch {

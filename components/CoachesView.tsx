@@ -11,7 +11,6 @@ import {
   Users,
   ShieldCheck,
   Star,
-  CheckCircle2,
   X,
   ArrowRight,
   Search,
@@ -19,14 +18,13 @@ import {
 } from 'lucide-react';
 
 export default function CoachesView() {
-  const { coaches, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
+  const { coaches, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const activeCoaches = coaches;
   const [bookingCoach, setBookingCoach] = useState<Coach | null>(null);
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'consultation' | 'season'>('monthly');
+
 
   const sportsList = [...new Set(coaches.flatMap(coach => coach.sports))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
@@ -41,16 +39,6 @@ export default function CoachesView() {
       return haystack.includes(query);
     }).sort((a, b) => sortBy === 'rating' ? b.rating - a.rating : a.name.localeCompare(b.name, 'pt-BR'));
   }, [activeCoaches, selectedSport, searchTerm, sortBy]);
-
-  const handleConfirmBooking = (e: React.FormEvent) => {
-    e.preventDefault();
-    setBookingConfirmed(true);
-    addToast('Agendamento Realizado', `Sua solicitação foi enviada para ${bookingCoach?.name}.`, 'success');
-    setTimeout(() => {
-      setBookingCoach(null);
-      setBookingConfirmed(false);
-    }, 2500);
-  };
 
   const formatPrice = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -106,8 +94,8 @@ export default function CoachesView() {
 
       <section aria-label="Filtros de treinadores" className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3"><SportPicker value={selectedSport} onChange={setSelectedSport} options={sportsList} /><label className="block text-xs text-zinc-400 space-y-2">Ordenar catálogo<select value={sortBy} onChange={e => setSortBy(e.target.value)} className="block rounded-xl border border-zinc-700 bg-zinc-950 p-2.5 text-white"><option value="name">Nome: A–Z</option><option value="rating">Melhores avaliações</option></select></label><div className="flex flex-wrap justify-between gap-3 text-sm text-zinc-400"><span>{filteredCoaches.length} treinadores no catálogo • perfis da comunidade abaixo</span><button type="button" onClick={() => { setSelectedSport('all'); setSearchTerm(''); setSortBy('name'); }} className="text-red-400">Limpar filtros</button></div></section>
 
-      <CoachActivities sport={selectedSport} search={searchTerm} />
       <CoachProfiles sport={selectedSport} search={searchTerm} />
+      <CoachActivities sport={selectedSport} search={searchTerm} />
 
       <header className="border-t border-zinc-800 pt-6 space-y-2"><h2 className="text-xl font-bold">Catálogo de treinadores</h2><p className="text-sm text-zinc-400">Compare modalidades, localização, formação e planos antes de escolher um profissional.</p></header>
       {/* Coaches Grid */}
@@ -183,8 +171,9 @@ export default function CoachesView() {
                 </div>
               </div>
 
-                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">{coach.bio}</p>
-                <p className="text-xs text-zinc-400">{coach.availability}</p>
+                <p className="text-xs text-zinc-400 leading-relaxed ">{coach.bio}</p>
+                <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-400"><p className="mb-1 font-bold text-zinc-300">Horários de atendimento</p>{coach.availability}</div>
+                <p className="text-xs text-zinc-500">Especialidade: {coach.specialty}</p>
               </div>
 
               {/* Price & Booking Button */}
@@ -205,7 +194,7 @@ export default function CoachesView() {
                   }}
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 shadow-md shadow-red-950/50 hover:scale-105 active:scale-95"
                 >
-                  <span>Agendar Aula</span>
+                  <span>Ver informações</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -214,132 +203,15 @@ export default function CoachesView() {
         </div>
       )}
 
-      {/* Booking Modal */}
-      {bookingCoach && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-lg bg-zinc-900 text-white rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="p-5 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src={bookingCoach.avatar_url}
-                  alt={bookingCoach.name}
-                  className="w-11 h-11 rounded-xl object-cover border-2 border-red-500"
-                />
-                <div>
-                  <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
-                    {bookingCoach.name}
-                    <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
-                  </h3>
-                  <span className="text-xs text-red-400 font-semibold">{bookingCoach.cref_number}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setBookingCoach(null)}
-                className="p-1.5 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            {bookingConfirmed ? (
-              <div className="p-8 text-center space-y-4">
-                <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mx-auto shadow-sm">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h4 className="text-base font-bold text-white">Solicitação de Aula Enviada!</h4>
-                <p className="text-xs text-zinc-400 max-w-xs mx-auto">
-                  {bookingCoach.name} recebeu suas preferências e entrará em contato pelo WhatsApp informado.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleConfirmBooking} className="p-6 space-y-4 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-400 mb-2 uppercase">
-                    Escolha o Formato
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPlan('monthly')}
-                      className={`p-3 rounded-2xl border text-center transition-all ${
-                        selectedPlan === 'monthly'
-                          ? 'bg-red-600/10 border-red-500 text-white shadow-sm'
-                          : 'bg-zinc-950 border-zinc-800 text-zinc-400'
-                      }`}
-                    >
-                      <span className="font-bold block text-xs">Mensal</span>
-                      <span className="text-[10px] text-red-400 font-semibold">{formatPrice(bookingCoach.hourly_rate * 2.5)}/mês</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPlan('consultation')}
-                      className={`p-3 rounded-2xl border text-center transition-all ${
-                        selectedPlan === 'consultation'
-                          ? 'bg-red-600/10 border-red-500 text-white shadow-sm'
-                          : 'bg-zinc-950 border-zinc-800 text-zinc-400'
-                      }`}
-                    >
-                      <span className="font-bold block text-xs">Aula Avulsa</span>
-                      <span className="text-[10px] text-red-400 font-semibold">{formatPrice(bookingCoach.hourly_rate)}/aula</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPlan('season')}
-                      className={`p-3 rounded-2xl border text-center transition-all ${
-                        selectedPlan === 'season'
-                          ? 'bg-red-600/10 border-red-500 text-white shadow-sm'
-                          : 'bg-zinc-950 border-zinc-800 text-zinc-400'
-                      }`}
-                    >
-                      <span className="font-bold block text-xs">Trimestral</span>
-                      <span className="text-[10px] text-red-400 font-semibold">{formatPrice(bookingCoach.hourly_rate * 6)}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                    Seu Objetivo Principal
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Começar no Jiu-Jitsu, melhorar arremesso no Basquete, saque no Tênis..."
-                    className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                    WhatsApp para Contato Direto
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="(11) 99999-9999"
-                    className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-full shadow-lg shadow-red-950/50 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95"
-                  >
-                    <span>Confirmar Solicitação de Aula</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      {bookingCoach && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setBookingCoach(null)}>
+        <section role="dialog" aria-modal="true" aria-label={`Informações de ${bookingCoach.name}`} className="relative max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6" onClick={event => event.stopPropagation()}>
+          <button type="button" aria-label="Fechar informações" onClick={() => setBookingCoach(null)} className="absolute right-4 top-4 rounded-full p-2 hover:bg-zinc-800"><X className="h-5 w-5" /></button>
+          <h2 className="pr-8 text-2xl font-black">{bookingCoach.name}</h2><p className="text-red-400">{bookingCoach.title}</p>
+          <p className="text-sm leading-relaxed text-zinc-300">{bookingCoach.bio}</p>
+          <dl className="space-y-3 text-sm"><div><dt className="font-bold">Modalidades</dt><dd className="text-zinc-400">{bookingCoach.sports.join(', ')}</dd></div><div><dt className="font-bold">Localização</dt><dd className="text-zinc-400">{bookingCoach.location}</dd></div><div><dt className="font-bold">Disponibilidade</dt><dd className="text-zinc-400">{bookingCoach.availability}</dd></div>{bookingCoach.cref_number && <div><dt className="font-bold">Registro informado</dt><dd className="text-zinc-400">{bookingCoach.cref_number}</dd></div>}</dl>
+          <p className="rounded-xl border border-zinc-800 p-4 text-sm text-zinc-400">Este perfil do catálogo ainda não possui contato publicado. Para conversar e combinar uma aula, escolha um profissional com contato informado na seção Profissionais da comunidade.</p>
+        </section>
+      </div>}
     </div>
   );
 }

@@ -48,7 +48,7 @@ await page.route('**/*',async route=>{
 });
 const dialog=()=>page.getByRole('dialog');
 const checkbox=()=>dialog().getByRole('checkbox');
-const openLogin=async()=>{await page.getByRole('button',{name:'Fazer login',exact:true}).first().click();await dialog().waitFor();};
+const openLogin=async()=>{await page.getByRole('button',{name:'Entrar',exact:true}).first().click();await dialog().waitFor();};
 const saved=async()=>page.evaluate(()=>JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('coremotion_saved_accounts_v1_')))||'[]'));
 const fillLogin=async(email,remember)=>{await dialog().locator('input[type=email]').fill(email);await dialog().locator('input[type=password]').fill('valid-secret');if(remember)await checkbox().check();await dialog().getByRole('button',{name:'Entrar na Plataforma',exact:true}).click();await dialog().waitFor({state:'hidden'});await page.getByRole('button',{name:'Abrir minha conta'}).waitFor();};
 const switchAccounts=async()=>{await page.getByRole('button',{name:'Abrir minha conta'}).click();await page.getByRole('button',{name:'Trocar conta',exact:true}).click();await dialog().waitFor();};

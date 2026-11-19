@@ -1,5 +1,8 @@
 'use client';
 
+import UserAvatar from '@/components/shared/UserAvatar';
+import ImageEditor from '@/components/shared/ImageEditor';
+import { validImageUrl } from '@/lib/media';
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
@@ -75,7 +78,7 @@ export default function ProfileView() {
     );
   }
 
-  const formKey = [user.id, user.name, user.phone ?? '', user.city ?? '', user.state ?? ''].join('|');
+  const formKey = [user.id, user.name, user.avatar_url ?? '', user.phone ?? '', user.city ?? '', user.state ?? ''].join('|');
 
   return (
     <>
@@ -121,6 +124,7 @@ interface ProfileContentProps {
 
 function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchAccount, ordersOnly }: ProfileContentProps) {
   const [form, setForm] = useState({
+    avatar_url: user.avatar_url ?? '',
     name: user.name ?? '',
     phone: user.phone ?? '',
     city: user.city ?? '',
@@ -128,6 +132,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
   });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [remoteOrders, setRemoteOrders] = useState<Order[]>([]);
 
   const userId = user.id;
@@ -161,10 +166,11 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
       return;
     }
     setError(null);
-    if (saving) return;
+    if (form.avatar_url && !validImageUrl(form.avatar_url)) { setError('Use um link HTTPS válido para a foto.'); return; }
+    if (saving || uploadingAvatar) return;
     setSaving(true);
     try {
-      const saved = await onSave({ name, phone: form.phone.trim(), city: form.city.trim(), state });
+      const saved = await onSave({ avatar_url: form.avatar_url, name, phone: form.phone.trim(), city: form.city.trim(), state });
       if (!saved) setError('Não foi possível salvar. Verifique a mensagem de erro e tente novamente.');
     } catch { setError('Não foi possível salvar. Tente novamente.'); }
     finally { setSaving(false); }
@@ -192,12 +198,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
 
       <section hidden={ordersOnly} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div
-            className="w-16 h-16 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center text-2xl font-black shrink-0"
-            aria-hidden="true"
-          >
-            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-          </div>
+          <UserAvatar large src={user.avatar_url} name={user.name} />
           <div className="min-w-0 flex-1">
             <p className="text-lg font-bold text-white truncate">{user.name}</p>
             <p className="text-sm text-zinc-400 truncate">{user.email}</p>
@@ -270,6 +271,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
 
       <form hidden={ordersOnly} onSubmit={handleSave} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
         <h2 className="text-base font-bold text-white">Dados pessoais</h2>
+        <ImageEditor purpose="avatars" value={form.avatar_url} onChange={avatar_url => setForm(current => ({ ...current, avatar_url }))} onBusyChange={setUploadingAvatar} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
@@ -345,10 +347,10 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
               <LogOut className="w-4 h-4" aria-hidden="true" />
               Sair
             </button>
-            {QUICK_ACCESS_ENABLED && <button type="button" disabled={saving} onClick={onSwitchAccount} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm font-bold">Trocar conta</button>}
+            {QUICK_ACCESS_ENABLED && <button type="button" disabled={saving || uploadingAvatar} onClick={onSwitchAccount} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm font-bold">Trocar conta</button>}
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || uploadingAvatar}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold"
             >
               <Save className="w-4 h-4" aria-hidden="true" />

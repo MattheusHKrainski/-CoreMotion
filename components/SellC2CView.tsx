@@ -1,5 +1,6 @@
 'use client';
 
+import CameraPhoto from '@/components/shared/CameraPhoto';
 import { normalizePhone, validPhone } from '@/lib/seller-contact';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -14,7 +15,6 @@ import {
   Sparkles,
   TrendingUp,
   ShieldCheck,
-  Camera,
   Layers,
 } from 'lucide-react';
 
@@ -44,23 +44,12 @@ export default function SellC2CView() {
   const [category, setCategory] = useState('Equipamentos');
   const [sport, setSport] = useState('Corrida');
   const [condition, setCondition] = useState<ProductCondition>('usado_excelente');
-  const [usageTime, setUsageTime] = useState('');
   const [location, setLocation] = useState(user?.city ? `${user.city}, ${user.state || 'SP'}` : 'São Paulo, SP');
-  const [imageUrl, setImageUrl] = useState('');
-  const [imageGallery, setImageGallery] = useState<string[]>([
-    '/c2c/relogio-garmin-mesa.jpg',
-  ]);
+  const [imageGallery, setImageGallery] = useState<string[]>([]);
   const [shippingAvailable, setShippingAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const myListings = products.filter((p) => p.seller_id === user?.id);
-
-  const handleAddImage = () => {
-    if (imageUrl.trim() && !imageGallery.includes(imageUrl.trim())) {
-      setImageGallery([...imageGallery, imageUrl.trim()]);
-      setImageUrl('');
-    }
-  };
 
   const handleRemoveImage = (index: number) => {
     setImageGallery(imageGallery.filter((_, i) => i !== index));
@@ -102,7 +91,6 @@ export default function SellC2CView() {
         category,
         sport,
         condition,
-        usage_time: usageTime.trim() || undefined,
         product_type: 'c2c',
         images: imageGallery,
         seller_id: user?.id || 'user-c2c',
@@ -120,7 +108,7 @@ export default function SellC2CView() {
       setDescription('');
       setPrice('');
       setOriginalPrice('');
-      setUsageTime('');
+      setImageGallery([]);
       setActiveTab('active');
     } catch {
       // O store já exibiu o erro.
@@ -140,7 +128,7 @@ export default function SellC2CView() {
             <span>Anuncie seu equipamento</span>
           </div>
           <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
-            Quero Vender meu Equipamento
+            Anuncie seu equipamento
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-2xl">
             Publique seus equipamentos novos ou seminovos em poucos minutos e conecte-se com atletas de todo o Brasil.
@@ -204,11 +192,33 @@ export default function SellC2CView() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
           <form onSubmit={handlePublishListing} className="lg:col-span-2 bg-zinc-900/60 p-6 sm:p-8 rounded-3xl border border-zinc-800/80 shadow-xl space-y-5 text-xs">
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-white">Fotos reais do produto *</p>
+              <p className="text-xs text-zinc-400">Abra a câmera e fotografe seu equipamento. É necessário pelo menos uma foto para publicar. Até 8 fotos.</p>
+              <CameraPhoto disabled={loading || imageGallery.length >= 8} onPhoto={url => setImageGallery(current => [...current, url].slice(0, 8))} />
+
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5 pt-2">
+                {imageGallery.map((img, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-zinc-800 group bg-zinc-950">
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      aria-label={`Remover foto ${idx + 1}`}
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-zinc-950/80 text-red-400 hover:text-red-300 opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <label className="block text-sm text-zinc-300 space-y-2">WhatsApp de contato com DDD *<input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} maxLength={25} placeholder="(41) 99999-9999" className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 text-white" /><span className="block text-xs text-zinc-500">Este número será público no anúncio para negociar preço, pagamento e entrega.</span></label>
 
             <h3 className="text-xs font-bold uppercase tracking-wider text-white pb-3 border-b border-zinc-800/80 flex items-center gap-2">
               <Layers className="w-4 h-4 text-red-400" />
-              <span>Especificações Técnicas do Equipamento</span>
+              <span>Sobre o seu produto</span>
             </h3>
 
             <div>
@@ -225,7 +235,7 @@ export default function SellC2CView() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
                   Categoria *
@@ -284,20 +294,7 @@ export default function SellC2CView() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Tempo de Uso
-                </label>
-                <input
-                  type="text"
-                  value={usageTime}
-                  onChange={(e) => setUsageTime(e.target.value)}
-                  placeholder="Ex: 6 meses (2x/sem), 120 km ou Sem uso"
-                  className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
-                />
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
                   Preço de Venda (R$) *
@@ -328,54 +325,16 @@ export default function SellC2CView() {
 
             <div>
               <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                Relato Honesto sobre Estado, Uso e Motivo da Venda *
+                Descrição *
               </label>
               <textarea
                 required
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Conte há quanto tempo comprou, frequência de uso/km rodados, se há algum detalhe estético, itens inclusos (caixa, capa, cabo) e por que está vendendo."
+                placeholder="Descreva seu produto, o estado de conservação e o que acompanha o anúncio."
                 className="w-full px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none leading-relaxed"
               />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-[11px] font-semibold uppercase text-zinc-400">
-                Galeria de Fotos (URL)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="Cole a URL da foto do seu produto"
-                  className="flex-1 px-4 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddImage}
-                  className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-xl border border-zinc-700 transition-colors flex items-center gap-1.5"
-                >
-                  <Camera className="w-4 h-4 text-red-400" />
-                  <span>Adicionar</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5 pt-2">
-                {imageGallery.map((img, idx) => (
-                  <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-zinc-800 group bg-zinc-950">
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(idx)}
-                      className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-zinc-950/80 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
             </div>
 
             <div className="pt-4 border-t border-zinc-800/80 space-y-3">
