@@ -39,11 +39,14 @@ export default function CoreMotiomApp() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<ExternalOffer | null>(null);
 
+  const [profileSection, setProfileSection] = useState<'details' | 'favorites'>('details');
+  const [profileKey, setProfileKey] = useState(0);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0B0C10] text-[#F8FAFC] selection:bg-red-600 selection:text-white antialiased">
-      <Sidebar />
+      <Sidebar onOpenFavorites={() => { if (isVisitor) { setAuthModalMode('login'); setAuthModalOpen(true); return; } setProfileSection('favorites'); setProfileKey(key => key + 1); setActiveView('profile'); }} />
 
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-64 xl:pl-72 transition-all">
+      <div className="flex-1 flex flex-col min-w-0 transition-all">
         <main className="flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
           <NotificationsInbox />
           {activeView === 'home' && (
@@ -72,7 +75,7 @@ export default function CoreMotiomApp() {
                 </div>
                 <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
                   <button type="button" onClick={() => { setAuthModalMode('login'); setAuthModalOpen(true); }} className="w-full rounded-full bg-red-600 px-6 py-3 text-xs font-semibold text-white shadow-lg shadow-red-950/50 transition hover:scale-105 hover:bg-red-500 sm:w-auto">Entrar na minha conta</button>
-                  <button type="button" onClick={() => setActiveView('marketplace')} className="w-full rounded-full bg-zinc-800 px-6 py-3 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700 hover:text-white sm:w-auto">Explorar marketplace</button>
+                  <button type="button" onClick={() => setActiveView('marketplace')} className="w-full rounded-full bg-zinc-800 px-6 py-3 text-xs font-medium text-zinc-300 transition hover:bg-zinc-700 hover:text-white sm:w-auto">Explorar CoreShop</button>
                 </div>
               </div>
             ) : <SellC2CView />
@@ -83,7 +86,7 @@ export default function CoreMotiomApp() {
           {(activeView === 'trials' || activeView === 'talents' || activeView === 'sports-profile') && <SportsHub key={activeView} view={activeView} />}
 
           {activeView === 'community' && <CommunityView />}
-          {activeView === 'profile' && <ProfileView />}
+          {activeView === 'profile' && <ProfileView key={profileKey} initialSection={profileSection} />}
           {activeView === 'admin' && <AdminDashboard />}
         </main>
 

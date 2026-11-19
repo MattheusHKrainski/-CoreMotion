@@ -6,17 +6,20 @@ import { CoreMotiomProvider } from '@/lib/store';
 import Sidebar from '@/components/shared/Sidebar';
 import { readFileSync } from 'node:fs';
 
-it('separa a navegação em grupos com descrições visíveis', () => {
-  const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(Sidebar)));
-  assert.match(html, /aria-label="Navegação da plataforma"/);
-  assert.match(html, /aria-label="Explorar"/);
-  assert.match(html, /aria-label="Anunciar e treinar"/);
-  assert.match(html, /Minhas compras/);
-  assert.match(html, /Publique e gerencie anúncios/);
-  assert.match(html, /aria-current="page"/);
+it('recolhe a navegação por padrão e preserva os grupos no menu', () => {
+  const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(Sidebar, { onOpenFavorites: () => {} })));
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /aria-label="Abrir barra de funções"/);
+  assert.match(html, /aria-label="Ver favoritos e salvos"/);
+  assert.match(html, /aria-label="Ver carrinho"/);
+  assert.doesNotMatch(html, /aria-label="Navegação da plataforma"/);
+  assert.match(html, /CoreShop/);
   const source = readFileSync('components/shared/Sidebar.tsx', 'utf8');
+  assert.match(source, /aria-label="Navegação da plataforma"/);
+  assert.match(source, /Publique e gerencie anúncios/);
   assert.match(source, /if \(!items.length\) return null/);
   assert.match(source, /canAccessSports\(user\)/);
+  assert.match(source, /motion-safe:group-hover:rotate-12/);
+  assert.match(source, /motion-safe:group-hover:scale-110/);
   assert.match(source, /whitespace-normal/);
-  assert.doesNotMatch(source, /text-\[10px\] truncate/);
 });

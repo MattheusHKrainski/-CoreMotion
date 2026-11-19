@@ -8,7 +8,7 @@ import CoreMotiomApp from '@/app/page';
 
 it('abre o catálogo sem tutorial ou tela obrigatória de visitante', () => {
   const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(CoreMotiomApp)));
-  assert.match(html, /Marketplace/);
+  assert.match(html, /CoreShop/);
   assert.match(html, /Entrar/);
   assert.doesNotMatch(html, /Entrar como visitante/);
   assert.doesNotMatch(html, /Prefere só conhecer primeiro|Entrando como Visitante|Entrar agora como visitante/);

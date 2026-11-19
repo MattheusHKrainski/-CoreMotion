@@ -55,10 +55,10 @@ function formatDate(value: string): string {
 const inputClass =
   'w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-600/60';
 
-export default function ProfileView() {
+export default function ProfileView({ initialSection = 'details' }: { initialSection?: 'details' | 'favorites' }) {
   const { user, isVisitor, setAuthModalOpen, setAuthModalMode, updateUserProfile, setActiveView, logout, orders, favorites, products, setCheckoutOpen } = useCoreMotiom();
 
-  const [section, setSection] = useState<'details' | 'favorites' | 'orders' | 'products'>('details');
+  const [section, setSection] = useState<'details' | 'favorites' | 'orders' | 'products'>(initialSection);
   const [selected, setSelected] = useState<Product | null>(null);
 
   if (isVisitor || !user) {
@@ -93,7 +93,7 @@ export default function ProfileView() {
       </nav>
       {section === 'favorites' && <section aria-label="Meus favoritos" className="space-y-4">
         <h2 className="text-xl font-bold">Meus favoritos</h2>
-        {products.filter(p => favorites.includes(p.id)).length === 0 ? <div className="rounded-2xl border border-zinc-800 p-6 text-zinc-400"><p>Nenhum produto salvo disponível. Toque no coração dos produtos no Marketplace para salvar aqui.</p><button type="button" onClick={() => setActiveView('marketplace')} className="text-red-400 font-bold mt-4">Explorar Marketplace →</button></div> : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => favorites.includes(p.id)).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div>}
+        {products.filter(p => favorites.includes(p.id)).length === 0 ? <div className="rounded-2xl border border-zinc-800 p-6 text-zinc-400"><p>Nenhum produto salvo disponível. Toque no coração dos produtos no CoreShop para salvar aqui.</p><button type="button" onClick={() => setActiveView('marketplace')} className="text-red-400 font-bold mt-4">Explorar CoreShop →</button></div> : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => favorites.includes(p.id)).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div>}
       </section>}
       {section === 'products' && <section aria-label="Meus produtos à venda" className="space-y-4"><h2 className="text-xl font-bold">Meus produtos à venda</h2><button type="button" onClick={() => setActiveView('sell')} className="text-red-400 font-bold text-sm">Anunciar ou gerenciar meus produtos →</button>{products.some(p => p.seller_id === user.id) ? <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => p.seller_id === user.id).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div> : <p className="rounded-2xl border border-zinc-800 p-6 text-zinc-400">Você ainda não publicou produtos.</p>}</section>}
     </div>

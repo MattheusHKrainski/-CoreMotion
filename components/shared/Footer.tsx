@@ -1,13 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import HelpCenter from './HelpCenter';
+import { HELP_TOPICS, SUPPORT_EMAIL, type HelpTopic } from '@/lib/support';
 import { useCoreMotiom } from '@/lib/store';
 import BrandMark from '@/components/shared/BrandMark';
-import { Mail, Clock, Instagram, Youtube, Globe } from 'lucide-react';
+import { Mail, Clock, Instagram, Youtube } from 'lucide-react';
 
 
 export default function Footer() {
-  const { setActiveView, setSearchQuery, setCheckoutOpen, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { setActiveView, setSearchQuery, setCheckoutOpen, isVisitor, setAuthModalOpen, setAuthModalMode } = useCoreMotiom();
+
+  const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
+  const switchAccount = () => { setAuthModalMode('switch'); setAuthModalOpen(true); };
 
   const openSport = (sport?: string) => {
     setSearchQuery(sport || '');
@@ -20,6 +25,7 @@ export default function Footer() {
   };
 
   return (
+    <>
     <footer className="bg-[#0b0d12] text-zinc-400 border-t border-zinc-800/90 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         {/* Main Columns */}
@@ -42,7 +48,7 @@ export default function Footer() {
             <div className="space-y-1.5 pt-1 text-xs text-zinc-400">
               <p className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                <span>contato@coremotion.com.br</span>
+                <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-white">{SUPPORT_EMAIL}</a>
               </p>
               <p className="flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
@@ -67,17 +73,7 @@ export default function Footer() {
               >
                 <Youtube className="w-4 h-4" />
               </a>
-              <a
-                href="#comunidade"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveView('community');
-                }}
-                aria-label="Comunidade CoreMotion"
-                className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
-              >
-                <Globe className="w-4 h-4" />
-              </a>
+
             </div>
           </div>
 
@@ -89,7 +85,7 @@ export default function Footer() {
               <li><button type="button" onClick={() => openSport()} className="hover:text-white transition-colors">Ofertas</button></li>
               <li><button type="button" onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Seja um Treinador</button></li>
               <li><button type="button" onClick={() => setActiveView('community')} className="hover:text-white transition-colors">Comunidade</button></li>
-              <li><span className="cursor-default">Trabalhe Conosco</span></li>
+              <li><button type="button" onClick={() => setHelpTopic('corporate')} className="hover:text-white">Trabalhe Conosco</button></li>
             </ul>
           </div>
 
@@ -107,7 +103,7 @@ export default function Footer() {
 
           {/* Column 3: Minha Conta */}
           <div className="lg:col-span-2">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200 mb-3.5">Minha Conta</h5>
+            <div className="mb-3.5 flex flex-wrap items-center gap-2"><h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200">Minha Conta</h5><button type="button" onClick={switchAccount} className="text-[10px] font-bold text-red-400 hover:text-red-300">Trocar conta</button></div>
             <ul className="space-y-2.5 text-xs">
               <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Meu Perfil</button></li>
               <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Meus Pedidos</button></li>
@@ -121,11 +117,8 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200 mb-3.5">Ajuda & Suporte</h5>
             <ul className="space-y-2.5 text-xs">
-              <li><span className="cursor-default">Central de Atendimento</span></li>
-              <li><span className="cursor-default">Prazos e Entregas</span></li>
-              <li><span className="cursor-default">Trocas e Devoluções</span></li>
-              <li><span className="cursor-default">Sobre os anúncios</span></li>
-              <li><span className="cursor-default">Perguntas Frequentes</span></li>
+              <li><button type="button" onClick={() => setHelpTopic('general')} className="hover:text-white">Central de Atendimento</button></li>
+              {Object.entries(HELP_TOPICS).map(([id, topic]) => <li key={id}><button type="button" onClick={() => setHelpTopic(id as HelpTopic)} className="hover:text-white">{topic.label}</button></li>)}
             </ul>
           </div>
         </div>
@@ -147,5 +140,7 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+    {helpTopic && <HelpCenter initialTopic={helpTopic} onClose={() => setHelpTopic(null)} />}
+    </>
   );
 }

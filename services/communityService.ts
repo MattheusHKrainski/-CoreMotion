@@ -110,7 +110,7 @@ export class CommunityService {
     if (!sb) return { success: true };
     try {
       const { data, error } = await sb.rpc('set_community_like', { p_post_id: postId, p_liked: liked });
-      if (error) return { success: false, error: error.message };
+      if (error) return { success: false, error: 'Não foi possível registrar a curtida. Tente novamente em instantes.' };
       return { success: true, likes_count: Number(data) };
     } catch { return { success: false, error: 'Não foi possível registrar a curtida.' }; }
   }

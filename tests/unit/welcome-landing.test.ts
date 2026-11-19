@@ -29,7 +29,7 @@ describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
   });
   it('abre diretamente a vitrine com navegação e catálogo, sem a página de boas-vindas', () => {
     const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(CoreMotiomApp)));
-    assert.match(html, /Marketplace/);
+    assert.match(html, /CoreShop/);
     assert.match(html, /Ofertas/);
     assert.match(html, /Entrar/);
     assert.doesNotMatch(html, /Cadastrar-se grátis|Entrar como visitante|Seu esporte, suas conexões, seu próximo passo/);

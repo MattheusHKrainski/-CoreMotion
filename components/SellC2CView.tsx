@@ -369,7 +369,7 @@ export default function SellC2CView() {
               className="w-full py-3.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-xl shadow-red-950/50 transition-all flex items-center justify-center gap-2 mt-4 hover:scale-[1.01] active:scale-95"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>{loading ? 'Publicando...' : 'Publicar Anúncio no Marketplace'}</span>
+              <span>{loading ? 'Publicando...' : 'Publicar Anúncio no CoreShop'}</span>
             </button>
           </form>
 
@@ -391,7 +391,7 @@ export default function SellC2CView() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-red-400 font-bold">3.</span>
-                  <span>Compare anúncios similares no marketplace para definir um valor competitivo.</span>
+                  <span>Compare anúncios similares no CoreShop para definir um valor competitivo.</span>
                 </li>
               </ul>
             </div>
@@ -455,7 +455,7 @@ export default function SellC2CView() {
               <Package className="w-8 h-8 text-zinc-600 mx-auto" />
               <h3 className="text-sm font-bold text-white">Nenhum anúncio ativo</h3>
               <p className="text-xs text-zinc-400">
-                Você ainda não possui equipamentos anunciados no marketplace.
+                Você ainda não possui equipamentos anunciados no CoreShop.
               </p>
               <button
                 onClick={() => setActiveTab('create')}
