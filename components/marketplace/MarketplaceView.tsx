@@ -151,7 +151,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <ShoppingBag className="h-3.5 w-3.5" />
             <span>Catálogo esportivo</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Equipamentos e Ofertas Esportivas</h1>
+          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">CoreShop</h1>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-400 sm:text-sm">
             Encontre descontos nas melhores lojas esportivas ou compre equipamentos novos e seminovos direto de outros atletas por meio de anúncios publicados na plataforma.
           </p>
@@ -166,7 +166,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         </button>
       </header>
 
-      <label className="block text-sm font-semibold text-zinc-300">Pesquisar no Marketplace
+      <label className="block text-sm font-semibold text-zinc-300">Pesquisar no CoreShop
         <div className="relative mt-2"><Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500" /><input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar produtos ou esportes..." className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm text-white focus:border-red-500 focus:outline-none" /></div>
       </label>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-2 backdrop-blur-md">

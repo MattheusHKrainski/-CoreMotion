@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Users,
   Compass,
-  Menu,
+  Heart,
+  Search,
   X,
   LogOut,
   SlidersHorizontal,
@@ -25,9 +26,10 @@ import {
 
 interface SidebarProps {
   className?: string;
+  onOpenFavorites: () => void;
 }
 
-export default function Sidebar({ className = '' }: SidebarProps) {
+export default function Sidebar({ className = '', onOpenFavorites }: SidebarProps) {
   const {
     activeView,
     setActiveView,
@@ -35,7 +37,9 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     role,
     isVisitor,
     cartCount,
-    cart,
+    favorites,
+    searchQuery,
+    setSearchQuery,
     setAuthModalOpen,
     setAuthModalMode,
     setCheckoutOpen,
@@ -51,7 +55,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   const userIsStaff = isStaffRole(user?.role);
   const showRoleMenu = !isSupabaseConfigured && !IS_QUICK_ACCESS && userIsStaff;
 
-  const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+
 
   interface NavItem {
     id: typeof activeView;
@@ -71,7 +75,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     },
     {
       id: 'marketplace',
-      label: 'Marketplace',
+      label: 'CoreShop',
       description: 'Equipamentos e ofertas',
       icon: ShoppingBag,
     },
@@ -122,6 +126,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       return;
     }
     setActiveView(id);
+    window.scrollTo({ top: 0, behavior: 'instant' });
     setIsMobileOpen(false);
   };
 
@@ -138,6 +143,22 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const before = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const drawer = document.getElementById('core-left-sidebar');
+    const focusable = () => Array.from(drawer?.querySelectorAll<HTMLElement>('button, a[href], input, select, [tabindex="0"]') || []).filter(node => !node.hasAttribute('disabled'));
+    focusable()[0]?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileOpen(false);
+      if (event.key === 'Tab') { const items = focusable(), first = items[0], last = items[items.length - 1]; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } }
+    };
+    document.addEventListener('keydown', keydown);
+    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', keydown); if (before instanceof HTMLElement) before.focus(); };
+  }, [isMobileOpen]);
 
   const renderSidebarContent = (isMobileDrawer = false) => (
     <div className="flex flex-col min-h-full justify-between gap-6">
@@ -250,41 +271,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           })}
         </nav>
 
-        {/* Quick Function Utilities (Cart & Favorites) */}
-        <div className="px-1 pt-1 space-y-1">
-          <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-            Minhas compras
-          </div>
 
-          <button
-            onClick={() => {
-              setCheckoutOpen(true);
-              setIsMobileOpen(false);
-            }}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 text-zinc-300 hover:text-white transition-all group"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-red-600/10 border border-red-500/20 text-red-400 flex items-center justify-center">
-                <ShoppingBag className="w-3.5 h-3.5" />
-              </div>
-              <div className="text-left">
-                <div className="text-xs font-semibold text-zinc-200 group-hover:text-white">
-                  Meu Carrinho
-                </div>
-                <div className="text-[10px] text-zinc-400">
-                  {cartCount > 0 ? `R$ ${cartSubtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Vazio'}
-                </div>
-              </div>
-            </div>
-            {cartCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-red-600 text-white font-bold text-[10px] shadow-sm">
-                {cartCount}
-              </span>
-            )}
-          </button>
-
-
-        </div>
       </div>
 
       {/* Bottom Section: Profile & Authentication */}
@@ -391,7 +378,10 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               )}
             </div>
 
-            <button type="button" onClick={() => handleNavClick('profile')} className="w-full text-left text-xs font-bold text-red-400 border-t border-zinc-800 pt-2">Minha conta →</button>
+            <div className="flex items-center justify-between gap-2 border-t border-zinc-800 pt-2">
+              <button type="button" onClick={() => handleNavClick('profile')} className="text-left text-xs font-bold text-red-400">Minha conta →</button>
+              <button type="button" onClick={() => { setAuthModalMode('switch'); setAuthModalOpen(true); setIsMobileOpen(false); }} className="text-right text-[11px] font-bold text-zinc-400 hover:text-white">Trocar conta</button>
+            </div>
             {showRoleMenu && showRoleSwitcher && (
               <div className="pt-2 border-t border-zinc-800/80 animate-in fade-in duration-150">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
@@ -425,35 +415,29 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
   return (
     <>
-      <aside
-        id="core-left-sidebar"
-        className={`hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 bg-zinc-950/95 backdrop-blur-xl border-r border-zinc-800/80 z-40 flex-col py-5 px-3 select-none overflow-y-auto ${className}`}
-      >
-        {renderSidebarContent(false)}
-      </aside>
-
-      <div className="lg:hidden sticky top-0 z-40 w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between">
+      <div className={`sticky top-0 z-40 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 px-3 sm:px-7 py-3 flex items-center justify-between gap-3 ${className}`}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileOpen(true)}
-            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+            type="button" aria-expanded={isMobileOpen} aria-controls="core-left-sidebar" className="group rounded-xl focus-visible:outline focus-visible:outline-red-500"
             aria-label="Abrir barra de funções"
           >
-            <Menu className="w-5 h-5" />
+            <BrandMark className="h-10 w-10 transition-transform duration-300 motion-safe:group-hover:rotate-12 motion-safe:group-hover:scale-110" />
           </button>
 
-          <button
-            onClick={() => handleNavClick('home')}
-            className="flex items-center gap-2 group focus:outline-none"
-          >
-            <BrandMark className="w-7 h-7" />
-            <span className="font-extrabold text-sm tracking-tight text-white">
-              CoreMotion
-            </span>
-          </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <nav aria-label="Navegação da loja" className="hidden items-center gap-6 text-xs font-semibold md:flex">
+          <button type="button" onClick={() => handleNavClick('home')} className="text-red-400 hover:text-white">Black Friday</button>
+          <button type="button" onClick={() => handleNavClick('marketplace')} className="hover:text-red-400">CoreShop</button>
+          <button type="button" onClick={() => handleNavClick('community')} className="hover:text-red-400">Comunidade</button>
+        </nav>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <form role="search" onSubmit={event => { event.preventDefault(); setActiveView('marketplace'); }} className="hidden min-[500px]:flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-2">
+            <button type="submit" aria-label="Pesquisar produtos"><Search className="h-4 w-4 text-zinc-400" /></button>
+            <input aria-label="Buscar no CoreShop" placeholder="Buscar" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="w-20 lg:w-32 bg-transparent text-xs outline-none" />
+          </form>
+          <button type="button" onClick={onOpenFavorites} aria-label="Ver favoritos e salvos" className="relative rounded-full p-2 text-zinc-300 hover:bg-zinc-800 hover:text-white"><Heart className="h-5 w-5" />{favorites.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-[10px] text-white">{favorites.length}</span>}</button>
           <button
             onClick={() => setCheckoutOpen(true)}
             className="relative p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white"
@@ -490,13 +474,13 @@ export default function Sidebar({ className = '' }: SidebarProps) {
       </div>
 
       {isMobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-50 flex">
           <div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMobileOpen(false)}
           />
 
-          <div className="relative w-72 sm:w-80 max-w-[85vw] h-full bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col z-50 overflow-y-auto animate-in slide-in-from-left duration-200">
+          <div id="core-left-sidebar" role="dialog" aria-modal="true" aria-label="Menu CoreMotion" className="relative w-72 sm:w-80 max-w-[85vw] h-full bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col z-50 overflow-y-auto animate-in slide-in-from-left duration-200">
             {renderSidebarContent(true)}
           </div>
         </div>

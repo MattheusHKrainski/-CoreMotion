@@ -53,7 +53,7 @@ it('trocar conta mantém a sessão oficial e não exige campos de senha no selet
  const profile = readFileSync('components/ProfileView.tsx', 'utf8');
  assert.match(profile, /setAuthModalMode\('switch'\)/);
  assert.match(profile, /Trocar conta/);
- assert.doesNotMatch(readFileSync('components/shared/Sidebar.tsx', 'utf8'), /Trocar conta/);
+ assert.match(readFileSync('components/shared/Sidebar.tsx', 'utf8'), /Trocar conta/);
  const modal = readFileSync('components/auth/AuthModal.tsx', 'utf8');
  assert.match(modal, /authModalMode !== 'switch' && <form/);
  const handler = modal.slice(modal.indexOf('const handleQuickLogin'), modal.indexOf('const handleSubmit'));
