@@ -13,9 +13,10 @@ describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
     const homeHtml = renderToStaticMarkup(
       React.createElement(CoreMotiomProvider, null, React.createElement(HomeHeroAndHighlights))
     );
-    const homeTudoIdx = homeHtml.indexOf('>Tudo<');
-    const homeAtletasIdx = homeHtml.indexOf('>De Atletas<');
-    const homeOfertasIdx = homeHtml.indexOf('>Ofertas<');
+    const homeFilters = homeHtml.slice(homeHtml.indexOf('aria-label="Filtrar catálogo"'));
+    const homeTudoIdx = homeFilters.indexOf('>Tudo<');
+    const homeAtletasIdx = homeFilters.indexOf('>De Atletas<');
+    const homeOfertasIdx = homeFilters.indexOf('>Ofertas<');
     assert.ok(homeTudoIdx > -1 && homeAtletasIdx > homeTudoIdx && homeOfertasIdx > homeAtletasIdx);
 
     const mpHtml = renderToStaticMarkup(
@@ -26,36 +27,13 @@ describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
     const mpOfertasIdx = mpHtml.indexOf('Ofertas (');
     assert.ok(mpTudoIdx > -1 && mpAtletasIdx > mpTudoIdx && mpOfertasIdx > mpAtletasIdx);
   });
-  it('renderiza na entrada inicial as 3 opções de acesso (logar, cadastrar e visitante), proposta, funcionamento e perfis', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(CoreMotiomProvider, null, React.createElement(CoreMotiomApp))
-    );
-
-    // 3 opções claras de acesso logo na entrada
-    assert.match(html, /Cadastrar-se grátis/);
-    assert.match(html, /Entrar como visitante/);
-    assert.match(html, /Fazer login/);
-
-    // Seções explicativas pedidas pelo usuário
-    assert.match(html, /Nossa proposta/);
-    assert.match(html, /Como funciona a CoreMotion/);
-    assert.match(html, /Para Clientes e Atletas/);
-    assert.match(html, /Para Treinadores e Assessorias/);
-    assert.doesNotMatch(html, /Custódia Protegida|5% OFF Automático no PIX|Envio para Todo o Brasil/);
-
-    // Zero formulários/inputs na tela inicial pública para nunca acionar falso-positivo de Safe Browsing
-    assert.equal(/<form[\s>]/i.test(html), false);
-    assert.equal(/<input[\s>]/i.test(html), false);
-
-    // Zero termos artificiais ou jargão interno
-    const forbidden = ['simulado', 'demonstração', 'fictício', 'Marca Demo', 'B2C', 'C2C', '⌘K'];
-    for (const term of forbidden) {
-      assert.equal(
-        html.toLowerCase().includes(term.toLowerCase()),
-        false,
-        `Termo indesejado encontrado na página inicial: ${term}`
-      );
-    }
+  it('abre diretamente a vitrine com navegação e catálogo, sem a página de boas-vindas', () => {
+    const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(CoreMotiomApp)));
+    assert.match(html, /Marketplace/);
+    assert.match(html, /Ofertas/);
+    assert.match(html, /Entrar/);
+    assert.doesNotMatch(html, /Cadastrar-se grátis|Entrar como visitante|Seu esporte, suas conexões, seu próximo passo/);
+    assert.doesNotMatch(readFileSync('app/page.tsx', 'utf8'), /WelcomeLandingPage|if \(!hasEnteredPlatform\)/);
   });
 });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import WelcomeCatalog from '@/components/WelcomeCatalog';
 import { useCoreMotiom } from '@/lib/store';
 import { ACCOUNT_TYPES } from '@/lib/sports';
 import BrandMark from '@/components/shared/BrandMark';
@@ -92,6 +92,7 @@ export default function WelcomeLandingPage() {
             </button>
 
             <nav className="hidden lg:flex items-center gap-5 text-sm font-medium text-zinc-300">
+              <button type="button" onClick={() => scrollToSection('produtos')} className="hover:text-white transition-colors">Produtos</button>
               <button
                 type="button"
                 onClick={() => scrollToSection('proposta')}
@@ -227,7 +228,7 @@ export default function WelcomeLandingPage() {
 
       <main className="flex-1">
         {/* HERO CENTRAL DE ALTO IMPACTO COM ESCOLHA IMEDIATA: CADASTRAR, LOGAR OU VISITANTE */}
-        <section className="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-zinc-800/80">
+        <section className="relative overflow-hidden pt-10 pb-14 sm:pt-14 sm:pb-20 border-b border-zinc-800/80">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,rgba(220,38,38,0.16),transparent_70%)]"
@@ -277,10 +278,12 @@ export default function WelcomeLandingPage() {
             </div>
 
             <nav aria-label="Conheça a CoreMotion" className="flex flex-wrap justify-center gap-2 pt-3">
-              {[['proposta', '01 · Explore a plataforma'], ['como-funciona', '02 · Entenda como funciona'], ['perfis', '03 · Escolha seu perfil']].map(([id, label]) => (
+              {[['produtos', 'Ver produtos'], ['proposta', '01 · Explore a plataforma'], ['como-funciona', '02 · Entenda como funciona'], ['perfis', '03 · Escolha seu perfil']].map(([id, label]) => (
                 <button key={id} type="button" onClick={() => scrollToSection(id)} className="rounded-full border border-zinc-700 px-4 py-2 text-xs text-zinc-300 hover:border-red-500 hover:text-white transition-colors">{label}</button>
               ))}
             </nav>
+
+            <WelcomeCatalog products={products} offers={activeOffers} onExplore={() => handleEnterAsVisitor('marketplace')} />
 
             {/* FAIXA DE DADOS VIVOS DA PLATAFORMA (ORDEM: ENTRE ATLETAS -> OFERTAS -> TREINADORES -> COMUNIDADE) */}
             <div className="pt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-left max-w-4xl mx-auto">
@@ -337,77 +340,7 @@ export default function WelcomeLandingPage() {
               </button>
             </div>
 
-            {/* VITRINE VISUAL AUTÊNTICA COREMOTION */}
-            <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto text-left">
-              <div
-                onClick={() => handleEnterAsVisitor('marketplace')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('marketplace');
-                }}
-                style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', overflow: 'hidden', minWidth: 0 }}
-                className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
-              >
-                <Image
-                  src="/products/raquete-tenis.jpg"
-                  alt="Equipamentos esportivos entre atletas"
-                  fill
-                  sizes="(max-width: 640px) 100vw, 320px"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-4 flex flex-col justify-end">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">De Atletas</span>
-                  <p className="text-sm font-bold text-white">Novos e seminovos entre atletas</p>
-                </div>
-              </div>
 
-              <div
-                onClick={() => handleEnterAsVisitor('marketplace')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('marketplace');
-                }}
-                style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', overflow: 'hidden', minWidth: 0 }}
-                className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
-              >
-                <Image
-                  src="/offers/gps-ciclocomputador-bike.jpg"
-                  alt="Ofertas esportivas verificadas"
-                  fill
-                  sizes="(max-width: 640px) 100vw, 320px"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-4 flex flex-col justify-end">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">Ofertas</span>
-                  <p className="text-sm font-bold text-white">Descontos e cupons selecionados</p>
-                </div>
-              </div>
-
-              <div
-                onClick={() => handleEnterAsVisitor('coaches')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleEnterAsVisitor('coaches');
-                }}
-                style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', overflow: 'hidden', minWidth: 0 }}
-                className="group relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-[16/10] cursor-pointer"
-              >
-                <Image
-                  src="/products/kimono-jiujitsu.jpg"
-                  alt="Treinadores e modalidades esportivas"
-                  fill
-                  sizes="(max-width: 640px) 100vw, 320px"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent p-4 flex flex-col justify-end">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">Treinadores</span>
-                  <p className="text-sm font-bold text-white">Evolução guiada em 10+ esportes</p>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 

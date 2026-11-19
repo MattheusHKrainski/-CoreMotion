@@ -2,9 +2,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { isStaffRole } from '@/lib/permissions';
 import type { ExternalOffer, Product } from '@/lib/types';
-import { getOfferDiscountPercent } from '@/lib/offer-utils';
+import HomeProductCarousel from './HomeProductCarousel';
 import ProductCard from '@/components/marketplace/ProductCard';
 import ExternalOfferCard from '@/components/marketplace/ExternalOfferCard';
 import {
@@ -12,7 +11,6 @@ import {
   Bike,
   ChevronRight,
   Layers,
-  PlusCircle,
   ShoppingBag,
   Tag,
   Users,
@@ -27,10 +25,6 @@ type HomeTab = 'all' | 'offers' | 'c2c';
 
 const QUICK_FILTERS = ['all', 'Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Ciclismo', 'Musculação'];
 
-function formatPrice(value: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-}
-
 function matchesQuickFilter(category: string, sport: string, filter: string): boolean {
   if (filter === 'all') return true;
   if (category === filter || sport === filter) return true;
@@ -39,11 +33,9 @@ function matchesQuickFilter(category: string, sport: string, filter: string): bo
 }
 
 export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }: HomeHeroAndHighlightsProps) {
-  const { user, products, activeOffers, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { products, activeOffers, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<HomeTab>('all');
-  const showStaffSummary = isStaffRole(user?.role);
-  const featuredOffer = activeOffers[0] ?? null;
 
   const filteredOffers = useMemo(() => activeOffers.filter((offer) =>
     matchesQuickFilter(offer.category, offer.sport, activeFilter)
@@ -58,7 +50,6 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
   const showOffers = activeTab !== 'c2c';
   const showC2C = activeTab !== 'offers';
   const resultCount = (showOffers ? filteredOffers.length : 0) + (showC2C ? filteredC2CProducts.length : 0);
-  const discount = featuredOffer ? getOfferDiscountPercent(featuredOffer) : null;
 
   const openMarketplace = () => {
     setSearchQuery('');
@@ -72,90 +63,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
 
   return (
     <div className="mx-auto max-w-7xl space-y-10 pb-16 pt-3 sm:space-y-14 sm:px-3">
-      <section aria-labelledby="home-title" className="relative overflow-hidden rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-[#11131a] to-black p-6 shadow-2xl sm:p-10 lg:p-12">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-80 w-80 rounded-full bg-red-600/10 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-red-950/20 blur-3xl" />
-
-        <div className="relative grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
-          <div className="space-y-5 lg:col-span-7">
-            <span className="inline-flex items-center gap-2 rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-red-300">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" />
-              Esporte em movimento
-            </span>
-            <h1 id="home-title" className="max-w-3xl text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-              Tudo para o seu esporte em um só lugar.
-            </h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-              Do tatame às quadras, das pistas aos campos: encontre descontos nas melhores marcas, compre e venda equipamentos entre atletas e treine com especialistas em Jiu-Jitsu, Basquete, Vôlei, Tênis, Karatê, Futebol, Corrida e mais.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-1">
-              <button type="button" onClick={() => openMarketplace()} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-red-950/40 transition hover:bg-red-500 sm:text-sm">
-                <Tag className="h-4 w-4" />
-                Explorar ofertas
-                <ArrowRight className="h-4 w-4" />
-              </button>
-              <button type="button" onClick={handleSellClick} className="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/80 px-6 py-3 text-xs font-semibold text-zinc-200 transition hover:border-red-500/40 hover:bg-zinc-800 hover:text-white sm:text-sm">
-                <PlusCircle className="h-4 w-4 text-red-400" />
-                Vender meu equipamento
-              </button>
-            </div>
-
-            {showStaffSummary && (
-              <div className="grid grid-cols-1 gap-2 border-t border-zinc-800/80 pt-5 sm:grid-cols-3">
-                <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Ofertas</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Grandes Marcas</span>
-                  <span className="text-[10px] text-zinc-400">Descontos selecionados em novos</span>
-                </div>
-                <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Entre Atletas</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Anúncios entre atletas</span>
-                  <span className="text-[10px] text-zinc-400">Novos e seminovos anunciados</span>
-                </div>
-                <div className="rounded-2xl border border-zinc-800/70 bg-zinc-900/50 p-3">
-                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Comunidade</span>
-                  <span className="mt-1 block text-xs font-bold text-white">Atletas e treinadores</span>
-                  <span className="text-[10px] text-zinc-400">Relatos, treinos e avaliações</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {featuredOffer && (
-            <div className="lg:col-span-5">
-              <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/80 shadow-2xl">
-                <div className="relative aspect-[4/3] overflow-hidden bg-zinc-950">
-                  <img
-                    src={featuredOffer.image_url}
-                    alt={featuredOffer.title}
-                    onError={(event) => {
-                      event.currentTarget.src = '/offers/gps-ciclocomputador-bike.jpg';
-                    }}
-                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
-                  <span className="absolute left-4 top-4 rounded-full border border-red-500/30 bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-red-200">Destaque da Semana</span>
-                  {discount !== null && <span className="absolute right-4 top-4 rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white">-{discount}%</span>}
-                  <div className="absolute bottom-4 left-4 right-4 space-y-1">
-                    <span className="text-[11px] font-semibold text-zinc-300">{featuredOffer.store_name}</span>
-                    <h2 className="line-clamp-2 text-lg font-black leading-tight text-white">{featuredOffer.title}</h2>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
-                  <div>
-                    {discount !== null && featuredOffer.original_price && <span className="block text-xs text-zinc-500 line-through">{formatPrice(featuredOffer.original_price)}</span>}
-                    <span className="text-xl font-black text-white">{formatPrice(featuredOffer.price)}</span>
-                  </div>
-                  <button type="button" onClick={() => onSelectOffer?.(featuredOffer)} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-red-500">
-                    Ver oferta
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </article>
-            </div>
-          )}
-        </div>
-      </section>
+      <HomeProductCarousel products={products} offers={activeOffers} onSelectProduct={onSelectProduct} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
 
       <section className="space-y-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
@@ -163,7 +71,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
             <h2 className="flex items-center gap-2 text-lg font-black text-white sm:text-xl"><ShoppingBag className="h-5 w-5 text-red-400" />Explore o catálogo</h2>
             <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em anúncios de atletas e ofertas.</p>
           </div>
-          <div className="flex flex-wrap gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
+          <div role="group" aria-label="Filtrar catálogo" className="flex flex-wrap gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
             {([
               { id: 'all', label: 'Tudo' },
               { id: 'c2c', label: 'De Atletas' },

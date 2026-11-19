@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
           { key: 'Content-Security-Policy-Report-Only', value: CSP_REPORT_ONLY },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
         ],
       },
     ];

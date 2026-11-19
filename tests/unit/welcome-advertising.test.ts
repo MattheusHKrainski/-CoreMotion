@@ -6,9 +6,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CoreMotiomProvider } from '@/lib/store';
 import CoreMotiomApp from '@/app/page';
 
-it('remove o tutorial de visitante e mantém os botões de acesso sem cadastro', () => {
+it('abre o catálogo sem tutorial ou tela obrigatória de visitante', () => {
   const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(CoreMotiomApp)));
-  assert.match(html, /Entrar como visitante/);
+  assert.match(html, /Marketplace/);
+  assert.match(html, /Entrar/);
+  assert.doesNotMatch(html, /Entrar como visitante/);
   assert.doesNotMatch(html, /Prefere só conhecer primeiro|Entrando como Visitante|Entrar agora como visitante/);
   const source = readFileSync('components/WelcomeLandingPage.tsx', 'utf8');
   assert.doesNotMatch(source, /setSelectedRoleTab\('visitante'\)/);

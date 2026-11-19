@@ -6,6 +6,7 @@ import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { IS_QUICK_ACCESS } from '@/lib/quick-access';
 import { ACCOUNT_TYPES, canAccessSports, canRecruit } from '@/lib/sports';
+import UserAvatar from './UserAvatar';
 import BrandMark from '@/components/shared/BrandMark';
 import {
   ShoppingBag,
@@ -326,9 +327,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
           <div className="p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2.5">
             <div className="flex items-center justify-between">
               <button type="button" onClick={() => handleNavClick('profile')} aria-label="Abrir minha conta" className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-80">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center font-bold text-xs shadow shrink-0">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                </div>
+                <UserAvatar src={user?.avatar_url} name={user?.name || 'Sua conta'} />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-white truncate leading-tight">{user?.name}</p>
                   <p className="text-[10px] text-zinc-400 truncate">{user?.email}</p>
@@ -480,10 +479,11 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             </button>
           ) : (
             <button
+              aria-label="Abrir minha conta"
               onClick={() => handleNavClick('profile')}
               className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-400 text-white flex items-center justify-center font-bold text-xs"
             >
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              <UserAvatar src={user?.avatar_url} name={user?.name || 'Sua conta'} />
             </button>
           )}
         </div>

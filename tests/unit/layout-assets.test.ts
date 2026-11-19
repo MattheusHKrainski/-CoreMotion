@@ -12,9 +12,11 @@ it('isola os arquivos do preview dos arquivos gerados pelo build', () => {
   assert.notEqual(development.distDir, production.distDir);
   assert.ok(development.allowedDevOrigins?.includes('*.e2b.app'));
 });
-it('limita as três imagens de boas-vindas a contêineres proporcionais', () => {
+it('troca os banners estáticos pela vitrine com cards de imagens proporcionais', () => {
   const source = readFileSync('components/WelcomeLandingPage.tsx', 'utf8');
-  assert.equal((source.match(/aspectRatio: '16 \/ 10'/g) || []).length, 3);
+  assert.match(source, /<WelcomeCatalog products=\{products\} offers=\{activeOffers\}/);
+  assert.match(readFileSync('components/marketplace/ExternalOfferCard.tsx', 'utf8'), /aspect-\[4\/3\]/);
+  assert.match(readFileSync('components/marketplace/ProductCard.tsx', 'utf8'), /aspect-\[5\/4\]/);
   const css = readFileSync('app/globals.css', 'utf8');
   assert.match(css, /img, video\s*\{\s*max-width: 100%/);
 });
