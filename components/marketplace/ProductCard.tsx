@@ -1,5 +1,6 @@
 'use client';
 
+import { productPath } from '@/lib/commerce';
 import React from 'react';
 import type { Product } from '@/lib/types';
 import { useCoreMotiom } from '@/lib/store';
@@ -83,13 +84,13 @@ export function getDefaultUsageTime(condition: Product['condition']): string {
   }
 }
 
-export default function ProductCard({ product, onSelect }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const isFavorite = favorites.includes(product.id);
 
   if (product.product_type !== 'c2c') return null;
 
-  const selectProduct = () => onSelect?.(product);
+  const selectProduct = () => window.location.assign(productPath('athlete', product.id));
   const conditionMeta = getConditionMeta(product.condition);
   const usageLabel = product.usage_time || getDefaultUsageTime(product.condition);
 

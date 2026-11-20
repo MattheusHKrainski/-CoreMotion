@@ -48,6 +48,6 @@ const nextConfig: NextConfig = {
 export default function config(phase: string): NextConfig {
   return {
     ...nextConfig,
-    distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.cache/next-dev' : '.next',
+    distDir: phase === PHASE_DEVELOPMENT_SERVER ? (process.env.COREMOTION_DEV_DIST_DIR || '.cache/next-dev') : '.next',
   };
 }

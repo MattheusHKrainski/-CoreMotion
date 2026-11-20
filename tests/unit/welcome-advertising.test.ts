@@ -32,7 +32,7 @@ it('as superfícies de venda não prometem garantia ou custódia da plataforma',
     assert.doesNotMatch(readFileSync(filename, 'utf8'), /compra (?:100% )?garantida|compra com garantia|compra protegida|pagamento protegido|pagamento seguro|custódia|frete.*protegido|equipamentos com garantia/i, filename);
   }
   const footer = readFileSync('components/shared/Footer.tsx', 'utf8');
-  assert.match(footer, /Não garante as transações, não retém pagamentos e não realiza entregas/);
+  assert.match(footer, /pagamento e logística ainda desativados, sem compras confirmadas ou estoque reservado/);
 });
 
 it('mantém as mesmas bordas neutras em todos os módulos de perfil', () => {

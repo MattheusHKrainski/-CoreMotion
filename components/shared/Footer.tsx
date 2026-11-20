@@ -42,7 +42,7 @@ export default function Footer() {
             </button>
 
             <p className="text-xs text-zinc-400 leading-relaxed max-w-sm">
-              Plataforma de anúncios esportivos que conecta atletas, anunciantes e treinadores. Pagamento, entrega e condições são combinados entre as partes.
+              CoreShop e comunidade esportiva. Vendas CoreMotion em preparação e anúncios de atletas com negociação direta.
             </p>
 
             <div className="space-y-1.5 pt-1 text-xs text-zinc-400">
@@ -106,8 +106,10 @@ export default function Footer() {
             <div className="mb-3.5 flex flex-wrap items-center gap-2"><h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200">Minha Conta</h5><button type="button" onClick={switchAccount} className="text-[10px] font-bold text-red-400 hover:text-red-300">Trocar conta</button></div>
             <ul className="space-y-2.5 text-xs">
               <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Meu Perfil</button></li>
-              <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Meus Pedidos</button></li>
-              <li><button type="button" onClick={() => setCheckoutOpen(true)} className="hover:text-white transition-colors">Meu Carrinho</button></li>
+              <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Pedidos de atletas</button></li>
+              <li><a href="/pedidos" className="hover:text-white">Pedidos CoreMotion</a></li>
+              <li><a href="/compras" className="hover:text-white">Carrinho CoreMotion</a></li>
+              <li><button type="button" onClick={() => setCheckoutOpen(true)} className="hover:text-white transition-colors">Carrinho de atletas</button></li>
               <li><button type="button" onClick={() => handleAccountLink('sell')} className="hover:text-white transition-colors">Quero Vender</button></li>
               <li><button type="button" onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Treinadores</button></li>
             </ul>
@@ -124,7 +126,7 @@ export default function Footer() {
         </div>
 
         <p className="py-6 border-b border-zinc-800/80 text-xs leading-relaxed text-zinc-400">
-          A CoreMotion hospeda anúncios e facilita conexões. Não garante as transações, não retém pagamentos e não realiza entregas. Nas ofertas externas, a compra acontece no site da loja, conforme as condições dela.
+          Vendas CoreMotion: pagamento e logística ainda desativados, sem compras confirmadas ou estoque reservado. Nos anúncios de atletas, pagamento, entrega e condições são combinados diretamente com o anunciante.
         </p>
 
         {/* Bottom Legal Bar */}

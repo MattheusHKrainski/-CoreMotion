@@ -1,10 +1,9 @@
 'use client';
-import ExternalStoreLink from './ExternalStoreLink';
+import { productPath } from '@/lib/commerce';
 
 import React from 'react';
-import { externalOfferDestination } from '@/lib/external-offer-link';
 import ProductImage from '@/components/shared/ProductImage';
-import { ExternalLink, Store, Ticket } from 'lucide-react';
+import { ShoppingBag, Store } from 'lucide-react';
 import { ExternalOffer } from '@/lib/types';
 
 interface ExternalOfferCardProps {
@@ -12,9 +11,9 @@ interface ExternalOfferCardProps {
   onSelect: (offer: ExternalOffer) => void;
 }
 
-export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCardProps) {
+export default function ExternalOfferCard({ offer }: ExternalOfferCardProps) {
 
-  const destination = externalOfferDestination(offer.source_url);
+  const select = () => window.location.assign(productPath('core', offer.id));
   const discount =
     offer.original_price && offer.original_price > offer.price
       ? Math.round(((offer.original_price - offer.price) / offer.original_price) * 100)
@@ -26,14 +25,14 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
 
   return (
     <div
-      onClick={() => onSelect(offer)}
+      onClick={() => select()}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.target !== e.currentTarget) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onSelect(offer);
+          select();
         }
       }}
       className="group relative flex flex-col justify-between bg-zinc-900/70 rounded-2xl border border-zinc-800/80 overflow-hidden transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900 hover:shadow-xl hover:shadow-red-950/20 cursor-pointer"
@@ -44,14 +43,9 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
         <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 max-w-[76%]">
           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-950/90 text-zinc-100 border border-zinc-700/80 backdrop-blur-md flex items-center gap-1">
             <Store className="w-3 h-3 text-red-400 shrink-0" />
-            <span className="truncate">{offer.store_name}</span>
+            <span className="truncate">Fornecedor: {offer.store_name}</span>
           </span>
-          {offer.coupon_code && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 backdrop-blur-md flex items-center gap-1">
-              <Ticket className="w-2.5 h-2.5" />
-              {offer.coupon_code}
-            </span>
-          )}
+
         </div>
 
         {discount && discount > 0 && (
@@ -87,10 +81,7 @@ export default function ExternalOfferCard({ offer, onSelect }: ExternalOfferCard
             </span>
           </div>
 
-          {destination ? <ExternalStoreLink href={destination} label={`Ver oferta em ${offer.store_name}: ${offer.title}`} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-all shadow-md shadow-red-950/40">
-            <span>Ver oferta</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </ExternalStoreLink> : <span className="text-xs text-zinc-400">Link indisponível</span>}
+          <button type="button" onClick={event => { event.stopPropagation(); select(); }} className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-500"><ShoppingBag className="h-3.5 w-3.5" />Comprar</button>
         </div>
       </div>
     </div>

@@ -1,0 +1,8 @@
+/** Server-only integration contracts. No adapter is activated by flags or browser state. */
+import type { ShippingAddress } from './commerce';
+export interface ShippingQuote { id: string; supplier: string; amountCents: number; minDays: number; maxDays: number; expiresAt: string }
+export interface ShippingProvider { quote(input: { address: ShippingAddress; items: { supplierSku: string; quantity: number }[] }): Promise<ShippingQuote[]> }
+export interface PaymentProvider { createIntent(input: { orderId: string; amountCents: number; idempotencyKey: string }): Promise<{ providerId: string; redirectUrl: string }>; verifyWebhook(rawBody: string, signature: string): Promise<{ providerId: string; eventId: string; status: 'paid' | 'failed' | 'refunded' }> }
+export interface SupplierProvider { availability(sku: string): Promise<{ available: boolean; stock: number; checkedAt: string }>; submit(input: { orderId: string; address: ShippingAddress; lines: { sku: string; quantity: number }[] }): Promise<{ supplierOrderId: string }>; tracking(supplierOrderId: string): Promise<{ code: string; carrier: string; events: { occurredAt: string; description: string }[] }> }
+export async function quoteShipping(): Promise<{ status: 'unavailable'; quotes: ShippingQuote[]; reason: string }> { return { status: 'unavailable', quotes: [], reason: 'Frete e prazo ainda não configurados com os fornecedores. Nenhum valor será cobrado.' }; }
+export async function createPayment(): Promise<never> { throw new Error('Pagamentos desativados. Gateway, conta comercial, operação e segurança ainda não homologados.'); }

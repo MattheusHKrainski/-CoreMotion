@@ -36,13 +36,11 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
     user,
     role,
     isVisitor,
-    cartCount,
     favorites,
     searchQuery,
     setSearchQuery,
     setAuthModalOpen,
     setAuthModalMode,
-    setCheckoutOpen,
     logout,
     switchRole,
     addToast,
@@ -439,16 +437,12 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
           </form>
           <button type="button" onClick={onOpenFavorites} aria-label="Ver favoritos e salvos" className="relative rounded-full p-2 text-zinc-300 hover:bg-zinc-800 hover:text-white"><Heart className="h-5 w-5" />{favorites.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-[10px] text-white">{favorites.length}</span>}</button>
           <button
-            onClick={() => setCheckoutOpen(true)}
+            onClick={() => window.location.assign('/compras')}
             className="relative p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white"
             aria-label="Ver carrinho"
           >
             <ShoppingBag className="w-4 h-4" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
+
           </button>
 
           {isVisitor ? (

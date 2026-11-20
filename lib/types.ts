@@ -23,7 +23,7 @@ export type ProductCondition = 'novo' | 'como_novo' | 'seminovo' | 'usado_excele
 
 export type ProductType = 'b2c' | 'c2c';
 
-/** Oferta externa B2C; os primeiros registros são explicitamente simulados. */
+/** Catálogo legado de origem externa, agora apresentado como vitrine CoreMotion. O nome do tipo é mantido por compatibilidade; disponibilidade e operação não são presumidas. */
 export interface ExternalOffer {
   id: string;
   title: string;

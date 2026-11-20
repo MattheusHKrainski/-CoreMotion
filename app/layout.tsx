@@ -3,17 +3,17 @@ import './globals.css';
 import SessionProvider from '@/components/SessionProvider';
 
 export const metadata: Metadata = {
-  title: 'CoreMotion — Marketplace & Plataforma Esportiva',
-  description: 'Marketplace esportivo completo: ofertas selecionadas com desconto, compra e venda entre atletas, treinadores certificados e comunidade.',
+  title: 'CoreMotion — CoreShop e comunidade esportiva',
+  description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Vendas CoreMotion em preparação, com pagamentos desativados.',
   openGraph: {
-    title: 'CoreMotion — Marketplace & Plataforma Esportiva',
-    description: 'Marketplace esportivo completo: ofertas selecionadas com desconto, compra e venda entre atletas, treinadores certificados e comunidade.',
+    title: 'CoreMotion — CoreShop e comunidade esportiva',
+    description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Vendas CoreMotion em preparação, com pagamentos desativados.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CoreMotion — Marketplace & Plataforma Esportiva',
-    description: 'Marketplace esportivo completo: ofertas selecionadas com desconto, compra e venda entre atletas, treinadores certificados e comunidade.',
+    title: 'CoreMotion — CoreShop e comunidade esportiva',
+    description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Vendas CoreMotion em preparação, com pagamentos desativados.',
   },
 };
 
