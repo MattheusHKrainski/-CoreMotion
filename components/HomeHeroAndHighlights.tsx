@@ -116,7 +116,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
               <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Seleção de produtos em lojas externas. Confira preço, estoque e condições na loja.</p>
+              <p className="mt-1 text-[11px] text-zinc-500">Produtos da vitrine CoreMotion, com fornecedor de origem informado. Checkout em preparação; sem pagamentos.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>

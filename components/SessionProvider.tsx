@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, type ReactNode } from 'react';
+import { CommerceProvider } from '@/lib/commerce-store';
 import { CoreMotiomProvider } from '@/lib/store';
 
 /** Query-scoped profiles and browser storage must not disagree with server markup. */
@@ -12,5 +13,5 @@ export default function SessionProvider({ children }: { children: ReactNode }) {
       <span className="animate-pulse">Carregando CoreMotion…</span>
     </main>
   );
-  return <CoreMotiomProvider>{children}</CoreMotiomProvider>;
+  return <CoreMotiomProvider><CommerceProvider>{children}</CommerceProvider></CoreMotiomProvider>;
 }

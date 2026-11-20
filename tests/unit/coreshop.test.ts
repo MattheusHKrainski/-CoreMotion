@@ -30,5 +30,5 @@ it('destaque exibe o mesmo produto, preço e percentual do catálogo', () => {
   const html = renderToStaticMarkup(React.createElement(HomeBlackFriday, { offers: INITIAL_EXTERNAL_OFFERS, onExplore() {} }));
   assert.ok(html.includes(first.title));
   assert.ok(html.includes(`ATÉ ${getOfferDiscountPercent(first)}% OFF`));
-  assert.match(html, /Confirme as condições e a vigência/);
+  assert.match(html, /pagamento desativado, disponibilidade e logística ainda não confirmadas/);
 });

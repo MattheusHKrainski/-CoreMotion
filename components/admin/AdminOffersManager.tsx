@@ -308,7 +308,7 @@ export default function AdminOffersManager() {
     try {
       const payload = {
         source_url: form.source_url.trim(),
-        store_name: form.store_name.trim() || 'Loja Oficial',
+        store_name: form.store_name.trim() || 'Fornecedor não identificado',
         title: form.title.trim(),
         price: parsedPrice,
         original_price: parsedOriginal && parsedOriginal > 0 ? parsedOriginal : null,
@@ -369,7 +369,7 @@ export default function AdminOffersManager() {
             Central de Ofertas e Links de Promoção
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl leading-relaxed">
-            Cadastre promoções diretas ou seus próprios links de afiliado (AliExpress, Mercado Livre, Amazon, Shopee, Netshoes, Centauro, Decathlon), altere fotos, cupons, preços ou exclua itens a qualquer momento.
+            Gerencie produtos CoreMotion, preços de varejo e referências de fornecedores. Links servem como origem do cadastro, não como destino da compra. Acordos, estoque e logística devem ser confirmados; cupons externos não se aplicam ao checkout CoreMotion.
           </p>
         </div>
 
@@ -428,7 +428,7 @@ export default function AdminOffersManager() {
           <div className="flex items-center justify-between gap-2 pb-3 border-b border-zinc-800">
             <div>
               <h3 className="text-base font-bold text-white">
-                {currentEditId ? 'Editar oferta existente' : 'Cadastrar nova oferta / link de afiliado'}
+                {currentEditId ? 'Editar oferta existente' : 'Cadastrar produto CoreMotion / referência do fornecedor'}
               </h3>
               <p className="text-xs text-zinc-400">
                 Cole o link da promoção, puxe os dados automaticamente ou envie a foto real do produto.
@@ -453,7 +453,7 @@ export default function AdminOffersManager() {
               {/* 1. Link de Destino / Afiliado + Botão Mágico */}
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                  1. Link direto do produto ou afiliado (https://) *
+                  1. Link de referência do produto no fornecedor (https://) *
                 </label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
@@ -483,7 +483,7 @@ export default function AdminOffersManager() {
               {/* 2. Loja + Seletor Rápido */}
               <div className="space-y-2">
                 <label className="block text-xs font-semibold text-zinc-300">
-                  2. Loja de destino *
+                  2. Fornecedor de origem *
                 </label>
                 <input
                   type="text"

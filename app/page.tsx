@@ -1,6 +1,7 @@
 'use client';
 
 import NotificationsInbox from '@/components/shared/NotificationsInbox';
+import { productPath } from '@/lib/commerce';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
@@ -36,8 +37,10 @@ export default function CoreMotiomApp() {
     setEditingOfferId,
     deleteOffer,
   } = useCoreMotiom();
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedOffer, setSelectedOffer] = useState<ExternalOffer | null>(null);
+  const setSelectedProduct = (product: Product | null) => { if (product) window.location.assign(productPath('athlete', product.id)); };
+  const selectedProduct: Product | null = null;
+  const setSelectedOffer = (offer: ExternalOffer | null) => { if (offer) window.location.assign(productPath('core', offer.id)); };
+  const selectedOffer: ExternalOffer | null = null;
 
   const [profileSection, setProfileSection] = useState<'details' | 'favorites'>('details');
   const [profileKey, setProfileKey] = useState(0);
