@@ -18,11 +18,11 @@ type HomeTab = 'all' | 'offers' | 'c2c';
 const QUICK_FILTERS = ['all', 'Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Ciclismo', 'Musculação'];
 
 const SPORT_FEATURES = [
-  { name: 'VÔLEI', label: 'Explosão · controle · altura', filter: 'Vôlei', number: '01', icon: Volleyball, tone: 'from-red-600/80 via-red-950 to-[#09090b', accent: 'text-red-300', outline: 'border-red-500/40' },
-  { name: 'BASQUETE', label: 'Quadra · velocidade · voo', filter: 'Basquete', number: '02', icon: Zap, tone: 'from-purple-600/70 via-purple-950 to-[#09090b', accent: 'text-purple-300', outline: 'border-purple-500/40' },
-  { name: 'FUTEBOL', label: 'Jogo · técnica · campo', filter: 'Futebol', number: '03', icon: ArrowUpRight, tone: 'from-zinc-700 via-zinc-950 to-[#09090b', accent: 'text-white', outline: 'border-white/20' },
-  { name: 'FITNESS', label: 'Força · foco · evolução', filter: 'Musculação', number: '04', icon: Dumbbell, tone: 'from-red-950 via-zinc-950 to-[#09090b', accent: 'text-red-300', outline: 'border-red-500/30' },
-  { name: 'RUNNING', label: 'Ritmo · distância · resistência', filter: 'Corrida', number: '05', icon: Bike, tone: 'from-purple-950 via-zinc-950 to-[#09090b', accent: 'text-purple-300', outline: 'border-purple-500/30' },
+  { name: 'VÔLEI', label: 'Explosão · controle · altura', filter: 'Vôlei', number: '01', icon: Volleyball, tone: 'from-red-600/80 via-red-950 to-[#09090b]', accent: 'text-red-300', outline: 'border-red-500/40' },
+  { name: 'BASQUETE', label: 'Quadra · velocidade · voo', filter: 'Basquete', number: '02', icon: Zap, tone: 'from-purple-600/70 via-purple-950 to-[#09090b]', accent: 'text-purple-300', outline: 'border-purple-500/40' },
+  { name: 'FUTEBOL', label: 'Jogo · técnica · campo', filter: 'Futebol', number: '03', icon: ArrowUpRight, tone: 'from-zinc-700 via-zinc-950 to-[#09090b]', accent: 'text-white', outline: 'border-white/20' },
+  { name: 'FITNESS', label: 'Força · foco · evolução', filter: 'Musculação', number: '04', icon: Dumbbell, tone: 'from-red-950 via-zinc-950 to-[#09090b]', accent: 'text-red-300', outline: 'border-red-500/30' },
+  { name: 'RUNNING', label: 'Ritmo · distância · resistência', filter: 'Corrida', number: '05', icon: Bike, tone: 'from-purple-950 via-zinc-950 to-[#09090b]', accent: 'text-purple-300', outline: 'border-purple-500/30' },
 ];
 
 function matchesQuickFilter(category: string, sport: string, filter: string): boolean {
