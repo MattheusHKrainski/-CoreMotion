@@ -5,6 +5,7 @@ import { useCoreMotiom } from '@/lib/store';
 import type { ExternalOffer, Product } from '@/lib/types';
 import HomeBlackFriday from './HomeBlackFriday';
 import HomeProductCarousel from './HomeProductCarousel';
+import HomeLaunchRadar from './HomeLaunchRadar';
 import ProductCard from '@/components/marketplace/ProductCard';
 import ExternalOfferCard from '@/components/marketplace/ExternalOfferCard';
 import { ArrowUpRight, Bike, ChevronRight, Dumbbell, Layers, ShoppingBag, Tag, Users, Volleyball, Zap } from 'lucide-react';
@@ -53,6 +54,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
   return (
     <div className="mx-auto max-w-[1440px] space-y-10 pb-16 sm:space-y-14">
       <HomeBlackFriday offers={activeOffers} onSelectOffer={onSelectOffer} onExplore={() => openMarketplace()} />
+      <HomeLaunchRadar />
       <HomeProductCarousel products={products} offers={activeOffers} onSelectProduct={onSelectProduct} onSelectOffer={onSelectOffer} onExplore={() => openMarketplace()} />
 
       <section aria-labelledby="sports-discovery" className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0a0d] p-5 sm:p-8 lg:p-10">
