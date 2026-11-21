@@ -177,7 +177,7 @@ export default function AuthModal() {
           <X className="w-5 h-5" />
         </button>
 
-        <div data-auth-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-7 sm:px-8 sm:py-9 md:pt-10">
+        <div data-auth-scroll className="min-h-0 overflow-y-auto overscroll-contain flex-1 px-6 py-7 sm:px-8 sm:py-9 md:pt-10">
           {/* Brand Header */}
           <div className="flex items-center gap-3 mb-6">
             <BrandMark className="w-10 h-10" />
