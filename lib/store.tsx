@@ -437,7 +437,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => { void refreshSharedData('products'); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'external_offers' }, () => { void refreshSharedData('external_offers'); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => { void refreshSharedData('community_posts'); })
-      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[CoreMotion Realtime] Canal indisponível:', status); });
+      .subscribe((status) => { if (status === 'SUBSCRIBED') console.info('[CoreMotion Realtime] Canal ativo:', status); else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[CoreMotion Realtime] Canal indisponível:', status); });
     return () => { disposed = true; void client.removeChannel(channel); };
   }, []);
 

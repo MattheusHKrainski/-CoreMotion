@@ -140,21 +140,44 @@ export default function AuthModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overscroll-none">
-      <div role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" className="relative w-full max-w-md max-h-[calc(100dvh-2rem)] flex flex-col bg-zinc-950 text-white rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" className="relative w-full max-w-5xl max-h-[calc(100dvh-2rem)] min-h-[min(640px,calc(100dvh-2rem))] grid grid-cols-1 md:grid-cols-[0.92fr_1.08fr] bg-zinc-950 text-white rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden">
         
         {/* Header decoration */}
-        <div className="h-1 shrink-0 bg-gradient-to-r from-red-800 via-red-600 to-red-500"></div>
+        <aside className="relative hidden md:flex flex-col justify-between overflow-hidden border-r border-zinc-800 bg-[#09090b] p-8 lg:p-10">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(220,38,38,0.22),transparent_55%),radial-gradient(ellipse_at_90%_80%,rgba(124,58,237,0.22),transparent_50%)]" />
+          <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:34px_34px]" />
+          <div className="relative z-10 flex items-center gap-3">
+            <BrandMark className="h-12 w-12" />
+            <div><p className="text-lg font-black tracking-tight text-white">CoreMotion</p><p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Sports community</p></div>
+          </div>
+          <div className="relative z-10 my-10">
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.28em] text-red-400">Performance • Connection • Movement</p>
+            <h2 className="max-w-sm text-3xl font-black leading-[1.12] lg:text-4xl">Seu esporte.<br/><span className="text-zinc-400">Sua próxima evolução.</span></h2>
+            <p className="mt-5 max-w-sm text-sm leading-6 text-zinc-400">Um espaço para atletas, treinadores e quem vive o esporte encontrarem novas possibilidades.</p>
+          </div>
+          <div className="relative z-10 flex items-center gap-3 text-xs text-zinc-500"><span className="h-px w-8 bg-red-500"/><span>Encontre seu movimento.</span></div>
+          <svg aria-hidden="true" viewBox="0 0 460 360" className="pointer-events-none absolute -bottom-14 -right-16 w-[90%] max-w-[440px] opacity-40">
+            <g fill="none" stroke="white" strokeWidth="1">
+              <circle cx="280" cy="210" r="150"/><circle cx="280" cy="210" r="105"/><circle cx="280" cy="210" r="60"/>
+              <path d="M0 210 H460 M280 0 V360 M65 65 L395 355 M390 65 L65 355" strokeDasharray="4 10"/>
+              <path d="M120 120 L440 120 L440 300 L120 300 Z" stroke="white" strokeWidth="2"/>
+              <path d="M230 120 V300 M120 210 H440 M230 180 A30 30 0 0 0 230 240" stroke="white" strokeWidth="2"/>
+            </g>
+            <g fill="none" stroke="#ef4444" strokeWidth="3"><path d="M30 330 L330 30"/><path d="M120 360 L420 60"/></g>
+          </svg>
+        </aside>
+        <div className="relative flex min-h-0 flex-col bg-zinc-950 md:min-h-[640px]">
 
         {/* Close Button */}
         <button
           onClick={() => setAuthModalOpen(false)}
           aria-label="Fechar formulário"
-          className="absolute top-4 right-4 z-10 p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full transition-colors"
+          className="absolute top-3 right-3 z-20 p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div data-auth-scroll className="min-h-0 overflow-y-auto overscroll-contain p-6 sm:p-8">
+        <div data-auth-scroll className="min-h-0 overflow-y-auto overscroll-contain flex-1 px-6 py-7 sm:px-8 sm:py-9 md:pt-10">
           {/* Brand Header */}
           <div className="flex items-center gap-3 mb-6">
             <BrandMark className="w-10 h-10" />
@@ -331,6 +354,7 @@ export default function AuthModal() {
               </p>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
