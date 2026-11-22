@@ -100,7 +100,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
     <p className="mt-3 text-zinc-400">{loaded ? 'Consulte outros itens no catálogo.' : 'Consultando catálogo.'}</p>
   </main>;
 
-  return <div className="min-h-screen bg-[#f4f4f5] text-zinc-900">
+  return <div className="min-h-screen bg-[#090b10] text-zinc-100">
     <header className="border-b border-zinc-800 bg-[#0a0a0c] text-white">
       <nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-8">
         <Link href="/" className="inline-flex items-center gap-2 text-sm font-black tracking-tight"><ArrowLeft className="h-4 w-4"/>COREMOTION <span className="font-normal text-zinc-500">/</span> CoreShop</Link>
@@ -113,60 +113,60 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
         <div className="min-w-0 space-y-5">
           <section aria-label="Galeria de fotos do produto" className="space-y-3">
             {gallery.length > 1 ? <div className="grid grid-cols-2 gap-1.5 overflow-hidden rounded-2xl">
-              {gallery.slice(0,4).map((src,i)=><button key={src+i} type="button" onClick={()=>{setIndex(i);setZoom(true);}} className="group relative aspect-square overflow-hidden bg-white text-zinc-900 hover:opacity-95" aria-label={'Ampliar foto '+(i+1)}>
+              {gallery.slice(0,4).map((src,i)=><button key={src+i} type="button" onClick={()=>{setIndex(i);setZoom(true);}} className="group relative aspect-square overflow-hidden bg-[#11141b] text-zinc-100 hover:opacity-95" aria-label={'Ampliar foto '+(i+1)}>
                 <ProductImage src={src} alt={item.title+' — foto '+(i+1)} sizes="(max-width: 1023px) 45vw, 340px"/>
                 {i===3 && gallery.length>4 && <span className="absolute inset-0 flex items-end justify-center bg-black/20 pb-4 text-xs font-black text-white">Ver as {gallery.length} fotos</span>}
               </button>)}
-            </div> : <button type="button" onClick={()=>setZoom(true)} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white" aria-label="Ampliar imagem principal">
+            </div> : <button type="button" onClick={()=>setZoom(true)} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#11141b]" aria-label="Ampliar imagem principal">
               <ProductImage src={selectedImage} alt={item.title} sizes="(max-width: 1023px) 100vw, 740px"/>
             </button>}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500"><ImageIcon className="h-4 w-4"/>{gallery.length} {gallery.length===1?'imagem':'imagens'} do produto</span>
-              {gallery.length>1 && <button type="button" onClick={()=>setZoom(true)} className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-xs font-semibold hover:border-red-500">Ver galeria completa</button>}
+              {gallery.length>1 && <button type="button" onClick={()=>setZoom(true)} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 hover:border-red-500">Ver galeria completa</button>}
             </div>
-            {gallery.length>1 && <div className="flex gap-2 overflow-x-auto pb-1">{gallery.map((src,i)=><button type="button" key={src+i} onClick={()=>setIndex(i)} aria-label={'Selecionar foto '+(i+1)} aria-pressed={index===i} className={'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-white '+(index===i?'border-red-600':'border-zinc-200')}><ProductImage src={src} alt={item.title+' — miniatura '+(i+1)} sizes="64px"/></button>)}</div>}
+            {gallery.length>1 && <div className="flex gap-2 overflow-x-auto pb-1">{gallery.map((src,i)=><button type="button" key={src+i} onClick={()=>setIndex(i)} aria-label={'Selecionar foto '+(i+1)} aria-pressed={index===i} className={'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-zinc-200')}><ProductImage src={src} alt={item.title+' — miniatura '+(i+1)} sizes="64px"/></button>)}</div>}
           </section>
-          <details open className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
+          <details open className="rounded-2xl border border-zinc-800 bg-[#14161d] p-5 sm:p-6">
             <summary className="cursor-pointer text-sm font-black">Informações do produto</summary>
-            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-zinc-600">{item.description}</p>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-zinc-300">{item.description}</p>
             {'image_is_reference' in item && item.image_is_reference && <p className="mt-3 text-xs text-zinc-500">Imagem de referência fornecida pelo anunciante.</p>}
           </details>
         </div>
 
-        <section className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:sticky lg:top-5 sm:p-7">
+        <section className="space-y-5 rounded-2xl border border-zinc-800 bg-[#14161d] p-5 shadow-2xl shadow-black/30 lg:sticky lg:top-5 sm:p-7">
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1"><p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{coreOffer?.store_name || (athlete ? 'Venda entre atletas' : 'CoreMotion')}</p>
               <h1 className="text-xl font-black leading-tight sm:text-2xl">{item.title}</h1>
             </div>
-            <button type="button" aria-label={favorites.includes(id)?'Remover dos favoritos':'Salvar nos favoritos'} onClick={()=>isVisitor?setAuthModalOpen(true):toggleFavorite(id)} className="rounded-full border border-zinc-200 p-2.5 hover:border-red-400">
+            <button type="button" aria-label={favorites.includes(id)?'Remover dos favoritos':'Salvar nos favoritos'} onClick={()=>isVisitor?setAuthModalOpen(true):toggleFavorite(id)} className="rounded-full border border-zinc-700 p-2.5 hover:border-red-400">
               <Heart className={'h-5 w-5 '+(favorites.includes(id)?'fill-red-600 text-red-600':'text-zinc-500')}/>
             </button>
           </div>
           {item.original_price && item.original_price > item.price && <p className="text-xs text-zinc-400 line-through">De {money(retailPriceCents(item.original_price))}</p>}
-          <div className="flex flex-wrap items-center gap-3"><p className="text-3xl font-black tracking-tight">{money(retailPriceCents(item.price))}</p>{percentage>0&&<span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">-{percentage}%</span>}</div>
-          <div className="border-t border-zinc-100 pt-4 text-sm text-zinc-500">
-            {coreOffer ? <p>Referência de <strong className="text-zinc-800">{coreOffer.store_name}</strong>. <a href={coreOffer.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-red-700 hover:underline">Ver produto na loja <ExternalLink className="h-3.5 w-3.5"/></a></p>
-              : <p>Vendido por <strong className="text-zinc-800">{athlete?.seller_name || 'Atleta'}</strong> {athlete?.condition && '· '+getConditionMeta(athlete.condition).badge}</p>}
+          <div className="flex flex-wrap items-center gap-3"><p className="text-3xl font-black tracking-tight">{money(retailPriceCents(item.price))}</p>{percentage>0&&<span className="rounded-md bg-emerald-500/15 px-2 py-1 text-xs font-bold text-emerald-400">-{percentage}%</span>}</div>
+          <div className="border-t border-zinc-800 pt-4 text-sm text-zinc-500">
+            {coreOffer ? <p>Referência de <strong className="text-white">{coreOffer.store_name}</strong>. <a href={coreOffer.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-red-400 hover:underline">Ver produto na loja <ExternalLink className="h-3.5 w-3.5"/></a></p>
+              : <p>Vendido por <strong className="text-white">{athlete?.seller_name || 'Atleta'}</strong> {athlete?.condition && '· '+getConditionMeta(athlete.condition).badge}</p>}
           </div>
-          {otherColors.length>0 && <div className="space-y-3 border-t border-zinc-100 pt-4">
+          {otherColors.length>0 && <div className="space-y-3 border-t border-zinc-800 pt-4">
             <p className="text-sm font-semibold">Outras versões e cores</p>
-            <div className="flex flex-wrap gap-2">{otherColors.map((other,i)=><Link href={productPath('core',other.id)} title={other.title} key={other.id} aria-label={'Ver versão '+(i+2)} className="relative block h-14 w-14 overflow-hidden rounded-lg border-2 border-zinc-200 bg-white hover:border-red-500"><ProductImage src={other.image_url} alt={other.title} sizes="56px"/></Link>)}</div>
+            <div className="flex flex-wrap gap-2">{otherColors.map((other,i)=><Link href={productPath('core',other.id)} title={other.title} key={other.id} aria-label={'Ver versão '+(i+2)} className="relative block h-14 w-14 overflow-hidden rounded-lg border-2 border-zinc-700 bg-zinc-950 hover:border-red-500"><ProductImage src={other.image_url} alt={other.title} sizes="56px"/></Link>)}</div>
           </div>}
-          {coreOffer && config && <div className="space-y-3 border-t border-zinc-100 pt-4">
+          {coreOffer && config && <div className="space-y-3 border-t border-zinc-800 pt-4">
             <p className="text-sm font-semibold">{config.label}{selectedVariant&&<span className="ml-2 font-normal text-zinc-500">{selectedVariant}</span>}</p>
-            <div role="group" aria-label={config.label} className="flex flex-wrap gap-2">{config.options.map(option=><button key={option} type="button" aria-pressed={selectedVariant===option} onClick={()=>setVariant(option)} className={'min-w-11 rounded-lg border px-3 py-2.5 text-xs font-bold transition '+(selectedVariant===option?'border-red-600 bg-red-600 text-white':'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500')}>{option}</button>)}</div>
+            <div role="group" aria-label={config.label} className="flex flex-wrap gap-2">{config.options.map(option=><button key={option} type="button" aria-pressed={selectedVariant===option} onClick={()=>setVariant(option)} className={'min-w-11 rounded-lg border px-3 py-2.5 text-xs font-bold transition '+(selectedVariant===option?'border-red-600 bg-red-600 text-white':'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-500')}>{option}</button>)}</div>
           </div>}
           {!core && athlete && <div className="text-sm text-zinc-500">{athlete.location && <p className="inline-flex items-center gap-2"><MapPin className="h-4 w-4"/>{athlete.location}</p>}</div>}
           {coreOffer ? <>
             <div className="space-y-2">
               <button type="button" disabled={variantRequired&&!selectedVariant.trim()} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">Comprar agora</button>
-              <button type="button" disabled={variantRequired&&!selectedVariant.trim()} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>Adicionar ao carrinho</button>
-              {notice&&<p role="status" className="text-sm font-semibold text-emerald-700">{notice}</p>}
+              <button type="button" disabled={variantRequired&&!selectedVariant.trim()} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-400 hover:bg-red-950/30 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>Adicionar ao carrinho</button>
+              {notice&&<p role="status" className="text-sm font-semibold text-emerald-400">{notice}</p>}
             </div>
-            <div className="space-y-3 border-t border-zinc-100 pt-5">
+            <div className="space-y-3 border-t border-zinc-800 pt-5">
               <p className="flex items-center gap-2 text-sm font-black"><Truck className="h-4 w-4 text-red-600"/>Consultar destino de entrega</p>
-              <div className="flex gap-2"><input inputMode="numeric" aria-label="CEP para entrega" autoComplete="postal-code" maxLength={9} placeholder="Digite seu CEP" value={cep} onChange={e=>setCep(e.target.value.replace(/[^\d-]/g,''))} className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-3 text-sm outline-none focus:border-red-600"/><button type="button" disabled={checkingCep} onClick={()=>void checkCep()} className="rounded-lg bg-zinc-900 px-4 text-xs font-bold text-white hover:bg-zinc-700 disabled:opacity-40">{checkingCep?'Consultando':'Consultar'}</button></div>
-              {cepStatus && <p role="status" className="text-xs text-zinc-600">{cepStatus}</p>}
+              <div className="flex gap-2"><input inputMode="numeric" aria-label="CEP para entrega" autoComplete="postal-code" maxLength={9} placeholder="Digite seu CEP" value={cep} onChange={e=>setCep(e.target.value.replace(/[^\d-]/g,''))} className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-white outline-none focus:border-red-600"/><button type="button" disabled={checkingCep} onClick={()=>void checkCep()} className="rounded-lg bg-zinc-900 px-4 text-xs font-bold text-white hover:bg-zinc-700 disabled:opacity-40">{checkingCep?'Consultando':'Consultar'}</button></div>
+              {cepStatus && <p role="status" className="text-xs text-zinc-400">{cepStatus}</p>}
             </div>
             <ReportButton category="external_offer" targetId={id} title={item.title}/>
           </> : <>
@@ -181,10 +181,10 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between"><span className="text-sm font-semibold">{index+1} / {gallery.length}</span><button type="button" aria-label="Fechar galeria" onClick={()=>setZoom(false)} className="rounded-full border border-zinc-600 p-3 hover:bg-zinc-800"><X className="h-5 w-5"/></button></div>
       <div className="mx-auto flex w-full max-w-6xl flex-1 items-center gap-2 py-6">
         <button type="button" aria-label="Foto anterior" onClick={previous} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronLeft/></button>
-        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-white"><ProductImage src={selectedImage} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
+        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-[#11141b]"><ProductImage src={selectedImage} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
         <button type="button" aria-label="Próxima foto" onClick={next} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronRight/></button>
       </div>
-      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-white '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} alt="" sizes="56px"/></button>)}</div>
+      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} alt="" sizes="56px"/></button>)}</div>
     </div>}
     <AuthModal />
   </div>;

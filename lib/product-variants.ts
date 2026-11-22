@@ -25,6 +25,23 @@ export function getProductVariantConfig(title: string, category: string, sport: 
   }
   const text = normalize(`${title} ${category} ${sport} ${description}`);
   const normalizedCategory = normalize(category);
+  if (/\bbola\b/.test(normalize(title))) {
+    const explicitSize = text.match(/(?:tamanho(?:\s+oficial)?|size)\s*(\d)/)?.[1];
+    if (/\b(volei|volleyball)\b/.test(text)) {
+      const size = explicitSize || '5';
+      return { label: 'Tamanho da bola', options: [size], fixedValue: size, note: '' };
+    }
+    if (/\bbasquete\b/.test(text)) {
+      if (explicitSize) return { label: 'Tamanho da bola', options: [explicitSize], fixedValue: explicitSize, note: '' };
+      return { label: 'Tamanho da bola', options: ['5', '6', '7'], note: '' };
+    }
+    if (/\b(futebol|futsal|campo|society)\b/.test(text)) {
+      if (explicitSize) return { label: 'Tamanho da bola', options: [explicitSize], fixedValue: explicitSize, note: '' };
+      if (/\b(ceramica\s*2[.,]0)\b/.test(text)) return { label: 'Tamanho da bola', options: ['5'], fixedValue: '5', note: '' };
+      return { label: 'Tamanho da bola', options: ['3', '4', '5'], note: '' };
+    }
+    if (/\b(handebol)\b/.test(text)) return { label: 'Tamanho da bola', options: ['1', '2', '3'], note: '' };
+  }
   if (/\b(kimono|gi)\b/.test(text)) {
     return { label: 'Tamanho do kimono', options: GI_SIZES, note: '' };
   }
@@ -37,21 +54,6 @@ export function getProductVariantConfig(title: string, category: string, sport: 
   if (/\b(luva|luvas)\b/.test(text)) {
     return { label: 'Tamanho da luva', options: ['P', 'M', 'G', 'GG'], note: '' };
   }
-  if (/\bbola\b/.test(text)) {
-    const explicitSize = text.match(/(?:tamanho(?:\s+oficial)?|size)\s*(\d)/)?.[1];
-    if (/\b(volei|volleyball)\b/.test(text)) {
-      const size = explicitSize || '5';
-      return { label: 'Tamanho da bola', options: [size], fixedValue: size, note: '' };
-    }
-    if (/\bbasquete\b/.test(text)) {
-      if (explicitSize) return { label: 'Tamanho da bola', options: [explicitSize], fixedValue: explicitSize, note: '' };
-      return { label: 'Tamanho da bola', options: ['5', '6', '7'], note: '' };
-    }
-    if (/\b(futebol|futsal)\b/.test(text)) {
-      if (explicitSize) return { label: 'Tamanho da bola', options: [explicitSize], fixedValue: explicitSize, note: '' };
-      return { label: 'Tamanho da bola', options: ['3', '4', '5'], note: '' };
-    }
-    if (/\b(handebol)\b/.test(text)) return { label: 'Tamanho da bola', options: ['1', '2', '3'], note: '' };
-  }
+
   return null;
 }

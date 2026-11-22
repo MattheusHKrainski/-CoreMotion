@@ -28,6 +28,13 @@ describe('product variants for catalog', () => {
     assert.equal(getProductVariantConfig('Bola Adidas tamanho 7', 'Equipamentos', 'Basquete')?.fixedValue, '7');
     assert.equal(getProductVariantConfig('Bola de Basquete Wilson', 'Equipamentos', 'Basquete', 'Tamanho oficial 7 segundo o vendedor.')?.fixedValue, '7');
   });
+
+  it('never shows clothing sizes for a football ball when descriptions contain apparel terms', () => {
+    const ball = getProductVariantConfig('Bola De Campo Umbro Cerâmica 2.0', 'Equipamentos', 'Futebol', 'Combina com camiseta e uniformes esportivos.');
+    assert.deepEqual(ball?.options, ['5']);
+    assert.equal(ball?.fixedValue, '5');
+    assert.equal(ball?.label, 'Tamanho da bola');
+  });
   it('does not invent variant selectors for fixed-size equipment/accessories', () => {
     assert.equal(getProductVariantConfig('Garrafa 600 ml', 'Acessórios', 'Treinamento'), null);
     assert.equal(getProductVariantConfig('Halter 3 kg', 'Equipamentos', 'Musculação'), null);
