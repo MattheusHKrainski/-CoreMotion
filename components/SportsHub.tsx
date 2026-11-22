@@ -5,11 +5,14 @@ import { scopedQuickStorage } from '@/lib/quick-access';
 import SportPicker from '@/components/shared/SportPicker';
 import { matchesSportsRecord } from '@/lib/sports-workflow';
 import SportsActivityView from './SportsActivityView';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import { canAccessSports, canRecruit, type SportsRecord } from '@/lib/sports';
 import { loadSportsPreview } from '@/fixtures/sports-preview';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
+
+const SPORTS_HUB_LIVE_SOURCES = [{ table: 'sports_records' }] as const;
 
 const input =
   'w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white';
@@ -92,6 +95,9 @@ export default function SportsHub({
           : 'athlete';
   const sportsAllowed = canAccessSports(user);
   const recruiting = canRecruit(user);
+  const [realtimeRefresh, setRealtimeRefresh] = useState(0);
+  const scheduleSportsRefresh = useCallback(() => setRealtimeRefresh(n => n + 1), []);
+  useRealtimeRefresh(client, SPORTS_HUB_LIVE_SOURCES, scheduleSportsRefresh, Boolean(client && sportsAllowed && (view !== 'talents' || recruiting)), 'sports-hub-' + (owner || 'visitor') + '-' + view);
   useEffect(() => {
     setRecords([]);
     setError('');
@@ -127,7 +133,7 @@ export default function SportsHub({
     return () => {
       active = false;
     };
-  }, [owner, view, client, sportsAllowed, refreshToken, recruiting]);
+  }, [owner, view, client, sportsAllowed, refreshToken, recruiting, realtimeRefresh]);
   if (!canAccessSports(user))
     return (
       <div className="p-8 text-zinc-300">
