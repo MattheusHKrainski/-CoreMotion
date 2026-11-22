@@ -4,6 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import type { ExternalOffer, Product } from '@/lib/types';
 import HomeBlackFriday from './HomeBlackFriday';
+import HomeVerifiedCampaigns from './HomeVerifiedCampaigns';
+import HomeRealLaunches from './HomeRealLaunches';
 import HomeProductCarousel from './HomeProductCarousel';
 import ProductCard from '@/components/marketplace/ProductCard';
 import ExternalOfferCard from '@/components/marketplace/ExternalOfferCard';
@@ -64,6 +66,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
   return (
     <div className="mx-auto max-w-[1440px] space-y-8 pb-16 sm:space-y-12">
       <HomeBlackFriday offers={activeOffers} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
+      <HomeVerifiedCampaigns offers={activeOffers} onSelectOffer={onSelectOffer} />
+      <HomeRealLaunches offers={activeOffers} onSelectOffer={onSelectOffer} />
       <HomeProductCarousel products={products} offers={activeOffers} onSelectProduct={onSelectProduct} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
 
       <section className="space-y-4">
