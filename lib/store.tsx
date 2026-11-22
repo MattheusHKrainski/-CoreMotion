@@ -512,7 +512,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'external_offers' }, () => schedule('external_offers'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => schedule('community_posts'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'coaches' }, () => schedule('coaches'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'news' }, () => schedule('news'));
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'news' }, () => schedule('news'))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'realtime_invalidations' }, payload => {
+        const topic = String((payload.new as Record<string, unknown>).topic || '');
+        if (topic === 'products' || topic === 'external_offers' || topic === 'community_posts') schedule(topic);
+      });
     if (realtimeUserId) {
       channel
         .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: 'id=eq.' + realtimeUserId }, () => schedule('profiles'))
