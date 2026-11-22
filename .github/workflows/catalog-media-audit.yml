@@ -12,5 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Consultar galerias das fontes Vollo e Penalty
-        run: node scripts/catalog-gallery-recover.mjs
+      - name: Confirmar tamanhos e descrições ausentes
+        run: node scripts/catalog-metadata-recover.mjs
+      - name: Testar rotas de fotos Shopify em fornecedores oficiais
+        run: node scripts/catalog-shopify-image-check.mjs
