@@ -106,7 +106,12 @@ add('Vestuário',125);
 add('Calçados',220);
 add('Acessórios',35);
 add('Equipamentos',20);
-for(const cat of ['Vestuário','Calçados','Acessórios','Equipamentos'])add(cat,400-selected.length);
+for(const cat of ['Vestuário','Calçados','Acessórios','Equipamentos']) {
+ for(const p of byCategory[cat]) {
+  if(selected.length>=400)break;
+  if(!selectedIds.has(p.id)) { selected.push(p);selectedIds.add(p.id); }
+ }
+}
 console.log('CATALOG_SUMMARY '+JSON.stringify({counts,byCategory:Object.fromEntries(Object.entries(byCategory).map(([k,v])=>[k,v.length])),excludedExisting:all.filter(p=>existingSourceUrls.has(p.source_url)).length,selected:selected.length,selectedCategories:Object.fromEntries(['Calçados','Vestuário','Acessórios','Equipamentos'].map(k=>[k,selected.filter(p=>p.category===k).length])),errors}));
 for(const p of selected)console.log('CATALOG_RECORD '+JSON.stringify(p));
 if(selected.length<400)process.exitCode=2;
