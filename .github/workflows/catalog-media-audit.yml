@@ -12,7 +12,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verificar as fotos de todos os 885 produtos e 26 anúncios
-        run: node scripts/catalog-media-audit.mjs
       - name: Consultar galerias das fontes Vollo e Penalty
         run: node scripts/catalog-gallery-recover.mjs
