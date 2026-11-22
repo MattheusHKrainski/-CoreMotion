@@ -59,10 +59,10 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between"><span className="text-sm font-semibold">{index+1} / {gallery.length}</span><button type="button" aria-label="Fechar galeria" onClick={()=>setZoom(false)} className="rounded-full border border-zinc-600 p-3 hover:bg-zinc-800"><X className="h-5 w-5"/></button></div>
       <div className="mx-auto flex w-full max-w-6xl flex-1 items-center gap-2 py-6">
         <button type="button" aria-label="Foto anterior" onClick={previous} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronLeft/></button>
-        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-white"><ProductImage src={selectedImage} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
+        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-[#11141b]"><ProductImage src={selectedImage} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
         <button type="button" aria-label="Próxima foto" onClick={next} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronRight/></button>
       </div>
-      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-white '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} alt="" sizes="56px"/></button>)}</div>
+      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} alt="" sizes="56px"/></button>)}</div>
     </div>}
     <AuthModal />
   </div>;
