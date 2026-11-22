@@ -18,9 +18,13 @@ test('Same-product fallback uses only the current gallery, never a stock replace
 test('Products without manufacturer-confirmed sizes cannot be added to the cart',()=>{
  const detail=read('components/commerce/ProductPage.tsx');
  assert.match(detail,/missingVerifiedSizes/);
- assert.match(detail,/variantRequired = Boolean\(missingVerifiedSizes/);
+ assert.match(detail,/variantRequired = Boolean\(needsVariant/);
  assert.match(detail,/Consultar tamanhos na loja/);
  assert.match(detail,/disabled=\{variantRequired/);
+ const controls=read('components/commerce/ProductOptions.tsx');
+ assert.match(controls,/hasCatalogSizes/);
+ assert.match(controls,/onChange\(selected\.Tamanho/);
+ assert.doesNotMatch(controls,/Outra variante desejada/);
 });
 
 test('Postgres prevents photo-primary mismatch and preserves gallery on cover replacement',()=>{
