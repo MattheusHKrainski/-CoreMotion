@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ShieldCheck,
@@ -11,6 +12,7 @@ import {
   Flag,
   Truck,
   Database,
+  History,
   Trophy,
 } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
@@ -57,8 +59,26 @@ const TABS = [
   ['sports', 'Talentos e seletivas', Trophy],
   ['reports', 'Denúncias e feedback', Flag],
   ['orders', 'Pedidos', Truck],
+  ['audit', 'Histórico de moderação', History],
   ['diagnostics', 'Banco de dados', Database],
 ] as const;
+interface AuditEntry {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  target_id: string;
+  reason: string | null;
+  created_at: string;
+}
+const auditLabels: Record<string, string> = {
+  account_role: 'Alteração de papel ou tipo de conta',
+  account_ban: 'Suspensão de conta',
+  account_unban: 'Reativação de conta',
+  account_delete: 'Exclusão de conta',
+  report_deleted: 'Exclusão de denúncia',
+  ...Object.fromEntries(Object.entries(REPORT_STATUSES).map(([key, label]) => [`report_${key}`, `Denúncia · ${label}`])),
+  ...Object.fromEntries(Object.entries(REPORT_CATEGORIES).map(([key, label]) => [`feedback_${key}`, `Orientação · ${label}`])),
+};
 type Tab = (typeof TABS)[number][0];
 const field =
   'rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white w-full';
@@ -245,6 +265,7 @@ export default function AdminDashboard() {
   const [diagnostics, setDiagnostics] = useState<ModerationDiagnostics | null>(
     null
   );
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [latency, setLatency] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -303,6 +324,13 @@ export default function AdminDashboard() {
       if (tab === 'reports') {
         const data = await listReports();
         if (version === request.current) setReports(data);
+      }
+      if (tab === 'audit') {
+        const { data, error } = await client.from('moderation_audit')
+          .select('id,actor_id,action,target_id,reason,created_at')
+          .order('created_at', { ascending: false }).order('id').limit(100);
+        if (error) throw new Error(error.message);
+        if (version === request.current) setAudit(data || []);
       }
       if (tab === 'diagnostics') {
         const start = performance.now();
@@ -422,6 +450,9 @@ export default function AdminDashboard() {
     );
   const matches = (...values: (string | undefined)[]) =>
     values.join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase());
+  const visibleAudit = audit.filter((entry) =>
+    matches(auditLabels[entry.action] || entry.action, entry.actor_id || '', entry.target_id, entry.reason || '')
+  );
   const visibleReports = reports.filter(
     (r) =>
       (category === 'all' || r.category === category) &&
@@ -849,8 +880,11 @@ export default function AdminDashboard() {
         )}
         {tab === 'orders' && (
           <>
+            <Link href="/pedidos" className="inline-block rounded-lg bg-red-600 px-4 py-2 font-semibold">
+              Abrir pedidos de venda direta e fornecedores
+            </Link>
             <h2 className="text-lg font-bold">
-              Pedidos registrados ({orders.length})
+              Registros anteriores ({orders.length})
             </h2>
             <p className="text-xs text-zinc-400">
               Acompanhamento dos registros de pedidos. A CoreMotion não recebe
@@ -948,6 +982,20 @@ export default function AdminDashboard() {
             {!orders.length && !loading && !error && (
               <p className="text-sm text-zinc-500">Nenhum pedido registrado.</p>
             )}
+          </>
+        )}
+        {tab === 'audit' && (
+          <>
+            <h2 className="text-lg font-bold">Últimas 100 ações de moderação</h2>
+            {visibleAudit.map((entry) => (
+              <article key={entry.id} className={card}>
+                <h3 className="font-bold">{auditLabels[entry.action] || entry.action}</h3>
+                <p className="text-sm text-zinc-400">{date(entry.created_at)}</p>
+                <p className="break-all text-xs text-zinc-400">Responsável: {entry.actor_id || 'Indisponível'} · Alvo: {entry.target_id}</p>
+                {entry.reason && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{entry.reason}</p>}
+              </article>
+            ))}
+            {!loading && !error && !visibleAudit.length && <p>Nenhum registro encontrado.</p>}
           </>
         )}
         {tab === 'diagnostics' && (
