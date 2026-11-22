@@ -355,12 +355,26 @@ export default function AdminDashboard() {
     setError('');
     setLastChecked('');
     void refresh();
-    const accountChannel = staff && client && tab === 'accounts'
-      ? client.channel('admin-account-directory')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, () => void refresh())
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => void refresh())
-          .subscribe(status => { if (status === 'SUBSCRIBED') void refresh(); })
-      : null;
+    const tablesByTab: Record<Tab, string[]> = {
+      accounts: ['profiles'],
+      products: ['products'],
+      offers: ['external_offers'],
+      community: ['community_posts'],
+      sports: ['sports_records'],
+      reports: ['moderation_reports', 'account_notifications'],
+      orders: ['orders', 'core_sale_orders'],
+      audit: ['moderation_audit'],
+      diagnostics: ['profiles', 'products', 'external_offers', 'moderation_reports', 'orders'],
+    };
+    const accountChannel = staff && client ? client.channel('admin-live-' + tab) : null;
+    if (accountChannel) {
+      for (const table of tablesByTab[tab]) {
+        accountChannel.on('postgres_changes', { event: '*', schema: 'public', table }, () => void refresh());
+      }
+      accountChannel.subscribe(status => {
+        if (status === 'SUBSCRIBED') void refresh();
+      });
+    }
     const interval = window.setInterval(() => void refresh(), 15000);
     const focus = () => void refresh();
     window.addEventListener('focus', focus);
