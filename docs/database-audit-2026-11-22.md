@@ -38,6 +38,14 @@ Testou-se a criação de identidade sintética em `auth.users` **dentro de subtr
 4. `20261122200519_coremotion_definer_search_path_hardening.sql`
    - `search_path` restrito a `pg_catalog` em cinco funções privilegiadas com referências a tabelas devidamente qualificadas.
 
+5. `20261122200908_coremotion_community_counter_integrity.sql`
+   - corrigidos dois contadores antigos de curtidas sem registros correspondentes (142 e 98 curtidas exibidas, zero curtidas efetivas);
+   - novos triggers mantêm `likes_count` sincronizado com inserções/remoções reais de curtidas;
+   - alterações diretas de engajamento por usuários comuns são rejeitadas, sem bloquear as RPCs legítimas;
+   - contagem de comentários deriva do array JSON de comentários.
+
+O fluxo real de publicar, curtir, descurtir e comentar foi validado com identidade sintética em transação revertida, sem criar contas ou publicações permanentes.
+
 ## Alertas após implementação
 - Advisor de **saúde**: sem alertas.
 - Advisor de **desempenho**: sem problemas de FK sem índice, políticas RLS recalculadas por linha, políticas permissivas sobrepostas ou índices duplicados. Registros informativos de índices ainda sem uso são esperados em um banco pequeno e recém-indexado; não excluir índices úteis apenas por essa informação.
