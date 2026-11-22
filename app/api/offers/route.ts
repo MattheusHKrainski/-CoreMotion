@@ -7,7 +7,6 @@ import {
   createExternalOfferInDb,
   deleteExternalOfferInDb,
   getExternalOffersFromDb,
-  resetExternalOffersInDb,
   updateExternalOfferInDb,
 } from '@/lib/offer-db';
 
@@ -35,7 +34,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** Cria nova oferta ou restaura curadoria padrão (restrito a admin/supervisor). */
+/** Cria nova oferta; restauração global destrutiva é explicitamente bloqueada. */
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.ok) return auth.response;
@@ -45,13 +44,8 @@ export async function POST(req: NextRequest) {
 
   const action = new URL(req.url).searchParams.get('action');
   if (action === 'reset') {
-    try {
-      const offers = await resetExternalOffersInDb();
-      return NextResponse.json({ success: true, offers });
-    } catch (error: unknown) {
-      console.error('[API /api/offers POST reset]', error);
-      return errorResponse('Falha ao restaurar ofertas padrão.');
-    }
+    // Destructive reset was able to erase the entire live catalog, bypassing the UI safeguard.
+    return errorResponse('Restauração global desativada para preservar o catálogo publicado. Gerencie ofertas individualmente.', 409);
   }
 
   const body = await readJson<Record<string, unknown>>(req);
