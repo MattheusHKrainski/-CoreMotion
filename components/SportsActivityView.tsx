@@ -5,9 +5,11 @@ import { useCoreMotiom } from '@/lib/store';
 import { canAccessSports, canRecruit, type SportsRecord } from '@/lib/sports';
 import { activityGroups, canCancelApplication } from '@/lib/sports-workflow';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import { loadSportsPreview } from '@/fixtures/sports-preview';
 import { scopedQuickStorage } from '@/lib/quick-access';
 
+const SPORTS_LIVE_SOURCES = [{ table: 'sports_records' }] as const;
 const panel = 'rounded-2xl border border-zinc-700 bg-zinc-900/60 p-5 space-y-4';
 export default function SportsActivityView() {
   const { user, addToast, setActiveView } = useCoreMotiom();
@@ -44,6 +46,7 @@ export default function SportsActivityView() {
     const invalidate = () => { version.current += 1; };
     return () => { invalidate(); window.clearInterval(timer); window.removeEventListener('focus', focus); };
   }, [owner, refresh]);
+  useRealtimeRefresh(client, SPORTS_LIVE_SOURCES, refresh, Boolean(client && allowed), 'sports-activity-' + (owner || 'visitor'));
   async function respond(record: SportsRecord, status: string) {
     if (busy || record.data.recipient !== owner || record.data.status) return;
     setBusy(true);
@@ -102,7 +105,7 @@ export default function SportsActivityView() {
   return <section className="mx-auto max-w-6xl space-y-6 py-6">
     <header className={`${panel} bg-gradient-to-br from-red-950/30 to-zinc-950`}>
       <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl sm:text-3xl font-black">{recruiting ? 'Minhas convocações e inscritos' : 'Convocações e minhas inscrições'}</h1><button disabled={loading || busy} onClick={() => void refresh()} className="flex items-center gap-2 text-xs text-zinc-400"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Atualizar</button></div>
-      <p className="text-sm text-zinc-400">{recruiting ? 'Acompanhe quem aceitou, quem recusou e quem ainda não respondeu às suas convocações. Analise as inscrições recebidas nos seus treinos.' : 'Receba convocações, responda aos treinadores e acompanhe suas inscrições e as decisões sobre sua participação nos treinos.'} Atualização automática a cada 15 segundos.</p>
+      <p className="text-sm text-zinc-400">{recruiting ? 'Acompanhe quem aceitou, quem recusou e quem ainda não respondeu às suas convocações. Analise as inscrições recebidas nos seus treinos.' : 'Receba convocações, responda aos treinadores e acompanhe suas inscrições e as decisões sobre sua participação nos treinos.'} Atualização automática em tempo real com verificação periódica.</p>
       <button className="text-sm font-bold text-red-400" onClick={() => setActiveView(recruiting ? 'talents' : 'trials')}>{recruiting ? 'Buscar atletas para convocar →' : 'Encontrar seletivas e treinos →'}</button>
     </header>
     {error && <p role="alert" className="rounded-xl border border-red-500/40 p-4 text-sm text-red-300">{error}</p>}
