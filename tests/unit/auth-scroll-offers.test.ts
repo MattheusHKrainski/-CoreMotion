@@ -2,22 +2,15 @@ import { it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-it('login e cadastro compartilham dialog limitado à viewport e scroll interno contido', () => {
+it('login e cadastro usam página própria sem bloquear o scroll do navegador', () => {
   const modal = readFileSync('components/auth/AuthModal.tsx', 'utf8');
-  assert.match(modal, /useDialogScrollLock\(isAuthModalOpen\)/);
-  assert.match(modal, /role="dialog" aria-modal="true"/);
-  assert.match(modal, /max-h-\[calc\(100dvh-2rem\)\]/);
-  assert.match(modal, /data-auth-scroll.*min-h-0 overflow-y-auto overscroll-contain/);
+  assert.doesNotMatch(modal, /useDialogScrollLock|role="dialog"|aria-modal="true"/);
+  assert.match(modal, /min-h-screen/);
+  assert.match(modal, /\/entrar\?mode=/);
+  assert.match(modal, /safeAuthReturn/);
   assert.match(modal, /aria-label="Fechar formulário"/);
   assert.match(modal, /<SavedAccounts/);
-  assert.match(modal, /max-w-5xl.*md:grid-cols-\[0\.92fr_1\.08fr\]/);
-  assert.match(modal, /hidden md:flex flex-col justify-between overflow-hidden/);
-  assert.match(modal, /Seu esporte\./);
-  assert.match(modal, /md:min-h-\[640px\]/);
-  const lock = readFileSync('hooks/useDialogScrollLock.ts', 'utf8');
-  assert.match(lock, /body.style.position = 'fixed'/);
-  assert.match(lock, /root.style.overflow = previous.rootOverflow/);
-  assert.match(lock, /window.scrollTo\(\{ top: scrollY/);
+  assert.match(readFileSync('app/entrar/page.tsx','utf8'), /<AuthModal page/);
 });
 it('leitura anônima de ofertas não chama funções restritas à equipe', () => {
   const sql = readFileSync('supabase/migrations/20261103180000_fix_public_offers_read_policy.sql', 'utf8');

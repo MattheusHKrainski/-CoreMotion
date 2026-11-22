@@ -159,7 +159,9 @@ export default function AdminOffersManager() {
   const [currentEditId, setCurrentEditId] = useState<string | null>(null);
   const [form, setForm] = useState<OfferFormState>(EMPTY_FORM);
   const [searchTerm, setSearchTerm] = useState('');
+  const [visibleCount, setVisibleCount] = useState(12);
   const [storeFilter, setStoreFilter] = useState<string>('ALL');
+  useEffect(() => { setVisibleCount(12); }, [searchTerm, storeFilter]);
   const [isFetchingMeta, setIsFetchingMeta] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -863,7 +865,7 @@ export default function AdminOffersManager() {
         </div>
       ) : (
         <div className="divide-y divide-zinc-800/80 rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-950/50">
-          {filteredOffers.map((offer) => {
+          {filteredOffers.slice(0, visibleCount).map((offer) => {
             const isPaused = offer.is_active === false;
             const isConfirmingDelete = confirmDeleteId === offer.id;
             return (
@@ -1004,6 +1006,7 @@ export default function AdminOffersManager() {
           })}
         </div>
       )}
+      {filteredOffers.length > visibleCount && <button type="button" onClick={() => setVisibleCount(n => n + 12)} className="rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-zinc-700">Mostrar mais ({filteredOffers.length - visibleCount} restantes)</button>}
     </section>
   );
 }

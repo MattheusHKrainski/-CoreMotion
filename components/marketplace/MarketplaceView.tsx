@@ -173,31 +173,12 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         </button>
       </header>
 
+      <CatalogTeams offers={activeOffers} selected={selectedTeam} onSelect={team => { setSelectedTeam(team); setSelectedTab(team ? 'offers' : 'all'); if (team) {setSearchQuery(''); setSelectedSport('all'); setSelectedCategory('all'); setSelectedTab('offers');} }} />
+
       <label className="block text-sm font-semibold text-zinc-300">Pesquisar no CoreShop
         <div className="relative mt-2"><Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500" /><input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar produtos ou esportes..." className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm text-white focus:border-red-500 focus:outline-none" /></div>
       </label>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/70 p-2 backdrop-blur-md">
-        <div className="flex w-full items-center gap-1.5 overflow-x-auto text-xs scrollbar-none sm:w-auto">
-          {([
-            { id: 'all', label: `Tudo (${filteredC2CProducts.length + filteredOffers.length})`, icon: ShoppingBag },
-            { id: 'c2c', label: `De Atletas (${filteredC2CProducts.length})`, icon: Layers },
-            { id: 'offers', label: `Ofertas (${filteredOffers.length})`, icon: Tag },
-          ] as const).map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setSelectedTab(tab.id)}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 font-semibold transition ${selectedTab === tab.id ? 'bg-red-600 text-white shadow-md shadow-red-950/40' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
         <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
           <button
             type="button"
@@ -312,7 +293,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   {visibleCount < filteredC2CProducts.length && (
                     <div className="flex justify-center border-t border-zinc-800/80 pt-5">
                       <button type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg shadow-red-950/30 transition hover:bg-red-500">
-                        Carregar mais equipamentos ({Math.min(PAGE_SIZE, filteredC2CProducts.length - visibleCount)})
+                        Mostrar mais ({Math.min(PAGE_SIZE, filteredC2CProducts.length - visibleCount)})
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </div>
@@ -347,7 +328,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   {visibleOffers < filteredOffers.length && (
                     <div className="flex justify-center pt-4">
                       <button type="button" onClick={() => setVisibleOffers(count => count + PAGE_SIZE)} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-red-500">
-                        Carregar mais produtos ({Math.min(PAGE_SIZE, filteredOffers.length - visibleOffers)})
+                        Mostrar mais ({Math.min(PAGE_SIZE, filteredOffers.length - visibleOffers)})
                       </button>
                     </div>
                   )}

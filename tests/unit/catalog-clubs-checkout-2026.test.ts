@@ -45,9 +45,13 @@ test('Real product photo gallery and size selector do not invent alternate produ
   assert.match(page,/gallery\.slice\(0,4\)/);
   assert.match(page,/Ver galeria completa/);
   assert.match(page,/role="dialog" aria-modal="true"/);
-  assert.match(page,/config\.options\.map/);
-  assert.match(page,/checkCep/);
-  assert.match(page,/https:\/\/viacep\.com\.br/);
+  const selectors = read('components/commerce/ProductOptions.tsx');
+  assert.match(page, /<ProductOptions/);
+  assert.match(selectors, /getProductVariantConfig\(title, category, sport, description, listedSizes\)/);
+  assert.match(selectors, /values: config.options/);
+  assert.match(selectors, /option.values.map/);
+  // Freight is not integrated: a CEP lookup is not a real shipping quote.
+  assert.match(page, /Frete e prazo indisponíveis/);
   assert.doesNotMatch(page,/Tamanhos anunciados para a opção consultada/);
   assert.doesNotMatch(read('lib/product-variants.ts'),/Tamanhos anunciados para a opção consultada/);
   const manager=read('components/admin/AdminOffersManager.tsx');
@@ -72,4 +76,12 @@ test('Demo payment RPC checks ownership, transaction locking, idem potency and p
   assert.match(checkout,/cart\.clear\(\)/);
   assert.match(checkout,/Pagamento de teste aprovado/);
   assert.doesNotMatch(checkout,/Pagamento, frete e envio ainda não estão disponíveis/);
+});
+
+test('Stored supplier galleries override fallback photos and preserve product identity', async () => {
+  const { productGallery } = await import('@/lib/product-gallery');
+  assert.deepEqual(productGallery({image_urls:['https://store.test/a.jpg','https://store.test/b.jpg','https://store.test/a.jpg']}, ['https://old.test/c.jpg']), ['https://store.test/a.jpg','https://store.test/b.jpg']);
+  assert.deepEqual(productGallery({images:['/my-product.jpg']}), ['/my-product.jpg']);
+  assert.deepEqual(productGallery({image_url:'https://store.test/cover.jpg'}), ['https://store.test/cover.jpg']);
+  assert.deepEqual(productGallery({image_urls:['javascript:bad']}), []);
 });

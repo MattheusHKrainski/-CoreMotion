@@ -63,7 +63,6 @@ it('trocar conta mantém a sessão oficial e não exige campos de senha no selet
 it('abrir e fechar o seletor não troca usuário nem retorna a conta conectada à página pública', () => {
  const store=readFileSync('lib/store.tsx','utf8');
  const handler=store.slice(store.indexOf('  const setAuthModalOpen = useCallback'),store.indexOf('  // Role switching'));
- assert.match(handler, /open && \(!userRef.current \|\| userRef.current.role === 'visitor'\)/);
  assert.doesNotMatch(handler, /setUser|signOut|logout|setActiveView/);
  const modal=readFileSync('components/auth/AuthModal.tsx','utf8');
  assert.match(modal, /onClick=\{\(\) => setAuthModalOpen\(false\)\}\s*aria-label="Fechar formulário"/);

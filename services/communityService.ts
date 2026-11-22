@@ -116,21 +116,20 @@ export class CommunityService {
   /**
    * Adds a comment to a community post.
    */
-  static async addComment(
-    postId: string,
-    comment: { id: string; content: string }
-  ): Promise<{ success: boolean; error?: string; data?: CommunityPost['comments'][number] }> {
-    const sb = getSupabaseClient();
-    if (!sb) return { success: true };
-    try {
-      const { data, error } = await sb.rpc('add_community_comment', {
-        p_post_id: postId, p_id: comment.id, p_content: comment.content,
-      });
-      if (error) return { success: false, error: error.message };
-      return { success: true, data };
-    } catch (err: unknown) {
-      return { success: false, error: err instanceof Error ? err.message : String(err) };
-    }
+  static async getPost(postId: string): Promise<CommunityPost> {
+    const sb=getSupabaseClient();
+    if(!sb) {const post=demoPosts().find(item=>item.id===postId);if(!post)throw new Error('Publicação não encontrada.');return post;}
+    const {data,error}=await sb.from('community_posts').select('*').eq('id',postId).single();
+    if(error||!data)throw new Error('Não foi possível carregar os comentários. Tente novamente.');
+    return this.mapDbPostToModel(data);
+  }
+
+  static async addComment(postId: string, comment: { content: string; id?: string }): Promise<{success:boolean;error?:string;post?:CommunityPost}> {
+    const sb=getSupabaseClient();
+    if(!sb)return {success:true};
+    const {data,error}=await sb.rpc('add_community_comment',{p_post_id:postId,p_content:comment.content,p_request_key:comment.id});
+    if(error||!data)return {success:false,error:'Não foi possível enviar o comentário. Sua resposta foi preservada; tente novamente.'};
+    return {success:true,post:this.mapDbPostToModel(data)};
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- linha crua do banco; tipada na correção de pedidos/comunidade
@@ -156,7 +155,7 @@ export class CommunityService {
       content: dbRow.content || '',
       image_url: dbRow.image_url,
       likes_count: Number(dbRow.likes_count) || 0,
-      comments_count: Number(dbRow.comments_count) || comments.length,
+      comments_count: comments.length,
       comments,
       created_at: dbRow.created_at || new Date().toISOString(),
       is_reported: Boolean(dbRow.is_reported),

@@ -22,14 +22,12 @@ it('não retoma perfil suspenso, rebaixado ou de outra identidade', async () => 
     assert.equal(await readSavedAdminProfile(async () => identity, async () => item), null);
   }
 });
-it('oferece contas reais salvas, sem botão Google, com scroll interno e bloqueio do fundo', () => {
+it('oferece contas reais salvas na página de acesso, sem botão Google ou modal', () => {
   const modal = readFileSync('components/auth/AuthModal.tsx', 'utf8');
   assert.doesNotMatch(modal, /Continuar com Google|handleGoogleAuth|signInWithGoogle/);
   assert.match(modal, /<SavedAccounts busy=\{loading\} onSelect=\{handleQuickLogin\}/);
-  assert.match(modal, /useDialogScrollLock\(isAuthModalOpen\)/);
-  assert.match(modal, /data-auth-scroll.*overflow-y-auto overscroll-contain/);
-  assert.match(modal, /max-h-\[calc\(100dvh-2rem\)\]/);
-  assert.match(modal, /role="dialog" aria-modal="true"/);
+  assert.doesNotMatch(modal, /role="dialog"|useDialogScrollLock/);
+  assert.match(modal, /safeAuthReturn/);
   const store = readFileSync('lib/store.tsx', 'utf8');
   assert.match(store, /await sb.auth.getUser\(\)/);
   assert.match(store, /setTimeout\(async \(\) =>/);
