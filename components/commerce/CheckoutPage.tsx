@@ -17,7 +17,12 @@ export default function CheckoutPage() {
   const [step,setStep] = useState<'cart'|'address'|'review'>('cart');
   const [busy,setBusy] = useState(false), [error,setError] = useState(''), [saved,setSaved] = useState(''), [paid,setPaid] = useState(false);
   const request = useRef<{ signature: string; key: string } | null>(null);
-  useEffect(() => { setAddress({...EMPTY_ADDRESS}); setStep('cart'); setSaved(''); setPaid(false); setError(''); request.current = null; }, [user?.id]);
+  useEffect(() => {
+    let postalCode = '';
+    try { const savedCep = sessionStorage.getItem('coremotion-cep') || ''; postalCode = /^\d{8}$/.test(savedCep) ? savedCep : ''; } catch { /* Session storage can be unavailable. */ }
+    setAddress({ ...EMPTY_ADDRESS, postalCode });
+    setStep('cart'); setSaved(''); setPaid(false); setError(''); request.current = null;
+  }, [user?.id]);
   const lines = cart.lines.map(line => ({...line, offer: activeOffers.find(item => item.id===line.offerId)}));
   const available = lines.length > 0 && lines.every(line => line.offer);
   const subtotal = lines.reduce((total,line) => total + (line.offer ? retailPriceCents(line.offer.price)*line.quantity : 0),0);
