@@ -13,7 +13,6 @@ import ProductCard from '@/components/marketplace/ProductCard';
 import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
 import type { Product, Order, UserProfile, UserRole } from '@/lib/types';
 import { ACCOUNT_TYPES, canAccessSports } from '@/lib/sports';
-import AdminOffersManager from '@/components/admin/AdminOffersManager';
 import { LogOut, Save, ShieldCheck, Tag, UserCircle2 } from 'lucide-react';
 
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
@@ -59,6 +58,7 @@ export default function ProfileView({ initialSection = 'details' }: { initialSec
   const { user, isVisitor, setAuthModalOpen, setAuthModalMode, updateUserProfile, setActiveView, logout, orders, favorites, products, setCheckoutOpen } = useCoreMotiom();
 
   const [section, setSection] = useState<'details' | 'favorites' | 'orders' | 'products'>(initialSection);
+  const [visibleProducts, setVisibleProducts] = useState(6);
   const [selected, setSelected] = useState<Product | null>(null);
 
   if (isVisitor || !user) {
@@ -96,7 +96,7 @@ export default function ProfileView({ initialSection = 'details' }: { initialSec
         <h2 className="text-xl font-bold">Meus favoritos</h2>
         {products.filter(p => favorites.includes(p.id)).length === 0 ? <div className="rounded-2xl border border-zinc-800 p-6 text-zinc-400"><p>Nenhum produto salvo disponível. Toque no coração dos produtos no CoreShop para salvar aqui.</p><button type="button" onClick={() => setActiveView('marketplace')} className="text-red-400 font-bold mt-4">Explorar CoreShop →</button></div> : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => favorites.includes(p.id)).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div>}
       </section>}
-      {section === 'products' && <section aria-label="Meus produtos à venda" className="space-y-4"><h2 className="text-xl font-bold">Meus produtos à venda</h2><button type="button" onClick={() => setActiveView('sell')} className="text-red-400 font-bold text-sm">Anunciar ou gerenciar meus produtos →</button>{products.some(p => p.seller_id === user.id) ? <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => p.seller_id === user.id).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div> : <p className="rounded-2xl border border-zinc-800 p-6 text-zinc-400">Você ainda não publicou produtos.</p>}</section>}
+      {section === 'products' && <section aria-label="Meus produtos à venda" className="space-y-4"><h2 className="text-xl font-bold">Meus produtos à venda</h2><button type="button" onClick={() => setActiveView('sell')} className="text-red-400 font-bold text-sm">Anunciar ou gerenciar meus produtos →</button>{products.some(p => p.seller_id === user.id) ? <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => p.seller_id === user.id).slice(0, visibleProducts).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div> : <p className="rounded-2xl border border-zinc-800 p-6 text-zinc-400">Você ainda não publicou produtos.</p>}{products.filter(p => p.seller_id === user.id).length > visibleProducts && <button type="button" onClick={() => setVisibleProducts(n => n + 6)} className="rounded-xl bg-zinc-800 px-4 py-2 font-bold">Mostrar mais</button>}</section>}
     </div>
     <ProductDetailModal product={selected} onClose={() => setSelected(null)} />
     {(section === 'details' || section === 'orders') && <ProfileContent
@@ -124,6 +124,8 @@ interface ProfileContentProps {
 }
 
 function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchAccount, ordersOnly }: ProfileContentProps) {
+  const { products, offers } = useCoreMotiom();
+  const [visibleProducts, setVisibleProducts] = useState(6);
   const [form, setForm] = useState({
     avatar_url: user.avatar_url ?? '',
     name: user.name ?? '',
@@ -217,12 +219,12 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
               <button
                 type="button"
                 onClick={() => {
-                  document.getElementById('admin-offers-section')?.scrollIntoView({ behavior: 'smooth' });
+                  onOpenAdmin();
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold shadow-lg shadow-red-950/40"
               >
                 <Tag className="w-4 h-4" aria-hidden="true" />
-                Gerenciar ofertas e afiliados
+                Central de Ofertas
               </button>
               <button
                 type="button"
@@ -237,7 +239,14 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
         </div>
       </section>
 
-      {isStaff && !ordersOnly && <AdminOffersManager />}
+      {!ordersOnly && <section className="rounded-2xl border border-zinc-800 p-5 space-y-4" aria-label="Produtos associados ao meu perfil">
+        <h2 className="text-lg font-bold">Meus produtos</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => p.seller_id === user.id).slice(0, visibleProducts).map(product => <ProductCard key={product.id} product={product} onSelect={() => window.location.assign(`/produto/athlete/${encodeURIComponent(product.id)}`)} />)}</div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{offers.filter(o => o.created_by === user.id).slice(0, visibleProducts).map(offer => <a key={offer.id} href={`/produto/core/${encodeURIComponent(offer.id)}`} className="rounded-xl border border-zinc-800 p-4 hover:border-red-500">{offer.title}</a>)}</div>
+        {offers.filter(o => o.created_by === user.id).length > visibleProducts && <button type="button" onClick={() => setVisibleProducts(n => n + 6)} className="rounded-xl bg-zinc-800 px-4 py-2 font-bold">Mostrar mais produtos do catálogo</button>}
+        {!products.some(p => p.seller_id === user.id) && <p className="text-sm text-zinc-400">Nenhum anúncio pessoal associado ao seu perfil.</p>}
+        {products.filter(p => p.seller_id === user.id).length > visibleProducts && <button type="button" onClick={() => setVisibleProducts(n => n + 6)} className="rounded-xl bg-zinc-800 px-4 py-2 font-bold">Mostrar mais</button>}
+      </section>}
 
       <section hidden={!ordersOnly} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 sm:p-6 space-y-4">
         <h2 className="text-base font-bold text-white">Meus pedidos</h2>

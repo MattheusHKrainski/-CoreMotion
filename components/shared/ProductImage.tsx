@@ -32,7 +32,7 @@ export default function ProductImage({ src, alt, sizes, fallbackSrcs = [], fit =
     alt={alt}
     fill
     sizes={sizes}
-    unoptimized={!selected.startsWith('/')}
+    unoptimized={!selected.startsWith('/') || selected.endsWith('.svg')}
     onError={() => setFailed(previous => previous.includes(selected) ? previous : [...previous, selected])}
     className={'transition-transform duration-500 group-hover:scale-105 ' + (fit === 'cover' ? 'object-cover' : 'object-contain p-4')}
   />;

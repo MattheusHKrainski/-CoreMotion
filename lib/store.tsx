@@ -169,7 +169,7 @@ interface CoreMotiomContextType {
   createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string }) => Promise<boolean>;
   likedCommunityPosts: string[];
   likeCommunityPost: (postId: string) => Promise<void>;
-  addCommunityComment: (postId: string, content: string) => Promise<boolean>;
+  addCommunityComment: (postId: string, content: string, requestKey?: string) => Promise<boolean>;
   reportCommunityPost: (postId: string, reason: string) => Promise<void>;
   adminDeleteCommunityPost: (postId: string) => void;
 
@@ -222,6 +222,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem(ENTERED_SESSION_KEY);
       window.history.replaceState(null, '', '/');
     }
+  }, []);
+
+  useEffect(() => {
+    const view = new URLSearchParams(window.location.search).get('view');
+    if (view && ['home','marketplace','sell','coaches','community','profile','admin','trials','talents','sports-profile','sports-activity'].includes(view)) setActiveView(view as ActiveView);
   }, []);
 
   // Core entities with resilient initializers - SSR safe
@@ -641,15 +646,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Visitors authenticate over welcome. Signed-in users keep their current screen
-  // and session when opening (or dismissing) the account selector.
+  // Authentication is presented on /entrar. Preserve the active screen until navigation.
   const setAuthModalOpen = useCallback((open: boolean) => {
-    if (open && (!userRef.current || userRef.current.role === 'visitor')) {
-      openWelcomePage();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }
     setAuthModalOpenState(open);
-  }, [openWelcomePage]);
+  }, []);
 
   // Role switching cannot create identities or change real account permissions.
   const switchRole = useCallback(() => {
@@ -1323,32 +1323,12 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     } finally { likesInFlight.current.delete(postId); }
   };
 
-  const addCommunityComment = async (postId: string, content: string): Promise<boolean> => {
+  const addCommunityComment = async (postId: string, content: string, requestKey?: string): Promise<boolean> => {
     if (!requireLogin('Entre para comentar nas publicações da comunidade.')) return false;
-    const comment = {
-      id: crypto.randomUUID(),
-      author_name: user?.name || 'Atleta',
-      author_avatar: user?.avatar_url,
-      content,
-      created_at: new Date().toISOString(),
-    };
+    const comment = { id: requestKey || crypto.randomUUID(), author_name: user?.name || 'Atleta', author_avatar: user?.avatar_url, content: content.trim(), created_at: new Date().toISOString() };
     const result = await CommunityService.addComment(postId, comment);
-    if (!result.success) {
-      addToast('Comentário não enviado', result.error || 'Tente novamente.', 'error');
-      return false;
-    }
-    setCommunityPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId && !p.comments.some(existing => existing.id === comment.id)
-          ? {
-              ...p,
-              comments_count: p.comments_count + 1,
-              comments: [...p.comments, result.data ?? comment],
-            }
-          : p
-      )
-    );
-    addToast('Comentário Adicionado', 'Sua resposta foi enviada.', 'success');
+    if (!result.success) { addToast('Comentário não enviado', result.error || 'Tente novamente.', 'error'); return false; }
+    setCommunityPosts(previous => previous.map(post => post.id === postId ? result.post || { ...post, comments: [...(post.comments || []), comment], comments_count: (post.comments?.length || 0) + 1 } : post));
     return true;
   };
 

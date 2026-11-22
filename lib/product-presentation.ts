@@ -1,0 +1,12 @@
+/** Merchant galleries manually checked on 2026-10-22. Only exact-model images, never similar-product cards. */
+export interface ProductPresentation { source: string; images: string[]; options: { label: string; values: string[] }[] }
+const olympikus=(id:number,file:string)=>`https://vulcabras.vtexassets.com/arquivos/ids/${id}/${file}.jpg`;
+const decathlon=(id:number,file:string)=>`https://decathlonstore.vtexassets.com/arquivos/ids/${id}/${file}.jpg`;
+export const PRODUCT_PRESENTATIONS: Record<string,ProductPresentation> = {
+ 'offer-centauro-penalty-vp5000-946720': {source:'https://www.centauro.com.br/bola-de-volei-penalty-vp-5000-946720.html',images:['A5','A1','A2','A3'].map(angle=>`https://imgcentauro-a.akamaihd.net/1024x1024/94672020${angle}.jpg`),options:[{label:'Cor',values:['Amarelo / roxo']},{label:'Tamanho',values:['Único']}]},
+ 'offer-olympikus-estilo2-43359278': {source:'https://www.olympikus.com.br/tenis-olympikus-estilo-2-unissex-43359278-3-834/p',images:Array.from({length:5},(_,i)=>olympikus(281992+i,`43359278_3-834-0${i+1}`)),options:[{label:'Cor',values:['Verde']},{label:'Tamanho',values:Array.from({length:11},(_,i)=>String(34+i))}]},
+ 'offer-olympikus-corremax-43758365': {source:'https://www.olympikus.com.br/tenis-olympikus-corre-max-43758365-3-016/p',images:Array.from({length:5},(_,i)=>olympikus(292744+i,`43758365-0${i+1}`)),options:[{label:'Cor',values:['Cinza']},{label:'Tamanho',values:Array.from({length:11},(_,i)=>String(34+i))}]},
+ 'offer-decathlon-umbro-2145645567': {source:'https://www.decathlon.com.br/chuteira-campo-umbro-ultimate-2145645567/p',images:[[146398870,'17190060914710'],[146398871,'17190060941480'],[146398878,'17190060967814'],[146398868,'17190060993073'],[146398877,'17190061012771'],[146398867,'17190061033596'],[146398874,'17190061064304'],[146398869,'17190061090802']].map(([id,file])=>decathlon(Number(id),String(file))),options:[{label:'Tamanho',values:['42']}]},
+ 'offer-decathlon-bjj-8920531': {source:'https://www.decathlon.com.br/kimono-adulto-de-jiu-jitsu-brasileiro-500-preto-8920531-outshock/p',images:Array.from({length:6},(_,i)=>decathlon(165327447+i,`bjj-gi-500-v2-blue-a3-185-195cm-preta-a1-165-175cm${i+1}`)),options:[{label:'Cor',values:['Preto']},{label:'Tamanho',values:['A1 165–175 cm']}]},
+};
+export function productPresentation(id:string,source?:string): ProductPresentation|undefined {return source ? Object.values(PRODUCT_PRESENTATIONS).find(item=>item.source===source) : PRODUCT_PRESENTATIONS[id];}

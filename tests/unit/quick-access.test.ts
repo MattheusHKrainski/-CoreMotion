@@ -29,7 +29,7 @@ it('a opção de salvar é desmarcada por padrão e é oferecida no login e cada
   assert.match(modal, /loginWithEmail\(email, password, rememberAccount\)/);
   assert.match(modal, /sport.trim\(\), rememberAccount\)/);
   assert.match(modal, /dispositivo de confiança/);
-  assert.doesNotMatch(modal, /perfis temporários|window.location.assign/);
+  assert.doesNotMatch(modal, /perfis temporários/);
 });
 it('remoção exige confirmação e não chama exclusão de conta ou logout', () => {
   const cards = readFileSync('components/auth/SavedAccounts.tsx', 'utf8');

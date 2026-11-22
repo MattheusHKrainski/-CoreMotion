@@ -5,7 +5,7 @@ import { getSupabaseClient } from '@/services/supabaseClient';
 import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
 import SavedAccounts from './SavedAccounts';
-import { useDialogScrollLock } from '@/hooks/useDialogScrollLock';
+import { safeAuthReturn } from '@/lib/auth-navigation';
 import SportPicker from '@/components/shared/SportPicker';
 import React, { useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -22,8 +22,9 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-export default function AuthModal() {
+export default function AuthModal({ page = false }: { page?: boolean }) {
   const {
+    activeView,
     isAuthModalOpen,
     setAuthModalOpen,
     authModalMode,
@@ -59,9 +60,18 @@ export default function AuthModal() {
     }
   }, [isAuthModalOpen, prefillAuthEmail, setPrefillAuthEmail]);
 
-  useDialogScrollLock(isAuthModalOpen);
+  useEffect(() => {
+    if (page || !isAuthModalOpen) return;
+    const current = new URL(window.location.href);
+    if (current.pathname === '/') current.searchParams.set('view', activeView);
+    const next = current.pathname + current.search + current.hash;
+    window.location.assign(`/entrar?mode=${authModalMode}&next=${encodeURIComponent(next)}`);
+  }, [page, isAuthModalOpen, authModalMode, activeView]);
+  useEffect(() => {
+    if (page && !isAuthModalOpen) window.location.replace(safeAuthReturn(new URLSearchParams(window.location.search).get('next')));
+  }, [page, isAuthModalOpen]);
 
-  if (!isAuthModalOpen) return null;
+  if (!page || !isAuthModalOpen) return null;
 
   const handleQuickLogin = async (id: string) => {
     if (loading) return;
@@ -139,8 +149,8 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overscroll-none">
-      <div role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" className="relative w-full max-w-5xl max-h-[calc(100dvh-2rem)] min-h-[min(640px,calc(100dvh-2rem))] grid grid-cols-1 md:grid-cols-[0.92fr_1.08fr] bg-zinc-950 text-white rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden">
+    <main className="flex min-h-screen items-start justify-center bg-zinc-950 px-4 py-10 sm:py-16">
+      <section aria-labelledby="auth-dialog-title" className="relative flex w-full max-w-md flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
         
         {/* Header decoration */}
         <aside className="relative hidden md:flex flex-col justify-between overflow-hidden border-r border-zinc-800 bg-[#09090b] p-8 lg:p-10">
@@ -177,17 +187,17 @@ export default function AuthModal() {
           <X className="w-5 h-5" />
         </button>
 
-        <div data-auth-scroll className="min-h-0 overflow-y-auto overscroll-contain flex-1 px-6 py-7 sm:px-8 sm:py-9 md:pt-10">
+        <div data-auth-scroll className="p-6 sm:p-8">
           {/* Brand Header */}
           <div className="flex items-center gap-3 mb-6">
             <BrandMark className="w-10 h-10" />
             <div>
-              <h3 id="auth-dialog-title" className="text-lg font-black text-white">
+              <h1 id="auth-dialog-title" className="text-lg font-black text-white">
                 {authModalMode === 'login' && 'Acessar CoreMotion'}
                 {authModalMode === 'register' && 'Criar Conta'}
                 {authModalMode === 'forgot' && 'Recuperar Senha'}
                 {authModalMode === 'switch' && 'Selecionar conta'}
-              </h3>
+              </h1>
               <p className="text-xs text-zinc-400">
                 {authModalMode === 'login' && 'Entre para gerenciar pedidos, compras e vendas.'}
                 {authModalMode === 'register' && 'Junte-se à plataforma esportiva de alta performance.'}
@@ -201,7 +211,7 @@ export default function AuthModal() {
 
           {/* Error Message if any */}
           {errorMsg && (
-            <div className="mb-4 p-3 rounded-2xl bg-red-950/40 border border-red-800/50 text-xs text-red-300 flex items-start gap-2">
+            <div role="alert" className="mb-4 p-3 rounded-2xl bg-red-950/40 border border-red-800/50 text-xs text-red-300 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
@@ -209,7 +219,7 @@ export default function AuthModal() {
 
           {/* Info Message if any */}
           {infoMsg && (
-            <div className="mb-4 p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/50 text-xs text-emerald-300 flex items-start gap-2">
+            <div role="status" className="mb-4 p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/50 text-xs text-emerald-300 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <span>{infoMsg}</span>
             </div>
@@ -356,7 +366,7 @@ export default function AuthModal() {
           </div>
         </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

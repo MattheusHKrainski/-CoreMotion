@@ -11,6 +11,7 @@ import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS, EXPANSION_OFFERS } from 
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 
 interface DbExternalOfferRow {
+  created_by?: string | null;
   variant_options?: string[];
   image_urls?: string[];
   team_id?: string | null;
@@ -39,6 +40,7 @@ function toIso(value: Date | string | null | undefined): string {
 function mapOfferRow(row: DbExternalOfferRow): ExternalOffer {
   return {
     id: row.id,
+    created_by: row.created_by,
     title: row.title,
     variant_options: row.variant_options,
     image_urls: row.image_urls?.length ? row.image_urls : [row.image_url],
@@ -208,7 +210,7 @@ export async function updateExternalOfferInDb(id: string, input: OfferUpdateInpu
   if (input.image_url !== undefined) pushField('image_url', input.image_url);
   if (input.image_urls !== undefined) pushField('image_urls', input.image_urls);
   if (input.team_id !== undefined) pushField('team_id', input.team_id);
-  // PostgreSQL gallery trigger preserves alternate photos when only the cover changes.
+  // Database trigger preserves alternate photos when replacing only the cover.
   if (input.source_url !== undefined) pushField('source_url', input.source_url);
   if (input.coupon_code !== undefined) pushField('coupon_code', input.coupon_code || null);
   if (input.is_active !== undefined) pushField('is_active', input.is_active);
