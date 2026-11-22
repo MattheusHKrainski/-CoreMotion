@@ -7,6 +7,9 @@ import { money, PREPARATION_STATUS, type SaleOrder } from '@/lib/commerce';
 import { listSaleOrders, reviewSale, listSuppliers, saveSupplier, saleEvents, type SaleEvent, type SupplierSetting } from '@/services/commerce';
 import PricingPanel from './PricingPanel';
 import AuthModal from '@/components/auth/AuthModal';
+import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
+const SALE_LIVE_SOURCES = [{ table: 'core_sale_orders' }, { table: 'core_sale_events' }, { table: 'core_supplier_settings' }] as const;
 const supplierStatus = {
   unconfirmed: 'Não confirmada',
   negotiating: 'Em negociação',
@@ -33,6 +36,8 @@ function AccountOrders() {
   const staff=isStaffRole(user?.role),id=user?.id;
   const [orders,setOrders]=useState<SaleOrder[]>([]),[suppliers,setSuppliers]=useState<SupplierSetting[]>([]),[error,setError]=useState(''),[loading,setLoading]=useState(false);
   const refresh=useCallback(async () => {if(!id)return;setLoading(true);setError('');try {const rows=await listSaleOrders();setOrders(rows);if(staff)setSuppliers(await listSuppliers());} catch(reason) {setError(reason instanceof Error?reason.message:'Pedidos indisponíveis.');} finally {setLoading(false);} },[id,staff]);
+  const client = getSupabaseClient();
+  useRealtimeRefresh(client, SALE_LIVE_SOURCES, refresh, Boolean(id), 'sale-orders-' + (id || 'visitor'));
   useEffect(() => {let active=true;setOrders([]);setSuppliers([]);if(id){setLoading(true);listSaleOrders().then(rows=>{if(active)setOrders(rows);}).catch(()=>{if(active)setError('Não foi possível carregar os pedidos.');}).finally(()=>{if(active)setLoading(false);});if(staff)listSuppliers().then(rows=>{if(active)setSuppliers(rows);}).catch(()=>{if(active)setError('Não foi possível carregar os fornecedores.');});}return()=>{active=false;};},[id,staff]);
   return <main className="mx-auto min-h-screen max-w-5xl space-y-6 px-4 py-8 text-white"><header className="flex justify-between gap-4"><Link href="/" className="font-black">← CoreShop</Link><Link href="/compras" className="text-sm text-red-400">Carrinho</Link></header><h1 className="text-3xl font-black">{staff?'Gestão de pedidos CoreMotion':'Meus pedidos CoreMotion'}</h1><p className="text-sm leading-relaxed text-zinc-400">Preparações de compra separadas das negociações de atletas. Não há pagamentos aprovados, estoque reservado ou envio confirmado. O acompanhamento mostra apenas ações realmente registradas pela equipe.</p>{!user || isVisitor ? <button type="button" onClick={()=>{setAuthModalMode('login');setAuthModalOpen(true);}} className="rounded-xl bg-red-600 p-4 font-bold">Entrar para acompanhar</button> : <><button type="button" disabled={loading} onClick={()=>void refresh()} className="text-sm text-red-400">{loading?'Carregando…':'Atualizar pedidos'}</button>{!loading&&!orders.length&&!error&&<p className="text-sm text-zinc-500">Nenhuma preparação registrada.</p>}{orders.map(order=><OrderCard key={`${order.id}-${order.updated_at}`} order={order} staff={staff} refresh={refresh}/>)}{staff&&<PricingPanel/>}{staff&&<section className="space-y-4 border-t border-zinc-800 pt-6"><h2 className="text-xl font-black">Fornecedores e operação</h2>{suppliers.map(supplier => isAdminRole(user.role)
     ? <SupplierEditor key={supplier.name} supplier={supplier} onSaved={refresh} />

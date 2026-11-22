@@ -37,13 +37,11 @@ export class CommunityService {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        return demoPosts();
-      }
-
+      if (error || !data) throw new Error(error?.message || 'Consulta da comunidade indisponível.');
       return data.map(this.mapDbPostToModel);
-    } catch {
-      return demoPosts();
+    } catch (error) {
+      // Live sessions must not replace real posts with stale/demo fixtures when offline.
+      throw error instanceof Error ? error : new Error('Não foi possível atualizar a comunidade.');
     }
   }
 
