@@ -1,0 +1,15 @@
+name: Revisar catálogos públicos de fornecedores
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  supplier-catalog-probe:
+    if: github.head_ref == 'feat/catalog-clubs-gallery-checkout-20261122'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/catalog-source-probe.mjs
