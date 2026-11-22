@@ -40,6 +40,8 @@ export const offerCreateSchema = z.object({
   price: z.number().positive('O preço em oferta deve ser maior que zero.').max(1_000_000),
   original_price: z.number().positive().max(1_000_000).nullable().optional(),
   image_url: imagePathOrHttpsSchema,
+  image_urls: z.array(imagePathOrHttpsSchema).max(12, 'Use até 12 fotos por produto.').optional(),
+  team_id: z.string().trim().max(128).nullable().optional(),
   source_url: httpsUrlSchema.refine(isProductDestination, 'Informe o link direto do produto, não uma busca, categoria ou página inicial.'),
   coupon_code: z.string().trim().max(40).nullable().optional(),
   is_active: z.boolean().optional().default(true),

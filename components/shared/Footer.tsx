@@ -42,7 +42,7 @@ export default function Footer() {
             </button>
 
             <p className="text-xs text-zinc-400 leading-relaxed max-w-sm">
-              CoreShop e comunidade esportiva. Vendas CoreMotion em preparação e anúncios de atletas com negociação direta.
+              CoreShop, produtos esportivos, clubes, comunidade e anúncios entre atletas.
             </p>
 
             <div className="space-y-1.5 pt-1 text-xs text-zinc-400">
@@ -126,7 +126,7 @@ export default function Footer() {
         </div>
 
         <p className="py-6 border-b border-zinc-800/80 text-xs leading-relaxed text-zinc-400">
-          Vendas CoreMotion: pagamento e logística ainda desativados, sem compras confirmadas ou estoque reservado. Nos anúncios de atletas, pagamento, entrega e condições são combinados diretamente com o anunciante.
+          Nas compras CoreMotion, a confirmação de pagamento é uma experiência de teste, sem cobrança bancária. Frete e entrega são informados separadamente. Os anúncios entre atletas são negociados diretamente entre as partes.
         </p>
 
         {/* Bottom Legal Bar */}

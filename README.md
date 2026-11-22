@@ -4,7 +4,7 @@
 
 O CoreMotion é uma plataforma web que reúne produtos e ofertas esportivas, anúncios de equipamentos entre usuários e recursos de comunidade em um único ambiente. O projeto é desenvolvido como Trabalho de Conclusão de Curso (TCC), com foco em facilitar a descoberta de produtos e aproximar pessoas que praticam esportes.
 
-> **Situação dos pagamentos:** o sistema contempla opções de pagamento no fluxo de compra, mas não realiza processamento financeiro real. A integração com um provedor de pagamentos e a estrutura comercial necessária ainda precisam ser configuradas. Não considere um pedido como pago apenas por selecionar uma forma de pagamento.
+> **Fluxo de compra:** o checkout permite concluir um pagamento de **teste** e acompanhar seu registro no banco, sem processamento financeiro externo. Frete e entrega são tratados separadamente.
 
 ---
 
@@ -22,10 +22,10 @@ O CoreMotion é uma plataforma web que reúne produtos e ofertas esportivas, an�
 ## Principais funcionalidades
 
 ### Marketplace esportivo
-- Catálogo de produtos esportivos com pesquisa e opções de filtragem.
+- Catálogo de produtos esportivos com pesquisa, filtragem por modalidade e navegação por clube; em 22/11/2026, são 848 ofertas ativas, incluindo 400 produtos adicionais conferidos em lojas oficiais.
 - Exibição de produtos e ofertas de lojas externas, com acesso ao endereço de origem da oferta.
 - Anúncios de equipamentos entre atletas, incluindo informações sobre condição, modalidade e preço.
-- Detalhes do produto, carrinho, favoritos e criação/acompanhamento de pedidos.
+- Galerias reais do mesmo produto (589 ofertas com múltiplas imagens na captura de 22/11/2026), opções de tamanho e cores quando disponíveis, carrinho, favoritos e acompanhamento de pedidos.
 - Área de perfil para informações da conta e atividades relacionadas ao usuário.
 
 ### Comunidade esportiva
@@ -40,7 +40,7 @@ O CoreMotion é uma plataforma web que reúne produtos e ofertas esportivas, an�
 - Recursos de moderação para ajudar a manter a plataforma organizada.
 
 ### Pagamento e checkout
-O checkout contempla métodos como **PIX, cartão de crédito e boleto**, além de informações de pedido e entrega. Entretanto, o CoreMotion **não está conectado a um gateway financeiro para liquidar transações reais**. A seleção de um método ou a atualização administrativa de um status não substitui a confirmação de pagamento por uma instituição financeira.
+O checkout CoreMotion organiza carrinho, endereço e revisão do pedido. A função autenticada `simulate_core_sale_payment` registra a aprovação de teste com verificação de propriedade, idempotência e histórico de eventos. O cliente recebe confirmação no site e consegue acompanhar/cancelar o pedido; nenhum pagamento bancário é efetivado por esse procedimento. O catálogo de clubes contém os 20 participantes da Série A brasileira, os 12 da SuperLega italiana masculina e os 12 da SV.League japonesa masculina em 2026/27. Só são anunciados produtos de times com páginas e imagens de produtos identificadas.
 
 ## Perfis e permissões
 
@@ -87,12 +87,12 @@ O CoreMotion utiliza PostgreSQL no Supabase para organizar informações relacio
 
 - Perfis e permissões de usuários.
 - Produtos e anúncios.
-- Ofertas externas.
+- Ofertas externas, galerias de produto e diretório dos 44 clubes.
 - Carrinho, pedidos e informações de entrega.
 - Publicações e interações da comunidade.
 - Denúncias, notificações e registros de gestão.
 
-As tabelas, políticas e funções SQL versionadas encontram-se em `supabase/migrations/`. A documentação complementar está em [`database/README.md`](database/README.md).
+As tabelas, políticas e funções SQL versionadas encontram-se em `supabase/migrations/`. A documentação complementar está em [`database/README.md`](database/README.md). Consulte também a [auditoria da ampliação do catálogo](docs/catalogo/expansao-400-reais-e-ligas-2026-11-22.md).
 
 ## Qualidade e testes
 

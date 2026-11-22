@@ -91,7 +91,7 @@ export default function ProfileView({ initialSection = 'details' }: { initialSec
         {canAccessSports(user) && <button type="button" onClick={() => setActiveView('sports-profile')} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">{user.account_type === 'coach' ? 'Meu perfil profissional' : 'Criar ou editar currículo de atleta'}</button>}
         <button type="button" onClick={() => logout()} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left text-red-400">Sair da conta</button>
       </nav>
-      <a href="/pedidos" className="block rounded-xl border border-red-900/60 bg-red-950/20 p-4 text-sm font-bold text-red-400">Pedidos CoreMotion — acompanhar preparações →</a>
+      <a href="/pedidos" className="block rounded-xl border border-red-900/60 bg-red-950/20 p-4 text-sm font-bold text-red-400">Pedidos CoreMotion — acompanhar compras →</a>
       {section === 'favorites' && <section aria-label="Meus favoritos" className="space-y-4">
         <h2 className="text-xl font-bold">Meus favoritos</h2>
         {products.filter(p => favorites.includes(p.id)).length === 0 ? <div className="rounded-2xl border border-zinc-800 p-6 text-zinc-400"><p>Nenhum produto salvo disponível. Toque no coração dos produtos no CoreShop para salvar aqui.</p><button type="button" onClick={() => setActiveView('marketplace')} className="text-red-400 font-bold mt-4">Explorar CoreShop →</button></div> : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{products.filter(p => favorites.includes(p.id)).map(product => <ProductCard key={product.id} product={product} onSelect={setSelected} />)}</div>}

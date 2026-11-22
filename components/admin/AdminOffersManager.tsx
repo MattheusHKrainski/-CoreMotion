@@ -1,5 +1,5 @@
 'use client';
-import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { getSupabaseClient, isSupabaseConfigured } from '@/services/supabaseClient';
 
 import { isProductDestination } from '@/lib/offer-catalog';
 import React, { useEffect, useRef, useState } from 'react';
@@ -38,9 +38,14 @@ const STORE_SUGGESTIONS = [
   'Centauro',
   'Decathlon',
   'Olympikus Oficial',
+  'Fila', 'Mizuno', 'Umbro', 'Penalty',
 ];
 
 const SPORT_OPTIONS = [
+  'Casual',
+  'Caminhada',
+  'Treinamento',
+  'Futsal',
   'Corrida',
   'Ciclismo',
   'Musculação',
@@ -74,6 +79,8 @@ interface OfferFormState {
   sport: string;
   category: string;
   image_url: string;
+  image_urls: string;
+  team_id: string;
   description: string;
   is_active: boolean;
 }
@@ -88,6 +95,8 @@ const EMPTY_FORM: OfferFormState = {
   sport: 'Corrida',
   category: 'Equipamentos',
   image_url: '',
+  image_urls: '',
+  team_id: '',
   description: '',
   is_active: true,
 };
@@ -156,6 +165,17 @@ export default function AdminOffersManager() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [clubs, setClubs] = useState<{ id: string; club_name: string; league: string }[]>([]);
+  useEffect(() => {
+    const client = getSupabaseClient();
+    if (!client) return;
+    let alive = true;
+    void (async () => {
+      const { data } = await client.from('catalog_teams').select('id,club_name,league').order('club_name');
+      if (alive && data) setClubs(data);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const formRef = useRef<HTMLFormElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -171,6 +191,8 @@ export default function AdminOffersManager() {
       sport: offer.sport,
       category: offer.category,
       image_url: offer.image_url,
+      image_urls: (offer.image_urls || []).filter(url => url !== offer.image_url).join('\n'),
+      team_id: offer.team_id || '',
       description: offer.description,
       is_active: offer.is_active !== false,
     });
@@ -304,6 +326,15 @@ export default function AdminOffersManager() {
       return;
     }
 
+    const additionalImages = form.image_urls.split(/\r?\n/).map(url => url.trim()).filter(Boolean);
+    if (additionalImages.length > 11 || additionalImages.some(url => !/^https:\/\/[^\s]+$/i.test(url))) {
+      setFormError('Adicione até 11 URLs extras de fotos HTTPS, uma por linha.');
+      return;
+    }
+    if (form.team_id && !clubs.some(club => club.id === form.team_id)) {
+      setFormError('Escolha um clube válido na relação de campeonatos.');
+      return;
+    }
     setIsSaving(true);
     try {
       const payload = {
@@ -316,6 +347,8 @@ export default function AdminOffersManager() {
         sport: form.sport,
         category: form.category,
         image_url: form.image_url.trim(),
+        image_urls: [...new Set([form.image_url.trim(), ...additionalImages])],
+        team_id: form.team_id || null,
         description:
           form.description.trim() ||
           `Oferta selecionada em ${form.store_name.trim() || 'loja parceira'} para ${form.sport.toLowerCase()}.`,
@@ -610,6 +643,15 @@ export default function AdminOffersManager() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-zinc-300">Clube da liga (opcional)</label>
+                <select value={form.team_id} onChange={event => setForm(f => ({ ...f, team_id: event.target.value }))} className={inputCls}>
+                  <option value="">Produto sem clube associado</option>
+                  {clubs.map(club => <option key={club.id} value={club.id}>{club.club_name} · {club.league.replace(/-2026.*$/, '')}</option>)}
+                </select>
+                <p className="text-[11px] text-zinc-500">Vincule somente produtos que indiquem claramente o clube na descrição ou no nome do fornecedor.</p>
+              </div>
+
               {/* 6. Imagem Real do Produto (URL ou Upload Direto) */}
               <div className="space-y-2">
                 <label className="block text-xs font-semibold text-zinc-300">
@@ -641,6 +683,12 @@ export default function AdminOffersManager() {
                   </button>
                 </div>
               </div>
+
+              <label className="block space-y-2 text-xs font-semibold text-zinc-300">
+                Fotos adicionais do mesmo produto (opcional)
+                <textarea rows={4} maxLength={18000} value={form.image_urls} onChange={e => setForm(previous => ({ ...previous, image_urls: e.target.value }))} placeholder={'https://loja.com/foto-lateral.jpg\nhttps://loja.com/foto-traseira.jpg'} className={inputCls} />
+                <span className="block text-[11px] font-normal text-zinc-500">Uma foto por linha, até 11. Aparecerão na galeria da página do produto.</span>
+              </label>
 
               {/* 7. Descrição curta */}
               <div>

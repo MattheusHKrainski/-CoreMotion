@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { getProductVariantConfig } from '../../lib/product-variants';
 
 describe('product variants for catalog', () => {
-  it('offers Brazilian footwear sizes and warns that availability is unconfirmed', () => {
+  it('offers Brazilian footwear sizes without repetitive inventory warning labels', () => {
     const result = getProductVariantConfig('Tênis Nike de corrida', 'Calçados', 'Corrida');
     assert.ok(result);
     assert.equal(result.label, 'Numeração (BR)');
     assert.deepEqual(result.options, ['34','35','36','37','38','39','40','41','42','43','44','45']);
-    assert.match(result.note, /não estoque confirmado/);
+    assert.equal(result.note, '');
   });
   it('offers clothing sizes for apparel', () => {
     const result = getProductVariantConfig('Camiseta Adidas', 'Vestuário', 'Treinamento');

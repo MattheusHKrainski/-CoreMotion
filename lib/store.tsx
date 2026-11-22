@@ -1423,6 +1423,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       price: Number(input.price),
       original_price: input.original_price ? Number(input.original_price) : undefined,
       image_url: input.image_url.trim(),
+      image_urls: input.image_urls?.length ? input.image_urls : [input.image_url.trim()],
+      team_id: input.team_id || null,
       source_url: input.source_url.trim(),
       coupon_code: input.coupon_code?.trim() || undefined,
       is_active: input.is_active ?? true,
@@ -1467,6 +1469,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
               ? { original_price: input.original_price ? Number(input.original_price) : undefined }
               : {}),
             ...(input.image_url !== undefined ? { image_url: input.image_url.trim() } : {}),
+            ...(input.image_urls !== undefined ? { image_urls: input.image_urls } : {}),
+            ...(input.team_id !== undefined ? { team_id: input.team_id } : {}),
             ...(input.source_url !== undefined ? { source_url: input.source_url.trim() } : {}),
             ...(input.coupon_code !== undefined
               ? { coupon_code: input.coupon_code ? input.coupon_code.trim() : undefined }
