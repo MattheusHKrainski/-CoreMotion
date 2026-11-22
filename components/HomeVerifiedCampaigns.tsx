@@ -30,7 +30,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
     const matching = offers.filter(offer => offer.is_active !== false && offer.sport === config.sport);
     const related = [...matching].sort((a, b) => {
       const ai = config.primaryIds.indexOf(a.id), bi = config.primaryIds.indexOf(b.id);
-      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
     });
     return { ...config, products: related };
   }).filter(campaign => campaign.products.length > 0), [offers]);
