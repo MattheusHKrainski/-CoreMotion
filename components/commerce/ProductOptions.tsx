@@ -1,9 +1,15 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
+import { getProductVariantConfig } from '@/lib/product-variants';
 import { productPresentation } from '@/lib/product-presentation';
-export default function ProductOptions({ id, category, source, onChange }: { id: string; category: string; source?: string; onChange: (value:string)=>void }) {
+export default function ProductOptions({ id, category, source, title = '', sport = '', description = '', listedSizes, onChange }: { id: string; category: string; source?: string; title?: string; sport?: string; description?: string; listedSizes?: string[]; onChange: (value:string)=>void }) {
   const verified=productPresentation(id,source);
-  const options=useMemo(()=>verified?.options.length?verified.options:category==='Calçados'?[{label:'Tamanho desejado',values:['34','35','36','37','38','39','40','41','42','43','44']}]:['Vestuário','Roupas'].includes(category)?[{label:'Tamanho desejado',values:['PP','P','M','G','GG']}]:[],[verified,category]);
+  const options = useMemo(() => {
+    const config = getProductVariantConfig(title, category, sport, description, listedSizes);
+    if (listedSizes?.length && config) return [{ label: config.label, values: config.options }];
+    if (verified?.options.length) return verified.options;
+    return config ? [{ label: config.label, values: config.options }] : [];
+  }, [verified, title, category, sport, description, listedSizes]);
   const [selected,setSelected]=useState<Record<string,string>>({});
   const [other,setOther]=useState('');
   useEffect(()=>{const complete=options.every(option=>selected[option.label]);onChange(other.trim()?`Outra variante: ${other.trim()}`:complete?options.map(option=>`${option.label}: ${selected[option.label]}`).join('; '):'');},[options,selected,other,onChange]);
