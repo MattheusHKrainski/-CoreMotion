@@ -227,10 +227,3 @@ export async function deleteExternalOfferInDb(id: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-export async function resetExternalOffersInDb(): Promise<ExternalOffer[]> {
-  await ensureExternalOffersTable();
-  await queryDb(`DELETE FROM public.external_offers`);
-  tableBootstrapped = false;
-  await ensureExternalOffersTable();
-  return getExternalOffersFromDb(true);
-}
