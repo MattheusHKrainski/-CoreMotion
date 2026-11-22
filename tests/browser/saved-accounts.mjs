@@ -51,19 +51,19 @@ const checkbox=()=>dialog().getByRole('checkbox');
 const openLogin=async()=>{await page.getByRole('button',{name:'Entrar',exact:true}).first().click();await dialog().waitFor();};
 const saved=async()=>page.evaluate(()=>JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('coremotion_saved_accounts_v1_')))||'[]'));
 const fillLogin=async(email,remember)=>{await dialog().locator('input[type=email]').fill(email);await dialog().locator('input[type=password]').fill('valid-secret');if(remember)await checkbox().check();await dialog().getByRole('button',{name:'Entrar na Plataforma',exact:true}).click();await dialog().waitFor({state:'hidden'});await page.getByRole('button',{name:'Abrir minha conta'}).waitFor();};
-const switchAccounts=async()=>{await page.getByRole('button',{name:'Abrir minha conta'}).click();await page.getByRole('button',{name:'Trocar conta',exact:true}).click();await dialog().waitFor();};
+const switchAccounts=async()=>{await page.getByRole('button',{name:'Abrir minha conta'}).click();await page.locator('main').getByRole('button',{name:'Trocar conta',exact:true}).click();await dialog().waitFor();};
 try{
  await page.goto('http://localhost:3000/');await openLogin();assert.equal(await checkbox().isChecked(),false);
  await fillLogin(users[0].email,true);assert.equal((await saved()).length,1);assert.equal(passwords,1);
- await page.getByTitle('Desconectar / Sair').click();await dialog().waitFor();
+ await page.getByRole('button',{name:'Abrir barra de funções'}).click(); await page.getByTitle('Desconectar / Sair').click();await dialog().waitFor();
  assert.equal(logouts,0);assert.equal((await saved()).length,1);
  await dialog().getByRole('button',{name:'Entrar como Atleta Salvo',exact:true}).click();await dialog().waitFor({state:'hidden'});await page.getByRole('button',{name:'Abrir minha conta'}).waitFor();assert.equal(passwords,1);assert.ok(refreshes>0);
  await switchAccounts();await dialog().getByRole('button',{name:'Fazer login',exact:true}).click();assert.equal(await checkbox().isChecked(),false);
  await fillLogin(users[1].email,true);assert.equal((await saved()).length,2);
  await switchAccounts();
  // Closing the selector leaves the current account and profile page intact.
- await dialog().getByRole('button',{name:'Fechar formulário'}).click();assert.match(await page.getByRole('button',{name:'Abrir minha conta'}).textContent(),/Treinadora Salva/);
- await page.getByRole('button',{name:'Trocar conta',exact:true}).click();
+ await dialog().getByRole('button',{name:'Fechar formulário'}).click();assert.equal(await page.getByLabel('Nome completo').inputValue(), users[1].name);
+ await page.locator('main').getByRole('button',{name:'Trocar conta',exact:true}).click();
  const loginHeight = await dialog().evaluate(element=>element.getBoundingClientRect().height);
  await dialog().getByRole('button',{name:'Remover Atleta Salvo do acesso rápido',exact:true}).click();
  assert.equal(await dialog().evaluate(element=>element.getBoundingClientRect().height),loginHeight);
@@ -74,8 +74,8 @@ try{
  // Forgotten session fails gracefully without changing the current logged-in account.
  deny=true;await dialog().getByRole('button',{name:'Entrar como Treinadora Salva',exact:true}).click();await dialog().getByText(/expirou ou foi revogado/).waitFor();
  assert.equal(await dialog().locator('input[type=email]').inputValue(),users[1].email);
- await dialog().getByRole('button',{name:'Fechar formulário'}).click();assert.match(await page.getByRole('button',{name:'Abrir minha conta'}).textContent(),/Treinadora Salva/);deny=false;
- await page.getByRole('button',{name:'Trocar conta',exact:true}).click();await dialog().getByRole('button',{name:'Fazer login',exact:true}).click();
+ await dialog().getByRole('button',{name:'Fechar formulário'}).click();assert.equal(await page.getByLabel('Nome completo').inputValue(), users[1].name);deny=false;
+ await page.locator('main').getByRole('button',{name:'Trocar conta',exact:true}).click();await dialog().getByRole('button',{name:'Fazer login',exact:true}).click();
  await fillLogin(users[2].email,false);assert.equal((await saved()).length,1);assert.ok(!(await saved()).some(x=>x.id===ids[2]));
  await page.reload();await page.getByRole('button',{name:'Abrir minha conta'}).waitFor();
  await switchAccounts();await dialog().getByRole('button',{name:'Remover Treinadora Salva do acesso rápido',exact:true}).click();await page.getByRole('alertdialog').getByRole('button',{name:'Confirmar remoção',exact:true}).click();

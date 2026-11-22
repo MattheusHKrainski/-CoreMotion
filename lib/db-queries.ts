@@ -91,7 +91,7 @@ export async function upsertOwnProfile(input: {
 
   const rows = await queryDb<DbProfileRow>(
     `INSERT INTO public.profiles (id, email, name, avatar_url, phone, role, city, state, sport_interests, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'São Paulo'), COALESCE($8, 'SP'), $9, NOW(), NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, ''), COALESCE($8, ''), $9, NOW(), NOW())
      ON CONFLICT (id) DO UPDATE SET
        email = EXCLUDED.email,
        name = COALESCE(NULLIF(public.profiles.name, ''), EXCLUDED.name),

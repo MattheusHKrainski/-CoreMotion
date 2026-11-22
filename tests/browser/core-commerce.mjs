@@ -99,7 +99,7 @@ try {
  assert.equal(await page.getByRole('dialog').count(),0);
  await page.getByRole('button',{name:'42',exact:true}).click();
  await page.getByRole('button',{name:'Adicionar ao carrinho',exact:true}).click();
- await page.getByRole('status').filter({hasText:'Adicionado ao carrinho'}).waitFor();
+ await page.getByRole('status').filter({hasText:/adicionado ao carrinho/i}).waitFor();
  await page.getByRole('link',{name:/Carrinho CoreMotion/}).click();
  await page.getByRole('button',{name:'Continuar para endereço'}).click();
  await page.waitForURL('**/entrar?**');

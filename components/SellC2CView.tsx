@@ -1,6 +1,7 @@
 'use client';
 
 import CameraPhoto from '@/components/shared/CameraPhoto';
+import SportPicker from '@/components/shared/SportPicker';
 import { normalizePhone, validPhone } from '@/lib/seller-contact';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -25,6 +26,37 @@ const LISTING_STATUS_LABEL: Record<Product['status'], string> = {
   suspended: 'Suspenso pela moderação',
 };
 
+function parseListingPrice(value: string) {
+  const text = value.trim();
+  if (/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/.test(text)) return Number(text.replaceAll('.', '').replace(',', '.'));
+  return /^\d+(?:[.,]\d{1,2})?$/.test(text) ? Number(text.replace(',', '.')) : NaN;
+}
+
+function ListingEditor({ product }: { product: Product }) {
+  const { updateProduct, addToast } = useCoreMotiom();
+  const [saving, setSaving] = useState(false);
+  return <details className="border-t border-zinc-800 pt-2 text-xs">
+    <summary className="cursor-pointer font-bold text-red-400">Editar preço e contato</summary>
+    <form className="mt-3 grid gap-3" onSubmit={async event => {
+      event.preventDefault();
+      const fields = new FormData(event.currentTarget);
+      const price = parseListingPrice(String(fields.get('price') ?? ''));
+      const phone = String(fields.get('phone') ?? '');
+      if (!Number.isFinite(price) || price <= 0 || !validPhone(phone)) {
+        addToast('Confira o anúncio', 'Informe um preço positivo e um WhatsApp com DDD.', 'error');
+        return;
+      }
+      setSaving(true);
+      try { await updateProduct(product.id, { price, contact_phone: normalizePhone(phone) }); }
+      finally { setSaving(false); }
+    }}>
+      <label>Preço em reais<input required name="price" inputMode="decimal" defaultValue={product.price.toFixed(2).replace('.', ',')} className="block w-full rounded bg-zinc-950 p-2" /></label>
+      <label>WhatsApp público do anúncio<input required name="phone" type="tel" defaultValue={product.contact_phone || ''} className="block w-full rounded bg-zinc-950 p-2" /></label>
+      <button disabled={saving} className="justify-self-start text-red-400">{saving ? 'Salvando…' : 'Salvar anúncio'}</button>
+    </form>
+  </details>;
+}
+
 export default function SellC2CView() {
   const {
     products,
@@ -44,7 +76,7 @@ export default function SellC2CView() {
   const [category, setCategory] = useState('Equipamentos');
   const [sport, setSport] = useState('Corrida');
   const [condition, setCondition] = useState<ProductCondition>('usado_excelente');
-  const [location, setLocation] = useState(user?.city ? `${user.city}, ${user.state || 'SP'}` : 'São Paulo, SP');
+  const [location, setLocation] = useState([user?.city, user?.state].filter(Boolean).join(', '));
   const [imageGallery, setImageGallery] = useState<string[]>([]);
   const [shippingAvailable, setShippingAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -57,8 +89,8 @@ export default function SellC2CView() {
 
   const handlePublishListing = async (e: React.FormEvent) => {
     e.preventDefault();
-    const priceValue = parseFloat(price.replace(',', '.'));
-    const originalValue = originalPrice ? parseFloat(originalPrice.replace(',', '.')) : undefined;
+    const priceValue = parseListingPrice(price);
+    const originalValue = originalPrice ? parseListingPrice(originalPrice) : undefined;
     if (title.trim().length < 3) {
       addToast('Título inválido', 'O título precisa ter pelo menos 3 caracteres.', 'error');
       return;
@@ -89,7 +121,7 @@ export default function SellC2CView() {
         price: priceValue,
         original_price: originalValue,
         category,
-        sport,
+        sport: sport.trim(),
         condition,
         product_type: 'c2c',
         images: imageGallery,
@@ -254,27 +286,7 @@ export default function SellC2CView() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Modalidade *
-                </label>
-                <select
-                  value={sport}
-                  onChange={(e) => setSport(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
-                >
-                  <option value="Jiu-Jitsu">Jiu-Jitsu</option>
-                  <option value="Basquete">Basquete</option>
-                  <option value="Vôlei">Vôlei</option>
-                  <option value="Tênis">Tênis</option>
-                  <option value="Karatê">Karatê</option>
-                  <option value="Futebol">Futebol</option>
-                  <option value="Corrida">Corrida</option>
-                  <option value="Musculação">Musculação</option>
-                  <option value="Natação">Natação</option>
-                  <option value="Ciclismo">Ciclismo</option>
-                </select>
-              </div>
+              <SportPicker value={sport} required onChange={setSport} options={products.map(product => product.sport)} />
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
@@ -437,6 +449,7 @@ export default function SellC2CView() {
                     </div>
                   </div>
 
+                  <ListingEditor key={JSON.stringify([p.id, p.price, p.contact_phone])} product={p} />
                   <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 text-xs">
                     <span className="text-zinc-500 text-[11px]">{p.views} visualizações</span>
                     <button

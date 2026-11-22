@@ -2,32 +2,39 @@
 import { matchesSport } from '@/lib/modalities';
 import { scopedQuickStorage } from '@/lib/quick-access';
 import { coachContactUrl } from '@/lib/coach-contact';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { MapPin, Clock, GraduationCap, MessageCircle } from 'lucide-react';
 import { loadSportsPreview } from '@/fixtures/sports-preview';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import { useCoreMotiom } from '@/lib/store';
 import type { SportsRecord } from '@/lib/sports';
 import UserAvatar from './shared/UserAvatar';
+
+const COACH_PROFILE_SOURCES = [{ table: 'sports_records' }] as const;
 
 export default function CoachProfiles({ sport, search }: { sport: string; search: string }) {
   const { user, setActiveView } = useCoreMotiom();
   const [profiles, setProfiles] = useState<SportsRecord[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    let active = true;
-    const client = getSupabaseClient();
-    if (client) {
-      client.from('sports_records').select('*').eq('kind', 'coach').then(({ data, error }) => {
-        if (active) { setProfiles(data || []); setLoading(false); if (error) setError('Perfis profissionais indisponíveis no momento.'); }
-      });
-    } else {
-      try { setProfiles(loadSportsPreview(scopedQuickStorage(localStorage)).filter(record => record.kind === 'coach')); } catch { setError('Não foi possível ler os perfis locais.'); }
-      setLoading(false);
-    }
-    return () => { active = false; };
-  }, []);
+  const client = getSupabaseClient();
+  const refresh = useCallback(async () => {
+    try {
+      if (client) {
+        const { data, error } = await client.from('sports_records').select('*').eq('kind', 'coach');
+        if (error) throw error;
+        setProfiles(data || []);
+      } else {
+        setProfiles(loadSportsPreview(scopedQuickStorage(localStorage)).filter(record => record.kind === 'coach'));
+      }
+      setError('');
+    } catch {
+      setError('Perfis profissionais indisponíveis no momento.');
+    } finally { setLoading(false); }
+  }, [client]);
+  useEffect(() => { setProfiles([]); setLoading(true); void refresh(); }, [refresh, user?.id]);
+  useRealtimeRefresh(client, COACH_PROFILE_SOURCES, refresh, Boolean(client), 'coach-profiles-' + (user?.id || 'visitor'));
   const visible = profiles.filter(record => matchesSport(record.data.sport, sport) && Object.values(record.data).join(' ').toLowerCase().includes(search.toLowerCase()));
   return <section className="space-y-5 rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900/80 to-zinc-950 p-5 sm:p-7">
     <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-red-400">Conheça quem vai orientar você</p><h2 className="mt-2 text-2xl font-black">Profissionais da comunidade</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">Compare modalidades, formação, metodologia e horários. Converse diretamente com o treinador sobre seus objetivos, valores e local das aulas.</p></div>

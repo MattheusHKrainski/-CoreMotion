@@ -9,6 +9,7 @@ import type { ExternalOffer, Product } from '@/lib/types';
 import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
+import CatalogTeams, { type CatalogTeam } from './CatalogTeams';
 import {
   ArrowUpDown,
   Check,
@@ -82,6 +83,7 @@ function sortOffers(items: ExternalOffer[], sortBy: SortBy): ExternalOffer[] {
 export default function MarketplaceView({ onSelectProduct, onSelectOffer }: MarketplaceViewProps) {
   const { user, products, activeOffers, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [selectedTab, setSelectedTab] = useState<CatalogTab>('all');
+  const [selectedTeam, setSelectedTeam] = useState<CatalogTeam | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSport, setSelectedSport] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
@@ -89,9 +91,11 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const [visibleOffers, setVisibleOffers] = useState(PAGE_SIZE);
   const normalizedQuery = normalize(searchQuery.trim());
   const filteredOffers = useMemo(() => {
     const filtered = activeOffers.filter((offer) => {
+      if (selectedTeam && offer.team_id !== selectedTeam.id) return false;
       const searchText = normalize(`${offer.title} ${offer.description} ${offer.store_name} ${offer.category} ${offer.sport} ${offer.coupon_code || ''}`);
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
       if (!matchesCategory(offer.category, selectedCategory)) return false;
@@ -99,10 +103,11 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       return true;
     });
     return sortOffers(filtered, sortBy);
-  }, [activeOffers, normalizedQuery, selectedCategory, selectedSport, sortBy]);
+  }, [activeOffers, normalizedQuery, selectedCategory, selectedSport, sortBy, selectedTeam]);
 
   const filteredC2CProducts = useMemo(() => {
     const filtered = products.filter((product) => {
+      if (selectedTeam) return false;
       if (product.product_type !== 'c2c' || product.status !== 'active') return false;
       const searchText = normalize(`${product.title} ${product.description} ${product.brand || ''} ${product.seller_name} ${product.category} ${product.sport}`);
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
@@ -112,15 +117,16 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       return true;
     });
     return sortProducts(filtered, sortBy);
-  }, [products, normalizedQuery, selectedCategory, selectedSport, selectedCondition, sortBy]);
+  }, [products, normalizedQuery, selectedCategory, selectedSport, selectedCondition, sortBy, selectedTeam]);
 
-  useEffect(() => setVisibleCount(PAGE_SIZE), [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); setVisibleOffers(PAGE_SIZE); }, [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy, selectedTeam]);
 
   const visibleC2CProducts = filteredC2CProducts.slice(0, visibleCount);
   const hasOffers = selectedTab !== 'c2c';
   const hasC2C = selectedTab !== 'offers';
   const displayedCount = (hasOffers ? filteredOffers.length : 0) + (hasC2C ? filteredC2CProducts.length : 0);
   const activeFiltersCount = [
+    selectedTeam !== null,
     selectedCategory !== 'all',
     selectedSport !== 'all',
     selectedCondition !== 'all' && selectedTab !== 'offers',
@@ -132,6 +138,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
     setSelectedSport('all');
     setSelectedCondition('all');
     setSearchQuery('');
+    setSelectedTeam(null);
   };
 
   const handleSellClick = () => {
@@ -141,7 +148,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
   const categoryCount = (category: string) =>
     activeOffers.filter((offer) => matchesCategory(offer.category, category)).length +
-    products.filter((product) => product.product_type === 'c2c' && matchesCategory(product.category, category)).length;
+    products.filter((product) => product.product_type === 'c2c' && product.status === 'active' && matchesCategory(product.category, category)).length;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-3 py-6 sm:px-6 lg:px-8">
@@ -165,6 +172,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
           Vender meu equipamento
         </button>
       </header>
+
+      <CatalogTeams offers={activeOffers} selected={selectedTeam} onSelect={team => { setSelectedTeam(team); if (team) {setSearchQuery(''); setSelectedSport('all'); setSelectedCategory('all'); setSelectedTab('offers');} }} />
 
       <label className="block text-sm font-semibold text-zinc-300">Pesquisar no CoreShop
         <div className="relative mt-2"><Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500" /><input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar produtos ou esportes..." className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm text-white focus:border-red-500 focus:outline-none" /></div>
@@ -303,7 +312,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
                       <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Promoções reais selecionadas em grandes lojas esportivas, com redirecionamento direto e descontos ativos.</p>
+                      <p className="mt-1 text-[11px] text-zinc-500">Consulte fotos, tamanhos e preços de referência de cada produto.</p>
                     </div>
                     {isStaffRole(user?.role) && (
                       <button
@@ -317,8 +326,15 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                     )}
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
-                    {filteredOffers.map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
+                    {filteredOffers.slice(0, visibleOffers).map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
                   </div>
+                  {visibleOffers < filteredOffers.length && (
+                    <div className="flex justify-center pt-4">
+                      <button type="button" onClick={() => setVisibleOffers(count => count + PAGE_SIZE)} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-red-500">
+                        Carregar mais produtos ({Math.min(PAGE_SIZE, filteredOffers.length - visibleOffers)})
+                      </button>
+                    </div>
+                  )}
                 </section>
               )}
             </>

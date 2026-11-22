@@ -2,15 +2,15 @@
 export type SaleCartLine = { offerId: string; quantity: number; variant: string };
 export type ShippingAddress = { recipient: string; phone: string; postalCode: string; street: string; number: string; complement: string; district: string; city: string; state: string };
 export type OrderPreparationStatus = 'preparation' | 'reviewing' | 'cancelled';
-export interface SaleOrder { id: string; owner: string; request_key: string; status: OrderPreparationStatus; payment_status: 'disabled'; shipping_status: 'not_quoted'; subtotal_cents: number; shipping_cents: null; total_cents: null; address: ShippingAddress; items: { offerId: string; title: string; supplier: string; quantity: number; variant: string; unitPriceCents: number }[]; note: string; created_at: string; updated_at: string }
-export const PREPARATION_STATUS = { preparation: 'Em preparação — compra não concluída', reviewing: 'Em análise pela equipe — compra não concluída', cancelled: 'Preparação cancelada' } as const;
+export interface SaleOrder { id: string; owner: string; request_key: string; status: OrderPreparationStatus; payment_status: 'disabled' | 'test_approved' | 'test_cancelled'; shipping_status: 'not_quoted'; subtotal_cents: number; shipping_cents: null; total_cents: null; address: ShippingAddress; items: { offerId: string; title: string; supplier: string; quantity: number; variant: string; unitPriceCents: number }[]; note: string; created_at: string; updated_at: string }
+export const PREPARATION_STATUS = { preparation: 'Aguardando confirmação', reviewing: 'Em acompanhamento', cancelled: 'Pedido cancelado' } as const;
 export const EMPTY_ADDRESS: ShippingAddress = { recipient: '', phone: '', postalCode: '', street: '', number: '', complement: '', district: '', city: '', state: '' };
 export function validateCart(value: unknown): SaleCartLine[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > 30) throw new Error('O carrinho deve conter de 1 a 30 itens.');
   const keys = new Set<string>();
   return value.map(line => {
     if (!line || typeof line.offerId !== 'string' || !line.offerId || line.offerId.length > 96 || !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10 || typeof line.variant !== 'string' || line.variant.length > 120) throw new Error('Item ou quantidade inválida.');
-    const key = JSON.stringify([line.offerId, line.variant]); if (keys.has(key)) throw new Error('Item duplicado.'); keys.add(key);
+    const key = JSON.stringify([line.offerId, line.variant.trim()]); if (keys.has(key)) throw new Error('Item duplicado.'); keys.add(key);
     return { offerId: line.offerId, quantity: line.quantity, variant: line.variant.trim() };
   });
 }

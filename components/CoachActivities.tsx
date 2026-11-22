@@ -4,8 +4,10 @@ import { useCoreMotiom } from '@/lib/store';
 import { canRecruit } from '@/lib/sports';
 import { scopedQuickStorage } from '@/lib/quick-access';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import { ACTIVITY_TYPES, ACTIVITY_LIMITS, validateCoachActivity, canManageCoachActivity, matchesCoachActivity, type CoachActivity, type CoachActivityData } from '@/lib/coach-activities';
 import SportPicker from '@/components/shared/SportPicker';
+const ACTIVITY_LIVE_SOURCES = [{ table: 'coach_activities' }] as const;
 const KEY = 'coremotion_coach_activities_v1';
 const blank: CoachActivityData = { title:'', type:'class', organizer:'', sport:'', city:'', schedule:'', contact:'', description:'' };
 const input = 'block w-full mt-2 rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-white';
@@ -46,6 +48,7 @@ export default function CoachActivities({ sport, search }: { sport: string; sear
   const invalidate=()=>{version.current++;};
   return ()=>{invalidate();window.removeEventListener('focus',focus);};
  },[owner,refresh]);
+ useRealtimeRefresh(client, ACTIVITY_LIVE_SOURCES, refresh, Boolean(client), 'coach-activities-' + (owner || 'visitor'));
  function open(activity?: CoachActivity){
   if(!canRecruit(user) || (activity && !canManageCoachActivity(user,activity)))return;
   setEditing(activity||null);setError('');

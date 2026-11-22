@@ -9,8 +9,13 @@ export async function prepareSale(lines: SaleCartLine[], address: ShippingAddres
 }
 export async function listSaleOrders(): Promise<SaleOrder[]> { const { data, error } = await client().from('core_sale_orders').select('*').order('created_at', { ascending: false }).limit(100); if (error) throw new Error('Não foi possível carregar os pedidos CoreMotion.'); return data || []; }
 export async function reviewSale(id: string, status: 'reviewing' | 'cancelled', note = ''): Promise<void> { const { error } = await client().rpc('review_core_sale', { p_id: id, p_status: status, p_note: note }); if (error) throw new Error('Não foi possível atualizar o pedido.'); }
+/** Only the signed-in order owner can approve a presentation-mode payment. */
+export async function simulateSalePayment(orderId: string): Promise<void> {
+  const { data, error } = await client().rpc('simulate_core_sale_payment', { p_id: orderId });
+  if (error || data !== 'test_approved') throw new Error(error?.message || 'Não foi possível confirmar a transação de demonstração.');
+}
 export interface SupplierSetting { name: string; agreement_status: 'unconfirmed' | 'negotiating' | 'approved'; operation_notes: string }
 export async function listSuppliers(): Promise<SupplierSetting[]> { const { data, error } = await client().from('core_supplier_settings').select('*').order('name'); if (error) throw new Error('Não foi possível carregar fornecedores.'); return data || []; }
 export async function saveSupplier(setting: SupplierSetting) { const { data, error } = await client().from('core_supplier_settings').update({ agreement_status: setting.agreement_status, operation_notes: setting.operation_notes }).eq('name', setting.name).select('name'); if (error || !data?.length) throw new Error('Não foi possível salvar o fornecedor.'); }
-export interface SaleEvent { id: string; order_id: string; status: 'reviewing' | 'cancelled'; note: string; created_at: string }
+export interface SaleEvent { id: string; order_id: string; status: 'reviewing' | 'cancelled' | 'test_approved'; note: string; created_at: string }
 export async function saleEvents(orderId: string): Promise<SaleEvent[]> { const { data,error }=await client().from('core_sale_events').select('id,order_id,status,note,created_at').eq('order_id',orderId).order('created_at');if(error)throw new Error('Não foi possível carregar o histórico.');return data||[]; }

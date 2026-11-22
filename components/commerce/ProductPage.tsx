@@ -3,16 +3,21 @@ import ProductOptions from './ProductOptions';
 import { productPresentation } from '@/lib/product-presentation';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Heart, ShoppingBag, Truck } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Heart, Image as ImageIcon, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { useCommerce } from '@/lib/commerce-store';
-import { money, retailPriceCents } from '@/lib/commerce';
+import { money, retailPriceCents, productPath } from '@/lib/commerce';
 import ProductImage from '@/components/shared/ProductImage';
 import { sellerContactUrl } from '@/lib/seller-contact';
 import AuthModal from '@/components/auth/AuthModal';
 import ReportButton from '@/components/shared/ReportButton';
 import { getConditionMeta } from '@/components/marketplace/ProductCard';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { getProductVariantConfig } from '@/lib/product-variants';
+import type { ExternalOffer, Product } from '@/lib/types';
+
+type GalleryItem = ExternalOffer | Product;
+const normalize = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 export default function ProductPage({ kind, id }: { kind: string; id: string }) {
   const { products, activeOffers, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
@@ -45,6 +50,16 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
         </section>
       </div>
     </main>
+
+    {zoom && gallery.length>0 && <div role="dialog" aria-modal="true" aria-label="Galeria ampliada" className="fixed inset-0 z-[100] flex flex-col bg-black/95 px-4 py-4 text-white">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between"><span className="text-sm font-semibold">{index+1} / {gallery.length}</span><button type="button" aria-label="Fechar galeria" onClick={()=>setZoom(false)} className="rounded-full border border-zinc-600 p-3 hover:bg-zinc-800"><X className="h-5 w-5"/></button></div>
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-center gap-2 py-6">
+        <button type="button" aria-label="Foto anterior" onClick={previous} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronLeft/></button>
+        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-white"><ProductImage src={selectedImage} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
+        <button type="button" aria-label="Próxima foto" onClick={next} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronRight/></button>
+      </div>
+      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-white '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} alt="" sizes="56px"/></button>)}</div>
+    </div>}
     <AuthModal />
   </div>;
 }

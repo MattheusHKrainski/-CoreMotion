@@ -243,9 +243,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const likesInFlight = useRef(new Set<string>());
   const likesReady = useRef(false);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(DEMO_MODE ? INITIAL_COMMUNITY_POSTS : []);
-  const [coaches] = useState<Coach[]>(INITIAL_COACHES);
+  const [coaches, setCoaches] = useState<Coach[]>(isSupabaseConfigured ? [] : INITIAL_COACHES);
   const [athletes] = useState<Athlete[]>(INITIAL_ATHLETES);
-  const [news] = useState<NewsArticle[]>(DEMO_MODE ? INITIAL_NEWS : []);
+  const [news, setNews] = useState<NewsArticle[]>(isSupabaseConfigured ? [] : (DEMO_MODE ? INITIAL_NEWS : []));
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSupabaseLive, setIsSupabaseLive] = useState(false);
 
@@ -418,33 +418,139 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     };
   }, [addToast, resetPrivateState, restoreAccountLists]);
 
-  // Atualizações em tempo real para dados compartilhados. O RLS continua controlando as linhas visíveis.
+  // A publicação Postgres só sinaliza uma mudança: as consultas abaixo reaplicam RLS.
+  // Um canal por sessão mantém duas pessoas/dispositivos sincronizados sem recarregar a página.
+  const realtimeUserId = user?.id;
+  const realtimeStaff = isStaffRole(user?.role);
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const client = getSupabase();
     if (!client) return;
     let disposed = false;
-    const refreshSharedData = async (table: 'products' | 'external_offers' | 'community_posts') => {
+    const generations: Record<string, number> = {};
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
+    type LiveTable = 'products' | 'external_offers' | 'community_posts' | 'orders' | 'profiles' | 'coaches' | 'news';
+
+    const refreshSharedData = async (table: LiveTable) => {
+      const version = (generations[table] || 0) + 1;
+      generations[table] = version;
       try {
         if (table === 'products') {
-          const rows = await ProductService.getProducts();
-          if (!disposed) setProducts(rows);
+          const rows = realtimeStaff
+            ? await ProductService.getProducts({ status: 'all' })
+            : await ProductService.getProducts();
+          // Preserve own paused listings while refreshing the public marketplace.
+          const own = !realtimeStaff && realtimeUserId
+            ? await ProductService.getProducts({ seller_id: realtimeUserId, status: 'all' })
+            : [];
+          if (!disposed && generations[table] === version) setProducts(mergeProductsById(rows, own));
         } else if (table === 'external_offers') {
-          const { data, error } = await client.from('external_offers').select('*').eq('is_active', true).order('created_at', { ascending: false });
-          if (!error && !disposed) setOffers(data || []);
-        } else {
+          const query = client.from('external_offers').select('*');
+          const { data, error } = await (realtimeStaff ? query : query.eq('is_active', true))
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          if (!disposed && generations[table] === version) setOffers(data || []);
+        } else if (table === 'community_posts') {
           const rows = await CommunityService.getPosts();
-          if (!disposed) setCommunityPosts(rows);
+          if (!disposed && generations[table] === version) setCommunityPosts(rows);
+        } else if (table === 'coaches') {
+          const { data, error } = await client.from('coaches').select('*').order('created_at', { ascending: false });
+          if (error) throw error;
+          if (!disposed && generations[table] === version) setCoaches((data || []).map(row => ({
+            ...row,
+            id: String(row.id),
+            rating: Number(row.rating) || 0,
+            hourly_rate: Number(row.hourly_rate) || 0,
+          } as Coach)));
+        } else if (table === 'news') {
+          const { data, error } = await client.from('news').select('*').order('published_at', { ascending: false });
+          if (error) throw error;
+          if (!disposed && generations[table] === version) setNews((data || []).map(row => ({
+            id: String(row.id),
+            title: row.title,
+            summary: row.excerpt || '',
+            content: row.body || '',
+            category: row.sport || 'Esportes',
+            image_url: row.image || '',
+            published_at: row.published_at,
+            read_time: Math.max(1, Math.ceil((row.body || '').split(/\s+/).length / 200)) + ' min',
+            author: row.source || 'CoreMotion',
+          })));
+        } else if (table === 'orders' && realtimeUserId) {
+          const rows = realtimeStaff
+            ? await OrderService.getAllOrdersAdmin()
+            : await OrderService.getMyOrders(realtimeUserId);
+          if (!disposed && generations[table] === version && userRef.current?.id === realtimeUserId) setOrders(rows);
+        } else if (table === 'profiles' && realtimeUserId) {
+          const { data, error } = await client.from('profiles').select('*').eq('id', realtimeUserId).maybeSingle();
+          if (error) throw error;
+          if (!disposed && generations[table] === version && data && userRef.current?.id === realtimeUserId) {
+            const updated = { ...data, supabase_id: data.id } as UserProfile;
+            userRef.current = updated;
+            setUser(updated);
+          }
         }
-      } catch (error) { console.warn('[CoreMotion Realtime] Falha ao atualizar', table, error); }
+      } catch (error) {
+        if (!disposed) console.warn('[CoreMotion Realtime] Falha ao atualizar', table, error);
+      }
     };
-    const channel = client.channel('coremotion-live-data')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => { void refreshSharedData('products'); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'external_offers' }, () => { void refreshSharedData('external_offers'); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => { void refreshSharedData('community_posts'); })
-      .subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[CoreMotion Realtime] Canal indisponível:', status); });
-    return () => { disposed = true; void client.removeChannel(channel); };
-  }, []);
+    const schedule = (table: LiveTable) => {
+      if (disposed || document.visibilityState === 'hidden') return;
+      const prior = timers.get(table);
+      if (prior !== undefined) clearTimeout(prior);
+      timers.set(table, setTimeout(() => {
+        timers.delete(table);
+        void refreshSharedData(table);
+      }, 140));
+    };
+    const resync = () => {
+      if (document.visibilityState === 'hidden') return;
+      schedule('products');
+      schedule('external_offers');
+      schedule('community_posts');
+      schedule('coaches');
+      schedule('news');
+      if (realtimeUserId) { schedule('profiles'); schedule('orders'); }
+    };
+    const channel = client.channel('coremotion-live-data-' + (realtimeUserId || 'visitor'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => schedule('products'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'external_offers' }, () => schedule('external_offers'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => schedule('community_posts'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'coaches' }, () => schedule('coaches'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'news' }, () => schedule('news'))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'realtime_invalidations' }, payload => {
+        const topic = String((payload.new as Record<string, unknown>).topic || '');
+        if (topic === 'products' || topic === 'external_offers' || topic === 'community_posts') schedule(topic);
+      });
+    if (realtimeUserId) {
+      channel
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: 'id=eq.' + realtimeUserId }, () => schedule('profiles'))
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'orders',
+          ...(realtimeStaff ? {} : { filter: 'user_id=eq.' + realtimeUserId }),
+        }, () => schedule('orders'));
+    }
+    channel.subscribe(status => {
+      if (status === 'SUBSCRIBED') resync(); // important after reconnect or missed initial events
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[CoreMotion Realtime] Reconectando:', status);
+      }
+    });
+    const onVisibility = () => { if (document.visibilityState === 'visible') resync(); };
+    window.addEventListener('focus', resync);
+    window.addEventListener('online', resync);
+    document.addEventListener('visibilitychange', onVisibility);
+    const fallback = window.setInterval(resync, 60000);
+    return () => {
+      disposed = true;
+      timers.forEach(timer => clearTimeout(timer));
+      clearInterval(fallback);
+      window.removeEventListener('focus', resync);
+      window.removeEventListener('online', resync);
+      document.removeEventListener('visibilitychange', onVisibility);
+      void client.removeChannel(channel);
+    };
+  }, [realtimeUserId, realtimeStaff]);
 
   // Dados privados da conta logada: staff vê todos os pedidos/contas/anúncios; os demais, só os seus.
   const userId = user?.id;
@@ -1070,7 +1176,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       throw err;
     }
 
-    setProducts((prev) => [newProduct, ...prev]);
+    setProducts((prev) => [newProduct, ...prev.filter((entry) => entry.id !== newProduct.id)]);
     addToast('Anúncio Publicado', `O produto "${newProduct.title}" está disponível no Marketplace.`, 'success');
     return newProduct;
   };
@@ -1154,7 +1260,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    setCommunityPosts((prev) => [newPost, ...prev]);
+    setCommunityPosts((prev) => [newPost, ...prev.filter((entry) => entry.id !== newPost.id)]);
     addToast('Publicação Criada', 'Sua postagem está visível para a comunidade esportiva.', 'success');
     return true;
   };
@@ -1163,13 +1269,40 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     let active = true;
     likesReady.current = false;
     setLikedCommunityPosts([]);
-    if (!user?.id) return;
+    const id = user?.id;
+    if (!id) return;
     if (isSupabaseConfigured) {
-      CommunityService.getMyLikes().then(ids => { if (active) { setLikedCommunityPosts(ids); likesReady.current = true; } }).catch(() => { if (active) addToast('Curtidas indisponíveis', 'Não foi possível carregar suas curtidas. Tente recarregar a página.', 'error'); });
-    } else {
-      try { const ids = JSON.parse(localStorage.getItem(quickStorageKey(`community_likes_${user.id}`)) || '[]'); setLikedCommunityPosts(Array.isArray(ids) ? ids : []); } catch { setLikedCommunityPosts([]); }
-      likesReady.current = true;
+      const client = getSupabase();
+      const syncLikes = async () => {
+        try {
+          const ids = await CommunityService.getMyLikes();
+          if (active && likesInFlight.current.size === 0) setLikedCommunityPosts(ids);
+          if (active) likesReady.current = true;
+        } catch {
+          if (active) addToast('Curtidas indisponíveis', 'Não foi possível carregar suas curtidas. Tente recarregar a página.', 'error');
+        }
+      };
+      void syncLikes();
+      const channel = client?.channel('my-community-likes-' + id)
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'community_likes', filter: 'user_id=eq.' + id,
+        }, () => { void syncLikes(); })
+        .subscribe(status => { if (status === 'SUBSCRIBED') void syncLikes(); });
+      const interval = window.setInterval(() => { if (document.visibilityState === 'visible') void syncLikes(); }, 60000);
+      const onFocus = () => { void syncLikes(); };
+      window.addEventListener('focus', onFocus);
+      return () => {
+        active = false;
+        clearInterval(interval);
+        window.removeEventListener('focus', onFocus);
+        if (client && channel) void client.removeChannel(channel);
+      };
     }
+    try {
+      const ids = JSON.parse(localStorage.getItem(quickStorageKey('community_likes_' + id)) || '[]');
+      setLikedCommunityPosts(Array.isArray(ids) ? ids : []);
+    } catch { setLikedCommunityPosts([]); }
+    likesReady.current = true;
     return () => { active = false; };
   }, [user?.id, addToast]);
 
@@ -1270,6 +1403,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       price: Number(input.price),
       original_price: input.original_price ? Number(input.original_price) : undefined,
       image_url: input.image_url.trim(),
+      image_urls: input.image_urls?.length ? input.image_urls : [input.image_url.trim()],
+      team_id: input.team_id || null,
       source_url: input.source_url.trim(),
       coupon_code: input.coupon_code?.trim() || undefined,
       is_active: input.is_active ?? true,
@@ -1314,6 +1449,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
               ? { original_price: input.original_price ? Number(input.original_price) : undefined }
               : {}),
             ...(input.image_url !== undefined ? { image_url: input.image_url.trim() } : {}),
+            ...(input.image_urls !== undefined ? { image_urls: input.image_urls } : {}),
+            ...(input.team_id !== undefined ? { team_id: input.team_id } : {}),
             ...(input.source_url !== undefined ? { source_url: input.source_url.trim() } : {}),
             ...(input.coupon_code !== undefined
               ? { coupon_code: input.coupon_code ? input.coupon_code.trim() : undefined }
