@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowUp, Search, Flame, MessageCircle, Plus, Send, Share2, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
@@ -8,6 +8,8 @@ import type { CommunityPost } from '@/lib/types';
 import { copyText } from '@/lib/clipboard';
 import { validImageUrl } from '@/lib/media';
 import { getFollowing, setFollowing } from '@/services/communityFollows';
+import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import ImageEditor from './shared/ImageEditor';
 import UserAvatar from './shared/UserAvatar';
 import ProductImage from './shared/ProductImage';
@@ -17,6 +19,8 @@ const CATEGORIES: { value: CommunityPost['category']; label: string }[] = [
   { value: 'treino', label: 'Treinos e técnica' }, { value: 'equipamento', label: 'Equipamentos' },
   { value: 'evento', label: 'Eventos' }, { value: 'duvida', label: 'Dúvidas' }, { value: 'conquista', label: 'Conquistas' },
 ];
+
+const FOLLOW_LIVE_SOURCES = [{ table: 'community_follows' }] as const;
 
 export default function CommunityView() {
   const { user, communityPosts, createCommunityPost, likedCommunityPosts, likeCommunityPost, addCommunityComment, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
@@ -39,11 +43,23 @@ export default function CommunityView() {
   const [replyBusy, setReplyBusy] = useState(false);
   const composer = useRef<HTMLDialogElement>(null);
   const userId = user?.id;
-  useEffect(() => {
-    let active = true; setFollowingIds([]); setFollowError('');
-    if (userId) getFollowing().then(ids => { if (active) setFollowingIds(ids); }).catch(error => { if (active) setFollowError(error.message); });
-    return () => { active = false; };
+  const client = getSupabaseClient();
+  const refreshFollowing = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const ids = await getFollowing();
+      setFollowingIds(ids);
+      setFollowError('');
+    } catch (error) {
+      setFollowError(error instanceof Error ? error.message : 'Não foi possível atualizar os perfis seguidos.');
+    }
   }, [userId]);
+  useEffect(() => {
+    setFollowingIds([]);
+    setFollowError('');
+    if (userId) void refreshFollowing();
+  }, [userId, refreshFollowing]);
+  useRealtimeRefresh(client, FOLLOW_LIVE_SOURCES, refreshFollowing, Boolean(userId), 'community-follows-' + (userId || 'visitor'));
   useEffect(() => {
     if (!composing) return;
     const dialog = composer.current; dialog?.showModal();
