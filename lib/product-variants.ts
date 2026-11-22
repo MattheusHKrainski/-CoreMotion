@@ -17,7 +17,7 @@ function normalize(value: string): string {
 export function getProductVariantConfig(title: string, category: string, sport: string): ProductVariantConfig | null {
   const text = normalize(`${title} ${category} ${sport}`);
   const normalizedCategory = normalize(category);
-  if (/\b(kimono|gi)\b/.test(text) || /artes marciais|jiu.?jitsu|karate/.test(text)) {
+  if (/\b(kimono|gi)\b/.test(text)) {
     return { label: 'Tamanho do kimono', options: GI_SIZES, note: 'Tamanhos de referência. A disponibilidade precisa ser confirmada com o fornecedor.' };
   }
   if (/\b(chuteira|tenis|sapatilha|boots|shoe)\b/.test(text) || normalizedCategory.includes('calcado')) {
