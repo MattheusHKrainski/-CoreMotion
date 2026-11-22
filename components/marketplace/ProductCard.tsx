@@ -3,6 +3,7 @@
 import { productPath } from '@/lib/commerce';
 import React from 'react';
 import type { Product } from '@/lib/types';
+import ProductImage from '@/components/shared/ProductImage';
 import { useCoreMotiom } from '@/lib/store';
 import { ArrowRight, Clock, Heart, MapPin, ShieldCheck, ShoppingBag, Sparkles, User } from 'lucide-react';
 
@@ -103,15 +104,8 @@ export default function ProductCard({ product }: ProductCardProps) {
         className="relative aspect-[5/4] w-full overflow-hidden bg-zinc-950/80 text-left"
         aria-label={`Ver anúncio de atleta: ${product.title}`}
       >
-        <img
-          src={product.images[0] || '/products/image-unavailable.svg'}
-          alt={product.title}
-          onError={(event) => {
-            event.currentTarget.onerror = null;
-            event.currentTarget.src = '/products/image-unavailable.svg';
-          }}
-          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-        />
+        <ProductImage src={product.images[0] || ''} fallbackSrcs={product.images.slice(1)} alt={product.title}
+          sizes="(max-width: 640px) 100vw, 40vw" fit="cover" />
 
         {/* Origem clara: vendido por atleta pessoa física */}
         <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-zinc-700/90 bg-zinc-950/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-100 backdrop-blur">

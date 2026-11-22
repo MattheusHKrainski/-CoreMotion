@@ -47,3 +47,9 @@ it('usa apenas a grade capturada para o modelo e distingue esporte de calçado',
   assert.equal(getProductVariantConfig('Raquete de tênis', 'Equipamentos', 'Tênis'), null);
   assert.equal(getProductVariantConfig('Camiseta', 'Vestuário', 'Treinamento', '', ['M'])?.fixedValue, 'M');
 });
+
+
+it('does not duplicate or keep blank manufacturer SKU sizes', () => {
+  const config = getProductVariantConfig('Tênis Fila', 'Calçados', 'Corrida', '', ['40', ' 40 ', '', '41']);
+  assert.deepEqual(config?.options, ['40', '41']);
+});

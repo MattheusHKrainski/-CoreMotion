@@ -41,17 +41,20 @@ test('Verified league directory has 44 clubs with publicly readable RLS', () => 
 
 test('Real product photo gallery and size selector do not invent alternate product images', () => {
   const page=read('components/commerce/ProductPage.tsx');
-  assert.match(page,/image_urls/);
+  assert.match(page,/productGallery\(item, presentation\?\.images\)/);
+  assert.match(read('lib/product-gallery.ts'),/image_urls/);
   assert.match(page,/gallery\.slice\(0,4\)/);
   assert.match(page,/Ver galeria completa/);
   assert.match(page,/role="dialog" aria-modal="true"/);
   const selectors = read('components/commerce/ProductOptions.tsx');
   assert.match(page, /<ProductOptions/);
-  assert.match(selectors, /getProductVariantConfig\(title, category, sport, description, listedSizes\)/);
-  assert.match(selectors, /values: config.options/);
+  assert.match(selectors, /getProductVariantConfig\(title, category, sport, description, \[\]\)/);
+  assert.match(selectors, /values: sizes/);
+  assert.match(selectors, /onChange\(selected\.Tamanho/);
   assert.match(selectors, /option.values.map/);
   // Freight is not integrated: a CEP lookup is not a real shipping quote.
-  assert.match(page, /Frete e prazo indisponíveis/);
+  assert.match(page, /Consultar destino de entrega/);
+  assert.match(page, /checkCep/);
   assert.doesNotMatch(page,/Tamanhos anunciados para a opção consultada/);
   assert.doesNotMatch(read('lib/product-variants.ts'),/Tamanhos anunciados para a opção consultada/);
   const manager=read('components/admin/AdminOffersManager.tsx');

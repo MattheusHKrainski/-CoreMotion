@@ -83,8 +83,8 @@ export default function ExternalOfferModal({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-white">
-<ProductImage src={offer.image_url} alt={offer.title} sizes="(max-width: 640px) 100vw, 512px" />
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-[#11141b]">
+<ProductImage src={offer.image_url} fallbackSrcs={offer.image_urls?.filter(url => url !== offer.image_url)} alt={offer.title} sizes="(max-width: 640px) 100vw, 512px" />
         </div>
 
         <div className="space-y-2">
