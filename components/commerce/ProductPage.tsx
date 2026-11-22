@@ -12,7 +12,9 @@ import AuthModal from '@/components/auth/AuthModal';
 import ReportButton from '@/components/shared/ReportButton';
 import { getConditionMeta } from '@/components/marketplace/ProductCard';
 import { getSupabaseClient } from '@/services/supabaseClient';
-import { getProductVariantConfig } from '@/lib/product-variants';
+import ProductOptions from './ProductOptions';
+import { productGallery } from '@/lib/product-gallery';
+import { productPresentation } from '@/lib/product-presentation';
 import type { ExternalOffer, Product } from '@/lib/types';
 
 type GalleryItem = ExternalOffer | Product;
@@ -54,21 +56,16 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   const available = !!item && (core
     ? ('is_active' in item && item.is_active !== false)
     : ('product_type' in item && item.product_type === 'c2c' && item.status === 'active'));
-  const rawImages = item ? ('image_urls' in item && item.image_urls?.length ? item.image_urls : 'images' in item && item.images?.length ? item.images : ['image_url' in item ? item.image_url : '']) : [];
-  const gallery = [...new Set(rawImages.filter((src): src is string => typeof src === 'string' && src.length>0))].slice(0,12);
-  const selectedImage = gallery[Math.min(index, gallery.length-1)] || '';
   const coreOffer = core && item && 'source_url' in item ? item as ExternalOffer : null;
   const athlete = !core && item && 'product_type' in item ? item as Product : null;
-  // Only list a size when the supplier provided a SKU; do not fabricate clothing/shoe numbers.
-  // Ball sizes remain a separate product-specific variant where the model identifies them.
-  const verifiedSizes = coreOffer?.variant_options || [];
-  const missingVerifiedSizes = Boolean(coreOffer && !verifiedSizes.length
-    && /calçados|calcados|vestuário|vestuario|roupas/i.test(coreOffer.category));
-  const config = coreOffer && (verifiedSizes.length || /^bola\b/i.test(coreOffer.title))
-    ? getProductVariantConfig(coreOffer.title, coreOffer.category, coreOffer.sport, coreOffer.description, verifiedSizes)
-    : null;
-  const selectedVariant = config?.fixedValue ?? variant;
-  const variantRequired = Boolean(missingVerifiedSizes || (config && !config.fixedValue));
+  const presentation = coreOffer ? productPresentation(id, coreOffer.source_url) : undefined;
+  const gallery = item ? productGallery(item, presentation?.images).slice(0, 12) : [];
+  const selectedImage = gallery[Math.min(index, gallery.length - 1)] || '';
+  const needsVariant = Boolean(coreOffer && /^(Calçados|Vestuário|Roupas|Lutas|Artes Marciais)$/.test(coreOffer.category));
+  const missingVerifiedSizes = Boolean(needsVariant && !(coreOffer?.variant_options?.length)
+    && !presentation?.options.some(option => option.label === 'Tamanho' && option.values.length > 0));
+  const selectedVariant = variant;
+  const variantRequired = Boolean(needsVariant && !variant.trim());
   const otherColors = coreOffer ? activeOffers.filter(other =>
     other.id !== coreOffer.id && other.store_name === coreOffer.store_name &&
     normalize(other.title) === normalize(coreOffer.title) && other.is_active !== false &&
@@ -159,9 +156,10 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
             <p className="text-sm font-semibold">Outras versões e cores</p>
             <div className="flex flex-wrap gap-2">{otherColors.map((other,i)=><Link href={productPath('core',other.id)} title={other.title} key={other.id} aria-label={'Ver versão '+(i+2)} className="relative block h-14 w-14 overflow-hidden rounded-lg border-2 border-zinc-700 bg-zinc-950 hover:border-red-500"><ProductImage src={other.image_url} alt={other.title} sizes="56px"/></Link>)}</div>
           </div>}
-          {coreOffer && config && <div className="space-y-3 border-t border-zinc-800 pt-4">
-            <p className="text-sm font-semibold">{config.label}{selectedVariant&&<span className="ml-2 font-normal text-zinc-500">{selectedVariant}</span>}</p>
-            <div role="group" aria-label={config.label} className="flex flex-wrap gap-2">{config.options.map(option=><button key={option} type="button" aria-pressed={selectedVariant===option} onClick={()=>setVariant(option)} className={'min-w-11 rounded-lg border px-3 py-2.5 text-xs font-bold transition '+(selectedVariant===option?'border-red-600 bg-red-600 text-white':'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-500')}>{option}</button>)}</div>
+          {coreOffer && <div className="border-t border-zinc-800 pt-4">
+            <ProductOptions key={id} id={id} source={coreOffer.source_url}
+              category={coreOffer.category} title={coreOffer.title} sport={coreOffer.sport}
+              description={coreOffer.description} listedSizes={coreOffer.variant_options} onChange={setVariant} />
           </div>}
           {missingVerifiedSizes && coreOffer && <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-zinc-300">
             A numeração deste modelo não foi confirmada no catálogo. <a href={coreOffer.source_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-red-400 underline">Consultar tamanhos na loja</a>
