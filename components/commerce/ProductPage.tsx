@@ -11,6 +11,7 @@ import AuthModal from '@/components/auth/AuthModal';
 import ReportButton from '@/components/shared/ReportButton';
 import { getConditionMeta } from '@/components/marketplace/ProductCard';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { getProductVariantConfig } from '@/lib/product-variants';
 
 export default function ProductPage({ kind, id }: { kind: string; id: string }) {
   const { products, activeOffers, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
@@ -26,6 +27,10 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   if (!item || !available) return <main className="mx-auto max-w-5xl p-8"><Link href="/" className="text-red-400">← Voltar ao CoreShop</Link><h1 className="mt-10 text-2xl font-black">{loaded ? 'Produto indisponível' : 'Carregando produto…'}</h1><p className="mt-3 text-zinc-400">{loaded ? 'Não foi possível encontrar um anúncio ativo. Confira o catálogo ou tente novamente.' : 'Consultando o catálogo.'}</p></main>;
   const gallery: string[] = ('images' in item && item.images?.length ? item.images : ['image_url' in item ? item.image_url || '' : '']).filter(Boolean);
   const needsVariant = ['Calçados','Vestuário','Roupas','Lutas','Artes Marciais'].includes(item.category);
+  const coreVariant = core ? getProductVariantConfig(item.title, item.category, item.sport) : null;
+  const variantRequired = core ? Boolean(coreVariant && !coreVariant.fixedValue) : needsVariant;
+  const selectedVariant = coreVariant?.fixedValue ?? variant;
+  React.useEffect(() => { setVariant(''); setNotice(''); setIndex(0); }, [kind, id]);
   const contact = !core && 'contact_phone' in item ? sellerContactUrl(item.contact_phone, item.title) : null;
   return <div className="min-h-screen bg-zinc-950 text-white">
     <header className="border-b border-zinc-800 px-5 py-5"><nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3"><Link href="/" className="inline-flex items-center gap-2 font-black"><ArrowLeft className="h-4 w-4" />CoreShop</Link><div className="flex gap-5 text-xs"><Link href="/compras">Carrinho CoreMotion ({cart.count})</Link><Link href="/pedidos">Meus pedidos</Link></div></nav></header>
@@ -55,9 +60,9 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
               <p className="text-zinc-400">Produto disponibilizado no catálogo CoreMotion.</p>
               {'store_name' in item&&item.store_name&&<p className="text-xs text-zinc-500">Loja de referência: <strong className="text-zinc-300">{item.store_name}</strong></p>}
             </div>
-            <label className="block text-sm">{needsVariant?'Tamanho ou variante desejada':'Variante desejada (opcional)'}<input maxLength={120} value={variant} onChange={event=>setVariant(event.target.value)} placeholder={needsVariant?'Ex.: tamanho 40':'Ex.: cor ou modelo'} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3"/></label>
-            <button type="button" disabled={needsVariant&&!variant.trim()} onClick={()=>{cart.add(id,variant.trim());setNotice('Produto adicionado ao carrinho. O checkout e o pagamento ainda não estão disponíveis.');}} className="flex w-full items-center justify-center gap-3 rounded-xl bg-red-600 px-5 py-4 text-sm font-bold transition hover:bg-red-500 disabled:opacity-40"><ShoppingBag className="h-5 w-5"/>Adicionar ao carrinho</button>
-            <button type="button" disabled={needsVariant&&!variant.trim()} onClick={()=>{cart.add(id,variant.trim());window.location.assign('/compras');}} className="block w-full rounded-xl border border-zinc-700 p-4 text-center text-sm font-bold transition hover:border-zinc-500 disabled:opacity-40">Comprar agora</button>
+            {coreVariant ? <div className="space-y-2"><label htmlFor="core-product-variant" className="block text-sm font-semibold">{coreVariant.label}</label>{coreVariant.fixedValue ? <p className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm">{coreVariant.fixedValue}</label></p> : <select id="core-product-variant" required value={variant} onChange={event=>setVariant(event.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm"><option value="">Selecione uma opção</option>{coreVariant.options.map(option=><option key={option} value={option}>{option}</option>)}</select>}<p className="text-xs leading-relaxed text-amber-300">{coreVariant.note}</p></div> : !core && needsVariant ? <label className="block text-sm">Tamanho ou variante informada pelo vendedor<input maxLength={120} value={variant} onChange={event=>setVariant(event.target.value)} placeholder="Ex.: tamanho 40, cor azul" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3"/></label> : null}
+            <button type="button" disabled={variantRequired&&!variant.trim()} onClick={()=>{cart.add(id,selectedVariant.trim());setNotice('Produto adicionado ao carrinho. O checkout e o pagamento ainda não estão disponíveis.');}} className="flex w-full items-center justify-center gap-3 rounded-xl bg-red-600 px-5 py-4 text-sm font-bold transition hover:bg-red-500 disabled:opacity-40"><ShoppingBag className="h-5 w-5"/>Adicionar ao carrinho</button>
+            <button type="button" disabled={variantRequired&&!variant.trim()} onClick={()=>{cart.add(id,selectedVariant.trim());window.location.assign('/compras');}} className="block w-full rounded-xl border border-zinc-700 p-4 text-center text-sm font-bold transition hover:border-zinc-500 disabled:opacity-40">Comprar agora</button>
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-xs text-zinc-400"><Truck className="mb-2 h-5 w-5"/><p className="font-medium text-zinc-300">Entrega</p><p className="mt-1">Frete e prazo serão informados quando a operação logística estiver disponível. Adicionar ao carrinho não reserva estoque nem efetua cobrança.</p></div>
             {notice&&<p role="status" className="text-sm text-emerald-400">{notice}</p>}
             <ReportButton category="external_offer" targetId={id} title={item.title}/>
