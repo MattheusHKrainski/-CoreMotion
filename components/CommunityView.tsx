@@ -1,8 +1,9 @@
 'use client';
 
+import CommunityComments from './community-comments';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowUp, Search, Flame, MessageCircle, Plus, Send, Share2, X } from 'lucide-react';
+import { ArrowUp, Search, Flame, MessageCircle, Plus, Share2, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import type { CommunityPost } from '@/lib/types';
 import { copyText } from '@/lib/clipboard';
@@ -19,7 +20,7 @@ const CATEGORIES: { value: CommunityPost['category']; label: string }[] = [
 ];
 
 export default function CommunityView() {
-  const { user, communityPosts, createCommunityPost, likedCommunityPosts, likeCommunityPost, addCommunityComment, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
+  const { user, communityPosts, createCommunityPost, likedCommunityPosts, likeCommunityPost, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
   const [feed, setFeed] = useState<'all' | 'following' | 'mine'>('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'recent' | 'popular'>('recent');
@@ -35,8 +36,6 @@ export default function CommunityView() {
   const [uploading, setUploading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
-  const [reply, setReply] = useState('');
-  const [replyBusy, setReplyBusy] = useState(false);
   const composer = useRef<HTMLDialogElement>(null);
   const userId = user?.id;
   useEffect(() => {
@@ -99,14 +98,11 @@ export default function CommunityView() {
             {post.image_url && <div className="relative mt-4 aspect-video overflow-hidden rounded-2xl border border-zinc-800"><ProductImage src={post.image_url} alt={`Imagem de ${post.author_name}`} sizes="(max-width: 640px) 85vw, 640px" /></div>}
             <div className="mt-4 flex items-center justify-between gap-3 text-xs text-zinc-400">
               <button type="button" onClick={() => void likeCommunityPost(post.id)} aria-label={likedCommunityPosts.includes(post.id) ? 'Remover curtida' : 'Curtir publicação'} aria-pressed={likedCommunityPosts.includes(post.id)} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-red-400"><ArrowUp className={`h-4 w-4 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500 text-red-500' : ''}`} />{post.likes_count}</button>
-              <button type="button" onClick={() => { setReplyTo(replyTo === post.id ? null : post.id); setReply(''); }} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-white"><MessageCircle className="h-4 w-4" />{post.comments?.length || post.comments_count || 0} respostas</button>
+              <button type="button" aria-expanded={replyTo===post.id} aria-controls={`comments-${post.id}`} onClick={() => { setReplyTo(replyTo === post.id ? null : post.id); }} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-white"><MessageCircle className="h-4 w-4" />{post.comments?.length ?? 0} respostas</button>
               <button type="button" aria-label="Compartilhar comunidade" onClick={async () => { const copied = await copyText(window.location.href); addToast(copied ? 'Link copiado' : 'Cópia indisponível', copied ? 'Endereço da página copiado.' : 'Copie o endereço na barra do navegador.', copied ? 'success' : 'info'); }}><Share2 className="h-4 w-4" /></button>
             </div>
             <div className="mt-3"><ReportButton category="community" targetId={post.id} title={post.title} /></div>
-            {replyTo === post.id && <div className="mt-4 space-y-3 border-t border-zinc-800 pt-4">
-              {post.comments?.map(comment => <div key={comment.id} className="flex gap-2 rounded-xl bg-zinc-950/70 p-3"><UserAvatar src={comment.author_avatar} name={comment.author_name} /><div className="min-w-0"><p className="text-xs font-bold">{comment.author_name}</p><p className="mt-1 break-words text-sm text-zinc-300">{comment.content}</p></div></div>)}
-              <form className="flex gap-2" onSubmit={async event => { event.preventDefault(); if (replyBusy || !reply.trim() || loginRequired()) return; setReplyBusy(true); try { await addCommunityComment(post.id, reply.trim()); setReply(''); } finally { setReplyBusy(false); } }}><input aria-label="Escrever resposta" maxLength={2000} value={reply} onChange={event => setReply(event.target.value)} className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm" placeholder="Escreva uma resposta…" /><button type="submit" disabled={replyBusy} aria-label="Enviar resposta" className="rounded-xl bg-red-600 px-3 disabled:opacity-50"><Send className="h-4 w-4" /></button></form>
-            </div>}
+            {replyTo === post.id && <CommunityComments key={post.id} post={post}/>}
           </div>
         </div>
       </article>)}

@@ -1,0 +1,17 @@
+'use client';
+import React,{useCallback,useEffect,useRef,useState} from 'react';
+import { Send } from 'lucide-react';
+import { CommunityService } from '@/services/communityService';
+import type { CommunityPost } from '@/lib/types';
+import { useCoreMotiom } from '@/lib/store';
+import { isSupabaseConfigured } from '@/services/supabaseClient';
+import UserAvatar from './shared/UserAvatar';
+export default function CommunityComments({post}:{post:CommunityPost}) {
+ const {addCommunityComment}=useCoreMotiom();
+ const [comments,setComments]=useState(post.comments||[]),[reply,setReply]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState('');
+ const attempt=useRef<{content:string;key:string}|null>(null);
+ const refresh=useCallback(async()=>{if(!isSupabaseConfigured)return;setLoading(true);setError('');try{setComments((await CommunityService.getPost(post.id)).comments);}catch(reason){setError(reason instanceof Error?reason.message:'Comentários indisponíveis.');}finally{setLoading(false);}},[post.id]);
+ useEffect(()=>{let active=true;if(isSupabaseConfigured){setLoading(true);CommunityService.getPost(post.id).then(fresh=>{if(active)setComments(fresh.comments);}).catch(()=>{if(active)setError('Não foi possível carregar os comentários.');}).finally(()=>{if(active)setLoading(false);});}return()=>{active=false;};},[post.id]);
+ useEffect(()=>{setComments(post.comments||[]);},[post.comments]);
+ return <section id={`comments-${post.id}`} aria-label="Comentários da publicação" className="mt-4 space-y-3 border-t border-zinc-800 pt-4"><div className="flex justify-between gap-3"><h3 className="text-sm font-bold">Comentários ({comments.length})</h3><button type="button" disabled={loading||busy} onClick={()=>void refresh()} className="text-xs text-red-400">Atualizar comentários</button></div>{loading&&<p role="status" className="text-xs text-zinc-500">Carregando comentários…</p>}{error&&<p role="alert" className="text-xs text-red-300">{error}</p>}{!loading&&!error&&!comments.length&&<p className="text-xs text-zinc-500">Nenhum comentário ainda. Seja o primeiro a responder.</p>}{comments.map(comment=><article key={comment.id} className="flex gap-2 rounded-xl bg-zinc-950/70 p-3"><UserAvatar src={comment.author_avatar} name={comment.author_name}/><div className="min-w-0"><p className="text-xs font-bold">{comment.author_name}</p><p className="mt-1 whitespace-pre-wrap break-words text-sm text-zinc-300">{comment.content}</p></div></article>)}<form className="flex gap-2" onSubmit={async event=>{event.preventDefault();if(busy||!reply.trim())return;setBusy(true);setError('');try{const content=reply.trim();if(attempt.current?.content!==content)attempt.current={content,key:crypto.randomUUID()};const saved=await addCommunityComment(post.id,content,attempt.current.key);if(saved){attempt.current=null;setReply('');await refresh();}else setError('Resposta não enviada. O texto foi preservado para tentar novamente.');}catch{setError('Resposta não enviada. Tente novamente.');}finally{setBusy(false);}}}><input aria-label="Escrever resposta" maxLength={2000} value={reply} onChange={event=>setReply(event.target.value)} className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm" placeholder="Escreva uma resposta…"/><button type="submit" disabled={busy||!reply.trim()} aria-label="Enviar resposta" className="rounded-xl bg-red-600 px-3 disabled:opacity-50"><Send className="h-4 w-4"/></button></form></section>;
+}

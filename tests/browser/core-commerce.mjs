@@ -18,8 +18,8 @@ const jwt=id=>Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('bas
 const getUser=id=>({...users.find(u=>u.id===id),aud:'authenticated',role:'authenticated',user_metadata:{name:users.find(u=>u.id===id).name,account_type:users.find(u=>u.id===id).account_type},identities:[]});
 const token=id=>({access_token:jwt(id),refresh_token:'remember-refresh-'+id,expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,token_type:'bearer',user:getUser(id)});
 const deny=false;
-let follows=[], products=INITIAL_PRODUCTS, tickets=[], saleOrders=[];
-const posts=[{id:'44444444-4444-4444-8444-444444444444',author_id:ids[1],author_name:users[1].name,title:'Treino da comunidade',content:'Uma dica útil para corredores.',category:'treino',created_at:new Date().toISOString(),likes_count:0,comments_count:0,comments:[]}];
+let follows=[], products=INITIAL_PRODUCTS, tickets=[], saleOrders=[], failComment=true;
+const posts=[{id:'44444444-4444-4444-8444-444444444444',author_id:ids[1],author_name:users[1].name,title:'Treino da comunidade',content:'Uma dica útil para corredores.',category:'treino',created_at:new Date().toISOString(),likes_count:0,comments_count:1,comments:[{id:'existing-reply',author_name:'Atleta da conversa',content:'Este comentário já estava salvo.',created_at:new Date().toISOString()}]}];
 let png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aS1sAAAAASUVORK5CYII=','base64');
 await page.route('https://**.supabase.co/**',async route=>{
  const req=route.request(),url=new URL(req.url()),path=url.pathname;
@@ -61,9 +61,13 @@ await page.route('https://**.supabase.co/**',async route=>{
   if(req.method()==='DELETE'){follows=[];return json(null);}
   return json(follows);
  }
+ if(path.endsWith('/add_community_comment')) {
+  if(failComment){failComment=false;return json({message:'Temporary error'},503);}
+  const input=req.postDataJSON();const post=posts.find(item=>item.id===input.p_post_id);if(!post.comments.some(item=>item.id===input.p_request_key))post.comments.push({id:input.p_request_key,author_name:users[0].name,content:input.p_content,created_at:new Date().toISOString()});post.comments_count=post.comments.length;return json(post);
+ }
  if(path.endsWith('/community_posts')){
   if(req.method()==='POST'){const body=req.postDataJSON();const post={...(Array.isArray(body)?body[0]:body),id:'55555555-5555-4555-8555-555555555555',created_at:new Date().toISOString()};posts.unshift(post);return json(post);}
-  return json(posts);
+  const id=url.searchParams.get('id')?.replace('eq.','');return json(id?posts.find(item=>item.id===id):posts);
  }
  if(path.endsWith('/products')){
   if(req.method()==='POST'){const post={...req.postDataJSON(),id:'66666666-6666-4666-8666-666666666666',created_at:new Date().toISOString(),views:0,likes_count:0};products.push(post);return json(post);}
@@ -89,14 +93,18 @@ try {
  await discount.getByRole('button').first().click();
  await page.waitForURL('**/produto/core/**');
  await page.getByRole('heading',{level:1}).waitFor();
+ await page.getByRole('button',{name:'Ver foto 1',exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:/^Ver foto /}).count(),8);
  await page.screenshot({path:'.cache/product-page-'+(process.env.MOBILE?'mobile':'desktop')+'.png'});
  assert.equal(await page.getByRole('dialog').count(),0);
- await page.getByLabel('Tamanho / variante desejada (obrigatório)').fill('40');
+ await page.getByRole('button',{name:'42',exact:true}).click();
  await page.getByRole('button',{name:'Adicionar ao carrinho',exact:true}).click();
  await page.getByRole('status').filter({hasText:'Adicionado ao carrinho'}).waitFor();
  await page.getByRole('link',{name:/Carrinho CoreMotion/}).click();
  await page.getByRole('button',{name:'Continuar para endereço'}).click();
- await page.getByRole('dialog').locator('input[type=email]').fill(users[0].email);await page.getByRole('dialog').locator('input[type=password]').fill('valid-secret');await page.getByRole('dialog').getByRole('button',{name:'Entrar na Plataforma',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
+ await page.waitForURL('**/entrar?**');
+ assert.equal(await page.getByRole('dialog').count(),0);
+ await page.locator('input[type=email]').fill(users[0].email);await page.locator('input[type=password]').fill('valid-secret');await page.getByRole('button',{name:'Entrar na Plataforma',exact:true}).click();await page.waitForURL('**/compras');
  // The header avatar is absent on the dedicated checkout; login still succeeds.
  await page.getByRole('button',{name:'Continuar para endereço'}).click();
  for(const [label,value] of [['Destinatário','Atleta Teste'],['Telefone','41999999999'],['CEP','80000000'],['Rua','Rua de Teste'],['Número','123'],['Bairro','Centro'],['Cidade','Curitiba'],['UF','PR']]) await page.getByLabel(label,{exact:true}).fill(value);
@@ -124,6 +132,19 @@ try {
  await page.getByLabel('Buscar na comunidade').fill('');
  await page.getByLabel('Ordenar publicações').selectOption('popular');
  await page.getByRole('heading',{name:'Treino da comunidade',exact:true}).waitFor();
+ await page.getByRole('button',{name:'1 respostas',exact:true}).click();
+ const thread=page.getByRole('region',{name:'Comentários da publicação'});
+ await thread.getByText('Este comentário já estava salvo.',{exact:true}).waitFor();
+ await thread.getByLabel('Escrever resposta').fill('Nova resposta real no teste.');
+ await thread.getByRole('button',{name:'Enviar resposta'}).click();
+ await thread.getByRole('alert').filter({hasText:'texto foi preservado'}).waitFor();
+ assert.equal(await thread.getByLabel('Escrever resposta').inputValue(),'Nova resposta real no teste.');
+ await thread.getByRole('button',{name:'Enviar resposta'}).click();
+ await thread.getByText('Nova resposta real no teste.',{exact:true}).waitFor();
+ assert.equal(await thread.getByLabel('Escrever resposta').inputValue(),'');
+ await page.getByRole('button',{name:'2 respostas',exact:true}).click();
+ await page.getByRole('button',{name:'2 respostas',exact:true}).click();
+ await page.getByRole('region',{name:'Comentários da publicação'}).getByText('Nova resposta real no teste.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.screenshot({path:'.cache/community-'+(process.env.MOBILE?'mobile':'desktop')+'.png'});
  users[0].role='admin';
@@ -137,6 +158,12 @@ try {
  await page.getByRole('heading',{name:'Fornecedores e operação'}).waitFor();
  await page.getByRole('heading',{name:'Centauro',exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:/Marcar.*pag|Enviar pedido|Confirmar pagamento/}).count(),0);
+ await page.goto('http://localhost:3001/entrar?mode=switch&next=%2Fpedidos');
+ await page.getByRole('heading',{name:'Selecionar conta',exact:true}).waitFor();
+ assert.equal(await page.getByRole('dialog').count(),0);
+ await page.getByRole('button',{name:'Fechar formulário'}).click();
+ await page.waitForURL('**/pedidos');
+ await page.getByRole('heading',{name:'Gestão de pedidos CoreMotion',exact:true}).waitFor();
  assert.deepEqual(errors,[]);
- console.log('PASS commerce: product URLs for CoreMotion and athletes, C2C WhatsApp kept separate, variant, guest cart merged after login, checkout/address/review, shipping unavailable, payments disabled, saved preparation/history, Reddit community search/sort; mocked backend '+(process.env.MOBILE?'mobile':'desktop'));
+ console.log('PASS commerce: product URLs for CoreMotion and athletes, C2C WhatsApp kept separate, variant, guest cart merged after login, checkout/address/review, shipping unavailable, payments disabled, saved preparation/history, non-modal login and cancel switch preserving account, existing/new comments and failed-draft retention, verified variants and gallery, Reddit search/sort; mocked backend '+(process.env.MOBILE?'mobile':'desktop'));
 } catch(error){console.error(error);console.error((await page.locator('body').innerText()).slice(-3000));process.exitCode=1;} finally {await browser.close();}

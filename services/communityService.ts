@@ -118,52 +118,20 @@ export class CommunityService {
   /**
    * Adds a comment to a community post.
    */
-  static async addComment(
-    postId: string,
-    comment: {
-      author_name?: string;
-      user_name?: string;
-      author_avatar?: string;
-      user_avatar?: string;
-      content: string;
-      id?: string;
-      created_at?: string;
-    }
-  ): Promise<{ success: boolean; error?: string }> {
-    const sb = getSupabaseClient();
-    if (!sb) return { success: true };
+  static async getPost(postId: string): Promise<CommunityPost> {
+    const sb=getSupabaseClient();
+    if(!sb) {const post=demoPosts().find(item=>item.id===postId);if(!post)throw new Error('Publicação não encontrada.');return post;}
+    const {data,error}=await sb.from('community_posts').select('*').eq('id',postId).single();
+    if(error||!data)throw new Error('Não foi possível carregar os comentários. Tente novamente.');
+    return this.mapDbPostToModel(data);
+  }
 
-    try {
-      const { data: current, error: readError } = await sb
-        .from('community_posts')
-        .select('comments, comments_count')
-        .eq('id', postId)
-        .single();
-      if (readError || !current) return { success: false, error: readError?.message || POST_NOT_FOUND };
-
-      const newComment = {
-        id: comment.id || `c-${Date.now()}`,
-        author_name: comment.author_name || comment.user_name || 'Atleta CoreMotion',
-        author_avatar: comment.author_avatar || comment.user_avatar,
-        content: comment.content,
-        created_at: comment.created_at || new Date().toISOString(),
-      };
-      const existingComments = Array.isArray(current.comments) ? current.comments : [];
-
-      const { data, error } = await sb
-        .from('community_posts')
-        .update({
-          comments: [...existingComments, newComment],
-          comments_count: (current.comments_count || 0) + 1,
-        })
-        .eq('id', postId)
-        .select('id');
-      if (error) return { success: false, error: error.message };
-      if (!data || data.length === 0) return { success: false, error: POST_NOT_FOUND };
-      return { success: true };
-    } catch (err: unknown) {
-      return { success: false, error: err instanceof Error ? err.message : String(err) };
-    }
+  static async addComment(postId: string, comment: { content: string; id?: string }): Promise<{success:boolean;error?:string;post?:CommunityPost}> {
+    const sb=getSupabaseClient();
+    if(!sb)return {success:true};
+    const {data,error}=await sb.rpc('add_community_comment',{p_post_id:postId,p_content:comment.content,p_request_key:comment.id});
+    if(error||!data)return {success:false,error:'Não foi possível enviar o comentário. Sua resposta foi preservada; tente novamente.'};
+    return {success:true,post:this.mapDbPostToModel(data)};
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- linha crua do banco; tipada na correção de pedidos/comunidade
@@ -189,7 +157,7 @@ export class CommunityService {
       content: dbRow.content || '',
       image_url: dbRow.image_url,
       likes_count: Number(dbRow.likes_count) || 0,
-      comments_count: Number(dbRow.comments_count) || comments.length,
+      comments_count: comments.length,
       comments,
       created_at: dbRow.created_at || new Date().toISOString(),
       is_reported: Boolean(dbRow.is_reported),

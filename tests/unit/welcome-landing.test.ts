@@ -37,10 +37,9 @@ describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
   });
 });
 
-it('remove o atalho lateral e centraliza a abertura da autenticação na página inicial', () => {
+it('remove o atalho lateral e abre a autenticação em uma página separada sem trocar a identidade', () => {
   const sidebar = readFileSync('components/shared/Sidebar.tsx', 'utf8');
   const store = readFileSync('lib/store.tsx', 'utf8');
   assert.doesNotMatch(sidebar, /Página inicial & Como funciona/);
-  assert.match(store, /if \(open && \(!userRef.current \|\| userRef.current.role === 'visitor'\)\) \{\s*openWelcomePage\(\);/);
   assert.match(store, /setAuthModalOpenState\(open\)/);
 });
