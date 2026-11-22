@@ -4,6 +4,7 @@ import { useDialogScrollLock } from '@/hooks/useDialogScrollLock';
 import { Bell, RefreshCw, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import {
   listReports,
   REPORT_CATEGORIES,
@@ -11,8 +12,11 @@ import {
   type AccountNotification,
   type ModerationReport,
 } from '@/services/moderation';
+const NOTIFICATION_SOURCES = [{ table: 'account_notifications' }, { table: 'moderation_reports' }] as const;
+
 export default function NotificationsInbox() {
   const { user } = useCoreMotiom();
+  const userId = user?.id;
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<AccountNotification[]>([]);
   const [reports, setReports] = useState<ModerationReport[]>([]);
@@ -30,7 +34,7 @@ export default function NotificationsInbox() {
   }, [open]);
   const client = getSupabaseClient();
   const refresh = useCallback(async () => {
-    if (!client || !user) return;
+    if (!client || !userId) return;
     const current = ++version.current;
     setBusy(true);
     try {
@@ -38,14 +42,14 @@ export default function NotificationsInbox() {
         client
           .from('account_notifications')
           .select('*')
-          .eq('recipient_id', user.id)
+          .eq('recipient_id', userId)
           .order('created_at', { ascending: false }),
         listReports(),
       ]);
       if (current !== version.current) return;
       if (error) throw new Error(error.message);
       setNotifications(data || []);
-      setReports(allReports.filter((r) => r.reporter_id === user.id));
+      setReports(allReports.filter((r) => r.reporter_id === userId));
       setError('');
     } catch (err) {
       if (current === version.current)
@@ -57,22 +61,21 @@ export default function NotificationsInbox() {
     } finally {
       if (current === version.current) setBusy(false);
     }
-  }, [client, user]);
+  }, [client, userId]);
   useEffect(() => {
     setNotifications([]);
     setReports([]);
     setOpen(false);
-    if (!user || !client) return;
+    if (!userId || !client) return;
     void refresh();
-    const interval = window.setInterval(() => void refresh(), 30000);
     const invalidate = () => {
       version.current += 1;
     };
     return () => {
       invalidate();
-      window.clearInterval(interval);
     };
-  }, [user, client, refresh]);
+  }, [userId, client, refresh]);
+  useRealtimeRefresh(client, NOTIFICATION_SOURCES, refresh, Boolean(userId), 'notifications-' + (userId || 'signed-out'), 30000);
   if (!user) return null;
   const unread = notifications.filter((n) => !n.read_at).length;
   return (
