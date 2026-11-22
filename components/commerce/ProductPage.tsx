@@ -37,9 +37,13 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
     let alive = true;
     const sb = getSupabaseClient();
     if (!sb || (kind !== 'core' && kind !== 'athlete')) { setLoaded(true); return; }
-    void sb.from(kind === 'core' ? 'external_offers' : 'products').select('*').eq('id', id).maybeSingle()
-      .then(({ data, error }) => { if (alive) { if (!error) setRemote(data as GalleryItem | null); setLoaded(true); } })
-      .catch(() => { if (alive) setLoaded(true); });
+    void (async () => {
+      try {
+        const { data, error } = await sb.from(kind === 'core' ? 'external_offers' : 'products').select('*').eq('id', id).maybeSingle();
+        if (alive && !error) setRemote(data as GalleryItem | null);
+      } catch { /* Product retrieval errors are handled by the unavailable state. */ }
+      finally { if (alive) setLoaded(true); }
+    })();
     return () => { alive = false; };
   }, [kind, id]);
 
