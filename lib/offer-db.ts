@@ -164,8 +164,8 @@ export async function createExternalOfferInDb(input: OfferCreateInput, actorId?:
   const id = `offer-${crypto.randomUUID()}`;
   const rows = await queryDb<DbExternalOfferRow>(
     `INSERT INTO public.external_offers
-      (id, title, description, store_name, category, sport, price, original_price, image_url, source_url, coupon_code, is_active, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      (id, title, description, store_name, category, sport, price, original_price, image_url, source_url, coupon_code, is_active, created_by, image_urls)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`,
     [
       id,
@@ -181,6 +181,7 @@ export async function createExternalOfferInDb(input: OfferCreateInput, actorId?:
       input.coupon_code || null,
       input.is_active ?? true,
       actorId && /^[0-9a-f-]{36}$/i.test(actorId) ? actorId : null,
+      input.image_urls?.length ? input.image_urls : [input.image_url],
     ]
   );
   return mapOfferRow(rows[0]);
@@ -205,6 +206,7 @@ export async function updateExternalOfferInDb(id: string, input: OfferUpdateInpu
   if (input.original_price !== undefined) pushField('original_price', input.original_price ?? null);
   if (input.image_url !== undefined) pushField('image_url', input.image_url);
   if (input.image_urls !== undefined) pushField('image_urls', input.image_urls);
+  else if (input.image_url !== undefined) pushField('image_urls', [input.image_url]);
   if (input.source_url !== undefined) pushField('source_url', input.source_url);
   if (input.coupon_code !== undefined) pushField('coupon_code', input.coupon_code || null);
   if (input.is_active !== undefined) pushField('is_active', input.is_active);
