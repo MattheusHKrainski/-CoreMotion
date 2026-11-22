@@ -355,6 +355,12 @@ export default function AdminDashboard() {
     setError('');
     setLastChecked('');
     void refresh();
+    const accountChannel = staff && client && tab === 'accounts'
+      ? client.channel('admin-account-directory')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, () => void refresh())
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => void refresh())
+          .subscribe(status => { if (status === 'SUBSCRIBED') void refresh(); })
+      : null;
     const interval = window.setInterval(() => void refresh(), 15000);
     const focus = () => void refresh();
     window.addEventListener('focus', focus);
@@ -364,10 +370,11 @@ export default function AdminDashboard() {
     };
     return () => {
       invalidate();
+      if (accountChannel && client) void client.removeChannel(accountChannel);
       window.clearInterval(interval);
       window.removeEventListener('focus', focus);
     };
-  }, [refresh]);
+  }, [refresh, staff, client, tab]);
   async function act(operation: () => Promise<void>, success: string) {
     if (busy) return;
     setBusy(true);

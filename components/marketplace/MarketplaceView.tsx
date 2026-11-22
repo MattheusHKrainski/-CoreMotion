@@ -89,6 +89,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const [visibleOffers, setVisibleOffers] = useState(PAGE_SIZE);
   const normalizedQuery = normalize(searchQuery.trim());
   const filteredOffers = useMemo(() => {
     const filtered = activeOffers.filter((offer) => {
@@ -114,7 +115,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
     return sortProducts(filtered, sortBy);
   }, [products, normalizedQuery, selectedCategory, selectedSport, selectedCondition, sortBy]);
 
-  useEffect(() => setVisibleCount(PAGE_SIZE), [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); setVisibleOffers(PAGE_SIZE); }, [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy]);
 
   const visibleC2CProducts = filteredC2CProducts.slice(0, visibleCount);
   const hasOffers = selectedTab !== 'c2c';
@@ -141,7 +142,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
   const categoryCount = (category: string) =>
     activeOffers.filter((offer) => matchesCategory(offer.category, category)).length +
-    products.filter((product) => product.product_type === 'c2c' && matchesCategory(product.category, category)).length;
+    products.filter((product) => product.product_type === 'c2c' && product.status === 'active' && matchesCategory(product.category, category)).length;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-3 py-6 sm:px-6 lg:px-8">
@@ -303,7 +304,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
                       <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Promoções reais selecionadas em grandes lojas esportivas, com redirecionamento direto e descontos ativos.</p>
+                      <p className="mt-1 text-[11px] text-zinc-500">Consulte fotos, tamanhos e preços de referência de cada produto.</p>
                     </div>
                     {isStaffRole(user?.role) && (
                       <button
@@ -317,8 +318,15 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                     )}
                   </div>
                   <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
-                    {filteredOffers.map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
+                    {filteredOffers.slice(0, visibleOffers).map((offer) => <ExternalOfferCard key={offer.id} offer={offer} onSelect={(item) => onSelectOffer?.(item)} />)}
                   </div>
+                  {visibleOffers < filteredOffers.length && (
+                    <div className="flex justify-center pt-4">
+                      <button type="button" onClick={() => setVisibleOffers(count => count + PAGE_SIZE)} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-red-500">
+                        Carregar mais produtos ({Math.min(PAGE_SIZE, filteredOffers.length - visibleOffers)})
+                      </button>
+                    </div>
+                  )}
                 </section>
               )}
             </>

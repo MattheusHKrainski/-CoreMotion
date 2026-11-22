@@ -91,9 +91,9 @@ try {
  await page.getByRole('heading',{level:1}).waitFor();
  await page.screenshot({path:'.cache/product-page-'+(process.env.MOBILE?'mobile':'desktop')+'.png'});
  assert.equal(await page.getByRole('dialog').count(),0);
- await page.getByLabel('Tamanho / variante desejada (obrigatório)').fill('40');
+ await page.getByLabel('Numeração (BR)', { exact: true }).selectOption('40');
  await page.getByRole('button',{name:'Adicionar ao carrinho',exact:true}).click();
- await page.getByRole('status').filter({hasText:'Adicionado ao carrinho'}).waitFor();
+ await page.getByRole('status').filter({hasText:/adicionado ao carrinho/i}).waitFor();
  await page.getByRole('link',{name:/Carrinho CoreMotion/}).click();
  await page.getByRole('button',{name:'Continuar para endereço'}).click();
  await page.getByRole('dialog').locator('input[type=email]').fill(users[0].email);await page.getByRole('dialog').locator('input[type=password]').fill('valid-secret');await page.getByRole('dialog').getByRole('button',{name:'Entrar na Plataforma',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});

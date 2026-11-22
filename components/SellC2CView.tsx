@@ -1,6 +1,7 @@
 'use client';
 
 import CameraPhoto from '@/components/shared/CameraPhoto';
+import SportPicker from '@/components/shared/SportPicker';
 import { normalizePhone, validPhone } from '@/lib/seller-contact';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -89,7 +90,7 @@ export default function SellC2CView() {
         price: priceValue,
         original_price: originalValue,
         category,
-        sport,
+        sport: sport.trim(),
         condition,
         product_type: 'c2c',
         images: imageGallery,
@@ -254,27 +255,7 @@ export default function SellC2CView() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">
-                  Modalidade *
-                </label>
-                <select
-                  value={sport}
-                  onChange={(e) => setSport(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 text-xs text-white rounded-xl border border-zinc-800 focus:border-red-500 focus:outline-none"
-                >
-                  <option value="Jiu-Jitsu">Jiu-Jitsu</option>
-                  <option value="Basquete">Basquete</option>
-                  <option value="Vôlei">Vôlei</option>
-                  <option value="Tênis">Tênis</option>
-                  <option value="Karatê">Karatê</option>
-                  <option value="Futebol">Futebol</option>
-                  <option value="Corrida">Corrida</option>
-                  <option value="Musculação">Musculação</option>
-                  <option value="Natação">Natação</option>
-                  <option value="Ciclismo">Ciclismo</option>
-                </select>
-              </div>
+              <SportPicker value={sport} required onChange={setSport} options={products.map(product => product.sport)} />
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase text-zinc-400 mb-1.5">

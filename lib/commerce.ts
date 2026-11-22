@@ -10,7 +10,7 @@ export function validateCart(value: unknown): SaleCartLine[] {
   const keys = new Set<string>();
   return value.map(line => {
     if (!line || typeof line.offerId !== 'string' || !line.offerId || line.offerId.length > 96 || !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10 || typeof line.variant !== 'string' || line.variant.length > 120) throw new Error('Item ou quantidade inválida.');
-    const key = JSON.stringify([line.offerId, line.variant]); if (keys.has(key)) throw new Error('Item duplicado.'); keys.add(key);
+    const key = JSON.stringify([line.offerId, line.variant.trim()]); if (keys.has(key)) throw new Error('Item duplicado.'); keys.add(key);
     return { offerId: line.offerId, quantity: line.quantity, variant: line.variant.trim() };
   });
 }
