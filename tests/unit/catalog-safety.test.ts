@@ -16,7 +16,7 @@ test('catalog persistence has no delete-all reset operation', () => {
 });
 
 test('catalog seed bookkeeping is private and new profiles have no invented hometown', () => {
-  const migration = readFileSync('supabase/migrations/20261122194600_protect_catalog_seed_batches.sql', 'utf8');
+  const migration = readFileSync('supabase/migrations/20261122194326_protect_catalog_seed_batches.sql', 'utf8');
   assert.match(migration, /ENABLE ROW LEVEL SECURITY/);
   assert.match(migration, /REVOKE ALL[\s\S]*anon, authenticated/);
   const profiles = readFileSync('lib/db-queries.ts', 'utf8');
