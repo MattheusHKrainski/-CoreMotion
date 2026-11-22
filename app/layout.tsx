@@ -4,16 +4,16 @@ import SessionProvider from '@/components/SessionProvider';
 
 export const metadata: Metadata = {
   title: 'CoreMotion — CoreShop e comunidade esportiva',
-  description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Vendas CoreMotion em preparação, com pagamentos desativados.',
+  description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Encontre produtos, clubes, treinadores e experiências esportivas.',
   openGraph: {
     title: 'CoreMotion — CoreShop e comunidade esportiva',
-    description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Vendas CoreMotion em preparação, com pagamentos desativados.',
+    description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Encontre produtos, clubes, treinadores e experiências esportivas.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'CoreMotion — CoreShop e comunidade esportiva',
-    description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Vendas CoreMotion em preparação, com pagamentos desativados.',
+    description: 'CoreShop, anúncios entre atletas, treinadores e comunidade esportiva. Encontre produtos, clubes, treinadores e experiências esportivas.',
   },
 };
 
