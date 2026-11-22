@@ -1176,7 +1176,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       throw err;
     }
 
-    setProducts((prev) => [newProduct, ...prev]);
+    setProducts((prev) => [newProduct, ...prev.filter((entry) => entry.id !== newProduct.id)]);
     addToast('Anúncio Publicado', `O produto "${newProduct.title}" está disponível no Marketplace.`, 'success');
     return newProduct;
   };
@@ -1260,7 +1260,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    setCommunityPosts((prev) => [newPost, ...prev]);
+    setCommunityPosts((prev) => [newPost, ...prev.filter((entry) => entry.id !== newPost.id)]);
     addToast('Publicação Criada', 'Sua postagem está visível para a comunidade esportiva.', 'success');
     return true;
   };
