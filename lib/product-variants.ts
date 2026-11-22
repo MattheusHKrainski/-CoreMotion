@@ -10,7 +10,7 @@ const APPAREL_SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG'];
 const GI_SIZES = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5'];
 
 function normalize(value: string): string {
-  return value.normalize('NFD').replace(/\\p{Diacritic}/gu, '').toLowerCase();
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
 /** Options express the customer's requested variant; supplier stock is not implied. */
