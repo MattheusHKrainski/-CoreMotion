@@ -1,5 +1,5 @@
 'use client';
-import { isSupabaseConfigured } from '@/services/supabaseClient';
+import { getSupabaseClient, isSupabaseConfigured } from '@/services/supabaseClient';
 
 import { isProductDestination } from '@/lib/offer-catalog';
 import React, { useEffect, useRef, useState } from 'react';
@@ -38,9 +38,14 @@ const STORE_SUGGESTIONS = [
   'Centauro',
   'Decathlon',
   'Olympikus Oficial',
+  'Fila', 'Mizuno', 'Umbro', 'Penalty',
 ];
 
 const SPORT_OPTIONS = [
+  'Casual',
+  'Caminhada',
+  'Treinamento',
+  'Futsal',
   'Corrida',
   'Ciclismo',
   'Musculação',
@@ -75,6 +80,7 @@ interface OfferFormState {
   category: string;
   image_url: string;
   image_urls: string;
+  team_id: string;
   description: string;
   is_active: boolean;
 }
@@ -90,6 +96,7 @@ const EMPTY_FORM: OfferFormState = {
   category: 'Equipamentos',
   image_url: '',
   image_urls: '',
+  team_id: '',
   description: '',
   is_active: true,
 };
@@ -158,6 +165,17 @@ export default function AdminOffersManager() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [clubs, setClubs] = useState<{ id: string; club_name: string; league: string }[]>([]);
+  useEffect(() => {
+    const client = getSupabaseClient();
+    if (!client) return;
+    let alive = true;
+    void (async () => {
+      const { data } = await client.from('catalog_teams').select('id,club_name,league').order('club_name');
+      if (alive && data) setClubs(data);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const formRef = useRef<HTMLFormElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -174,6 +192,7 @@ export default function AdminOffersManager() {
       category: offer.category,
       image_url: offer.image_url,
       image_urls: (offer.image_urls || []).filter(url => url !== offer.image_url).join('\n'),
+      team_id: offer.team_id || '',
       description: offer.description,
       is_active: offer.is_active !== false,
     });
@@ -312,6 +331,10 @@ export default function AdminOffersManager() {
       setFormError('Adicione até 11 URLs extras de fotos HTTPS, uma por linha.');
       return;
     }
+    if (form.team_id && !clubs.some(club => club.id === form.team_id)) {
+      setFormError('Escolha um clube válido na relação de campeonatos.');
+      return;
+    }
     setIsSaving(true);
     try {
       const payload = {
@@ -325,6 +348,7 @@ export default function AdminOffersManager() {
         category: form.category,
         image_url: form.image_url.trim(),
         image_urls: [...new Set([form.image_url.trim(), ...additionalImages])],
+        team_id: form.team_id || null,
         description:
           form.description.trim() ||
           `Oferta selecionada em ${form.store_name.trim() || 'loja parceira'} para ${form.sport.toLowerCase()}.`,
@@ -617,6 +641,15 @@ export default function AdminOffersManager() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-zinc-300">Clube da liga (opcional)</label>
+                <select value={form.team_id} onChange={event => setForm(f => ({ ...f, team_id: event.target.value }))} className={inputCls}>
+                  <option value="">Produto sem clube associado</option>
+                  {clubs.map(club => <option key={club.id} value={club.id}>{club.club_name} · {club.league.replace(/-2026.*$/, '')}</option>)}
+                </select>
+                <p className="text-[11px] text-zinc-500">Vincule somente produtos que indiquem claramente o clube na descrição ou no nome do fornecedor.</p>
               </div>
 
               {/* 6. Imagem Real do Produto (URL ou Upload Direto) */}
