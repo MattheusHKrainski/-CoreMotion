@@ -26,6 +26,7 @@ describe('product variants for catalog', () => {
     assert.deepEqual(getProductVariantConfig('Bola de Basquete', 'Equipamentos', 'Basquete')?.options, ['5','6','7']);
     assert.deepEqual(getProductVariantConfig('Bola de Futebol', 'Equipamentos', 'Futebol')?.options, ['3','4','5']);
     assert.equal(getProductVariantConfig('Bola Adidas tamanho 7', 'Equipamentos', 'Basquete')?.fixedValue, '7');
+    assert.equal(getProductVariantConfig('Bola de Basquete Wilson', 'Equipamentos', 'Basquete', 'Tamanho oficial 7 segundo o vendedor.')?.fixedValue, '7');
   });
   it('does not invent variant selectors for fixed-size equipment/accessories', () => {
     assert.equal(getProductVariantConfig('Garrafa 600 ml', 'Acessórios', 'Treinamento'), null);
