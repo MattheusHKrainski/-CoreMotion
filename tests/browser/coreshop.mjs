@@ -18,7 +18,8 @@ try {
  assert.equal(await page.getByRole('dialog',{name:'Menu CoreMotion'}).count(),0);
  const discounts=page.getByRole('region',{name:'Descontos em destaque'});
  await discounts.getByRole('button').first().click();
- await page.getByRole('button',{name:'Fechar detalhes da oferta'}).click();
+ await page.waitForURL('**/produto/core/**');
+ await page.getByRole('link', {name: 'CoreShop', exact: true}).click();
  await menu.click();
  const drawer=page.getByRole('dialog',{name:'Menu CoreMotion'});await drawer.waitFor();
  await drawer.getByRole('button',{name:/CoreShop/}).click();

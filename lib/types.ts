@@ -25,6 +25,7 @@ export type ProductType = 'b2c' | 'c2c';
 
 /** Catálogo legado de origem externa, agora apresentado como vitrine CoreMotion. O nome do tipo é mantido por compatibilidade; disponibilidade e operação não são presumidas. */
 export interface ExternalOffer {
+  variant_options?: string[];
   id: string;
   title: string;
   description: string;

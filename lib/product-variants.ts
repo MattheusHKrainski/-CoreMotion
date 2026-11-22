@@ -14,13 +14,21 @@ function normalize(value: string): string {
 }
 
 /** Options express the customer's requested variant; supplier stock is not implied. */
-export function getProductVariantConfig(title: string, category: string, sport: string, description = ''): ProductVariantConfig | null {
+export function getProductVariantConfig(title: string, category: string, sport: string, description = '', listedSizes?: string[]): ProductVariantConfig | null {
+  if (listedSizes?.length) {
+    return {
+      label: 'Tamanho',
+      options: listedSizes,
+      fixedValue: listedSizes.length === 1 ? listedSizes[0] : undefined,
+      note: 'Tamanhos anunciados para a opção consultada. A disponibilidade será confirmada pelo fornecedor.',
+    };
+  }
   const text = normalize(`${title} ${category} ${sport} ${description}`);
   const normalizedCategory = normalize(category);
   if (/\b(kimono|gi)\b/.test(text)) {
     return { label: 'Tamanho do kimono', options: GI_SIZES, note: 'Tamanhos de referência. A disponibilidade precisa ser confirmada com o fornecedor.' };
   }
-  if (/\b(chuteira|tenis|sapatilha|boots|shoe)\b/.test(text) || normalizedCategory.includes('calcado')) {
+  if (normalizedCategory.includes('calcado') || /^(tenis(?! de mesa)|chuteira|sapatilha|boots|shoe)\b/.test(normalize(title))) {
     return { label: 'Numeração (BR)', options: SHOE_SIZES, note: 'Numeração desejada, não estoque confirmado. A disponibilidade precisa ser confirmada com o fornecedor.' };
   }
   if (/\b(camiseta|camisa|regata|short|bermuda|calca|legging|jaqueta|blusa|top|uniforme)\b/.test(text) || /vestuario|roupas/.test(normalizedCategory)) {

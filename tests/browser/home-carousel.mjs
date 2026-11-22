@@ -24,7 +24,8 @@ try{
  await carousel.getByRole('button',{name:'Retomar carrossel'}).click();await page.locator('body').click({position:{x:2,y:2}});await page.mouse.move(2,2);
  const before=await current();await page.waitForTimeout(6400);assert.notEqual(await current(),before);
  await page.emulateMedia({reducedMotion:'reduce'});await carousel.getByRole('button',{name:'Retomar carrossel'}).waitFor();assert.equal(await carousel.getByRole('button',{name:'Retomar carrossel'}).isDisabled(),true);
- await carousel.getByRole('button',{name:/Mostrar produto 1:/}).click();await carousel.getByRole('button',{name:'Conhecer produto',exact:true}).click();await page.getByRole('button',{name:'Fechar detalhes do produto'}).waitFor();
+ await carousel.getByRole('button',{name:/Mostrar produto 1:/}).click();await carousel.getByRole('button',{name:'Conhecer produto',exact:true}).click();await page.waitForURL('**/produto/athlete/**');
+ await page.getByRole('heading',{name:firstProduct.title,exact:true}).waitFor();
  assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  console.log('PASS carousel: arrows, indicators, keyboard, pause/resume, autoplay, reduced motion, exact product details, no overflow '+(process.env.MOBILE?'mobile':'desktop'));
 }catch(error){console.error(error);console.error((await page.locator('body').innerText()).slice(-2500));process.exitCode=1;}finally{await browser.close();}

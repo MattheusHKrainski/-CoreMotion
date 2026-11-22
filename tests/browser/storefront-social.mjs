@@ -72,7 +72,7 @@ await page.route('**/*',async route=>{
 const dialog=()=>page.getByRole('dialog');
 const checkbox=()=>dialog().getByRole('checkbox');
 const fillLogin=async(email,remember)=>{await dialog().locator('input[type=email]').fill(email);await dialog().locator('input[type=password]').fill('valid-secret');if(remember)await checkbox().check();await dialog().getByRole('button',{name:'Entrar na Plataforma',exact:true}).click();await dialog().waitFor({state:'hidden'});await page.getByRole('button',{name:'Abrir minha conta'}).waitFor();};
-const navigate=async label=>{if(process.env.MOBILE)await page.getByRole('button',{name:'Abrir barra de funções'}).click();await page.getByRole('navigation',{name:'Navegação da plataforma'}).getByRole('button').filter({hasText:label}).first().click();};
+const navigate=async label=>{await page.getByRole('button',{name:'Abrir barra de funções'}).click();await page.getByRole('navigation',{name:'Navegação da plataforma'}).getByRole('button').filter({hasText:label}).first().click();};
 try{
  await page.goto('http://localhost:3000/');
  png=Buffer.from(await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;const ctx=canvas.getContext('2d');ctx.fillStyle='red';ctx.fillRect(0,0,64,64);return canvas.toDataURL('image/png').split(',')[1];}),'base64');await page.getByRole('heading',{name:'Destaques para o seu esporte'}).waitFor();
@@ -97,11 +97,11 @@ try{
  assert.equal(await page.getByText('Tempo de Uso',{exact:true}).count(),0);assert.equal(await page.locator('input[type=url]').count(),0);
  await page.getByPlaceholder('Ex: Kimono Jiu-Jitsu A2, Raquete Wilson, Tênis de Basquete Tam 42...').fill('Tênis de corrida tamanho 42');
  await page.getByPlaceholder('Descreva seu produto, o estado de conservação e o que acompanha o anúncio.').fill('Tênis em bom estado para corrida, acompanha caixa.');
- await page.getByPlaceholder('220.00').fill('150');await page.getByPlaceholder('(41) 99999-9999').fill('(41) 98891-8146');
- await page.locator('form button[type=submit]').click();await page.getByText('Adicione pelo menos uma foto do produto.').waitFor();assert.equal(products.length,0);
+ await page.getByPlaceholder('Ex: Campinas, SP').fill('Araucária, PR');await page.getByPlaceholder('220.00').fill('150');await page.getByPlaceholder('(41) 99999-9999').fill('(41) 98891-8146');
+ await page.getByRole('button',{name:'Publicar Anúncio no CoreShop',exact:true}).click();await page.getByText('Adicione pelo menos uma foto do produto.').waitFor();assert.equal(products.length,0);
  await page.getByRole('button',{name:'Tirar foto do produto'}).click();await page.getByRole('button',{name:'Capturar foto',exact:true}).waitFor();
  await page.waitForFunction(()=>document.querySelector('video')?.videoWidth>0);await page.getByRole('button',{name:'Capturar foto',exact:true}).click();await page.getByRole('button',{name:'Tirar foto do produto'}).waitFor();
- await page.locator('form button[type=submit]').click();await page.waitForFunction(()=>document.body.textContent.includes('Anúncio Publicado'));assert.equal(products.length,1);assert.ok(products[0].images[0].includes('/products/'));assert.equal(products[0].usage_time,undefined);
+ await page.getByRole('button',{name:'Publicar Anúncio no CoreShop',exact:true}).click();await page.waitForFunction(()=>document.body.textContent.includes('Anúncio Publicado'));assert.equal(products.length,1);assert.ok(products[0].images[0].includes('/products/'));assert.equal(products[0].usage_time,undefined);
  await navigate('Treinadores e associações');await page.getByRole('heading',{name:'Treinadora Contato'}).waitFor();assert.equal(await page.getByRole('link',{name:'Conversar com o treinador'}).getAttribute('href'),'https://wa.me/5541988918146');
  assert.ok(uploads>=3);assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  console.log('PASS Chromium actual SDK with mocked HTTP: direct storefront, follow/unfollow feeds, modal publication+image, profile upload/save/avatar, mandatory fake-camera capture+listing, coach contact, no page errors.');

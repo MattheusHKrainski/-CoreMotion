@@ -169,7 +169,7 @@ interface CoreMotiomContextType {
   createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string }) => Promise<boolean>;
   likedCommunityPosts: string[];
   likeCommunityPost: (postId: string) => Promise<void>;
-  addCommunityComment: (postId: string, content: string) => Promise<void>;
+  addCommunityComment: (postId: string, content: string) => Promise<boolean>;
   reportCommunityPost: (postId: string, reason: string) => Promise<void>;
   adminDeleteCommunityPost: (postId: string) => void;
 
@@ -1190,10 +1190,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     } finally { likesInFlight.current.delete(postId); }
   };
 
-  const addCommunityComment = async (postId: string, content: string): Promise<void> => {
-    if (!requireLogin('Entre para comentar nas publicações da comunidade.')) return;
+  const addCommunityComment = async (postId: string, content: string): Promise<boolean> => {
+    if (!requireLogin('Entre para comentar nas publicações da comunidade.')) return false;
     const comment = {
-      id: `comm-${Date.now()}`,
+      id: crypto.randomUUID(),
       author_name: user?.name || 'Atleta',
       author_avatar: user?.avatar_url,
       content,
@@ -1202,20 +1202,21 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     const result = await CommunityService.addComment(postId, comment);
     if (!result.success) {
       addToast('Comentário não enviado', result.error || 'Tente novamente.', 'error');
-      return;
+      return false;
     }
     setCommunityPosts((prev) =>
       prev.map((p) =>
-        p.id === postId
+        p.id === postId && !p.comments.some(existing => existing.id === comment.id)
           ? {
               ...p,
               comments_count: p.comments_count + 1,
-              comments: [...p.comments, comment],
+              comments: [...p.comments, result.data ?? comment],
             }
           : p
       )
     );
     addToast('Comentário Adicionado', 'Sua resposta foi enviada.', 'success');
+    return true;
   };
 
   const reportCommunityPost = async (postId: string, reason: string): Promise<void> => {

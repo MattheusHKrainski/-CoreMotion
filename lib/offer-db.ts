@@ -11,6 +11,7 @@ import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS, EXPANSION_OFFERS } from 
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 
 interface DbExternalOfferRow {
+  variant_options?: string[];
   id: string;
   title: string;
   description: string;
@@ -37,6 +38,7 @@ function mapOfferRow(row: DbExternalOfferRow): ExternalOffer {
   return {
     id: row.id,
     title: row.title,
+    variant_options: row.variant_options,
     description: row.description,
     store_name: row.store_name,
     category: row.category,

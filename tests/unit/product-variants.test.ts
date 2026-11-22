@@ -33,3 +33,10 @@ describe('product variants for catalog', () => {
     assert.equal(getProductVariantConfig('Halter 3 kg', 'Equipamentos', 'Musculação'), null);
   });
 });
+
+it('usa apenas a grade capturada para o modelo e distingue esporte de calçado', () => {
+  const shoe = getProductVariantConfig('Chuteira Futsal', 'Calçados', 'Futsal', '', ['40', '42']);
+  assert.deepEqual(shoe?.options, ['40', '42']);
+  assert.equal(getProductVariantConfig('Raquete de tênis', 'Equipamentos', 'Tênis'), null);
+  assert.equal(getProductVariantConfig('Camiseta', 'Vestuário', 'Treinamento', '', ['M'])?.fixedValue, 'M');
+});
