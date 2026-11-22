@@ -42,3 +42,12 @@ test('catalog and account security hardening does not delete operational rows', 
   assert.match(all, /SET search_path TO pg_catalog/);
   assert.match(all, /REVOKE ALL ON FUNCTION public\.protect_profile_privileges\(\)/);
 });
+
+test('community engagement is derived from stored likes and real comment arrays', () => {
+  const sql = migration('20261122200908_coremotion_community_counter_integrity');
+  assert.match(sql, /CREATE TRIGGER community_likes_counter_sync/);
+  assert.match(sql, /AFTER INSERT OR DELETE ON public\.community_likes/);
+  assert.match(sql, /UPDATE public\.community_posts p/);
+  assert.match(sql, /jsonb_array_length\(coalesce\(NEW\.comments/);
+  assert.match(sql, /Interações devem ser registradas pelos serviços autorizados/);
+});
