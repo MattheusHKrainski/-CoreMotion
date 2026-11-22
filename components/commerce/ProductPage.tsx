@@ -1,10 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Heart, ShoppingBag, Truck } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Heart, Image as ImageIcon, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { useCommerce } from '@/lib/commerce-store';
-import { money, retailPriceCents } from '@/lib/commerce';
+import { money, retailPriceCents, productPath } from '@/lib/commerce';
 import ProductImage from '@/components/shared/ProductImage';
 import { sellerContactUrl } from '@/lib/seller-contact';
 import AuthModal from '@/components/auth/AuthModal';
@@ -12,69 +13,175 @@ import ReportButton from '@/components/shared/ReportButton';
 import { getConditionMeta } from '@/components/marketplace/ProductCard';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { getProductVariantConfig } from '@/lib/product-variants';
+import type { ExternalOffer, Product } from '@/lib/types';
+
+type GalleryItem = ExternalOffer | Product;
+const normalize = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 export default function ProductPage({ kind, id }: { kind: string; id: string }) {
   const { products, activeOffers, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const cart = useCommerce();
-  const [index, setIndex] = useState(0), [variant, setVariant] = useState(''), [notice, setNotice] = useState('');
-  const [remote, setRemote] = useState<{ title: string; description: string; price: number; original_price?: number; variant_options?: string[]; images?: string[]; image_url?: string; store_name?: string; category: string; sport: string; product_type?: string; status?: string; is_active?: boolean; seller_name?: string; contact_phone?: string; condition?: string; location?: string; image_is_reference?: boolean } | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  React.useEffect(() => { setVariant(''); setNotice(''); setIndex(0); }, [kind, id]);
-  React.useEffect(() => { let alive = true; const sb = getSupabaseClient(); if (!sb) { setLoaded(true); return; } if (kind !== 'core' && kind !== 'athlete') { setLoaded(true); return; } void sb.from(kind === 'core' ? 'external_offers' : 'products').select('*').eq('id',id).maybeSingle().then(({data}) => { if (alive) { setRemote(data); setLoaded(true); } }); return () => { alive = false; }; }, [kind,id]);
-  const local = kind === 'core' ? activeOffers.find(item => item.id === id) : kind === 'athlete' ? products.find(item => item.id === id && item.product_type === 'c2c') : null;
-  const item = local || remote;
   const core = kind === 'core';
-  const available = item && (core ? ('is_active' in item && item.is_active !== false) : ('product_type' in item && item.product_type === 'c2c' && 'status' in item && item.status === 'active'));
-  if (!item || !available) return <main className="mx-auto max-w-5xl p-8"><Link href="/" className="text-red-400">← Voltar ao CoreShop</Link><h1 className="mt-10 text-2xl font-black">{loaded ? 'Produto indisponível' : 'Carregando produto…'}</h1><p className="mt-3 text-zinc-400">{loaded ? 'Não foi possível encontrar um anúncio ativo. Confira o catálogo ou tente novamente.' : 'Consultando o catálogo.'}</p></main>;
-  const gallery: string[] = ('images' in item && item.images?.length ? item.images : ['image_url' in item ? item.image_url || '' : '']).filter(Boolean);
-  const needsVariant = ['Calçados','Vestuário','Roupas','Lutas','Artes Marciais'].includes(item.category);
-  const coreVariant = core ? getProductVariantConfig(item.title, item.category, item.sport, item.description, 'variant_options' in item ? item.variant_options : undefined) : null;
-  const variantRequired = core ? Boolean(coreVariant && !coreVariant.fixedValue) : needsVariant;
-  const selectedVariant = coreVariant?.fixedValue ?? variant;
-  const contact = !core && 'contact_phone' in item ? sellerContactUrl(item.contact_phone, item.title) : null;
-  return <div className="min-h-screen bg-zinc-950 text-white">
-    <header className="border-b border-zinc-800 px-5 py-5"><nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3"><Link href="/" className="inline-flex items-center gap-2 font-black"><ArrowLeft className="h-4 w-4" />CoreShop</Link><div className="flex gap-5 text-xs"><Link href="/compras">Carrinho CoreMotion ({cart.count})</Link><Link href="/pedidos">Meus pedidos</Link></div></nav></header>
-    <main className="mx-auto max-w-7xl px-4 py-7 sm:px-8">
-      <p className="mb-5 text-xs text-zinc-500">CoreShop / {core ? 'CoreMotion' : 'De atletas'} / {item.sport} / {item.category}</p>
-      {core ? (
-        <div className="grid items-start gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-          <section aria-label="Fotos do produto" className="space-y-4">
-            <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-2xl">
-              {gallery.slice(0,4).map((src,i)=><button key={src+i} type="button" aria-label={`Ver foto ${i+1}`} aria-pressed={index===i} onClick={()=>setIndex(i)} className={`relative aspect-square overflow-hidden bg-zinc-100 ${index===i?'ring-2 ring-inset ring-red-500':''}`}>
-                <ProductImage src={src} alt={`${item.title} — foto ${i+1}`} sizes="(max-width: 1024px) 45vw, 560px"/>
-                {gallery.length>4&&i===3&&<span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-bold">+{gallery.length-4} imagens</span>}
+  const [index, setIndex] = useState(0);
+  const [variant, setVariant] = useState('');
+  const [notice, setNotice] = useState('');
+  const [zoom, setZoom] = useState(false);
+  const [cep, setCep] = useState('');
+  const [cepStatus, setCepStatus] = useState('');
+  const [checkingCep, setCheckingCep] = useState(false);
+  const [remote, setRemote] = useState<GalleryItem | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => { setVariant(''); setNotice(''); setIndex(0); setZoom(false); setRemote(null); setLoaded(false); }, [kind, id]);
+  useEffect(() => {
+    let alive = true;
+    const sb = getSupabaseClient();
+    if (!sb || (kind !== 'core' && kind !== 'athlete')) { setLoaded(true); return; }
+    void sb.from(kind === 'core' ? 'external_offers' : 'products').select('*').eq('id', id).maybeSingle()
+      .then(({ data, error }) => { if (alive) { if (!error) setRemote(data as GalleryItem | null); setLoaded(true); } })
+      .catch(() => { if (alive) setLoaded(true); });
+    return () => { alive = false; };
+  }, [kind, id]);
+
+  const local = core
+    ? activeOffers.find(item => item.id === id)
+    : kind === 'athlete' ? products.find(item => item.id === id && item.product_type === 'c2c') : null;
+  const item = (local || remote) as GalleryItem | null;
+  const available = !!item && (core
+    ? ('is_active' in item && item.is_active !== false)
+    : ('product_type' in item && item.product_type === 'c2c' && item.status === 'active'));
+  const rawImages = item ? ('image_urls' in item && item.image_urls?.length ? item.image_urls : 'images' in item && item.images?.length ? item.images : ['image_url' in item ? item.image_url : '']) : [];
+  const gallery = [...new Set(rawImages.filter((src): src is string => typeof src === 'string' && src.length>0))].slice(0,12);
+  const selectedImage = gallery[Math.min(index, gallery.length-1)] || '';
+  const coreOffer = core && item && 'source_url' in item ? item as ExternalOffer : null;
+  const athlete = !core && item && 'product_type' in item ? item as Product : null;
+  const config = coreOffer ? getProductVariantConfig(coreOffer.title, coreOffer.category, coreOffer.sport, coreOffer.description, coreOffer.variant_options) : null;
+  const selectedVariant = config?.fixedValue ?? variant;
+  const variantRequired = Boolean(config && !config.fixedValue);
+  const otherColors = coreOffer ? activeOffers.filter(other =>
+    other.id !== coreOffer.id && other.store_name === coreOffer.store_name &&
+    normalize(other.title) === normalize(coreOffer.title) && other.is_active !== false &&
+    other.image_url !== coreOffer.image_url
+  ).slice(0,9) : [];
+  const percentage = item && item.original_price && item.original_price > item.price
+    ? Math.round((1-item.price/item.original_price)*100) : 0;
+  const previous = () => setIndex(current => (current-1+gallery.length)%gallery.length);
+  const next = () => setIndex(current => (current+1)%gallery.length);
+
+  const checkCep = async () => {
+    const digits = cep.replace(/\D/g,'');
+    if (!/^\d{8}$/.test(digits)) { setCepStatus('Digite um CEP com 8 números.'); return; }
+    setCheckingCep(true); setCepStatus('');
+    try {
+      const res = await fetch('https://viacep.com.br/ws/'+digits+'/json/', { signal: AbortSignal.timeout(9000) });
+      if (!res.ok) throw new Error('Não foi possível consultar o CEP.');
+      const data: {erro?: boolean;localidade?: string;uf?: string} = await res.json();
+      if (data.erro) { setCepStatus('CEP não encontrado.'); return; }
+      setCepStatus((data.localidade && data.uf ? data.localidade+' / '+data.uf+' · ' : '')+'CEP confirmado para o endereço de entrega.');
+      sessionStorage.setItem('coremotion-cep',digits);
+    } catch { setCepStatus('CEP não consultado. Confira o endereço no carrinho.'); }
+    finally { setCheckingCep(false); }
+  };
+
+  const addToCart = (buy = false) => {
+    if (!item || !core || (variantRequired && !selectedVariant.trim())) return;
+    cart.add(id, selectedVariant.trim());
+    if (buy) window.location.assign('/compras');
+    else setNotice('Adicionado ao carrinho CoreMotion.');
+  };
+
+  if (!item || !available) return <main className="mx-auto max-w-5xl p-8 text-white">
+    <Link href="/" className="text-red-400">← Voltar ao CoreShop</Link>
+    <h1 className="mt-10 text-2xl font-black">{loaded ? 'Produto indisponível' : 'Carregando produto…'}</h1>
+    <p className="mt-3 text-zinc-400">{loaded ? 'Consulte outros itens no catálogo.' : 'Consultando catálogo.'}</p>
+  </main>;
+
+  return <div className="min-h-screen bg-[#f4f4f5] text-zinc-900">
+    <header className="border-b border-zinc-800 bg-[#0a0a0c] text-white">
+      <nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-8">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-black tracking-tight"><ArrowLeft className="h-4 w-4"/>COREMOTION <span className="font-normal text-zinc-500">/</span> CoreShop</Link>
+        <div className="flex gap-5 text-xs text-zinc-300"><Link href="/compras" className="hover:text-white">Carrinho ({cart.count})</Link><Link href="/pedidos" className="hover:text-white">Meus pedidos</Link></div>
+      </nav>
+    </header>
+    <main className="mx-auto max-w-[1380px] px-4 pb-16 pt-5 sm:px-8">
+      <p className="mb-6 text-xs font-medium text-zinc-500">CoreMotion <span className="mx-2">/</span> {core ? 'CoreShop' : 'De atletas'} <span className="mx-2">/</span> {item.sport} <span className="mx-2">/</span> {item.category}</p>
+      <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(350px,0.85fr)]">
+        <div className="min-w-0 space-y-5">
+          <section aria-label="Galeria de fotos do produto" className="space-y-3">
+            {gallery.length > 1 ? <div className="grid grid-cols-2 gap-1.5 overflow-hidden rounded-2xl">
+              {gallery.slice(0,4).map((src,i)=><button key={src+i} type="button" onClick={()=>{setIndex(i);setZoom(true);}} className="group relative aspect-square overflow-hidden bg-white text-zinc-900 hover:opacity-95" aria-label={'Ampliar foto '+(i+1)}>
+                <ProductImage src={src} alt={item.title+' — foto '+(i+1)} sizes="(max-width: 1023px) 45vw, 340px"/>
+                {i===3 && gallery.length>4 && <span className="absolute inset-0 flex items-end justify-center bg-black/20 pb-4 text-xs font-black text-white">Ver as {gallery.length} fotos</span>}
               </button>)}
+            </div> : <button type="button" onClick={()=>setZoom(true)} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white" aria-label="Ampliar imagem principal">
+              <ProductImage src={selectedImage} alt={item.title} sizes="(max-width: 1023px) 100vw, 740px"/>
+            </button>}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500"><ImageIcon className="h-4 w-4"/>{gallery.length} {gallery.length===1?'imagem':'imagens'} do produto</span>
+              {gallery.length>1 && <button type="button" onClick={()=>setZoom(true)} className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-xs font-semibold hover:border-red-500">Ver galeria completa</button>}
             </div>
-            {gallery.length>1&&<div className="flex gap-2 overflow-x-auto pb-1">{gallery.map((src,i)=><button key={src+i} type="button" aria-label={`Selecionar imagem ${i+1}`} aria-pressed={index===i} onClick={()=>setIndex(i)} className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-zinc-100 ${index===i?'border-red-500':'border-zinc-700'}`}><ProductImage src={src} alt="" sizes="64px"/></button>)}</div>}
-            <details open className="rounded-2xl border border-zinc-800 p-5"><summary className="cursor-pointer font-bold">Descrição e informações do produto</summary><p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-400">{item.description}</p></details>
+            {gallery.length>1 && <div className="flex gap-2 overflow-x-auto pb-1">{gallery.map((src,i)=><button type="button" key={src+i} onClick={()=>setIndex(i)} aria-label={'Selecionar foto '+(i+1)} aria-pressed={index===i} className={'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-white '+(index===i?'border-red-600':'border-zinc-200')}><ProductImage src={src} alt={item.title+' — miniatura '+(i+1)} sizes="64px"/></button>)}</div>}
           </section>
-          <section className="space-y-5 lg:sticky lg:top-6">
-            <div className="space-y-3">
-              <h1 className="text-2xl font-black leading-tight sm:text-3xl">{item.title}</h1>
-              {item.original_price&&item.original_price>item.price&&<div className="text-sm text-zinc-500 line-through">{money(retailPriceCents(item.original_price))}</div>}
-              <div className="text-3xl font-black tracking-tight">{money(retailPriceCents(item.price))}</div>
-              <p className="text-xs text-zinc-500">Preço anunciado no catálogo CoreMotion</p>
+          <details open className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
+            <summary className="cursor-pointer text-sm font-black">Informações do produto</summary>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-zinc-600">{item.description}</p>
+            {'image_is_reference' in item && item.image_is_reference && <p className="mt-3 text-xs text-zinc-500">Imagem de referência fornecida pelo anunciante.</p>}
+          </details>
+        </div>
+
+        <section className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:sticky lg:top-5 sm:p-7">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1"><p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{coreOffer?.store_name || (athlete ? 'Venda entre atletas' : 'CoreMotion')}</p>
+              <h1 className="text-xl font-black leading-tight sm:text-2xl">{item.title}</h1>
             </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-2 text-sm">
-              <p className="font-semibold">Venda CoreMotion</p>
-              <p className="text-zinc-400">Produto disponibilizado no catálogo CoreMotion.</p>
-              {'store_name' in item&&item.store_name&&<p className="text-xs text-zinc-500">Loja de referência: <strong className="text-zinc-300">{item.store_name}</strong></p>}
+            <button type="button" aria-label={favorites.includes(id)?'Remover dos favoritos':'Salvar nos favoritos'} onClick={()=>isVisitor?setAuthModalOpen(true):toggleFavorite(id)} className="rounded-full border border-zinc-200 p-2.5 hover:border-red-400">
+              <Heart className={'h-5 w-5 '+(favorites.includes(id)?'fill-red-600 text-red-600':'text-zinc-500')}/>
+            </button>
+          </div>
+          {item.original_price && item.original_price > item.price && <p className="text-xs text-zinc-400 line-through">De {money(retailPriceCents(item.original_price))}</p>}
+          <div className="flex flex-wrap items-center gap-3"><p className="text-3xl font-black tracking-tight">{money(retailPriceCents(item.price))}</p>{percentage>0&&<span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">-{percentage}%</span>}</div>
+          <div className="border-t border-zinc-100 pt-4 text-sm text-zinc-500">
+            {coreOffer ? <p>Referência de <strong className="text-zinc-800">{coreOffer.store_name}</strong>. <a href={coreOffer.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-red-700 hover:underline">Ver produto na loja <ExternalLink className="h-3.5 w-3.5"/></a></p>
+              : <p>Vendido por <strong className="text-zinc-800">{athlete?.seller_name || 'Atleta'}</strong> {athlete?.condition && '· '+getConditionMeta(athlete.condition).badge}</p>}
+          </div>
+          {otherColors.length>0 && <div className="space-y-3 border-t border-zinc-100 pt-4">
+            <p className="text-sm font-semibold">Outras versões e cores</p>
+            <div className="flex flex-wrap gap-2">{otherColors.map((other,i)=><Link href={productPath('core',other.id)} title={other.title} key={other.id} aria-label={'Ver versão '+(i+2)} className="relative block h-14 w-14 overflow-hidden rounded-lg border-2 border-zinc-200 bg-white hover:border-red-500"><ProductImage src={other.image_url} alt={other.title} sizes="56px"/></Link>)}</div>
+          </div>}
+          {coreOffer && config && <div className="space-y-3 border-t border-zinc-100 pt-4">
+            <p className="text-sm font-semibold">{config.label}{selectedVariant&&<span className="ml-2 font-normal text-zinc-500">{selectedVariant}</span>}</p>
+            <div role="group" aria-label={config.label} className="flex flex-wrap gap-2">{config.options.map(option=><button key={option} type="button" aria-pressed={selectedVariant===option} onClick={()=>setVariant(option)} className={'min-w-11 rounded-lg border px-3 py-2.5 text-xs font-bold transition '+(selectedVariant===option?'border-red-600 bg-red-600 text-white':'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500')}>{option}</button>)}</div>
+          </div>}
+          {!core && athlete && <div className="text-sm text-zinc-500">{athlete.location && <p className="inline-flex items-center gap-2"><MapPin className="h-4 w-4"/>{athlete.location}</p>}</div>}
+          {coreOffer ? <>
+            <div className="space-y-2">
+              <button type="button" disabled={variantRequired&&!selectedVariant.trim()} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">Comprar agora</button>
+              <button type="button" disabled={variantRequired&&!selectedVariant.trim()} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>Adicionar ao carrinho</button>
+              {notice&&<p role="status" className="text-sm font-semibold text-emerald-700">{notice}</p>}
             </div>
-            {coreVariant ? <div className="space-y-2"><label htmlFor="core-product-variant" className="block text-sm font-semibold">{coreVariant.label}</label>{coreVariant.fixedValue ? <p className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm">{coreVariant.fixedValue}</p> : <select id="core-product-variant" required value={variant} onChange={event=>setVariant(event.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm"><option value="">Selecione uma opção</option>{coreVariant.options.map(option=><option key={option} value={option}>{option}</option>)}</select>}<p className="text-xs leading-relaxed text-amber-300">{coreVariant.note}</p></div> : !core && needsVariant ? <label className="block text-sm">Tamanho ou variante informada pelo vendedor<input maxLength={120} value={variant} onChange={event=>setVariant(event.target.value)} placeholder="Ex.: tamanho 40, cor azul" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3"/></label> : null}
-            <button type="button" disabled={variantRequired&&!variant.trim()} onClick={()=>{cart.add(id,selectedVariant.trim());setNotice('Produto adicionado ao carrinho. O checkout e o pagamento ainda não estão disponíveis.');}} className="flex w-full items-center justify-center gap-3 rounded-xl bg-red-600 px-5 py-4 text-sm font-bold transition hover:bg-red-500 disabled:opacity-40"><ShoppingBag className="h-5 w-5"/>Adicionar ao carrinho</button>
-            <button type="button" disabled={variantRequired&&!variant.trim()} onClick={()=>{cart.add(id,selectedVariant.trim());window.location.assign('/compras');}} className="block w-full rounded-xl border border-zinc-700 p-4 text-center text-sm font-bold transition hover:border-zinc-500 disabled:opacity-40">Continuar para o carrinho</button>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-xs text-zinc-400"><Truck className="mb-2 h-5 w-5"/><p className="font-medium text-zinc-300">Entrega</p><p className="mt-1">Frete e prazo serão informados quando a operação logística estiver disponível. Adicionar ao carrinho não reserva estoque nem efetua cobrança.</p></div>
-            {notice&&<p role="status" className="text-sm text-emerald-400">{notice}</p>}
+            <div className="space-y-3 border-t border-zinc-100 pt-5">
+              <p className="flex items-center gap-2 text-sm font-black"><Truck className="h-4 w-4 text-red-600"/>Consultar destino de entrega</p>
+              <div className="flex gap-2"><input inputMode="numeric" aria-label="CEP para entrega" autoComplete="postal-code" maxLength={9} placeholder="Digite seu CEP" value={cep} onChange={e=>setCep(e.target.value.replace(/[^\d-]/g,''))} className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-3 text-sm outline-none focus:border-red-600"/><button type="button" disabled={checkingCep} onClick={()=>void checkCep()} className="rounded-lg bg-zinc-900 px-4 text-xs font-bold text-white hover:bg-zinc-700 disabled:opacity-40">{checkingCep?'Consultando':'Consultar'}</button></div>
+              {cepStatus && <p role="status" className="text-xs text-zinc-600">{cepStatus}</p>}
+            </div>
             <ReportButton category="external_offer" targetId={id} title={item.title}/>
-          </section>
-        </div>
-      ) : (
-        <div className="grid items-start gap-8 lg:grid-cols-[1.3fr_1fr]">
-          <section aria-label="Fotos do produto" className="space-y-3"><div className="relative aspect-square overflow-hidden rounded-2xl bg-zinc-100"><ProductImage key={gallery[index]} src={gallery[index]||''} alt={`${item.title} — foto ${index+1}`} sizes="(max-width: 1024px) 95vw, 720px"/></div><div className="flex gap-3 overflow-x-auto">{gallery.map((src,i)=><button key={`${src}-${i}`} type="button" aria-label={`Ver foto ${i+1}`} aria-pressed={index===i} onClick={()=>setIndex(i)} className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 bg-zinc-100 ${index===i?'border-red-500':'border-zinc-700'}`}><ProductImage src={src} alt={`Miniatura ${i+1}`} sizes="80px"/></button>)}</div>{'image_is_reference' in item&&item.image_is_reference&&<p className="text-xs text-zinc-500">Imagem de referência. Solicite fotos atuais ao anunciante.</p>}<details open className="rounded-2xl border border-zinc-800 p-5"><summary className="cursor-pointer font-bold">Informações do produto</summary><p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-400">{item.description}</p></details></section>
-          <section className="space-y-6 lg:sticky lg:top-6"><div className="flex items-start justify-between gap-4"><h1 className="text-2xl font-black sm:text-3xl">{item.title}</h1><button type="button" aria-label="Salvar produto" onClick={()=>isVisitor?setAuthModalOpen(true):toggleFavorite(id)} className="rounded-full border border-zinc-700 p-3"><Heart className={`h-5 w-5 ${favorites.includes(id)?'fill-red-500 text-red-500':''}`}/></button></div><div>{item.original_price&&item.original_price>item.price?<p className="text-sm text-zinc-500 line-through">{money(retailPriceCents(item.original_price))}</p>:null}<p className="mt-1 text-3xl font-black">{money(retailPriceCents(item.price))}</p><p className="mt-2 text-xs text-zinc-500">Negocie preço e entrega diretamente com o anunciante.</p></div><div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm"><p>Vendido por <strong>{'seller_name'in item?item.seller_name:'Atleta'}</strong></p><p className="mt-2 text-zinc-400">{'condition'in item&&item.condition?getConditionMeta(item.condition as Parameters<typeof getConditionMeta>[0]).badge:''}</p><p className="mt-1 text-zinc-400">{'location'in item?item.location:''}</p></div>{contact?<a href={contact} target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-red-600 p-4 text-center text-sm font-bold">Conversar com o atleta pelo WhatsApp</a>:<p className="text-sm text-amber-300">Contato do anunciante indisponível.</p>}<ReportButton category="athlete_listing" targetId={id} title={item.title}/></section>
-        </div>
-      )}
+          </> : <>
+            {athlete?.contact_phone ? <a href={sellerContactUrl(athlete.contact_phone,athlete.title)||'#'} target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-red-600 px-5 py-4 text-center text-sm font-bold text-white">Falar com o anunciante</a> : <p className="text-sm text-zinc-500">Contato do anunciante indisponível.</p>}
+            <ReportButton category="athlete_listing" targetId={id} title={item.title}/>
+          </>}
+        </section>
+      </div>
     </main>
+
+    {zoom && gallery.length>0 && <div role="dialog" aria-modal="true" aria-label="Galeria ampliada" className="fixed inset-0 z-[100] flex flex-col bg-black/95 px-4 py-4 text-white">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between"><span className="text-sm font-semibold">{index+1} / {gallery.length}</span><button type="button" aria-label="Fechar galeria" onClick={()=>setZoom(false)} className="rounded-full border border-zinc-600 p-3 hover:bg-zinc-800"><X className="h-5 w-5"/></button></div>
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-center gap-2 py-6">
+        <button type="button" aria-label="Foto anterior" onClick={previous} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronLeft/></button>
+        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-white"><ProductImage src={selectedImage} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
+        <button type="button" aria-label="Próxima foto" onClick={next} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronRight/></button>
+      </div>
+      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-white '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} alt="" sizes="56px"/></button>)}</div>
+    </div>}
     <AuthModal />
   </div>;
 }
