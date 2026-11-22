@@ -6,6 +6,10 @@ import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
 import { HELP_TOPICS, SUPPORT_EMAIL, TICKET_STATUSES, supportMailto, type HelpTopic, type SupportTicket, type TicketStatus } from '@/lib/support';
 import { createSupportTicket, listSupportTickets, reviewSupportTicket } from '@/services/support';
+import { getSupabaseClient } from '@/services/supabaseClient';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
+
+const SUPPORT_LIVE_SOURCES = [{ table: 'support_tickets' }] as const;
 
 function TicketReply({ ticket, onSaved }: { ticket: SupportTicket; onSaved: () => Promise<void> }) {
   const [response, setResponse] = useState(ticket.response);
@@ -39,6 +43,7 @@ export default function HelpCenter({ initialTopic, onClose }: { initialTopic: He
   const [notice, setNotice] = useState('');
   const staff = isStaffRole(user?.role);
   const identity = user?.id;
+  const client = getSupabaseClient();
   const version = useRef(0);
   const refresh = useCallback(async () => {
     if (!identity) return;
@@ -49,6 +54,8 @@ export default function HelpCenter({ initialTopic, onClose }: { initialTopic: He
   }, [identity]);
   useEffect(() => { const node = dialog.current; node?.showModal(); return () => { node?.close(); }; }, []);
   useEffect(() => { const requestVersion = version; setTickets([]); void refresh(); return () => { requestVersion.current++; }; }, [refresh]);
+  useRealtimeRefresh(client, SUPPORT_LIVE_SOURCES, refresh, Boolean(identity), 'help-center-' + (identity || 'visitor'));
+
   const go = (target: 'profile' | 'marketplace') => { onClose(); setActiveView(target); };
   return createPortal(<dialog ref={dialog} aria-labelledby="help-center-title" onCancel={event => { if (busy) event.preventDefault(); else onClose(); }} className="fixed inset-0 m-auto max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-5xl overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-5 text-white shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm sm:p-7">
     <header className="mb-6 flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-red-400">CoreMotion</p><h2 id="help-center-title" className="mt-2 text-2xl font-black">Central de Atendimento</h2><a href={`mailto:${SUPPORT_EMAIL}`} className="mt-2 inline-flex items-center gap-2 break-all text-xs text-zinc-400 hover:text-white"><Mail className="h-4 w-4 shrink-0" />{SUPPORT_EMAIL}</a></div><button type="button" autoFocus disabled={busy} onClick={onClose} aria-label="Fechar atendimento" className="rounded-full p-2 hover:bg-zinc-800"><X className="h-5 w-5" /></button></header>
