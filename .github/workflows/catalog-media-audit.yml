@@ -1,0 +1,18 @@
+name: Auditar todas as fotos do CoreMotion
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  media-audit:
+    if: github.head_ref == 'fix/catalog-media-quality-20261122'
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar as fotos de todos os 885 produtos e 26 anúncios
+        run: node scripts/catalog-media-audit.mjs
+      - name: Consultar galerias das fontes Vollo e Penalty
+        run: node scripts/catalog-gallery-recover.mjs
