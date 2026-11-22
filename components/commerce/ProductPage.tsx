@@ -28,7 +28,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   if (!item || !available) return <main className="mx-auto max-w-5xl p-8"><Link href="/" className="text-red-400">← Voltar ao CoreShop</Link><h1 className="mt-10 text-2xl font-black">{loaded ? 'Produto indisponível' : 'Carregando produto…'}</h1><p className="mt-3 text-zinc-400">{loaded ? 'Não foi possível encontrar um anúncio ativo. Confira o catálogo ou tente novamente.' : 'Consultando o catálogo.'}</p></main>;
   const gallery: string[] = ('images' in item && item.images?.length ? item.images : ['image_url' in item ? item.image_url || '' : '']).filter(Boolean);
   const needsVariant = ['Calçados','Vestuário','Roupas','Lutas','Artes Marciais'].includes(item.category);
-  const coreVariant = core ? getProductVariantConfig(item.title, item.category, item.sport) : null;
+  const coreVariant = core ? getProductVariantConfig(item.title, item.category, item.sport, item.description) : null;
   const variantRequired = core ? Boolean(coreVariant && !coreVariant.fixedValue) : needsVariant;
   const selectedVariant = coreVariant?.fixedValue ?? variant;
   const contact = !core && 'contact_phone' in item ? sellerContactUrl(item.contact_phone, item.title) : null;
