@@ -71,6 +71,8 @@ function parseProduct(row,brand){
   discovered_category:(row.categories||[]).join(' > ').slice(0,140)
  };
 }
+const {readFileSync}=await import('node:fs');
+const existingSourceUrls=new Set(JSON.parse(readFileSync('scripts/catalog-existing-urls.json','utf8')));
 const all=[];const errors=[];const counts={};
 for(const brand of providers){
  let total=0,usable=0;
@@ -91,7 +93,7 @@ for(const brand of providers){
 }
 const byCategory={'Calçados':[],'Vestuário':[],'Acessórios':[],'Equipamentos':[]};
 const dedupe=new Set();
-for(const p of all){if(dedupe.has(p.source_url))continue;dedupe.add(p.source_url);byCategory[p.category].push(p)}
+for(const p of all){if(dedupe.has(p.source_url)||existingSourceUrls.has(p.source_url))continue;dedupe.add(p.source_url);byCategory[p.category].push(p)}
 // Avoid collecting 400 nearly identical shoes; round-robin suppliers for each category.
 const selected=[];const selectedIds=new Set();
 function add(cat,amount){
@@ -105,6 +107,6 @@ add('Calçados',220);
 add('Acessórios',35);
 add('Equipamentos',20);
 for(const cat of ['Vestuário','Calçados','Acessórios','Equipamentos'])add(cat,400-selected.length);
-console.log('CATALOG_SUMMARY '+JSON.stringify({counts,byCategory:Object.fromEntries(Object.entries(byCategory).map(([k,v])=>[k,v.length])),selected:selected.length,selectedCategories:Object.fromEntries(['Calçados','Vestuário','Acessórios','Equipamentos'].map(k=>[k,selected.filter(p=>p.category===k).length])),errors}));
+console.log('CATALOG_SUMMARY '+JSON.stringify({counts,byCategory:Object.fromEntries(Object.entries(byCategory).map(([k,v])=>[k,v.length])),excludedExisting:all.filter(p=>existingSourceUrls.has(p.source_url)).length,selected:selected.length,selectedCategories:Object.fromEntries(['Calçados','Vestuário','Acessórios','Equipamentos'].map(k=>[k,selected.filter(p=>p.category===k).length])),errors}));
 for(const p of selected)console.log('CATALOG_RECORD '+JSON.stringify(p));
 if(selected.length<400)process.exitCode=2;
