@@ -95,6 +95,7 @@ const byCategory={'Calçados':[],'Vestuário':[],'Acessórios':[],'Equipamentos'
 const dedupe=new Set();
 for(const p of all){if(dedupe.has(p.source_url)||existingSourceUrls.has(p.source_url))continue;dedupe.add(p.source_url);byCategory[p.category].push(p)}
 // Avoid collecting 400 nearly identical shoes; round-robin suppliers for each category.
+for (const p of all.filter(p=>existingSourceUrls.has(p.source_url) && p.image_urls.length>1)) console.log('CATALOG_EXISTING_GALLERY '+JSON.stringify({source_url:p.source_url,image_urls:p.image_urls,image_url:p.image_url}));
 const selected=[];const selectedIds=new Set();
 function add(cat,amount){
  const arr=byCategory[cat]||[];const groups={};for(const p of arr){(groups[p.store_name]??=[]).push(p)}
