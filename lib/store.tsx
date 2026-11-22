@@ -413,33 +413,108 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     };
   }, [addToast, resetPrivateState, restoreAccountLists]);
 
-  // Atualizações em tempo real para dados compartilhados. O RLS continua controlando as linhas visíveis.
+  // A publicação Postgres só sinaliza uma mudança: as consultas abaixo reaplicam RLS.
+  // Um canal por sessão mantém duas pessoas/dispositivos sincronizados sem recarregar a página.
+  const realtimeUserId = user?.id;
+  const realtimeStaff = isStaffRole(user?.role);
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const client = getSupabase();
     if (!client) return;
     let disposed = false;
-    const refreshSharedData = async (table: 'products' | 'external_offers' | 'community_posts') => {
+    const generations: Record<string, number> = {};
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
+    type LiveTable = 'products' | 'external_offers' | 'community_posts' | 'orders' | 'profiles';
+
+    const refreshSharedData = async (table: LiveTable) => {
+      const version = (generations[table] || 0) + 1;
+      generations[table] = version;
       try {
         if (table === 'products') {
-          const rows = await ProductService.getProducts();
-          if (!disposed) setProducts(rows);
+          const rows = realtimeStaff
+            ? await ProductService.getProducts({ status: 'all' })
+            : await ProductService.getProducts();
+          // Preserve own paused listings while refreshing the public marketplace.
+          const own = !realtimeStaff && realtimeUserId
+            ? await ProductService.getProducts({ seller_id: realtimeUserId, status: 'all' })
+            : [];
+          if (!disposed && generations[table] === version) setProducts(mergeProductsById(rows, own));
         } else if (table === 'external_offers') {
-          const { data, error } = await client.from('external_offers').select('*').eq('is_active', true).order('created_at', { ascending: false });
-          if (!error && !disposed) setOffers(data || []);
-        } else {
+          const query = client.from('external_offers').select('*');
+          const { data, error } = await (realtimeStaff ? query : query.eq('is_active', true))
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          if (!disposed && generations[table] === version) setOffers(data || []);
+        } else if (table === 'community_posts') {
           const rows = await CommunityService.getPosts();
-          if (!disposed) setCommunityPosts(rows);
+          if (!disposed && generations[table] === version) setCommunityPosts(rows);
+        } else if (table === 'orders' && realtimeUserId) {
+          const rows = realtimeStaff
+            ? await OrderService.getAllOrdersAdmin()
+            : await OrderService.getMyOrders(realtimeUserId);
+          if (!disposed && generations[table] === version && userRef.current?.id === realtimeUserId) setOrders(rows);
+        } else if (table === 'profiles' && realtimeUserId) {
+          const { data, error } = await client.from('profiles').select('*').eq('id', realtimeUserId).maybeSingle();
+          if (error) throw error;
+          if (!disposed && generations[table] === version && data && userRef.current?.id === realtimeUserId) {
+            const updated = { ...data, supabase_id: data.id } as UserProfile;
+            userRef.current = updated;
+            setUser(updated);
+          }
         }
-      } catch (error) { console.warn('[CoreMotion Realtime] Falha ao atualizar', table, error); }
+      } catch (error) {
+        if (!disposed) console.warn('[CoreMotion Realtime] Falha ao atualizar', table, error);
+      }
     };
-    const channel = client.channel('coremotion-live-data')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => { void refreshSharedData('products'); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'external_offers' }, () => { void refreshSharedData('external_offers'); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => { void refreshSharedData('community_posts'); })
-      .subscribe((status) => { if (status === 'SUBSCRIBED') console.info('[CoreMotion Realtime] Canal ativo:', status); else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[CoreMotion Realtime] Canal indisponível:', status); });
-    return () => { disposed = true; void client.removeChannel(channel); };
-  }, []);
+    const schedule = (table: LiveTable) => {
+      if (disposed || document.visibilityState === 'hidden') return;
+      const prior = timers.get(table);
+      if (prior !== undefined) clearTimeout(prior);
+      timers.set(table, setTimeout(() => {
+        timers.delete(table);
+        void refreshSharedData(table);
+      }, 140));
+    };
+    const resync = () => {
+      if (document.visibilityState === 'hidden') return;
+      schedule('products');
+      schedule('external_offers');
+      schedule('community_posts');
+      if (realtimeUserId) { schedule('profiles'); schedule('orders'); }
+    };
+    const channel = client.channel('coremotion-live-data-' + (realtimeUserId || 'visitor'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => schedule('products'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'external_offers' }, () => schedule('external_offers'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => schedule('community_posts'));
+    if (realtimeUserId) {
+      channel
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: 'id=eq.' + realtimeUserId }, () => schedule('profiles'))
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'orders',
+          ...(realtimeStaff ? {} : { filter: 'user_id=eq.' + realtimeUserId }),
+        }, () => schedule('orders'));
+    }
+    channel.subscribe(status => {
+      if (status === 'SUBSCRIBED') resync(); // important after reconnect or missed initial events
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[CoreMotion Realtime] Reconectando:', status);
+      }
+    });
+    const onVisibility = () => { if (document.visibilityState === 'visible') resync(); };
+    window.addEventListener('focus', resync);
+    window.addEventListener('online', resync);
+    document.addEventListener('visibilitychange', onVisibility);
+    const fallback = window.setInterval(resync, 60000);
+    return () => {
+      disposed = true;
+      timers.forEach(timer => clearTimeout(timer));
+      clearInterval(fallback);
+      window.removeEventListener('focus', resync);
+      window.removeEventListener('online', resync);
+      document.removeEventListener('visibilitychange', onVisibility);
+      void client.removeChannel(channel);
+    };
+  }, [realtimeUserId, realtimeStaff]);
 
   // Dados privados da conta logada: staff vê todos os pedidos/contas/anúncios; os demais, só os seus.
   const userId = user?.id;
