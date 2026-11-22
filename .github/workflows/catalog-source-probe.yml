@@ -13,3 +13,4 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/catalog-source-probe.mjs
+      - run: node scripts/catalog-harvest.mjs
