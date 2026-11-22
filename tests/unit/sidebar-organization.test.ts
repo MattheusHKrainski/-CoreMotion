@@ -19,7 +19,7 @@ it('recolhe a navegação por padrão e preserva os grupos no menu', () => {
   assert.match(source, /Publique e gerencie anúncios/);
   assert.match(source, /if \(!items.length\) return null/);
   assert.match(source, /canAccessSports\(user\)/);
-  assert.match(source, /motion-safe:group-hover:rotate-12/);
-  assert.match(source, /motion-safe:group-hover:scale-110/);
+  assert.match(source, /<Menu className="h-6 w-6"/);
+  assert.match(source, /aria-label="Voltar à tela principal"/);
   assert.match(source, /whitespace-normal/);
 });

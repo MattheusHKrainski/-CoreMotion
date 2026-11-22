@@ -9,23 +9,16 @@ import HomeHeroAndHighlights from '@/components/HomeHeroAndHighlights';
 import MarketplaceView from '@/components/marketplace/MarketplaceView';
 
 describe('Welcome Landing Page (Página Inicial de Boas-Vindas)', () => {
-  it('mantém a ordem (Tudo, De Atletas, Ofertas) na Home e no Marketplace', () => {
+  it('remove as abas Tudo, De Atletas e Ofertas da Home e do Marketplace', () => {
     const homeHtml = renderToStaticMarkup(
       React.createElement(CoreMotiomProvider, null, React.createElement(HomeHeroAndHighlights))
     );
-    const homeFilters = homeHtml.slice(homeHtml.indexOf('aria-label="Filtrar catálogo"'));
-    const homeTudoIdx = homeFilters.indexOf('>Tudo<');
-    const homeAtletasIdx = homeFilters.indexOf('>De Atletas<');
-    const homeOfertasIdx = homeFilters.indexOf('>Ofertas<');
-    assert.ok(homeTudoIdx > -1 && homeAtletasIdx > homeTudoIdx && homeOfertasIdx > homeAtletasIdx);
-
+    assert.doesNotMatch(homeHtml, /aria-label="Filtrar catálogo"/);
     const mpHtml = renderToStaticMarkup(
       React.createElement(CoreMotiomProvider, null, React.createElement(MarketplaceView))
     );
-    const mpTudoIdx = mpHtml.indexOf('Tudo (');
-    const mpAtletasIdx = mpHtml.indexOf('De Atletas (');
-    const mpOfertasIdx = mpHtml.indexOf('Ofertas (');
-    assert.ok(mpTudoIdx > -1 && mpAtletasIdx > mpTudoIdx && mpOfertasIdx > mpAtletasIdx);
+    assert.doesNotMatch(mpHtml, /Tudo \(|De Atletas \(|Ofertas \(/);
+    assert.match(mpHtml, /Pesquisar no CoreShop/);
   });
   it('abre diretamente a vitrine com navegação e catálogo, sem a página de boas-vindas', () => {
     const html = renderToStaticMarkup(React.createElement(CoreMotiomProvider, null, React.createElement(CoreMotiomApp)));

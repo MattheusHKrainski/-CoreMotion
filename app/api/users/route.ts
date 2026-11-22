@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+import { removeAccountMedia } from '@/services/accountMedia';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   deleteAuthUser,
@@ -131,6 +133,11 @@ export async function DELETE(req: NextRequest) {
       return errorResponse('Esta conta não pode ser excluída.', 403);
     }
 
+    const storageClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      global: { headers: { Authorization: req.headers.get('authorization') || '' } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    await removeAccountMedia(storageClient, userId);
     await deleteAuthUser(userId);
     return NextResponse.json({ success: true, message: 'Conta removida da plataforma.' });
   } catch (err: unknown) {

@@ -49,12 +49,13 @@ import type {
 } from '@/lib/types';
 import { ACCOUNT_TYPES, type AccountType } from '@/lib/sports';
 import AdminOffersManager from './AdminOffersManager';
+import { removeAccountMedia } from '@/services/accountMedia';
 import SportsHub from '@/components/SportsHub';
 
 const TABS = [
   ['accounts', 'Contas', Users],
   ['products', 'Produtos de atletas', Package],
-  ['offers', 'Ofertas externas', Tag],
+  ['offers', 'Central de Ofertas', Tag],
   ['community', 'Comunidade', MessageSquare],
   ['sports', 'Talentos e seletivas', Trophy],
   ['reports', 'Denúncias e feedback', Flag],
@@ -429,13 +430,14 @@ export default function AdminDashboard() {
     if (
       action === 'delete' &&
       !window.confirm(
-        `Excluir definitivamente a conta de ${account.name}? Esta ação não pode ser desfeita.`
+        `Excluir definitivamente a conta de ${account.name}? Todos os conteúdos e atividades vinculados também serão removidos. Esta ação não pode ser desfeita.`
       )
     )
       return;
     await act(
       async () => {
         if (!client) throw new Error('Conexão indisponível.');
+        if (action === 'delete') await removeAccountMedia(client, account.id);
         const { error } = await client.rpc('moderate_account', {
           p_target: account.id,
           p_action: action,

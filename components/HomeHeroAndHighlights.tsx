@@ -23,7 +23,6 @@ interface HomeHeroAndHighlightsProps {
   onSelectOffer?: (offer: ExternalOffer) => void;
 }
 
-type HomeTab = 'all' | 'offers' | 'c2c';
 
 const QUICK_FILTERS = ['all', 'Jiu-Jitsu', 'Basquete', 'Vôlei', 'Tênis', 'Karatê', 'Futebol', 'Corrida', 'Ciclismo', 'Musculação'];
 
@@ -37,7 +36,6 @@ function matchesQuickFilter(category: string, sport: string, filter: string): bo
 export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }: HomeHeroAndHighlightsProps) {
   const { products, activeOffers, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [activeFilter, setActiveFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState<HomeTab>('all');
 
   const filteredOffers = useMemo(() => activeOffers.filter((offer) =>
     matchesQuickFilter(offer.category, offer.sport, activeFilter)
@@ -49,8 +47,8 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
     matchesQuickFilter(product.category, product.sport, activeFilter)
   ), [products, activeFilter]);
 
-  const showOffers = activeTab !== 'c2c';
-  const showC2C = activeTab !== 'offers';
+  const showOffers = true;
+  const showC2C = true;
   const resultCount = (showOffers ? filteredOffers.length : 0) + (showC2C ? filteredC2CProducts.length : 0);
 
   const openMarketplace = () => {
@@ -76,17 +74,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
             <h2 className="flex items-center gap-2 text-lg font-black text-white sm:text-xl"><ShoppingBag className="h-5 w-5 text-purple-400" />Explore o catálogo</h2>
             <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em anúncios de atletas e ofertas.</p>
           </div>
-          <div role="group" aria-label="Filtrar catálogo" className="flex flex-wrap gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 p-1 text-xs">
-            {([
-              { id: 'all', label: 'Tudo' },
-              { id: 'c2c', label: 'De Atletas' },
-              { id: 'offers', label: 'Ofertas' },
-            ] as const).map((tab) => (
-              <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`rounded-full px-3 py-1.5 font-semibold transition ${activeTab === tab.id ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
+
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -98,7 +86,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         </div>
       </section>
 
-      {(activeTab === 'all' || activeTab === 'c2c') && (
+      {showC2C && (
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
@@ -115,7 +103,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         </section>
       )}
 
-      {(activeTab === 'all' || activeTab === 'offers') && (
+      {showOffers && (
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>

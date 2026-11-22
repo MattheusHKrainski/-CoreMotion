@@ -365,6 +365,7 @@ export default function AuthModal({ page = false }: { page?: boolean }) {
             )}
           </div>
         </div>
+        </div>
       </section>
     </main>
   );

@@ -11,6 +11,7 @@ import { INITIAL_EXTERNAL_OFFERS, LEGACY_SEARCH_OFFERS, EXPANSION_OFFERS } from 
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
 
 interface DbExternalOfferRow {
+  created_by?: string | null;
   variant_options?: string[];
   image_urls?: string[];
   team_id?: string | null;
@@ -39,6 +40,7 @@ function toIso(value: Date | string | null | undefined): string {
 function mapOfferRow(row: DbExternalOfferRow): ExternalOffer {
   return {
     id: row.id,
+    created_by: row.created_by,
     title: row.title,
     variant_options: row.variant_options,
     image_urls: row.image_urls?.length ? row.image_urls : [row.image_url],

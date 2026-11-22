@@ -24,6 +24,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   const cart = useCommerce();
   const [index, setIndex] = useState(0), [variant, setVariant] = useState(''), [notice, setNotice] = useState('');
   const [remote, setRemote] = useState<{ title: string; description: string; price: number; original_price?: number; images?: string[]; image_url?: string; store_name?: string; category: string; sport: string; product_type?: string; status?: string; is_active?: boolean; seller_name?: string; contact_phone?: string; condition?: string; location?: string; image_is_reference?: boolean } | null>(null);
+  const [zoom, setZoom] = useState(false);
   const [loaded, setLoaded] = useState(false);
   React.useEffect(() => { let alive = true; const sb = getSupabaseClient(); if (!sb) { setLoaded(true); return; } if (kind !== 'core' && kind !== 'athlete') { setLoaded(true); return; } void sb.from(kind === 'core' ? 'external_offers' : 'products').select('*').eq('id',id).maybeSingle().then(({data}) => { if (alive) { setRemote(data); setLoaded(true); } }); return () => { alive = false; }; }, [kind,id]);
   const local = kind === 'core' ? activeOffers.find(item => item.id === id) : kind === 'athlete' ? products.find(item => item.id === id && item.product_type === 'c2c') : null;
@@ -33,6 +34,9 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   if (!item || !available) return <main className="mx-auto max-w-5xl p-8"><Link href="/" className="text-red-400">← Voltar ao CoreShop</Link><h1 className="mt-10 text-2xl font-black">{loaded ? 'Produto indisponível' : 'Carregando produto…'}</h1><p className="mt-3 text-zinc-400">{loaded ? 'Não foi possível encontrar um anúncio ativo. Confira o catálogo ou tente novamente.' : 'Consultando o catálogo.'}</p></main>;
   const presentation = core ? productPresentation(id, 'source_url' in item ? String(item.source_url) : undefined) : undefined;
   const gallery: string[] = presentation?.images.length ? presentation.images : ('images' in item && item.images?.length ? item.images : ['image_url' in item ? item.image_url || '' : '']).filter(Boolean);
+  const selectedImage = gallery[index] || gallery[0] || '';
+  const previous = () => setIndex(i => (i - 1 + gallery.length) % gallery.length);
+  const next = () => setIndex(i => (i + 1) % gallery.length);
   const needsVariant = ['Calçados','Vestuário','Roupas','Lutas','Artes Marciais'].includes(item.category);
   const contact = !core && 'contact_phone' in item ? sellerContactUrl(item.contact_phone, item.title) : null;
   return <div className="min-h-screen bg-zinc-950 text-white">

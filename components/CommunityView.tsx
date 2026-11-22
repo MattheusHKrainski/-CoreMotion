@@ -1,7 +1,7 @@
 'use client';
 
 import CommunityComments from './community-comments';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowUp, Search, Flame, MessageCircle, Plus, Share2, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
