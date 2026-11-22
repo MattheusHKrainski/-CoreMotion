@@ -74,6 +74,7 @@ interface OfferFormState {
   sport: string;
   category: string;
   image_url: string;
+  image_urls: string;
   description: string;
   is_active: boolean;
 }
@@ -88,6 +89,7 @@ const EMPTY_FORM: OfferFormState = {
   sport: 'Corrida',
   category: 'Equipamentos',
   image_url: '',
+  image_urls: '',
   description: '',
   is_active: true,
 };
@@ -171,6 +173,7 @@ export default function AdminOffersManager() {
       sport: offer.sport,
       category: offer.category,
       image_url: offer.image_url,
+      image_urls: (offer.image_urls || []).filter(url => url !== offer.image_url).join('\n'),
       description: offer.description,
       is_active: offer.is_active !== false,
     });
@@ -304,6 +307,11 @@ export default function AdminOffersManager() {
       return;
     }
 
+    const additionalImages = form.image_urls.split(/\r?\n/).map(url => url.trim()).filter(Boolean);
+    if (additionalImages.length > 11 || additionalImages.some(url => !/^https:\/\/[^\s]+$/i.test(url))) {
+      setFormError('Adicione até 11 URLs extras de fotos HTTPS, uma por linha.');
+      return;
+    }
     setIsSaving(true);
     try {
       const payload = {
@@ -316,6 +324,7 @@ export default function AdminOffersManager() {
         sport: form.sport,
         category: form.category,
         image_url: form.image_url.trim(),
+        image_urls: [...new Set([form.image_url.trim(), ...additionalImages])],
         description:
           form.description.trim() ||
           `Oferta selecionada em ${form.store_name.trim() || 'loja parceira'} para ${form.sport.toLowerCase()}.`,
@@ -641,6 +650,12 @@ export default function AdminOffersManager() {
                   </button>
                 </div>
               </div>
+
+              <label className="block space-y-2 text-xs font-semibold text-zinc-300">
+                Fotos adicionais do mesmo produto (opcional)
+                <textarea rows={4} maxLength={18000} value={form.image_urls} onChange={e => setForm(previous => ({ ...previous, image_urls: e.target.value }))} placeholder={'https://loja.com/foto-lateral.jpg\nhttps://loja.com/foto-traseira.jpg'} className={inputCls} />
+                <span className="block text-[11px] font-normal text-zinc-500">Uma foto por linha, até 11. Aparecerão na galeria da página do produto.</span>
+              </label>
 
               {/* 7. Descrição curta */}
               <div>
