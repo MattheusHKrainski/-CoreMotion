@@ -9,6 +9,7 @@ import type { ExternalOffer, Product } from '@/lib/types';
 import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
+import CatalogTeams, { type CatalogTeam } from './CatalogTeams';
 import {
   ArrowUpDown,
   Check,
@@ -82,6 +83,7 @@ function sortOffers(items: ExternalOffer[], sortBy: SortBy): ExternalOffer[] {
 export default function MarketplaceView({ onSelectProduct, onSelectOffer }: MarketplaceViewProps) {
   const { user, products, activeOffers, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [selectedTab, setSelectedTab] = useState<CatalogTab>('all');
+  const [selectedTeam, setSelectedTeam] = useState<CatalogTeam | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSport, setSelectedSport] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
@@ -93,6 +95,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
   const normalizedQuery = normalize(searchQuery.trim());
   const filteredOffers = useMemo(() => {
     const filtered = activeOffers.filter((offer) => {
+      if (selectedTeam && offer.team_id !== selectedTeam.id) return false;
       const searchText = normalize(`${offer.title} ${offer.description} ${offer.store_name} ${offer.category} ${offer.sport} ${offer.coupon_code || ''}`);
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
       if (!matchesCategory(offer.category, selectedCategory)) return false;
@@ -100,10 +103,11 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       return true;
     });
     return sortOffers(filtered, sortBy);
-  }, [activeOffers, normalizedQuery, selectedCategory, selectedSport, sortBy]);
+  }, [activeOffers, normalizedQuery, selectedCategory, selectedSport, sortBy, selectedTeam]);
 
   const filteredC2CProducts = useMemo(() => {
     const filtered = products.filter((product) => {
+      if (selectedTeam) return false;
       if (product.product_type !== 'c2c' || product.status !== 'active') return false;
       const searchText = normalize(`${product.title} ${product.description} ${product.brand || ''} ${product.seller_name} ${product.category} ${product.sport}`);
       if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
@@ -113,15 +117,16 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       return true;
     });
     return sortProducts(filtered, sortBy);
-  }, [products, normalizedQuery, selectedCategory, selectedSport, selectedCondition, sortBy]);
+  }, [products, normalizedQuery, selectedCategory, selectedSport, selectedCondition, sortBy, selectedTeam]);
 
-  useEffect(() => { setVisibleCount(PAGE_SIZE); setVisibleOffers(PAGE_SIZE); }, [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); setVisibleOffers(PAGE_SIZE); }, [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy, selectedTeam]);
 
   const visibleC2CProducts = filteredC2CProducts.slice(0, visibleCount);
   const hasOffers = selectedTab !== 'c2c';
   const hasC2C = selectedTab !== 'offers';
   const displayedCount = (hasOffers ? filteredOffers.length : 0) + (hasC2C ? filteredC2CProducts.length : 0);
   const activeFiltersCount = [
+    selectedTeam !== null,
     selectedCategory !== 'all',
     selectedSport !== 'all',
     selectedCondition !== 'all' && selectedTab !== 'offers',
@@ -133,6 +138,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
     setSelectedSport('all');
     setSelectedCondition('all');
     setSearchQuery('');
+    setSelectedTeam(null);
   };
 
   const handleSellClick = () => {
@@ -166,6 +172,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
           Vender meu equipamento
         </button>
       </header>
+
+      <CatalogTeams offers={activeOffers} selected={selectedTeam} onSelect={team => { setSelectedTeam(team); if (team) {setSearchQuery(''); setSelectedSport('all'); setSelectedCategory('all'); setSelectedTab('offers');} }} />
 
       <label className="block text-sm font-semibold text-zinc-300">Pesquisar no CoreShop
         <div className="relative mt-2"><Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500" /><input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar produtos ou esportes..." className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm text-white focus:border-red-500 focus:outline-none" /></div>
