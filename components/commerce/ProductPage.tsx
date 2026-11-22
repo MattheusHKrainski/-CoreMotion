@@ -50,7 +50,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   const local = core
     ? activeOffers.find(item => item.id === id)
     : kind === 'athlete' ? products.find(item => item.id === id && item.product_type === 'c2c') : null;
-  const item = (local || remote) as GalleryItem | null;
+  const item = (remote || local) as GalleryItem | null;
   const available = !!item && (core
     ? ('is_active' in item && item.is_active !== false)
     : ('product_type' in item && item.product_type === 'c2c' && item.status === 'active'));
@@ -59,9 +59,16 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   const selectedImage = gallery[Math.min(index, gallery.length-1)] || '';
   const coreOffer = core && item && 'source_url' in item ? item as ExternalOffer : null;
   const athlete = !core && item && 'product_type' in item ? item as Product : null;
-  const config = coreOffer ? getProductVariantConfig(coreOffer.title, coreOffer.category, coreOffer.sport, coreOffer.description, coreOffer.variant_options) : null;
+  // Only list a size when the supplier provided a SKU; do not fabricate clothing/shoe numbers.
+  // Ball sizes remain a separate product-specific variant where the model identifies them.
+  const verifiedSizes = coreOffer?.variant_options || [];
+  const missingVerifiedSizes = Boolean(coreOffer && !verifiedSizes.length
+    && /calçados|calcados|vestuário|vestuario|roupas/i.test(coreOffer.category));
+  const config = coreOffer && (verifiedSizes.length || /^bola\b/i.test(coreOffer.title))
+    ? getProductVariantConfig(coreOffer.title, coreOffer.category, coreOffer.sport, coreOffer.description, verifiedSizes)
+    : null;
   const selectedVariant = config?.fixedValue ?? variant;
-  const variantRequired = Boolean(config && !config.fixedValue);
+  const variantRequired = Boolean(missingVerifiedSizes || (config && !config.fixedValue));
   const otherColors = coreOffer ? activeOffers.filter(other =>
     other.id !== coreOffer.id && other.store_name === coreOffer.store_name &&
     normalize(other.title) === normalize(coreOffer.title) && other.is_active !== false &&
@@ -114,17 +121,17 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
           <section aria-label="Galeria de fotos do produto" className="space-y-3">
             {gallery.length > 1 ? <div className="grid grid-cols-2 gap-1.5 overflow-hidden rounded-2xl">
               {gallery.slice(0,4).map((src,i)=><button key={src+i} type="button" onClick={()=>{setIndex(i);setZoom(true);}} className="group relative aspect-square overflow-hidden bg-[#11141b] text-zinc-100 hover:opacity-95" aria-label={'Ampliar foto '+(i+1)}>
-                <ProductImage src={src} alt={item.title+' — foto '+(i+1)} sizes="(max-width: 1023px) 45vw, 340px"/>
+                <ProductImage src={src} fallbackSrcs={gallery.filter(candidate => candidate !== src)} alt={item.title+' — foto '+(i+1)} sizes="(max-width: 1023px) 45vw, 340px"/>
                 {i===3 && gallery.length>4 && <span className="absolute inset-0 flex items-end justify-center bg-black/20 pb-4 text-xs font-black text-white">Ver as {gallery.length} fotos</span>}
               </button>)}
             </div> : <button type="button" onClick={()=>setZoom(true)} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#11141b]" aria-label="Ampliar imagem principal">
-              <ProductImage src={selectedImage} alt={item.title} sizes="(max-width: 1023px) 100vw, 740px"/>
+              <ProductImage src={selectedImage} fallbackSrcs={gallery.filter(candidate => candidate !== selectedImage)} alt={item.title} sizes="(max-width: 1023px) 100vw, 740px"/>
             </button>}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500"><ImageIcon className="h-4 w-4"/>{gallery.length} {gallery.length===1?'imagem':'imagens'} do produto</span>
               {gallery.length>1 && <button type="button" onClick={()=>setZoom(true)} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 hover:border-red-500">Ver galeria completa</button>}
             </div>
-            {gallery.length>1 && <div className="flex gap-2 overflow-x-auto pb-1">{gallery.map((src,i)=><button type="button" key={src+i} onClick={()=>setIndex(i)} aria-label={'Selecionar foto '+(i+1)} aria-pressed={index===i} className={'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-zinc-200')}><ProductImage src={src} alt={item.title+' — miniatura '+(i+1)} sizes="64px"/></button>)}</div>}
+            {gallery.length>1 && <div className="flex gap-2 overflow-x-auto pb-1">{gallery.map((src,i)=><button type="button" key={src+i} onClick={()=>setIndex(i)} aria-label={'Selecionar foto '+(i+1)} aria-pressed={index===i} className={'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-zinc-200')}><ProductImage src={src} fallbackSrcs={gallery.filter(candidate => candidate !== src)} alt={item.title+' — miniatura '+(i+1)} sizes="64px"/></button>)}</div>}
           </section>
           <details open className="rounded-2xl border border-zinc-800 bg-[#14161d] p-5 sm:p-6">
             <summary className="cursor-pointer text-sm font-black">Informações do produto</summary>
@@ -156,6 +163,9 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
             <p className="text-sm font-semibold">{config.label}{selectedVariant&&<span className="ml-2 font-normal text-zinc-500">{selectedVariant}</span>}</p>
             <div role="group" aria-label={config.label} className="flex flex-wrap gap-2">{config.options.map(option=><button key={option} type="button" aria-pressed={selectedVariant===option} onClick={()=>setVariant(option)} className={'min-w-11 rounded-lg border px-3 py-2.5 text-xs font-bold transition '+(selectedVariant===option?'border-red-600 bg-red-600 text-white':'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-500')}>{option}</button>)}</div>
           </div>}
+          {missingVerifiedSizes && coreOffer && <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-zinc-300">
+            A numeração deste modelo não foi confirmada no catálogo. <a href={coreOffer.source_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-red-400 underline">Consultar tamanhos na loja</a>
+          </div>}
           {!core && athlete && <div className="text-sm text-zinc-500">{athlete.location && <p className="inline-flex items-center gap-2"><MapPin className="h-4 w-4"/>{athlete.location}</p>}</div>}
           {coreOffer ? <>
             <div className="space-y-2">
@@ -181,10 +191,10 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between"><span className="text-sm font-semibold">{index+1} / {gallery.length}</span><button type="button" aria-label="Fechar galeria" onClick={()=>setZoom(false)} className="rounded-full border border-zinc-600 p-3 hover:bg-zinc-800"><X className="h-5 w-5"/></button></div>
       <div className="mx-auto flex w-full max-w-6xl flex-1 items-center gap-2 py-6">
         <button type="button" aria-label="Foto anterior" onClick={previous} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronLeft/></button>
-        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-[#11141b]"><ProductImage src={selectedImage} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
+        <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-xl bg-[#11141b]"><ProductImage src={selectedImage} fallbackSrcs={gallery.filter(candidate => candidate !== selectedImage)} alt={item.title+' — foto ampliada '+(index+1)} sizes="90vw"/></div>
         <button type="button" aria-label="Próxima foto" onClick={next} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronRight/></button>
       </div>
-      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} alt="" sizes="56px"/></button>)}</div>
+      <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} fallbackSrcs={gallery.filter(candidate => candidate !== src)} alt="" sizes="56px"/></button>)}</div>
     </div>}
     <AuthModal />
   </div>;

@@ -208,7 +208,7 @@ export async function updateExternalOfferInDb(id: string, input: OfferUpdateInpu
   if (input.image_url !== undefined) pushField('image_url', input.image_url);
   if (input.image_urls !== undefined) pushField('image_urls', input.image_urls);
   if (input.team_id !== undefined) pushField('team_id', input.team_id);
-  else if (input.image_url !== undefined) pushField('image_urls', [input.image_url]);
+  // PostgreSQL gallery trigger preserves alternate photos when only the cover changes.
   if (input.source_url !== undefined) pushField('source_url', input.source_url);
   if (input.coupon_code !== undefined) pushField('coupon_code', input.coupon_code || null);
   if (input.is_active !== undefined) pushField('is_active', input.is_active);

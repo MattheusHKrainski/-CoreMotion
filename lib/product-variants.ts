@@ -16,10 +16,11 @@ function normalize(value: string): string {
 /** Options express the customer's requested variant; supplier stock is not implied. */
 export function getProductVariantConfig(title: string, category: string, sport: string, description = '', listedSizes?: string[]): ProductVariantConfig | null {
   if (listedSizes?.length) {
-    return {
+    const options = [...new Set(listedSizes.map(x => x.trim()).filter(Boolean))];
+    if (options.length) return {
       label: 'Tamanho',
-      options: listedSizes,
-      fixedValue: listedSizes.length === 1 ? listedSizes[0] : undefined,
+      options,
+      fixedValue: options.length === 1 ? options[0] : undefined,
       note: '',
     };
   }
