@@ -82,7 +82,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
         <p className="mt-2 text-xs text-zinc-400">Campanhas por modalidade com produtos e preços do catálogo.</p></div>
       <div className="flex items-center gap-2">
         <button type="button" aria-label="Campanha anterior" onClick={() => move(-1)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10"><ChevronLeft className="h-4 w-4"/></button>
-        <span className="min-w-12 text-center text-xs tabular-nums text-zinc-300">{index % campaigns.length + 1} / {campaigns.length}</span>
+        
         <button type="button" aria-label="Próxima campanha" onClick={() => move(1)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10"><ChevronRight className="h-4 w-4"/></button>
         <button type="button" disabled={reduceMotion} aria-label={paused ? 'Retomar campanhas' : 'Pausar campanhas'} aria-pressed={paused} onClick={() => setPaused(p => !p)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10 disabled:opacity-40">{paused ? <Play className="h-4 w-4"/> : <Pause className="h-4 w-4"/>}</button>
       </div>
