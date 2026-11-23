@@ -115,7 +115,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           
           {/* Left Column: Product Gallery */}
           <div className="space-y-4">
-            {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência, não do exemplar anunciado. O modelo, a cor e o estado de conservação precisam ser confirmados com fotos do item real.</p>}
+            {product.image_is_reference && <span className="inline-block rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-200">Foto ilustrativa</span>}
             {product.images[0]?.includes('upload.wikimedia.org') && <p className="text-xs text-zinc-400">Fotografia real de item usado do Wikimedia Commons (Joxemai, CC BY-SA). Créditos e link de licença na descrição. Este exemplar não está à venda no CoreMotion.</p>}
             <div className="group relative aspect-square w-full bg-[#0E1017] rounded-xl overflow-hidden border border-[#232836] shadow-inner">
               <img
@@ -176,7 +176,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-zinc-400 font-medium px-0.5">
                   <span>{product.image_is_reference ? 'Imagens ilustrativas' : 'Fotos do produto'} ({galleryImages.length})</span>
-                  <span className="text-red-400 text-[10px]">Clique para alternar</span>
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5">
                   {galleryImages.map((img, idx) => {
