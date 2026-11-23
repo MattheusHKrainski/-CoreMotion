@@ -12,6 +12,7 @@ import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
 import CatalogTeams, { type CatalogTeam } from './CatalogTeams';
+import ClubUniformPreviewGrid from './ClubUniformPreviewGrid';
 import {
   ArrowUpDown,
   Check,
@@ -271,11 +272,13 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
           </div>
 
+          {selectedTeam && <ClubUniformPreviewGrid teamId={selectedTeam.id} />}
+
           {displayedCount === 0 ? (
             <div className="space-y-4 rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-12 text-center shadow-xl">
               <Search className="mx-auto h-8 w-8 text-zinc-600" />
               <h2 className="text-sm font-bold text-white">Nenhum resultado encontrado</h2>
-              <p className="mx-auto max-w-md text-xs text-zinc-400">{selectedTeam ? 'Ainda não há camisetas ou produtos cadastrados para este clube na CoreMotion. Confira os outros clubes ou limpe o filtro.' : 'Tente ajustar a busca, categoria ou modalidade selecionada para explorar mais equipamentos.'}</p>
+              <p className="mx-auto max-w-md text-xs text-zinc-400">{selectedTeam ? 'Ainda não há produtos com venda confirmada deste clube na CoreMotion. Os uniformes identificados aparecem acima, quando disponíveis; confira outros clubes ou limpe o filtro.' : 'Tente ajustar a busca, categoria ou modalidade selecionada para explorar mais equipamentos.'}</p>
               <button type="button" onClick={resetFilters} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-red-500">Limpar filtros</button>
             </div>
           ) : (
