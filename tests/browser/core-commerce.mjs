@@ -46,6 +46,15 @@ await page.route('https://**.supabase.co/**',async route=>{
  if(path.includes('/storage/v1/object/public/'))return route.fulfill({status:200,contentType:'image/png',body:png});
  if(path.includes('/storage/v1/object/')&&req.method()==='POST'){return json({Key:path.split('/object/')[1]});}
  if(path.endsWith('/external_offers')) {const id=url.searchParams.get('id')?.replace('eq.','');return json(id?INITIAL_EXTERNAL_OFFERS.find(item=>item.id===id):INITIAL_EXTERNAL_OFFERS);}
+ if(path.endsWith('/confirm_demo_order')) {
+   const input=req.postDataJSON();
+   const previous=saleOrders.find(item=>item.request_key===input.p_request_key);
+   if(previous)return previous.payment_method!==input.p_method ? json({message:'Método já confirmado'},409):json(previous.id);
+   const items=input.p_items.map(line=>{const offer=INITIAL_EXTERNAL_OFFERS.find(item=>item.id===line.offerId);return {...line,title:offer.title,supplier:offer.store_name,unitPriceCents:Math.round(offer.price*100)};});
+   const now=new Date().toISOString();
+   const order={id:'88888888-8888-4888-8888-888888888889',owner:ids[0],request_key:input.p_request_key,status:'reviewing',payment_status:'test_approved',payment_method:input.p_method,shipping_status:'not_quoted',shipping_cents:null,total_cents:null,address:input.p_address,items,note:'',created_at:now,updated_at:now};
+   order.subtotal_cents=items.reduce((sum,item)=>sum+item.unitPriceCents*item.quantity,0);saleOrders.push(order);return json(order.id);
+ }
  if(path.endsWith('/prepare_core_sale')) {
    const input=req.postDataJSON(); const old=saleOrders.find(item=>item.request_key===input.p_request_key); if(old)return json(old.id);
    const order={id:'88888888-8888-4888-8888-888888888889',owner:ids[0],request_key:input.p_request_key,status:'preparation',payment_status:'disabled',shipping_status:'not_quoted',shipping_cents:null,total_cents:null,address:input.p_address,items:input.p_items.map(line=>{const offer=INITIAL_EXTERNAL_OFFERS.find(item=>item.id===line.offerId);return {...line,title:offer.title,supplier:offer.store_name,unitPriceCents:Math.round(offer.price*100)};}),note:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()};order.subtotal_cents=order.items.reduce((sum,item)=>sum+item.unitPriceCents*item.quantity,0);saleOrders.push(order);return json(order.id);
@@ -108,15 +117,20 @@ try {
  // The header avatar is absent on the dedicated checkout; login still succeeds.
  await page.getByRole('button',{name:'Continuar para endereço'}).click();
  for(const [label,value] of [['Destinatário','Atleta Teste'],['Telefone','41999999999'],['CEP','80000000'],['Rua','Rua de Teste'],['Número','123'],['Bairro','Centro'],['Cidade','Curitiba'],['UF','PR']]) await page.getByLabel(label,{exact:true}).fill(value);
- await page.getByRole('button',{name:'Revisar preparação'}).click();
- assert.equal(await page.getByRole('button',{name:'Pagar — indisponível'}).isDisabled(),true);
- await page.getByRole('button',{name:'Consultar disponibilidade de frete'}).click();
- await page.getByRole('status').filter({hasText:'Frete e prazo ainda não configurados'}).waitFor();
- await page.getByRole('button',{name:'Salvar preparação — sem concluir compra'}).click();
- await page.getByRole('heading',{name:'Preparação salva — não é uma compra concluída'}).waitFor();
- assert.equal(saleOrders.length,1);assert.equal(saleOrders[0].payment_status,'disabled');
- await page.getByRole('link',{name:'Acompanhar preparação →'}).click();
- await page.getByText('Em preparação — compra não concluída',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Revisar pedido'}).click();
+ await page.getByRole('radio',{name:/Cartão de crédito/}).check();
+ await page.getByText('Cartão fictício',{exact:true}).waitFor();
+ await page.getByRole('radio',{name:/Cartão de débito/}).check();
+ await page.getByText('Débito simulado em uma única parcela.').waitFor();
+ await page.getByRole('radio',{name:/Boleto bancário/}).check();
+ await page.getByText('Boleto de demonstração',{exact:true}).waitFor();
+ await page.getByRole('radio',{name:/Pix/}).check();
+ await page.getByRole('button',{name:'Confirmar pedido simulado'}).click();
+ await page.getByRole('heading',{name:'Pedido confirmado!'}).waitFor();
+ assert.equal(saleOrders.length,1);assert.equal(saleOrders[0].payment_status,'test_approved');
+ assert.equal(saleOrders[0].payment_method,'pix');
+ await page.getByRole('link',{name:'Ver meus pedidos'}).click();
+ await page.getByText('Pagamento simulado aprovado',{exact:false}).waitFor();
  const athlete=INITIAL_PRODUCTS.find(item=>item.product_type==='c2c'&&item.status==='active'&&item.contact_phone);
  await page.goto(`http://localhost:3001/produto/athlete/${encodeURIComponent(athlete.id)}`);
  await page.getByRole('heading',{name:athlete.title,exact:true}).waitFor();
@@ -165,5 +179,5 @@ try {
  await page.waitForURL('**/pedidos');
  await page.getByRole('heading',{name:'Gestão de pedidos CoreMotion',exact:true}).waitFor();
  assert.deepEqual(errors,[]);
- console.log('PASS commerce: product URLs for CoreMotion and athletes, C2C WhatsApp kept separate, variant, guest cart merged after login, checkout/address/review, shipping unavailable, payments disabled, saved preparation/history, non-modal login and cancel switch preserving account, existing/new comments and failed-draft retention, verified variants and gallery, Reddit search/sort; mocked backend '+(process.env.MOBILE?'mobile':'desktop'));
+ console.log('PASS commerce: product URLs for CoreMotion and athletes, C2C WhatsApp kept separate, variant, guest cart merged after login, checkout/address/review, shipping unavailable, four simulated payment methods, confirmed purchase/history, non-modal login and cancel switch preserving account, existing/new comments and failed-draft retention, verified variants and gallery, Reddit search/sort; mocked backend '+(process.env.MOBILE?'mobile':'desktop'));
 } catch(error){console.error(error);console.error((await page.locator('body').innerText()).slice(-3000));process.exitCode=1;} finally {await browser.close();}

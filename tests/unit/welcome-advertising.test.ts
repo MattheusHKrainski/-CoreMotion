@@ -36,7 +36,7 @@ it('as superfícies de venda não prometem garantia ou custódia da plataforma',
   // Keep financial transparency where the user confirms the transaction, not a site-wide banner.
   const checkout = readFileSync('components/commerce/CheckoutPage.tsx', 'utf8');
   assert.match(checkout, /Ambiente de demonstração: nenhuma cobrança financeira é realizada/);
-  assert.match(checkout, /Pagamento de teste CoreMotion/);
+  assert.match(checkout, /Forma de pagamento simulada/);
 });
 
 it('mantém as mesmas bordas neutras em todos os módulos de perfil', () => {
