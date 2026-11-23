@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { isStaffRole } from '@/lib/permissions';
 import { ArrowLeft, ChevronLeft, ChevronRight, Heart, Image as ImageIcon, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { useCommerce } from '@/lib/commerce-store';
@@ -22,7 +23,7 @@ type GalleryItem = ExternalOffer | Product;
 const normalize = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 export default function ProductPage({ kind, id }: { kind: string; id: string }) {
-  const { products, activeOffers, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { user, products, activeOffers, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const cart = useCommerce();
   const core = kind === 'core';
   const [index, setIndex] = useState(0);
@@ -64,6 +65,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   const available = !!item && (core
     ? ('is_active' in item && item.is_active !== false)
     : ('product_type' in item && item.product_type === 'c2c' && item.status === 'active'));
+  const reviewing = Boolean(item && !available && isStaffRole(user?.role) && !user?.is_banned);
   const coreOffer = core && item && 'source_url' in item ? item as ExternalOffer : null;
   const soldOut = coreOffer?.stock_status === 'sold_out';
   const athlete = !core && item && 'product_type' in item ? item as Product : null;
@@ -108,10 +110,10 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
     else setNotice('Adicionado ao carrinho CoreMotion.');
   };
 
-  if (!item || !available) return <main className="mx-auto max-w-5xl p-8 text-white">
+  if (!item || (!available && !reviewing)) return <main className="mx-auto max-w-5xl p-8 text-white">
     <Link href="/" className="text-red-400">← Voltar ao CoreShop</Link>
     <h1 className="mt-10 text-2xl font-black">{loaded ? 'Produto indisponível' : 'Carregando produto…'}</h1>
-    <p className="mt-3 text-zinc-400">{loaded ? 'Consulte outros itens no catálogo.' : 'Consultando catálogo.'}</p>
+    <p className="mt-3 text-zinc-400">{loaded ? 'Este anúncio pode ter sido removido ou não estar disponível para sua conta. Consulte outros itens no catálogo.' : 'Consultando catálogo.'}</p>
   </main>;
 
   return <div className="min-h-screen bg-[#090b10] text-zinc-100">
@@ -121,7 +123,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
         <div className="flex gap-5 text-xs text-zinc-300"><Link href="/compras" className="hover:text-white">Carrinho ({cart.count})</Link><Link href="/pedidos" className="hover:text-white">Meus pedidos</Link></div>
       </nav>
     </header>
-    <main className="mx-auto max-w-[1380px] px-4 pb-16 pt-5 sm:px-8">
+    <main className="mx-auto max-w-[1380px] px-4 pb-16 pt-5 sm:px-8">{reviewing && <div role="status" className="mb-5 rounded-xl border border-amber-700 bg-amber-950/30 p-4 text-sm text-amber-200">Visualização da equipe: anúncio indisponível ao público. A compra permanece bloqueada.</div>}
       <p className="mb-6 text-xs font-medium text-zinc-500">CoreMotion <span className="mx-2">/</span> {core ? 'CoreShop' : 'De atletas'} <span className="mx-2">/</span> {item.sport} <span className="mx-2">/</span> {item.category}</p>
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(350px,0.85fr)]">
         <div className="min-w-0 space-y-5">
@@ -179,8 +181,8 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
           {coreOffer ? <>
             {soldOut && <p role="status" className="rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm font-bold text-zinc-200">Esgotado — uniforme mantido no catálogo, compra indisponível.</p>}
             <div className="space-y-2">
-              <button type="button" disabled={soldOut || variantRequired} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">{soldOut ? 'Esgotado' : 'Comprar agora'}</button>
-              <button type="button" disabled={soldOut || variantRequired} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-400 hover:bg-red-950/30 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>{soldOut ? 'Indisponível' : 'Adicionar ao carrinho'}</button>
+              <button type="button" disabled={!available || soldOut || variantRequired} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">{soldOut ? 'Esgotado' : 'Comprar agora'}</button>
+              <button type="button" disabled={!available || soldOut || variantRequired} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-400 hover:bg-red-950/30 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>{soldOut ? 'Indisponível' : 'Adicionar ao carrinho'}</button>
               {notice&&<p role="status" className="text-sm font-semibold text-emerald-400">{notice}</p>}
             </div>
             <div className="space-y-3 border-t border-zinc-800 pt-5">
