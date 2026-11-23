@@ -193,6 +193,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {hasIdentifiedSeller ? 'Anunciado por atleta' : 'Modelo de referência'}
               </span>
             )}
+            {!hasIdentifiedSeller && <span className="mb-1 block text-[10px] font-semibold text-amber-300">Valor de referência · não está à venda</span>}
             <span className="text-lg font-extrabold tracking-tight text-white">
               {formatPrice(product.price)}
             </span>
@@ -202,8 +203,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             <button
               type="button"
               onClick={() => addToCart(product, 1)}
-              title="Adicionar ao carrinho"
-              disabled={product.status !== 'active' || product.stock < 1}
+              title={hasIdentifiedSeller ? 'Adicionar ao carrinho' : 'Apenas referência: vendedor não identificado'}
+              disabled={!hasIdentifiedSeller || product.status !== 'active' || product.stock < 1}
               className="rounded-full border border-zinc-700/60 bg-zinc-800/80 p-2 text-zinc-300 transition hover:scale-105 hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ShoppingBag className="h-3.5 w-3.5" />
