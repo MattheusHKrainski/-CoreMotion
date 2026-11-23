@@ -166,7 +166,7 @@ export interface CommunityPost {
   author_name: string;
   author_avatar?: string;
   author_badge?: string;
-  category: 'treino' | 'equipamento' | 'evento' | 'duvida' | 'conquista';
+  category: 'treino' | 'equipamento' | 'geral' | 'evento' | 'duvida' | 'conquista';
   title: string;
   content: string;
   image_url?: string;
