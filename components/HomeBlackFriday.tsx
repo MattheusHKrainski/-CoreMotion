@@ -68,7 +68,6 @@ export default function HomeBlackFriday({ offers, onSelectOffer, onExplore }: { 
         <div className="relative h-40 bg-[#19191c] sm:h-52"><ProductImage src={offer.image_url} alt={offer.title} sizes="(max-width: 768px) 45vw, 310px" /><span className="absolute right-2 top-2 rounded-md bg-red-600 px-2 py-1 text-[10px] font-black text-white">{getOfferDiscountPercent(offer)}% OFF</span></div>
         <div className="space-y-2 p-3 sm:p-4"><p className="line-clamp-2 min-h-10 text-xs font-semibold leading-5 text-zinc-200">{offer.title}{offer.voltage_variants?.length ? ' · '+offer.voltage_variants.map(item=>item.label).join(' / ') : ''}</p><p className="text-[11px] text-zinc-500 line-through">{money(offer.original_price!)}</p><p className="text-lg font-black text-white sm:text-xl">{money(offer.price)}</p><p className="flex items-center gap-1 pt-1 text-[10px] font-bold text-red-400">Conhecer oferta<ArrowRight className="h-3 w-3" /></p></div>
       </button>)}</div> : <p className="rounded-xl border border-zinc-800 p-5 text-sm text-zinc-400">Nenhum desconto informado no momento. Explore os produtos disponíveis no CoreShop.</p>}
-      <p className="text-[10px] leading-relaxed text-zinc-500">Descontos calculados sobre preços de referência dos fornecedores. Confira as opções de cada produto.</p>
     </section>
   </div>;
 }
