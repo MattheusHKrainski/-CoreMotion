@@ -109,7 +109,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
               {off !== null && <span className="mt-1 block text-[10px] font-bold text-[#ffdb7b]"><Tag className="mr-1 inline h-3 w-3"/> {off}% abaixo do preço de referência</span>}
             </span>
           </button>
-          {next.slice(0,2).map((offer, i) => <button type="button" key={offer.id} onClick={() => onSelectOffer?.(offer)}
+          {next.slice(0,2).map(offer => <button type="button" key={offer.id} onClick={() => onSelectOffer?.(offer)}
             aria-label={'Ver ' + offer.title} className="group relative overflow-hidden rounded-md border border-white/10 bg-[#eeeae6]">
             <ProductImage src={offer.image_url} alt={offer.title} sizes="(max-width:1024px) 33vw, 17vw"/>
             <span className="absolute inset-x-0 bottom-0 bg-black/85 p-2 text-left text-white">
