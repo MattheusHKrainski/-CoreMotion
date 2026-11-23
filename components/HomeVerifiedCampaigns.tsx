@@ -126,7 +126,6 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
         <div role="group" aria-label="Selecionar modalidade" className="flex flex-wrap gap-1.5">{campaigns.map((c,i) =>
           <button type="button" key={c.id} onClick={() => setIndex(i)} aria-current={index % campaigns.length === i ? 'true' : undefined}
             className={'rounded-full border px-3 py-1.5 text-[10px] font-black uppercase transition ' + (index % campaigns.length === i ? 'border-red-500 bg-red-600 text-white' : 'border-white/20 text-zinc-300 hover:bg-white/10')}>{c.sport}</button>)}</div>
-        <p className="text-[10px] leading-4 text-zinc-400">Fotos dos produtos do catálogo. Preços e disponibilidade sujeitos à atualização.</p>
       </div>
     </div>
   </section>;
