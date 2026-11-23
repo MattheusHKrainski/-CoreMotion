@@ -5,6 +5,7 @@ import UserAvatar from '@/components/shared/UserAvatar';
 import ImageEditor from '@/components/shared/ImageEditor';
 import { validImageUrl } from '@/lib/media';
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useCoreMotiom } from '@/lib/store';
 import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
@@ -56,7 +57,7 @@ const inputClass =
   'w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-600/60';
 
 export default function ProfileView({ initialSection = 'details' }: { initialSection?: 'details' | 'favorites' }) {
-  const { user, isVisitor, setAuthModalOpen, setAuthModalMode, updateUserProfile, setActiveView, logout, orders, favorites, products, setCheckoutOpen } = useCoreMotiom();
+  const { user, isVisitor, setAuthModalOpen, setAuthModalMode, updateUserProfile, setActiveView, logout, orders, favorites, products } = useCoreMotiom();
 
   const [section, setSection] = useState<'details' | 'favorites' | 'orders' | 'products'>(initialSection);
   const [visibleProducts, setVisibleProducts] = useState(6);
@@ -87,7 +88,7 @@ export default function ProfileView({ initialSection = 'details' }: { initialSec
       <header><h1 className="text-2xl sm:text-3xl font-black text-white">Minha conta</h1><p className="text-sm text-zinc-400 mt-2">Seus dados, equipamentos e atividades em um só lugar.</p></header>
       <nav aria-label="Opções da minha conta" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {([['details', 'Dados da conta'], ['favorites', `Meus favoritos (${favorites.length})`], ['orders', 'Pedidos feitos']] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={section === id} onClick={() => setSection(id)} className={`rounded-xl border p-4 text-left text-sm font-bold transition-colors ${section === id ? 'border-red-500 bg-red-950/30 text-white' : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-red-500'}`}>{label}</button>)}
-        <button type="button" onClick={() => setCheckoutOpen(true)} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meu carrinho</button>
+        <Link href="/compras" className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meu carrinho</Link>
         <button type="button" onClick={() => setSection('products')} aria-pressed={section === 'products'} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meus produtos à venda</button>
         {canManageOwnSportsProfile(user) && <button type="button" onClick={() => setActiveView('sports-profile')} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">{user.account_type === 'coach' ? 'Meu perfil profissional' : 'Criar ou editar currículo de atleta'}</button>}
       </nav>

@@ -3,7 +3,7 @@
  * payload to a provider. The database records only the selected method.
  */
 export const DEMO_PAYMENT_METHODS = [
-  { id: 'pix', label: 'Pix', description: 'QR Code e Pix Copia e Cola ilustrativos' },
+  { id: 'pix', label: 'Pix', description: 'QR escaneável com referência não pagável' },
   { id: 'credit', label: 'Cartão de crédito', description: 'Número, validade, CVV e parcelamento de teste' },
   { id: 'debit', label: 'Cartão de débito', description: 'Dados de cartão fictício e débito demonstrativo' },
   { id: 'boleto', label: 'Boleto bancário', description: 'Vencimento e código de barras ilustrativos' },

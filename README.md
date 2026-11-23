@@ -153,3 +153,11 @@ Projeto desenvolvido por uma equipe de cinco integrantes, com organização de t
 ### Contas salvas no acesso rápido
 
 Login e cadastro oferecem a opção **Salvar esta conta no acesso rápido**, desmarcada por padrão. Somente contas reais autenticadas são adicionadas; não há mais perfis rápidos temporários. Os cartões mostram nome/tipo e permitem remover o acesso com confirmação, sem excluir a conta. A lista e os tokens de sessão ficam apenas neste navegador, nunca as senhas. Use somente em um dispositivo de confiança. Consulte [persistência, logout e validação](docs/auth/acesso-rapido-contas-salvas.md).
+
+## Auditoria de estabilidade e segurança
+
+O CoreShop tem checkout **exclusivamente simulado** (Pix, crédito, débito e boleto), com pedido salvo em core_sale_orders e confirmação pela RPC confirm_demo_order. O QR da demonstração pode ser lido por um leitor comum, mas **não é um payload Pix bancário nem um meio de transferir dinheiro**.
+
+Anúncios C2C de atletas são negociados pelo contato com o anunciante, separados do checkout CoreShop. O carrinho de atletas permanece acessível em /compras. A antiga janela de checkout C2C, que permitia persistir pedidos sem validação de preços no servidor, não é mais apresentada.
+
+A auditoria de pré-lançamento, os testes executados, as limitações e critérios para a tag v1.0.0 estão descritos em [docs/validacao/auditoria-v1-20261123.md](docs/validacao/auditoria-v1-20261123.md). Um build aprovado não significa que todas as funcionalidades tenham sido homologadas em navegador.
