@@ -37,7 +37,7 @@ test('Brazilian league directory uses current 50-team official competition cover
   const component=read('components/marketplace/CatalogTeams.tsx');
   for(const name of ['brasileirao-2026','superliga-brasil-masculina-2026-27','nbb-brasil-2026-27'])assert.ok(component.includes(name));
   assert.doesNotMatch(component,/superlega-italia-2026-27|svleague-japao-2026-27/);
-  const brazilianMigration=read('supabase/migrations/20261123014500_replace_foreign_leagues_with_brazilian_superliga_and_nbb_2026_27.sql');
+  const brazilianMigration=read('supabase/migrations/20261123045316_replace_foreign_leagues_with_brazilian_superliga_and_nbb_2026_27.sql');
   assert.match(brazilianMigration,/DELETE FROM public\.catalog_teams WHERE league IN/);
   for(const name of ['Sada Cruzeiro','Vôlei Renata','Norde Vôlei','Sesi Franca','Flamengo','Pato Basquete','Unifacisa'])assert.ok(brazilianMigration.includes(name));
   assert.match(brazilianMigration,/Expected 50 clubs 20\+12\+18/);
