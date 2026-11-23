@@ -184,8 +184,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         </button>
       </header>
 
-      <CatalogTeams offers={activeOffers} selected={selectedTeam} onSelect={team => { setSelectedTeam(team); setSelectedTab(team ? 'offers' : 'all'); if (team) {setSearchQuery(''); setSelectedSport('all'); setSelectedCategory('all'); setSelectedTab('offers');} }} />
-
       <label className="block text-sm font-semibold text-zinc-300">Pesquisar no CoreShop
         <div className="relative mt-2"><Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500" /><input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar produtos ou esportes..." className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm text-white focus:border-red-500 focus:outline-none" /></div>
       </label>
