@@ -1,4 +1,5 @@
 'use client';
+import ModerationTargetLink from '@/components/shared/ModerationTargetLink';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDialogScrollLock } from '@/hooks/useDialogScrollLock';
 import { Bell, RefreshCw, X } from 'lucide-react';
@@ -154,6 +155,7 @@ export default function NotificationsInbox() {
                 <p className="text-sm whitespace-pre-wrap break-words">
                   {n.message}
                 </p>
+                <ModerationTargetLink category={n.category} targetId={n.target_id}/>
                 {!n.read_at && (
                   <button
                     className="text-xs text-red-400"
@@ -183,6 +185,7 @@ export default function NotificationsInbox() {
                 className="rounded-xl border border-zinc-700 p-4 text-sm space-y-2"
               >
                 <p className="font-bold">{r.target_title}</p>
+                <ModerationTargetLink category={r.category} targetId={r.target_id}/>
                 <p className="text-xs text-zinc-400">
                   {REPORT_CATEGORIES[r.category]} • {REPORT_STATUSES[r.status]}
                 </p>

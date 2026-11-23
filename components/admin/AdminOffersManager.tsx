@@ -1,4 +1,5 @@
 'use client';
+import ModerationTargetLink from '@/components/shared/ModerationTargetLink';
 import { getSupabaseClient, isSupabaseConfigured } from '@/services/supabaseClient';
 
 import { isProductDestination } from '@/lib/offer-catalog';
@@ -918,6 +919,7 @@ export default function AdminOffersManager() {
                     </div>
 
                     <p className="text-sm font-bold text-white truncate">{offer.title}</p>
+                    <ModerationTargetLink category="external_offer" targetId={offer.id}/>
 
                     <div className="flex flex-wrap items-center gap-3 text-xs">
                       <span className="font-extrabold text-white">{formatBRL(offer.price)}</span>

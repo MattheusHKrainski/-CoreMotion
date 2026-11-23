@@ -1,4 +1,5 @@
 'use client';
+import ModerationTargetLink from '@/components/shared/ModerationTargetLink';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -245,6 +246,7 @@ function ReportReview({
           na aba correspondente quando necessário.
         </p>
         <div className="flex flex-wrap gap-2">
+          <ModerationTargetLink category={report.category} targetId={report.target_id}/>
           <button disabled={busy} className={button}>Salvar análise e notificar</button>
           <button type="button" disabled={busy} className={`${button} !text-red-400`} onClick={onDelete}>Excluir denúncia</button>
         </div>
@@ -702,6 +704,7 @@ export default function AdminDashboard() {
                     {p.description}
                   </p>
                   <div className="flex flex-wrap gap-2">
+                    <ModerationTargetLink category="athlete_listing" targetId={p.id}/>
                     <button
                       className={button}
                       disabled={busy}
