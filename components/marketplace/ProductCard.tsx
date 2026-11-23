@@ -88,6 +88,7 @@ export function getDefaultUsageTime(condition: Product['condition']): string {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, favorites, toggleFavorite } = useCoreMotiom();
   const isFavorite = favorites.includes(product.id);
+  const hasIdentifiedSeller = Boolean(product.seller_id);
 
   if (product.product_type !== 'c2c') return null;
 
@@ -97,7 +98,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/60 shadow-xl shadow-black/30 transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900/90">
-      {product.image_is_reference && <span className="absolute left-3 top-12 z-10 rounded-md bg-black/80 px-2 py-1 text-[10px] text-zinc-200 pointer-events-none">Imagem de referência · estado a confirmar</span>}
+      {product.image_is_reference && <span className="absolute left-3 top-12 z-10 rounded-md bg-black/80 px-2 py-1 text-[10px] text-zinc-200 pointer-events-none">Foto ilustrativa · exemplar não verificado</span>}
       <button
         type="button"
         onClick={selectProduct}
@@ -110,7 +111,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Origem clara: vendido por atleta pessoa física */}
         <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-zinc-700/90 bg-zinc-950/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-100 backdrop-blur">
           <User className="h-3 w-3 text-sky-400" />
-          De Atleta
+          {hasIdentifiedSeller ? 'De Atleta' : 'Referência CoreMotion'}
         </span>
 
         {/* Estado claro: Novo sem uso vs Já usado */}
@@ -122,7 +123,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           ) : (
             <Clock className="h-3 w-3 shrink-0" />
           )}
-          {conditionMeta.badge}
+          {product.image_is_reference ? 'Conservação não verificada' : conditionMeta.badge}
         </span>
       </button>
 
@@ -189,7 +190,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             ) : (
               <span className="mb-0.5 flex items-center gap-1 text-[10px] text-emerald-400">
                 <ShieldCheck className="h-3 w-3" />
-                Anunciado por atleta
+                {hasIdentifiedSeller ? 'Anunciado por atleta' : 'Modelo de referência'}
               </span>
             )}
             <span className="text-lg font-extrabold tracking-tight text-white">
