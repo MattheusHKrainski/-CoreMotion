@@ -376,7 +376,7 @@ export default function WelcomeLandingPage() {
                 </div>
                 <h3 className="text-lg font-bold text-white">Curadoria de Ofertas Reais</h3>
                 <p className="text-sm text-zinc-400 leading-relaxed">
-                  Reunimos descontos verificados e cupons ativos nos principais varejistas esportivos do mercado, levando você direto para a página oficial de cada promoção.
+                  Reunimos equipamentos esportivos e ofertas de fornecedores identificados em uma vitrine própria. Explore produtos e compare opções sem sair do CoreMotion.
                 </p>
               </div>
 
