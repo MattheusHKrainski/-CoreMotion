@@ -51,7 +51,7 @@ export default function CatalogTeams({offers,selected,onSelect}: {
     return result;
   },[offers]);
   return <div className="space-y-3 rounded-2xl border border-red-900/40 bg-gradient-to-b from-red-950/20 to-zinc-950/60 p-3.5 shadow-inner" aria-label="Filtros de campeonato e clube">
-    <h3 className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-zinc-100"><Trophy className="h-3.5 w-3.5 text-red-400"/>Campeonato e clube <span className="ml-auto rounded-md border border-red-900/50 bg-red-600/10 px-1.5 py-0.5 text-[9px] font-bold normal-case tracking-normal text-red-300">Filtro específico</span></h3>
+    <h3 className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-zinc-100"><Trophy className="h-3.5 w-3.5 text-red-400"/>Campeonato e clube</h3>
     <label className="block text-[11px] text-zinc-500">Campeonato
       <select aria-label="Campeonato" value={league} onChange={event=>{
         const next=event.target.value;setLeague(next);
