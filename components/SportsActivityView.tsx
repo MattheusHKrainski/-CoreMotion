@@ -1,4 +1,5 @@
 'use client';
+import InvitingCoachProfile from './shared/InvitingCoachProfile';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
@@ -121,6 +122,7 @@ export default function SportsActivityView() {
           {r.kind === 'application' && recruiting && applicationProfile && <p className="text-xs text-zinc-400">{applicationProfile.data.sport} • {applicationProfile.data.age} anos • {applicationProfile.data.city}</p>}
           {r.data.message && <p className="whitespace-pre-wrap break-words text-zinc-300">{r.data.message}</p>}
           {target?.kind === 'trial' && <p className="text-xs text-zinc-400">{target.data.sport} • {target.data.city} • {target.data.category} • {target.data.date} • {target.data.time}</p>}
+          <InvitingCoachProfile invite={r} records={records} recipientId={owner} />
           <p className={r.data.status === 'Aceito' ? 'text-emerald-400' : r.data.status === 'Recusado' ? 'text-red-400' : 'text-amber-300'}>{r.data.status === 'Aceito' ? 'Aceito — participação confirmada' : r.data.status === 'Recusado' ? 'Recusado' : 'Aguardando resposta'}</p>
           {canCancelApplication(r, owner) && <button type="button" disabled={busy} onClick={() => void cancelApplication(r)} className="rounded-lg border border-zinc-700 px-4 py-2 text-red-400 font-bold disabled:opacity-40">Cancelar inscrição</button>}
           {r.data.recipient === owner && !r.data.status && <div className="flex gap-3">{['Aceito','Recusado'].map(status => <button key={status} disabled={busy} className="rounded-lg border border-zinc-700 px-4 py-2 font-bold disabled:opacity-40" onClick={() => void respond(r, status)}>{status === 'Aceito' ? 'Aceitar' : 'Recusar'}</button>)}</div>}

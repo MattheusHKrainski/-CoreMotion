@@ -24,3 +24,9 @@ it('adiciona acesso em denúncias, gestão e notificações sem liberar compras 
  assert.match(product,/disabled=\{!available \|\| soldOut \|\| variantRequired\}/);
  assert.match(product,/Visualização da equipe/);
 });
+it('moderação da comunidade permite abrir a publicação original em nova aba',()=>{
+ const source=readFileSync('components/admin/AdminDashboard.tsx','utf8');
+ assert.match(source,/<ModerationTargetLink category="community" targetId=\{p.id\} \/>/);
+ const html=renderToStaticMarkup(React.createElement(ModerationTargetLink,{category:'community',targetId:'post-id'}));
+ assert.match(html,/Ver publicação/);assert.match(html,/view=community&amp;post=post-id/);assert.match(html,/target="_blank"/);
+});

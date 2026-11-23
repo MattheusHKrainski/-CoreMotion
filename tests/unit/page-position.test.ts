@@ -17,3 +17,13 @@ it('preserva seção na URL e restaura rolagem somente no reload',()=>{
  const store=readFileSync('lib/store.tsx','utf8');assert.match(store,/url.searchParams.set\('view', view\)/);assert.match(store,/window.history.replaceState\(window.history.state/);
  const source=readFileSync('components/PagePosition.tsx','utf8');assert.match(source,/navigation\?\.type==='reload'/);assert.match(source,/new ResizeObserver/);assert.match(source,/sessionStorage.setItem/);assert.match(source,/wheel',interrupt/);assert.match(source,/pagehide',write/);assert.doesNotMatch(source,/localStorage/);
 });
+it('explorar modalidade abre o catálogo no topo após atualizar a seção',()=>{
+ const source=readFileSync('components/HomeHeroAndHighlights.tsx','utf8');
+ assert.match(source,/setLaunchSport\(sport\); openMarketplace\(\)/);
+ assert.match(source,/setActiveView\('marketplace'\);[\s\S]*?requestAnimationFrame\(\(\) => window.scrollTo\(\{ top: 0, behavior: 'instant' \}\)\)/);
+});
+it('assuntos da comunidade não exibem prefixo c/',()=>{
+ const source=readFileSync('components/CommunityView.tsx','utf8');
+ assert.doesNotMatch(source,/c\/\{topic.label\}/);
+ assert.match(source,/>\{topic.label\}<\/button>/);
+});

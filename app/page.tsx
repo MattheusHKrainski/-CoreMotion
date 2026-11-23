@@ -1,6 +1,5 @@
 'use client';
 
-import NotificationsInbox from '@/components/shared/NotificationsInbox';
 import { productPath } from '@/lib/commerce';
 import React, { useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
@@ -51,7 +50,6 @@ export default function CoreMotiomApp() {
 
       <div className="flex-1 flex flex-col min-w-0 transition-all">
         <main className="flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-          <NotificationsInbox />
           {activeView === 'home' && (
             <HomeHeroAndHighlights
               onSelectProduct={setSelectedProduct}

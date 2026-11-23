@@ -14,6 +14,6 @@ it('a conta lista os favoritos e produtos pertencentes ao usuário, e mantém pe
   assert.match(account, /favorites.includes\(p.id\)/);
   assert.match(account, /p.seller_id === user.id/);
   assert.match(account, /o.user_id === userId/);
-  assert.match(account, /canAccessSports\(user\)/);
+  assert.match(account, /canManageOwnSportsProfile\(user\)/);
   for (const label of ['Meu carrinho', 'Meus produtos à venda', 'Pedidos feitos', 'Sair da conta']) assert.ok(account.includes(label));
 });

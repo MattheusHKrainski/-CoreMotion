@@ -9,6 +9,16 @@ export async function removeAccountMedia(client: SupabaseClient, targetId: strin
   if (authError || !auth.user || auth.user.id === targetId) throw new Error('Exclusão não permitida.');
   const { data: actor, error: roleError } = await client.from('profiles').select('role,is_banned').eq('id', auth.user.id).single();
   if (roleError || actor?.role !== 'admin' || actor.is_banned) throw new Error('Somente administradores ativos podem excluir contas.');
+  await removeMediaFiles(client,targetId);
+}
+
+export async function removeOwnAccountMedia(client: SupabaseClient): Promise<void> {
+  const {data,error}=await client.auth.getUser();
+  if(error||!data.user)throw new Error('Entre novamente para excluir sua conta.');
+  await removeMediaFiles(client,data.user.id);
+}
+
+async function removeMediaFiles(client: SupabaseClient,targetId:string):Promise<void> {
   const bucket = client.storage.from('user-media');
   const files: string[] = [];
   let requests = 0;

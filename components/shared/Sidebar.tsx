@@ -5,8 +5,9 @@ import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole, ROLE_LABELS } from '@/lib/permissions';
 import { isSupabaseConfigured } from '@/services/supabaseClient';
 import { IS_QUICK_ACCESS } from '@/lib/quick-access';
-import { ACCOUNT_TYPES, canAccessSports, canRecruit } from '@/lib/sports';
+import { ACCOUNT_TYPES, canAccessSports, canRecruit, canManageOwnSportsProfile } from '@/lib/sports';
 import UserAvatar from './UserAvatar';
+import NotificationsInbox from './NotificationsInbox';
 import BrandMark from '@/components/shared/BrandMark';
 import {
   Menu,
@@ -101,7 +102,7 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
       { id: 'trials' as const, label: 'Seletivas e treinos', description: 'Oportunidades e inscrições', icon: Users },
       { id: 'talents' as const, label: canRecruit(user) ? 'Banco de atletas' : 'Convocações e inscrições', description: canRecruit(user) ? 'Buscar atletas e convocar' : 'Convites, treinos e respostas', icon: Users },
       ...(canRecruit(user) ? [{ id: 'sports-activity' as const, label: 'Convocações e inscritos', description: 'Minhas convocações e atletas inscritos', icon: Users }] : []),
-      { id: 'sports-profile' as const, label: user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Perfil atleta', description: user?.account_type === 'coach' ? 'Formação, metodologia e horários' : 'Trajetória e conquistas', icon: User },
+      ...(canManageOwnSportsProfile(user) ? [{ id: 'sports-profile' as const, label: user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Perfil atleta', description: user?.account_type === 'coach' ? 'Formação, metodologia e horários' : 'Trajetória e conquistas', icon: User }] : []),
     ] : []),
     ...(userIsStaff
       ? [
@@ -429,7 +430,7 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <form role="search" onSubmit={event => { event.preventDefault(); setActiveView('marketplace'); window.dispatchEvent(new Event('coremotion:catalog-search')); }} className="flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-2">
             <button type="submit" aria-label="Pesquisar produtos"><Search className="h-4 w-4 text-zinc-400" /></button>
-            <input type="search" aria-label="Buscar no CoreShop" placeholder="Buscar" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="w-16 sm:w-24 lg:w-40 bg-transparent text-xs outline-none" />
+            <input type="search" aria-label="Buscar no CoreShop" placeholder="Buscar" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="hidden w-12 min-[480px]:block sm:w-24 lg:w-40 bg-transparent text-xs outline-none" />
           </form>
           <button type="button" onClick={onOpenFavorites} aria-label="Ver favoritos e salvos" className="relative rounded-full p-2 text-zinc-300 hover:bg-zinc-800 hover:text-white"><Heart className="h-5 w-5" />{favorites.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-[10px] text-white">{favorites.length}</span>}</button>
           <button
@@ -441,6 +442,7 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
 
           </button>
 
+          <NotificationsInbox />
           {isVisitor ? (
             <button
               onClick={() => {
