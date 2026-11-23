@@ -843,7 +843,7 @@ export default function AdminOffersManager() {
                 : 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800'
             }`}
           >
-            Todas ({offers.length})
+            Todas
           </button>
           {uniqueStores.map((st) => (
             <button
@@ -1019,7 +1019,7 @@ export default function AdminOffersManager() {
           })}
         </div>
       )}
-      {filteredOffers.length > visibleCount && <button type="button" onClick={() => setVisibleCount(n => n + 12)} className="rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-zinc-700">Mostrar mais ({filteredOffers.length - visibleCount} restantes)</button>}
+      {filteredOffers.length > visibleCount && <button type="button" onClick={() => setVisibleCount(n => n + 12)} className="rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-zinc-700">Mostrar mais</button>}
     </section>
   );
 }
