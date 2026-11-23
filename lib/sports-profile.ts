@@ -13,3 +13,9 @@ export function sportsProfileDetails(record:SportsRecord):{label:string;value:st
   const value=record.data[key];return typeof value==='string'&&value.trim()?[{label,value}]:[];
  });
 }
+
+/** Resolve the published profile by the authenticated sender stored on the invite. */
+export function invitingCoachProfile(invite:SportsRecord,records:SportsRecord[],recipientId:string):SportsRecord|undefined {
+ if(invite.kind!=='invite'||invite.data.recipient!==recipientId||!invite.owner)return undefined;
+ return records.find(record=>record.kind==='coach'&&record.owner===invite.owner);
+}

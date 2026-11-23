@@ -1,4 +1,6 @@
 'use client';
+import { groupReports } from '@/lib/report-groups';
+import { attachReportOwners } from '@/services/moderation';
 import ModerationTargetLink from '@/components/shared/ModerationTargetLink';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -203,6 +205,7 @@ function ReportReview({
       <button className={button} onClick={onOpen}>
         Localizar conteúdo na aba de moderação
       </button>
+      {!report.owner_id && <p className="text-xs text-amber-300">Não há conta responsável disponível para este conteúdo. O envio será recusado se a conta ou o anúncio tiver sido removido.</p>}
       <form
         className="space-y-3 border-t border-zinc-700 pt-3"
         onSubmit={(e) => {
@@ -229,7 +232,7 @@ function ReportReview({
           </select>
         </label>
         <label className="block text-xs text-zinc-400">
-          Resposta ao denunciante
+          Mensagem ao responsável denunciado
           <textarea
             className={`${field} mt-1`}
             rows={2}
@@ -242,7 +245,7 @@ function ReportReview({
           />
         </label>
         <p className="text-xs text-zinc-500">
-          Salvar a análise envia uma notificação. Remova ou corrija o conteúdo
+          Salvar envia sua mensagem ao responsável pelo conteúdo denunciado. Quem denunciou acompanha apenas a decisão. Remova ou corrija o conteúdo
           na aba correspondente quando necessário.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -333,7 +336,7 @@ export default function AdminDashboard() {
         if (version === request.current) setOrders(data || []);
       }
       if (tab === 'reports') {
-        const data = await listReports();
+        const data = await attachReportOwners(await listReports());
         if (version === request.current) setReports(data);
       }
       if (tab === 'audit') {
@@ -774,6 +777,7 @@ export default function AdminDashboard() {
                     {p.content}
                   </p>
                   <div className="flex flex-wrap gap-2">
+                    <ModerationTargetLink category="community" targetId={p.id} />
                     <button
                       disabled={busy}
                       className={button}
@@ -880,10 +884,12 @@ export default function AdminDashboard() {
               </label>
             </div>
             <p className="text-xs text-zinc-500">
-              {visibleReports.length} solicitação(ões). As respostas ficam
-              disponíveis nas notificações de quem denunciou.
+              {visibleReports.length} solicitação(ões). As mensagens são enviadas ao responsável denunciado. O denunciante acompanha a decisão.
             </p>
-            {visibleReports.map((r) => (
+            {groupReports(visibleReports).map(group => <details key={group.key} className="rounded-2xl border border-zinc-700 bg-zinc-900/40 p-4">
+              <summary className="cursor-pointer"><span className="font-bold">{group.name}</span><span className="ml-3 rounded-full bg-red-950 px-2 py-1 text-xs font-bold text-red-300">{group.reports.length} {group.reports.length===1?'denúncia':'denúncias'}</span></summary>
+              <p className="mt-3 text-xs text-zinc-400">Relatos agrupados por conta responsável, conforme os filtros atuais. Abra cada relato para analisar seu conteúdo e enviar uma orientação individual.</p>
+              <div className="mt-4 space-y-4">{group.reports.map((r) => (
               <ReportReview
                 key={`${r.id}-${r.reviewed_at}`}
                 report={r}
@@ -891,7 +897,7 @@ export default function AdminDashboard() {
                 onSave={(status, response) =>
                   void act(
                     () => reviewReport(r.id, status, response),
-                    'Análise salva e resposta enviada.'
+                    'Análise salva e mensagem enviada ao responsável denunciado.'
                   )
                 }
                 onDelete={() => {
@@ -916,7 +922,7 @@ export default function AdminDashboard() {
                     );
                 }}
               />
-            ))}
+              ))}</div></details>)}
             {!visibleReports.length && !loading && !error && (
               <p className="text-sm text-zinc-500">
                 Nenhuma denúncia corresponde aos filtros.

@@ -56,6 +56,9 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
   const openMarketplace = () => {
     setSearchQuery('');
     setActiveView('marketplace');
+    // These sections share a URL/document, so the browser keeps the home offset.
+    // Reset after React commits the filtered catalog, not before its layout changes.
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   };
 
   const handleSellClick = () => {

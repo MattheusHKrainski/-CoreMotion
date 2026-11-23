@@ -1,4 +1,5 @@
 'use client';
+import { validateSportsProfile, sportsSaveError } from '@/lib/sports-validation';
 import { SPORTS_PROFILE_FIELDS } from '@/lib/sports-profile';
 import { notifyOwner } from '@/services/moderation';
 import ReportButton from '@/components/shared/ReportButton';
@@ -8,7 +9,7 @@ import { matchesSportsRecord } from '@/lib/sports-workflow';
 import SportsActivityView from './SportsActivityView';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
-import { canAccessSports, canRecruit, type SportsRecord } from '@/lib/sports';
+import { canAccessSports, canRecruit, canManageOwnSportsProfile, type SportsRecord } from '@/lib/sports';
 import { loadSportsPreview } from '@/fixtures/sports-preview';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
@@ -119,6 +120,9 @@ export default function SportsHub({
       </div>
     );
 
+  if (view === 'sports-profile' && !canManageOwnSportsProfile(user))
+    return <div className="p-8 text-sm text-zinc-400">Contas da equipe não possuem perfil esportivo pessoal. Use o painel de moderação para gerenciar perfis.</div>;
+
   if (view === 'talents' && !recruiting) return <SportsActivityView />;
 
   async function persist(record: SportsRecord, remove = false) {
@@ -138,9 +142,7 @@ export default function SportsHub({
             : client.from('sports_records').insert(record).select();
         const { data, error } = await query;
         if (error || !data?.length)
-          throw new Error(
-            'Operação não autorizada ou indisponível. Tente novamente.'
-          );
+          throw new Error(sportsSaveError(error));
       }
       const next = remove
         ? records.filter((r) => r.id !== record.id)
@@ -175,6 +177,8 @@ export default function SportsHub({
       setError('Confira as idades e o prazo de inscrição.');
       return;
     }
+    const profileError = validateSportsProfile(kind, { ...form, name: form.name || user!.name });
+    if (profileError) { setError(profileError); return; }
     const existing =
       view === 'sports-profile'
         ? records.find((r) => r.owner === owner && r.kind === kind)
@@ -184,7 +188,7 @@ export default function SportsHub({
         id: editing || existing?.id || crypto.randomUUID(),
         owner: editingRecord?.owner || owner,
         kind,
-        data: { ...form, name: form.name || user!.name },
+        data: { ...form, ...Object.fromEntries(['height','weight','experience'].filter(key=>form[key]).map(key=>[key,form[key].replace(',','.')])), name: form.name || user!.name },
       })
     ) {
       setShowForm(false);
@@ -298,8 +302,9 @@ export default function SportsHub({
                       ? 'number'
                       : 'text'
                 }
-                min={0}
-                max={key.toLowerCase().includes('age') ? 120 : undefined}
+                step={['height','weight','experience'].includes(key) ? 'any' : undefined}
+                min={key==='age' ? 1 : key==='height' ? 30 : key==='weight' ? 1 : 0}
+                max={key.toLowerCase().includes('age') ? 120 : key==='height' ? 260 : key==='weight' ? 400 : undefined}
                 maxLength={1500}
               />
             </label>

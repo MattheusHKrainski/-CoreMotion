@@ -17,7 +17,8 @@ it('offers reporting at every requested content surface and a recipient notifica
   const categories = read('services/moderation.ts');
   for (const category of ['external_offer','athlete_listing','athlete_profile','trial','community']) assert.match(categories, new RegExp(`${category}:`));
   assert.match(read('components/shared/NotificationsInbox.tsx'), /account_notifications/);
-  assert.match(read('app/page.tsx'), /<NotificationsInbox \/>/);
+  assert.match(read('components/shared/Sidebar.tsx'), /<NotificationsInbox \/>/);
+  assert.doesNotMatch(read('app/page.tsx'), /<NotificationsInbox \/>/);
 });
 it('consolidates welcome profile navigation and always opens login over welcome on logout', () => {
   const welcome = read('components/WelcomeLandingPage.tsx');

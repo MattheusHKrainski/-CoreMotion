@@ -126,10 +126,13 @@ export class CommunityService {
     return this.mapDbPostToModel(data);
   }
 
-  static async addComment(postId: string, comment: { content: string; id?: string }): Promise<{success:boolean;error?:string;post?:CommunityPost}> {
+  static async addComment(postId: string, comment: { content: string; id?: string; parent_id?: string }): Promise<{success:boolean;error?:string;post?:CommunityPost}> {
     const sb=getSupabaseClient();
     if(!sb)return {success:true};
-    const {data,error}=await sb.rpc('add_community_comment',{p_post_id:postId,p_content:comment.content,p_request_key:comment.id});
+    const params={p_post_id:postId,p_content:comment.content,p_request_key:comment.id};
+    const {data,error}=comment.parent_id
+      ? await sb.rpc('reply_community_comment',{...params,p_parent_id:comment.parent_id})
+      : await sb.rpc('add_community_comment',params);
     if(error||!data)return {success:false,error:'Não foi possível enviar o comentário. Sua resposta foi preservada; tente novamente.'};
     return {success:true,post:this.mapDbPostToModel(data)};
   }
@@ -140,6 +143,7 @@ export class CommunityService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- comentários crus do JSONB; tipados na correção de comunidade
     const comments = rawComments.map((c: any) => ({
       id: c.id || `c-${Math.random()}`,
+      parent_id: typeof c.parent_id === 'string' ? c.parent_id : undefined,
       author_name: c.author_name || c.user_name || 'Atleta',
       author_avatar: c.author_avatar || c.user_avatar,
       content: c.content || '',
