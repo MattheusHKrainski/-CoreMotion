@@ -12,6 +12,7 @@ import AuthModal from '@/components/auth/AuthModal';
 import ReportButton from '@/components/shared/ReportButton';
 import { getConditionMeta } from '@/components/marketplace/ProductCard';
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { voltageVariants, offerVoltage } from '@/lib/offer-models';
 import ProductOptions from './ProductOptions';
 import { productGallery } from '@/lib/product-gallery';
 import { productPresentation } from '@/lib/product-presentation';
@@ -65,6 +66,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
     : ('product_type' in item && item.product_type === 'c2c' && item.status === 'active'));
   const coreOffer = core && item && 'source_url' in item ? item as ExternalOffer : null;
   const athlete = !core && item && 'product_type' in item ? item as Product : null;
+  const voltageOptions = coreOffer ? voltageVariants(coreOffer, activeOffers) : [];
   const presentation = coreOffer ? productPresentation(id, coreOffer.source_url) : undefined;
   const gallery = item ? productGallery(item, presentation?.images).slice(0, 12) : [];
   const selectedImage = gallery[Math.min(index, gallery.length - 1)] || '';
@@ -163,6 +165,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
             <p className="text-sm font-semibold">Outras versões e cores</p>
             <div className="flex flex-wrap gap-2">{otherColors.map((other,i)=><Link href={productPath('core',other.id)} title={other.title} key={other.id} aria-label={'Ver versão '+(i+2)} className="relative block h-14 w-14 overflow-hidden rounded-lg border-2 border-zinc-700 bg-zinc-950 hover:border-red-500"><ProductImage src={other.image_url} alt={other.title} sizes="56px"/></Link>)}</div>
           </div>}
+          {voltageOptions.length > 1 && <section aria-label="Voltagem do produto"><h2 className="mb-3 text-sm font-bold">Voltagem</h2><div className="flex flex-wrap gap-2">{voltageOptions.map(option=><Link key={option.id} href={productPath('core',option.id)} aria-current={option.id===id?'page':undefined} className={`rounded-lg border px-4 py-3 text-sm font-bold ${option.id===id?'border-red-500 bg-red-950/40':'border-zinc-700 bg-zinc-900'}`}>{offerVoltage(option.title)}</Link>)}</div><p className="mt-2 text-xs text-zinc-500">Confira a tensão elétrica antes de adicionar ao carrinho.</p></section>}
           {coreOffer && <div className="border-t border-zinc-800 pt-4">
             <ProductOptions key={id} id={id} source={coreOffer.source_url}
               category={coreOffer.category} title={coreOffer.title} sport={coreOffer.sport}

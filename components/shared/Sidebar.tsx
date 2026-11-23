@@ -101,7 +101,7 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
       { id: 'trials' as const, label: 'Seletivas e treinos', description: 'Oportunidades e inscrições', icon: Users },
       { id: 'talents' as const, label: canRecruit(user) ? 'Banco de atletas' : 'Convocações e inscrições', description: canRecruit(user) ? 'Buscar atletas e convocar' : 'Convites, treinos e respostas', icon: Users },
       ...(canRecruit(user) ? [{ id: 'sports-activity' as const, label: 'Convocações e inscritos', description: 'Minhas convocações e atletas inscritos', icon: Users }] : []),
-      { id: 'sports-profile' as const, label: user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Meu currículo esportivo', description: user?.account_type === 'coach' ? 'Formação, metodologia e horários' : 'Trajetória e conquistas', icon: User },
+      { id: 'sports-profile' as const, label: user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Perfil atleta', description: user?.account_type === 'coach' ? 'Formação, metodologia e horários' : 'Trajetória e conquistas', icon: User },
     ] : []),
     ...(userIsStaff
       ? [

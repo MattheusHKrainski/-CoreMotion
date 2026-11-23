@@ -1,4 +1,5 @@
 'use client';
+import { SPORTS_PROFILE_FIELDS } from '@/lib/sports-profile';
 import { notifyOwner } from '@/services/moderation';
 import ReportButton from '@/components/shared/ReportButton';
 import { scopedQuickStorage } from '@/lib/quick-access';
@@ -19,31 +20,8 @@ const input =
 const button =
   'rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-40';
 const fields = {
-  athlete: {
-    name: 'Nome esportivo',
-    sport: 'Esporte',
-    city: 'Cidade / UF',
-    age: 'Idade',
-    height: 'Altura (cm)',
-    weight: 'Peso (kg)',
-    experience: 'Tempo de prática (anos)',
-    position: 'Posição / especialidade',
-    achievements: 'Medalhas e conquistas',
-    history: 'Equipes anteriores e estatísticas',
-    availability: 'Disponibilidade para treinar',
-    contact: 'Contato para treinadores',
-  },
-  coach: {
-    name: 'Nome profissional',
-    sport: 'Modalidades (inclua pilates, ginástica etc.)',
-    city: 'Cidade / UF',
-    experience: 'Experiência (anos)',
-    qualifications: 'Formação e certificações / registro profissional',
-    team: 'Equipe / instituição',
-    methodology: 'Metodologia e público atendido',
-    availability: 'Locais e horários de atendimento',
-    contact: 'Contato profissional (será público)',
-  },
+  athlete: SPORTS_PROFILE_FIELDS.athlete,
+  coach: SPORTS_PROFILE_FIELDS.coach,
   trial: {
     name: 'Nome da seletiva / treino / peneira',
     team: 'Equipe / organização',
@@ -238,7 +216,7 @@ export default function SportsHub({
             ? 'Seletivas e treinos'
             : view === 'talents'
               ? 'Banco de atletas'
-              : user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Meu currículo esportivo'}
+              : user?.account_type === 'coach' ? 'Meu perfil profissional' : 'Perfil atleta'}
         </h1>
         <p className="text-sm text-zinc-400">
           {view === 'trials'
@@ -272,7 +250,7 @@ export default function SportsHub({
           >
             {view === 'trials'
               ? 'Publicar seletiva / treino'
-              : user?.account_type === 'coach' ? 'Editar meu perfil profissional' : 'Editar meu currículo'}
+              : user?.account_type === 'coach' ? 'Editar meu perfil profissional' : 'Editar perfil atleta'}
           </button>
         )}
       </header>
@@ -294,7 +272,7 @@ export default function SportsHub({
               ? 'Informações da oportunidade'
               : kind === 'coach'
                 ? 'Currículo de treinador'
-                : 'Currículo de atleta'}
+                : 'Perfil atleta'}
           </h2>
           {Object.entries(fields[kind]).map(([key, label]) => (
             <label key={key} className="text-sm text-zinc-300 space-y-2">

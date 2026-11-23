@@ -1,5 +1,6 @@
 'use client';
 
+import { uniqueOfferModels } from '@/lib/offer-models';
 import React, { useMemo } from 'react';
 import { ArrowDownRight, ArrowRight, BadgePercent, MoveUpRight } from 'lucide-react';
 import type { ExternalOffer } from '@/lib/types';
@@ -7,7 +8,7 @@ import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductImage from './shared/ProductImage';
 
 export function discountedOffers(offers: ExternalOffer[]): ExternalOffer[] {
-  return offers.filter(offer => offer.is_active && Number.isFinite(offer.price) && offer.price > 0 && Number.isFinite(offer.original_price) && (getOfferDiscountPercent(offer) ?? 0) > 0)
+  return uniqueOfferModels(offers).filter(offer => offer.is_active && Number.isFinite(offer.price) && offer.price > 0 && Number.isFinite(offer.original_price) && (getOfferDiscountPercent(offer) ?? 0) > 0)
     .sort((a, b) => (getOfferDiscountPercent(b) ?? 0) - (getOfferDiscountPercent(a) ?? 0));
 }
 
@@ -65,7 +66,7 @@ export default function HomeBlackFriday({ offers, onSelectOffer, onExplore }: { 
       <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-4"><div className="flex items-center gap-3"><BadgePercent className="h-6 w-6 text-red-400" /><div><h2 id="discounts-title" className="text-sm font-black uppercase tracking-wide sm:text-base">Descontos em destaque</h2><p className="mt-1 text-[10px] text-zinc-400">Seleção CoreMotion · fotos e preços de referência verificados.</p></div></div>{maxDiscount !== null && <span className="text-sm font-black text-red-400">ATÉ {maxDiscount}% OFF</span>}</header>
       {discounts.length ? <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{discounts.slice(0,4).map(offer => <button type="button" key={offer.id} onClick={() => onSelectOffer?.(offer)} className="group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 text-left transition hover:border-red-500 focus-visible:outline focus-visible:outline-red-500">
         <div className="relative h-40 bg-[#19191c] sm:h-52"><ProductImage src={offer.image_url} alt={offer.title} sizes="(max-width: 768px) 45vw, 310px" /><span className="absolute right-2 top-2 rounded-md bg-red-600 px-2 py-1 text-[10px] font-black text-white">{getOfferDiscountPercent(offer)}% OFF</span></div>
-        <div className="space-y-2 p-3 sm:p-4"><p className="line-clamp-2 min-h-10 text-xs font-semibold leading-5 text-zinc-200">{offer.title}</p><p className="text-[11px] text-zinc-500 line-through">{money(offer.original_price!)}</p><p className="text-lg font-black text-white sm:text-xl">{money(offer.price)}</p><p className="flex items-center gap-1 pt-1 text-[10px] font-bold text-red-400">Conhecer oferta<ArrowRight className="h-3 w-3" /></p></div>
+        <div className="space-y-2 p-3 sm:p-4"><p className="line-clamp-2 min-h-10 text-xs font-semibold leading-5 text-zinc-200">{offer.title}{offer.voltage_variants?.length ? ' · '+offer.voltage_variants.map(item=>item.label).join(' / ') : ''}</p><p className="text-[11px] text-zinc-500 line-through">{money(offer.original_price!)}</p><p className="text-lg font-black text-white sm:text-xl">{money(offer.price)}</p><p className="flex items-center gap-1 pt-1 text-[10px] font-bold text-red-400">Conhecer oferta<ArrowRight className="h-3 w-3" /></p></div>
       </button>)}</div> : <p className="rounded-xl border border-zinc-800 p-5 text-sm text-zinc-400">Nenhum desconto informado no momento. Explore os produtos disponíveis no CoreShop.</p>}
       <p className="text-[10px] leading-relaxed text-zinc-500">Descontos calculados sobre preços de referência dos fornecedores. Confira as opções de cada produto.</p>
     </section>

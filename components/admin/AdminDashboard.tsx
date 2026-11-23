@@ -50,7 +50,6 @@ import type {
 import { ACCOUNT_TYPES, type AccountType } from '@/lib/sports';
 import SupportDesk from './SupportDesk';
 import AdminOffersManager from './AdminOffersManager';
-import { removeAccountMedia } from '@/services/accountMedia';
 import SportsHub from '@/components/SportsHub';
 
 const TABS = [
@@ -77,7 +76,10 @@ const auditLabels: Record<string, string> = {
   account_role: 'Alteração de papel ou tipo de conta',
   account_ban: 'Suspensão de conta',
   account_unban: 'Reativação de conta',
-  account_delete: 'Exclusão de conta',
+  account_delete: 'Exclusão definitiva de conta',
+  account_trash: 'Conta enviada à lixeira',
+  account_restore: 'Restauração de conta',
+  account_purge: 'Exclusão definitiva após 30 dias',
   report_deleted: 'Exclusão de denúncia',
   ...Object.fromEntries(Object.entries(REPORT_STATUSES).map(([key, label]) => [`report_${key}`, `Denúncia · ${label}`])),
   ...Object.fromEntries(Object.entries(REPORT_CATEGORIES).map(([key, label]) => [`feedback_${key}`, `Orientação · ${label}`])),
@@ -275,6 +277,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [lastChecked, setLastChecked] = useState('');
   const [category, setCategory] = useState<ReportCategory | 'all'>('all');
+  const [trash, setTrash] = useState<{user_id:string;deleted_at:string;purge_after:string}[]>([]);
+  const [accountStatus, setAccountStatus] = useState<'all' | 'active' | 'suspended' | 'deleted'>('all');
+  const [auditScope, setAuditScope] = useState<'all' | 'deleted'>('all');
   const [reportStatus, setReportStatus] = useState<ReportStatus | 'all'>(
     'open'
   );
@@ -301,8 +306,9 @@ export default function AdminDashboard() {
           throw new Error(result.error || 'Ofertas indisponíveis.');
       }
       if (tab === 'accounts') {
-        const data = await AuthService.listUsers();
-        if (version === request.current) setAccounts(data);
+        const [data, archived] = await Promise.all([AuthService.listUsers(), client.from('account_trash').select('user_id,deleted_at,purge_after')]);
+        if (archived.error) throw new Error('Não foi possível consultar a lixeira.');
+        if (version === request.current) { setAccounts(data); setTrash(archived.data || []); }
       }
       if (tab === 'products') {
         const data = await ProductService.getProducts({ status: 'all' });
@@ -360,7 +366,7 @@ export default function AdminDashboard() {
     void refresh();
     const tablesByTab: Record<Tab, string[]> = {
       support: ['support_tickets','support_messages'],
-      accounts: ['profiles'],
+      accounts: ['profiles','account_trash'],
       products: ['products'],
       offers: ['external_offers'],
       community: ['community_posts'],
@@ -433,14 +439,13 @@ export default function AdminDashboard() {
     if (
       action === 'delete' &&
       !window.confirm(
-        `Excluir definitivamente a conta de ${account.name}? Todos os conteúdos e atividades vinculados também serão removidos. Esta ação não pode ser desfeita.`
+        `Mover a conta de ${account.name} para a lixeira por 30 dias? O acesso será bloqueado e o conteúdo público ficará oculto. Um administrador poderá restaurar a conta antes do prazo; depois, a exclusão será definitiva.`
       )
     )
       return;
     await act(
       async () => {
         if (!client) throw new Error('Conexão indisponível.');
-        if (action === 'delete') await removeAccountMedia(client, account.id);
         const { error } = await client.rpc('moderate_account', {
           p_target: account.id,
           p_action: action,
@@ -450,7 +455,7 @@ export default function AdminDashboard() {
         });
         if (error) throw new Error(error.message);
       },
-      action === 'delete' ? 'Conta excluída.' : 'Conta atualizada.'
+      action === 'delete' ? 'Conta movida para a lixeira por 30 dias.' : action === 'restore' ? 'Conta restaurada. Suspensão anterior preservada, quando existente.' : 'Conta atualizada.'
     );
   }
   function feedback(contentCategory: ReportCategory, id: string) {
@@ -476,8 +481,9 @@ export default function AdminDashboard() {
     );
   const matches = (...values: (string | undefined)[]) =>
     values.join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase());
+  const accountMatchesStatus = (a:UserProfile) => { const archived=trash.some(item=>item.user_id===a.id); return accountStatus==='deleted'?archived:!archived&&(accountStatus==='all'||(accountStatus==='suspended'?a.is_banned:!a.is_banned)); };
   const visibleAudit = audit.filter((entry) =>
-    matches(auditLabels[entry.action] || entry.action, entry.actor_id || '', entry.target_id, entry.reason || '')
+    (auditScope === 'all' || ['account_delete','account_trash','account_purge'].includes(entry.action)) && matches(auditLabels[entry.action] || entry.action, entry.actor_id || '', entry.target_id, entry.reason || '')
   );
   const visibleReports = reports.filter(
     (r) =>
@@ -580,12 +586,20 @@ export default function AdminDashboard() {
                 lista.
               </p>
             </div>
+            <label className="flex flex-wrap items-center gap-3 text-sm">Situação da conta
+              <select aria-label="Filtrar contas por situação" value={accountStatus} onChange={event=>setAccountStatus(event.target.value as typeof accountStatus)} className={field}>
+                <option value="all">Todas as contas</option><option value="active">Ativas</option><option value="suspended">Suspensas</option><option value="deleted">Excluídas · lixeira</option>
+              </select>
+            </label>
+            <button type="button" className="text-sm font-bold text-red-400" onClick={()=>{setAuditScope('deleted');navigate('audit');}}>Consultar exclusões no histórico</button>
+            {!loading && !error && !accounts.some(a=>accountMatchesStatus(a)&&matches(a.name,a.email,a.role,a.account_type)) && <p className="text-sm text-zinc-500">Nenhuma conta encontrada com estes filtros.</p>}
             {accounts
-              .filter((a) => matches(a.name, a.email, a.role, a.account_type))
+              .filter((a) => accountMatchesStatus(a) && matches(a.name, a.email, a.role, a.account_type))
               .map((a) => {
+                const archived = trash.find(item=>item.user_id===a.id);
                 const protectedAccount = a.id === user!.id;
                 const suspend =
-                  !protectedAccount &&
+                  !archived && !protectedAccount &&
                   canSuspendTarget(user!.role, a.role, a.email);
                 return (
                   <article key={a.id} className={`${card} space-y-2`}>
@@ -605,9 +619,10 @@ export default function AdminDashboard() {
                         <p className="mt-1 text-xs text-zinc-500">
                           {ROLE_LABELS[a.role]} •{' '}
                           {ACCOUNT_TYPES[a.account_type || 'casual']?.label} •{' '}
-                          {a.is_banned ? 'Suspensa' : 'Ativa'} • cadastro{' '}
+                          {archived ? 'Na lixeira' : a.is_banned ? 'Suspensa' : 'Ativa'} • cadastro{' '}
                           {date(a.created_at)}
                         </p>
+                        {archived && <p className="mt-2 text-xs text-amber-300">Excluída em {date(archived.deleted_at)} · Prazo de restauração: {date(archived.purge_after)}. Após o prazo, aguardará a próxima limpeza automática.</p>}
                         {a.ban_reason && (
                           <p className="mt-2 text-xs text-red-400">
                             Motivo: {a.ban_reason}
@@ -615,6 +630,7 @@ export default function AdminDashboard() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        {admin && archived && <button type="button" disabled={busy||Date.parse(archived.purge_after)<=Date.now()} className={button} onClick={()=>{if(window.confirm(`Restaurar a conta de ${a.name}? Se ela já estava suspensa antes da exclusão, continuará suspensa.`))void accountAction(a,'restore');}}>Restaurar conta</button>}
                         {suspend && (
                           <button
                             disabled={busy}
@@ -629,7 +645,7 @@ export default function AdminDashboard() {
                             {a.is_banned ? 'Reativar conta' : 'Suspender conta'}
                           </button>
                         )}
-                        {admin &&
+                        {admin && !archived &&
                           !protectedAccount &&
                           canDeleteTarget(user!.role, a.email) && (
                             <button
@@ -642,7 +658,7 @@ export default function AdminDashboard() {
                           )}
                       </div>
                     </div>
-                    {admin && !protectedAccount && (
+                    {admin && !archived && !protectedAccount && (
                       <AccountRoleEditor
                         key={`${a.id}-${a.role}-${a.account_type}`}
                         account={a}
@@ -1014,6 +1030,8 @@ export default function AdminDashboard() {
         {tab === 'audit' && (
           <>
             <h2 className="text-lg font-bold">Últimas 100 ações de moderação</h2>
+            <label className="flex flex-wrap items-center gap-3 text-sm">Tipo de registro<select aria-label="Filtrar histórico de moderação" value={auditScope} onChange={event=>setAuditScope(event.target.value as typeof auditScope)} className={field}><option value="all">Todas as ações</option><option value="deleted">Contas excluídas</option></select></label>
+            {auditScope==='deleted' && <p className="text-xs text-zinc-400">Exclusões administrativas entre as últimas 100 ações carregadas. Os registros identificam a ação e a conta pelo ID; não são cópias de segurança e não permitem restaurar dados apagados.</p>}
             {visibleAudit.map((entry) => (
               <article key={entry.id} className={card}>
                 <h3 className="font-bold">{auditLabels[entry.action] || entry.action}</h3>

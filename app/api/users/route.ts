@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { removeAccountMedia } from '@/services/accountMedia';
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  deleteAuthUser,
   getProfileById,
   listProfiles,
   setUserBan,
@@ -116,7 +114,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-/** Exclusão definitiva de outra conta: somente administradores. */
+/** Lixeira de 30 dias para exclusões administrativas. */
 export async function DELETE(req: NextRequest) {
   const auth = await requireAuth(req, ['admin']);
   if (!auth.ok) return auth.response;
@@ -137,9 +135,9 @@ export async function DELETE(req: NextRequest) {
       global: { headers: { Authorization: req.headers.get('authorization') || '' } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    await removeAccountMedia(storageClient, userId);
-    await deleteAuthUser(userId);
-    return NextResponse.json({ success: true, message: 'Conta removida da plataforma.' });
+    const { error } = await storageClient.rpc('moderate_account', { p_target:userId, p_action:'delete' });
+    if (error) throw new Error(error.message);
+    return NextResponse.json({ success: true, message: 'Conta movida para a lixeira por 30 dias.' });
   } catch (err: unknown) {
     console.error('[API /api/users DELETE]', err);
     return errorResponse('Falha ao excluir o usuário.');

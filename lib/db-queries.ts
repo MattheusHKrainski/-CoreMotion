@@ -277,7 +277,7 @@ export async function getProductsFromDb(filters?: ProductFilters, authorization:
     const rows = await readCatalogPages<DbProductRow>((start, end) => ordered.range(start, end));
     return rows.map(mapDbProductToModel);
   }
-  const conditions: string[] = [];
+  const conditions: string[] = ['NOT public.is_account_trashed(seller_id)'];
   const params: unknown[] = [];
   const add = (sql: string, value: unknown) => {
     params.push(value);
@@ -317,7 +317,7 @@ export async function getProductByIdFromDb(id: string, authorization?: string | 
     if (error) throw new Error(error.message);
     return data ? mapDbProductToModel(data as DbProductRow) : null;
   }
-  const rows = await queryDb<DbProductRow>(`SELECT * FROM public.products WHERE id = $1 LIMIT 1`, [id]);
+  const rows = await queryDb<DbProductRow>(`SELECT * FROM public.products WHERE id = $1 AND NOT public.is_account_trashed(seller_id) LIMIT 1`, [id]);
   return rows.length > 0 ? mapDbProductToModel(rows[0]) : null;
 }
 

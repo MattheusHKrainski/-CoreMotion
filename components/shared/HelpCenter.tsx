@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { Mail, RefreshCw, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { isStaffRole } from '@/lib/permissions';
-import { HELP_TOPICS, SUPPORT_EMAIL, TICKET_STATUSES, supportMailto, type HelpTopic, type SupportTicket } from '@/lib/support';
+import { HELP_TOPICS, HELP_SECTIONS, helpSection, SUPPORT_EMAIL, TICKET_STATUSES, supportMailto, type HelpTopic, type SupportTicket } from '@/lib/support';
 import SupportFAQ from './SupportFAQ';
 import SupportConversation from './SupportConversation';
 import { createSupportTicket, listSupportTickets } from '@/services/support';
@@ -17,7 +17,7 @@ export default function HelpCenter({ initialTopic, onClose, initialFaq = false }
   const { user, setActiveView, setAuthModalMode, setAuthModalOpen } = useCoreMotiom();
   const dialog = useRef<HTMLDialogElement>(null);
   const [showFaq, setShowFaq] = useState(initialFaq);
-  const [topic, setTopic] = useState<HelpTopic>(initialTopic);
+  const [topic, setTopic] = useState<HelpTopic>(helpSection(initialTopic).id);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [queueStatus, setQueueStatus] = useState('all');
   const [queueSearch, setQueueSearch] = useState('');
@@ -49,11 +49,11 @@ export default function HelpCenter({ initialTopic, onClose, initialFaq = false }
   return createPortal(<dialog ref={dialog} aria-labelledby="help-center-title" onCancel={event => { if (busy) event.preventDefault(); else onClose(); }} className="fixed inset-0 m-auto max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-5xl overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-5 text-white shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm sm:p-7">
     <header className="mb-6 flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-red-400">CoreMotion</p><h2 id="help-center-title" className="mt-2 text-2xl font-black">Central de Atendimento</h2><a href={`mailto:${SUPPORT_EMAIL}`} className="mt-2 inline-flex items-center gap-2 break-all text-xs text-zinc-400 hover:text-white"><Mail className="h-4 w-4 shrink-0" />{SUPPORT_EMAIL}</a></div><button type="button" autoFocus disabled={busy} onClick={onClose} aria-label="Fechar atendimento" className="rounded-full p-2 hover:bg-zinc-800"><X className="h-5 w-5" /></button></header>
     <div className="grid gap-6 md:grid-cols-[190px_1fr]">
-      <nav aria-label="Assuntos de ajuda" className="flex flex-wrap gap-2 content-start md:flex-col"><button type="button" aria-current={showFaq ? 'page' : undefined} onClick={() => setShowFaq(true)} className={`rounded-xl border px-3 py-2 text-left text-xs font-semibold ${showFaq ? 'border-red-600 bg-red-950/40 text-white' : 'border-zinc-800 text-zinc-400 hover:bg-zinc-900'}`}>Perguntas frequentes</button>{Object.entries(HELP_TOPICS).map(([id,item]) => <button key={id} type="button" aria-current={!showFaq && topic === id ? 'page' : undefined} onClick={() => { setShowFaq(false); setTopic(id as HelpTopic); setNotice(''); }} className={`rounded-xl border px-3 py-2 text-left text-xs font-semibold ${!showFaq && topic === id ? 'border-red-600 bg-red-950/40 text-white' : 'border-zinc-800 text-zinc-400 hover:bg-zinc-900'}`}>{item.label}</button>)}</nav>
+      <nav aria-label="Assuntos de ajuda" className="flex flex-wrap gap-2 content-start md:flex-col"><button type="button" aria-current={showFaq ? 'page' : undefined} onClick={() => setShowFaq(true)} className={`rounded-xl border px-3 py-2 text-left text-xs font-semibold ${showFaq ? 'border-red-600 bg-red-950/40 text-white' : 'border-zinc-800 text-zinc-400 hover:bg-zinc-900'}`}>Perguntas frequentes</button>{HELP_SECTIONS.map(({id,label}) => <button key={id} type="button" aria-current={!showFaq && topic === id ? 'page' : undefined} onClick={() => { setShowFaq(false); setTopic(id as HelpTopic); setNotice(''); }} className={`rounded-xl border px-3 py-2 text-left text-xs font-semibold ${!showFaq && topic === id ? 'border-red-600 bg-red-950/40 text-white' : 'border-zinc-800 text-zinc-400 hover:bg-zinc-900'}`}>{label}</button>)}</nav>
       <div className="min-w-0 space-y-6">
         {showFaq && <SupportFAQ onContact={() => {setTopic('contact');setShowFaq(false);}} />}
         <div hidden={showFaq} className="space-y-6">
-        <article className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5"><h3 className="text-lg font-bold">{HELP_TOPICS[topic].title}</h3><p className="mt-3 text-sm leading-relaxed text-zinc-300">{HELP_TOPICS[topic].text}</p>
+        <article className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5"><h3 className="text-lg font-bold">{helpSection(topic).label}</h3><div className="mt-3 space-y-4">{helpSection(topic).topics.map(id=><div key={id}>{helpSection(topic).topics.length > 1 && <h4 className="text-sm font-bold text-white">{HELP_TOPICS[id].title}</h4>}<p className="mt-2 text-sm leading-relaxed text-zinc-300">{HELP_TOPICS[id].text}</p></div>)}</div>
           <div className="mt-4 flex flex-wrap gap-3"><a href={supportMailto(topic)} className="text-xs font-bold text-red-400 underline">Enviar e-mail</a>{topic === 'orders' && <button type="button" onClick={() => { if (!user) { onClose(); setAuthModalMode('login'); setAuthModalOpen(true); } else go('profile'); }} className="text-xs font-bold text-red-400 underline">Abrir minha conta e pedidos</button>}{topic === 'products' && <button type="button" onClick={() => go('marketplace')} className="text-xs font-bold text-red-400 underline">Explorar produtos</button>}</div>
         </article>
         <section aria-labelledby="support-form-title" className="rounded-2xl border border-zinc-800 p-5"><h3 id="support-form-title" className="font-bold">Registrar solicitação</h3><p className="mt-2 text-xs leading-relaxed text-zinc-400">Converse com a equipe e acompanhe o histórico pelo protocolo. A resposta fica disponível aqui, em suas solicitações. Não envie senhas, códigos de acesso ou dados de cartão.</p>
@@ -63,7 +63,7 @@ export default function HelpCenter({ initialTopic, onClose, initialFaq = false }
             catch (reason) { setError(reason instanceof Error ? reason.message : 'Solicitação não enviada.'); }
             finally { setBusy(false); }
           }}>
-            <p className="text-xs text-zinc-400">Categoria: <strong>{HELP_TOPICS[topic].label}</strong></p>
+            <p className="text-xs text-zinc-400">Categoria: <strong>{helpSection(topic).label}</strong></p>
             <label className="block text-xs text-zinc-400">Assunto<input required minLength={3} maxLength={200} value={subject} onChange={event => setSubject(event.target.value)} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm text-white" /></label>
             <label className="block text-xs text-zinc-400">Descrição da solicitação<textarea required minLength={10} maxLength={4000} rows={4} value={message} onChange={event => setMessage(event.target.value)} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm text-white" /></label>
             <label className="block text-xs text-zinc-400">Referência do anúncio ou pedido (opcional)<input maxLength={200} value={reference} onChange={event => setReference(event.target.value)} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm text-white" /></label>

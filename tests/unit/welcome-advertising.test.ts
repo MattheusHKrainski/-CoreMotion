@@ -32,7 +32,11 @@ it('as superfícies de venda não prometem garantia ou custódia da plataforma',
     assert.doesNotMatch(readFileSync(filename, 'utf8'), /compra (?:100% )?garantida|compra com garantia|compra protegida|pagamento protegido|pagamento seguro|custódia|frete.*protegido|equipamentos com garantia/i, filename);
   }
   const footer = readFileSync('components/shared/Footer.tsx', 'utf8');
-  assert.match(footer, /confirmação de pagamento é uma experiência de teste, sem cobrança bancária/);
+  assert.doesNotMatch(footer, /confirmação de pagamento é uma experiência de teste, sem cobrança bancária/);
+  // Keep financial transparency where the user confirms the transaction, not a site-wide banner.
+  const checkout = readFileSync('components/commerce/CheckoutPage.tsx', 'utf8');
+  assert.match(checkout, /Ambiente de demonstração: nenhuma cobrança financeira é realizada/);
+  assert.match(checkout, /Pagamento de teste CoreMotion/);
 });
 
 it('mantém as mesmas bordas neutras em todos os módulos de perfil', () => {

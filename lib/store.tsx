@@ -168,7 +168,7 @@ interface CoreMotiomContextType {
   // Community
   communityPosts: CommunityPost[];
   /** Devolve true quando a publicação foi criada (o formulário só é limpo nesse caso). */
-  createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string }) => Promise<boolean>;
+  createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string; video_url?: string }) => Promise<boolean>;
   likedCommunityPosts: string[];
   likeCommunityPost: (postId: string) => Promise<void>;
   addCommunityComment: (postId: string, content: string, requestKey?: string) => Promise<boolean>;
@@ -1241,6 +1241,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     content: string;
     category: CommunityPost['category'];
     image_url?: string;
+    video_url?: string;
   }): Promise<boolean> => {
     if (isSupabaseConfigured && !requireLogin('É preciso estar autenticado para publicar na comunidade.')) return false;
 
@@ -1269,6 +1270,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         title: post.title,
         content: post.content,
         image_url: post.image_url,
+        video_url: post.video_url,
         likes_count: 0,
         comments_count: 0,
         comments: [],
