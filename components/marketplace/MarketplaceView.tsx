@@ -11,6 +11,7 @@ import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
 import CatalogTeams, { type CatalogTeam } from './CatalogTeams';
+import VerifiedVolleyMerchandise from './VerifiedVolleyMerchandise';
 import {
   ArrowUpDown,
   Check,
@@ -278,6 +279,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
               Ver coleção {selectedTeam.merchandise_source==='retailer'?'na loja':'do clube'} <span aria-hidden="true">↗</span>
             </a>
           </section>}
+
+          {selectedTeam && !selectedTeam.league.startsWith('brasileirao') && <VerifiedVolleyMerchandise teamId={selectedTeam.id} />}
 
           {displayedCount === 0 ? (
             <div className="space-y-4 rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-12 text-center shadow-xl">
