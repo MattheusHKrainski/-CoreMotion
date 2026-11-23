@@ -49,5 +49,7 @@ test('CoreShop removes image-reference microcopy but keeps meaningful item and s
   for(const component of [athleteCard, athleteModal, productPage]) assert.ok(component.includes('Foto ilustrativa'));
   assert.match(athleteCard, /disabled=\{!hasIdentifiedSeller/);
   assert.match(productPage, /soldOut/);
-  assert.match(checkout, /nenhuma cobrança financeira é realizada/);
+  const payment = read('components/commerce/DemoPaymentPanel.tsx');
+  assert.match(checkout, /DemoPaymentPanel/);
+  assert.match(payment, /Nenhuma cobrança financeira é realizada/i);
 });
