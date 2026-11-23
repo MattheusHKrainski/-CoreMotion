@@ -31,8 +31,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     addToCart,
     favorites,
     toggleFavorite,
-    isVisitor,
-    setAuthModalOpen,
     addToast,
   } = useCoreMotiom();
 
@@ -329,6 +327,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   onClick={() => {
                     addToCart(product, 1);
                   }}
+                  disabled={product.status !== 'active' || product.stock < 1}
                   className="py-3 px-4 rounded-xl bg-[#0E1017] hover:bg-[#181B22] border border-[#232836] hover:border-[#3B4252] text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
                 >
                   <ShoppingBag className="w-4 h-4" />
