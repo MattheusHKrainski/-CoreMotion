@@ -1069,6 +1069,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       return;
     }
     setCart(prev => {
+      if (prev.filter(item => item.product.id === live.id).reduce((sum, item) => sum + item.quantity, 0) + quantity > stock) return prev;
       const existing = prev.find(item => item.product.id === live.id && item.selected_size === selected_size);
       if (existing) return prev.map(item => item === existing ? { ...item, product: live, quantity: item.quantity + quantity } : item);
       return [...prev, { product: live, quantity, selected_size }];
