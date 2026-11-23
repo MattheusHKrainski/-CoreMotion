@@ -42,8 +42,6 @@ export default function WelcomeLandingPage() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const c2cCount = products.filter((p) => p.product_type === 'c2c' && p.status === 'active').length;
-
   const handleOpenLogin = () => {
     setMobileMenuOpen(false);
     setAuthModalMode('login');
@@ -296,7 +294,6 @@ export default function WelcomeLandingPage() {
                   <span>Entre Atletas</span>
                   <ShoppingBag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
-                <p className="text-2xl font-black text-white mt-1">{c2cCount}</p>
                 <p className="text-[11px] text-zinc-400 mt-0.5">Equipamentos anunciados por atletas</p>
               </button>
 
@@ -309,7 +306,6 @@ export default function WelcomeLandingPage() {
                   <span>Ofertas Verificadas</span>
                   <Tag className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform" />
                 </div>
-                <p className="text-2xl font-black text-white mt-1">{activeOffers.length}</p>
                 <p className="text-[11px] text-zinc-400 mt-0.5">Promoções reais selecionadas</p>
               </button>
 
