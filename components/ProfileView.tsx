@@ -90,7 +90,6 @@ export default function ProfileView({ initialSection = 'details' }: { initialSec
         <button type="button" onClick={() => setCheckoutOpen(true)} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meu carrinho</button>
         <button type="button" onClick={() => setSection('products')} aria-pressed={section === 'products'} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meus produtos à venda</button>
         {canManageOwnSportsProfile(user) && <button type="button" onClick={() => setActiveView('sports-profile')} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">{user.account_type === 'coach' ? 'Meu perfil profissional' : 'Criar ou editar currículo de atleta'}</button>}
-        <button type="button" onClick={() => logout()} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left text-red-400">Sair da conta</button>
       </nav>
       <a href="/pedidos" className="block rounded-xl border border-red-900/60 bg-red-950/20 p-4 text-sm font-bold text-red-400">Pedidos CoreMotion — acompanhar compras →</a>
       {section === 'favorites' && <section aria-label="Meus favoritos" className="space-y-4">

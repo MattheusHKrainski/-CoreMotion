@@ -9,11 +9,10 @@ import { Mail, Instagram, Youtube } from 'lucide-react';
 
 
 export default function Footer() {
-  const { setActiveView, setSearchQuery, isVisitor, setAuthModalOpen, setAuthModalMode } = useCoreMotiom();
+  const { setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
 
   const [helpFaq, setHelpFaq] = useState(false);
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
-  const switchAccount = () => { setAuthModalMode('switch'); setAuthModalOpen(true); };
 
   const openSport = (sport?: string) => {
     setSearchQuery(sport || '');
@@ -103,7 +102,7 @@ export default function Footer() {
 
           {/* Column 3: Minha Conta */}
           <div className="lg:col-span-2">
-            <div className="mb-3.5 flex flex-wrap items-center gap-2"><h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200">Minha Conta</h5><button type="button" onClick={switchAccount} className="text-[10px] font-bold text-red-400 hover:text-red-300">Trocar conta</button></div>
+            <div className="mb-3.5 flex flex-wrap items-center gap-2"><h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200">Minha Conta</h5></div>
             <ul className="space-y-2.5 text-xs">
               <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Meu Perfil</button></li>
               <li><a href="/pedidos" className="hover:text-white">Pedidos</a></li>

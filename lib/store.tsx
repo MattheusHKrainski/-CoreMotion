@@ -25,13 +25,13 @@ import {
   NewsArticle,
 } from './types';
 import {
-  INITIAL_PRODUCTS,
   INITIAL_COACHES,
   INITIAL_ATHLETES,
   INITIAL_COMMUNITY_POSTS,
   INITIAL_NEWS,
   INITIAL_USERS,
 } from '@/fixtures/initial-data';
+import { ATHLETE_EXAMPLES as INITIAL_PRODUCTS } from '@/fixtures/athlete-examples';
 import { appendExpansionOffers, appendMultiStoreOffers, refreshLegacyOffers } from './offer-catalog';
 import { INITIAL_EXTERNAL_OFFERS } from '@/fixtures/real-offers';
 import type { OfferCreateInput, OfferUpdateInput } from './schemas/offer.schema';
