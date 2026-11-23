@@ -19,12 +19,15 @@ export default function CheckoutPage() {
   const [step,setStep] = useState<'cart'|'address'|'review'>('cart');
   const [busy,setBusy] = useState(false), [error,setError] = useState(''), [saved,setSaved] = useState('');
   const [method,setMethod] = useState<DemoPaymentMethod>('pix');
+  const [cpf,setCpf] = useState('');
+  const cpfDigits = cpf.replace(/\D/g, '');
+  const validCpf = (() => { if (!/^\d{11}$/.test(cpfDigits) || /^(\d)\1{10}$/.test(cpfDigits)) return false; for (const length of [9,10]) { const sum = [...cpfDigits.slice(0,length)].reduce((acc,digit,index) => acc + Number(digit)*(length+1-index),0); const remainder = (sum*10)%11; if (Number(cpfDigits[length]) !== (remainder===10?0:remainder)) return false; } return true; })();
   const request = useRef<{ signature: string; key: string } | null>(null);
   useEffect(() => {
     let postalCode = '';
     try { const savedCep = sessionStorage.getItem('coremotion-cep') || ''; postalCode = /^\d{8}$/.test(savedCep) ? savedCep : ''; } catch { /* Session storage can be unavailable. */ }
     setAddress({ ...EMPTY_ADDRESS, postalCode });
-    setStep('cart'); setSaved(''); setMethod('pix'); setError(''); request.current = null;
+    setStep('cart'); setSaved(''); setCpf(''); setMethod('pix'); setError(''); request.current = null;
   }, [user?.id]);
   const lines = cart.lines.map(line => ({...line, offer: activeOffers.find(item => item.id===line.offerId)}));
   const invalidVariant = (line: typeof lines[number]) => Boolean(line.offer?.variant_options?.length && !line.offer.variant_options.includes(line.variant));
@@ -32,6 +35,7 @@ export default function CheckoutPage() {
   const subtotal = lines.reduce((total,line) => total + (line.offer ? retailPriceCents(line.offer.price)*line.quantity : 0),0);
   const finalizeDemo = async () => {
     if (busy || !available || !user || isVisitor) return;
+    if (!validCpf) { setError('Informe um CPF válido para continuar.'); return; }
     setBusy(true); setError('');
     try {
       validateAddress(address);
@@ -65,7 +69,8 @@ export default function CheckoutPage() {
       {step==='review' && <section className="space-y-5 rounded-2xl border border-zinc-800 p-5">
         <div><h2 className="text-lg font-black">Revise e confirme</h2><p className="mt-2 text-sm text-zinc-400">{address.recipient} · {address.street}, {address.number} · {address.district} · {address.city}/{address.state} · CEP {address.postalCode}</p></div>
         <div className="rounded-xl bg-zinc-900 p-4"><p className="text-xs text-zinc-500">Valor dos produtos</p><strong className="text-2xl">{money(subtotal)}</strong><p className="mt-1 text-xs text-zinc-500">O frete não é calculado ou cobrado nesta simulação.</p></div>
-        <DemoPaymentPanel key={request.current?.key ?? 'pending'} operationKey={request.current?.key ?? ''} method={method} onMethodChange={setMethod} subtotal={subtotal} busy={busy} available={available} onConfirm={finalizeDemo} />
+        <div className="space-y-2 rounded-xl border border-zinc-700 bg-zinc-900 p-4"><label htmlFor="checkout-cpf" className="block text-sm font-semibold">CPF do comprador *</label><input id="checkout-cpf" type="text" inputMode="numeric" autoComplete="off" value={cpf} maxLength={14} placeholder="000.000.000-00" onChange={event => { const digits=event.target.value.replace(/\D/g,'').slice(0,11); setCpf(digits.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})(\d{1,2})$/,'$1-$2')); setError(''); }} aria-invalid={cpfDigits.length===11&&!validCpf} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-white" /><p className="text-xs text-zinc-400">Validação matemática do CPF para a simulação. Não consultamos a Receita Federal e não armazenamos o CPF no pedido.</p>{cpfDigits.length===11&&!validCpf && <p className="text-xs text-red-300" role="alert">CPF inválido. Confira os números.</p>}</div>
+        <DemoPaymentPanel key={request.current?.key ?? 'pending'} operationKey={request.current?.key ?? ''} method={method} onMethodChange={setMethod} subtotal={subtotal} busy={busy} available={available && validCpf} onConfirm={finalizeDemo} />
 
         <button type="button" disabled={busy} onClick={() => setStep('address')} className="text-xs text-zinc-400">Editar endereço</button>
       </section>}
