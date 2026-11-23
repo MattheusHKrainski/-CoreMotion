@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ExternalLink, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import type { ExternalOffer } from '@/lib/types';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
@@ -72,10 +72,6 @@ export default function CatalogTeams({offers,selected,onSelect}: {
     {selected && <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/80 p-3">
       <p className="text-xs font-semibold text-white">{selected.club_name}</p>
       <p className="text-[11px] text-zinc-400">{counts.get(selected.id)||0} ofertas na CoreMotion</p>
-      {selected.merchandise_url && <a href={selected.merchandise_url} target="_blank" rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300">
-        {selected.merchandise_source==='retailer'?'Ver produtos na loja parceira':selected.merchandise_source==='manufacturer'?'Ver coleção na fornecedora':'Ver coleção do clube'}<ExternalLink className="h-3.5 w-3.5"/>
-      </a>}
       <button type="button" onClick={()=>onSelect(null)} className="block text-[11px] text-zinc-400 underline hover:text-white">Limpar clube</button>
     </div>}
   </div>;
