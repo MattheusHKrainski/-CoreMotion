@@ -38,7 +38,7 @@ it('as superfícies de venda não prometem garantia ou custódia da plataforma',
   const payment = readFileSync('components/commerce/DemoPaymentPanel.tsx', 'utf8');
   assert.match(payment, /Checkout 100% demonstrativo/);
   assert.match(payment, /Escolha como pagar/);
-  assert.match(payment, /Cartões reais não são aceitos|Cartões reais não são aceitos/i.test(payment) ? /Cartões reais não são aceitos/i : /Apenas os dois números de teste/);
+  assert.match(payment, /Apenas os dois números de teste/);
   assert.match(checkout, /DemoPaymentPanel/);
 });
 
