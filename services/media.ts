@@ -1,8 +1,8 @@
 import { getSupabaseClient } from './supabaseClient';
-import { validateImageFile } from '@/lib/media';
+import { validateImageFile, MAX_COMMUNITY_IMAGE_BYTES, MAX_IMAGE_BYTES } from '@/lib/media';
 
 export async function uploadImage(file: File, purpose: 'products' | 'avatars' | 'community'): Promise<string> {
-  validateImageFile(file);
+  validateImageFile(file, purpose === 'community' ? MAX_COMMUNITY_IMAGE_BYTES : MAX_IMAGE_BYTES);
   const client = getSupabaseClient();
   if (!client) throw new Error('Entre em uma conta conectada ao Supabase para enviar imagens.');
   const { data, error } = await client.auth.getUser();

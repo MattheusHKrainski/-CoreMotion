@@ -55,6 +55,6 @@ it('variantes obrigatórias são verificadas também no banco', () => {
 it('comunidade dispõe de descoberta lateral, busca, ordenação e mantém curtidas reais', () => {
   const source=readFileSync('components/CommunityView.tsx','utf8');
   assert.match(source,/Buscar na comunidade/); assert.match(source,/Ordenar publicações/);
-  assert.match(source,/Descubra conversas/); assert.match(source,/likeCommunityPost\(post.id\)/);
+  assert.match(source,/Explorar assuntos/); assert.match(source,/likeCommunityPost\(post.id\)/);
   assert.doesNotMatch(source,/11 mil|visitantes semanais|Continuar com Google/);
 });

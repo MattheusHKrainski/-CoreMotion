@@ -205,7 +205,17 @@ function mergeProductsById(current: Product[], incoming: Product[]): Product[] {
 
 export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Navigation & views
-  const [activeView, setActiveView] = useState<ActiveView>('home');
+  const [activeView, setActiveViewState] = useState<ActiveView>('home');
+  const setActiveView = useCallback((view: ActiveView) => {
+    setActiveViewState(view);
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      const url = new URL(window.location.href);
+      const previous = url.searchParams.get('view') || 'home';
+      url.searchParams.set('view', view);
+      if (previous !== view) url.searchParams.delete('post');
+      window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    }
+  }, []);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAuthModalOpen, setAuthModalOpenState] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot' | 'switch'>('login');
@@ -229,7 +239,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const view = new URLSearchParams(window.location.search).get('view');
-    if (view && ['home','marketplace','sell','coaches','community','profile','admin','trials','talents','sports-profile','sports-activity'].includes(view)) setActiveView(view as ActiveView);
+    if (view && ['home','marketplace','sell','coaches','community','profile','admin','trials','talents','sports-profile','sports-activity'].includes(view)) setActiveViewState(view as ActiveView);
   }, []);
 
   // Core entities with resilient initializers - SSR safe

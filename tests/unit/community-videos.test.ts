@@ -19,7 +19,7 @@ it('reproduz apenas uploads do Storage configurado, com controles e sem autoplay
  assert.equal(validCommunityVideoUrl(url.replace('example.supabase.co','untrusted.test')),false);
  assert.equal(validCommunityVideoUrl(url+'?other=true'),false);
  const html=renderToStaticMarkup(React.createElement(CommunityMedia,{video:url,author:'Atleta'}));
- assert.match(html,/<video/);assert.match(html,/controls=""/);assert.match(html,/preload="none"/);assert.doesNotMatch(html,/autoplay/);
+ assert.match(html,/<video/);assert.match(html,/controls=""/);assert.match(html,/preload="metadata"/);assert.doesNotMatch(html,/autoplay/);
  }finally{if(previous===undefined)delete process.env.NEXT_PUBLIC_SUPABASE_URL;else process.env.NEXT_PUBLIC_SUPABASE_URL=previous;}
 });
 it('persiste vídeo no post, protege alterações e inclui o player no perfil',()=>{
