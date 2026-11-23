@@ -5,7 +5,7 @@ import CommunityShare from './community-share';
 import CommunityComments from './community-comments';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, Search, MessageCircle, Plus, X } from 'lucide-react';
+import { Heart, Search, Flame, MessageCircle, Plus, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import type { CommunityPost } from '@/lib/types';
 import { validImageUrl } from '@/lib/media';
@@ -99,7 +99,8 @@ export default function CommunityView() {
     } finally { setPublishing(false); }
   };
   const visible = communityPosts.filter(post => (category === 'all' || (post.category === 'evento' ? 'geral' : post.category) === category) && (feed !== 'following' || following.includes(post.author_id)) && (feed !== 'mine' || post.author_id === userId) && `${post.title} ${post.content} ${post.author_name}`.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))).sort((a,b) => sort === 'popular' ? b.likes_count - a.likes_count || new Date(b.created_at).getTime() - new Date(a.created_at).getTime() : new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  return <div className="mx-auto grid max-w-[1080px] items-start gap-6 pb-12 text-white xl:grid-cols-[minmax(0,760px)_260px]">
+  return <div className="mx-auto grid max-w-[1080px] items-start gap-6 pb-12 text-white lg:grid-cols-[200px_minmax(0,760px)]">
+    <aside aria-label="Explorar assuntos" className="hidden space-y-5 lg:sticky lg:top-24 lg:block"><div className="px-3"><p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Sua comunidade esportiva</p><h2 className="mt-3 text-xl font-black">Encontre sua<br/>próxima conversa.</h2></div><button type="button" onClick={()=>{setCategory('all');setFeed('all');setQuery('');}} className="flex w-full items-center gap-3 rounded-xl bg-zinc-800/60 p-3 text-left text-sm font-bold"><Flame className="h-4 w-4 text-red-400"/>Feed principal</button><p className="px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Assuntos</p>{CATEGORIES.map(topic=><button type="button" key={topic.value} onClick={()=>setCategory(topic.value)} className={`block w-full rounded-xl p-3 text-left text-sm hover:bg-zinc-900 ${category===topic.value?'bg-red-950/30 text-red-400':'text-zinc-400'}`}>c/{topic.label}</button>)}<div className="rounded-2xl border border-zinc-800 p-4"><p className="text-sm font-bold">O esporte conecta.</p><p className="mt-2 text-xs leading-relaxed text-zinc-500">Compartilhe experiências, peça dicas e conheça outros atletas.</p><button type="button" onClick={()=>{if(!loginRequired())setComposing(true);}} className="mt-4 text-xs font-bold text-red-400">Começar conversa →</button></div></aside>
     <div className="min-w-0">
 
     <header className="border-b border-zinc-800 bg-zinc-950/70 p-4 sm:p-5">
@@ -141,7 +142,7 @@ export default function CommunityView() {
       </article>)}
     </div>
     </div>
-    <aside aria-label="Descubra conversas" className="hidden space-y-4 xl:sticky xl:top-24 xl:block"><section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><h2 className="text-xs font-black uppercase tracking-wide text-zinc-400">Descubra assuntos</h2><div className="mt-4 space-y-4">{CATEGORIES.map(topic=><button type="button" key={topic.value} onClick={()=>{setCategory(topic.value);setFeed('all');}} className="flex w-full items-center gap-3 text-left"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-950 text-sm font-black text-red-400">{topic.label[0]}</span><span><strong className="block text-xs">c/{topic.label}</strong><span className="mt-1 block text-[10px] text-zinc-500">{communityPosts.filter(post=>(post.category==='evento'?'geral':post.category)===topic.value).length} publicações no feed carregado</span></span></button>)}</div></section><section className="rounded-2xl border border-zinc-800 p-5"><h2 className="text-sm font-bold">Jogue junto, respeite sempre.</h2><p className="mt-3 text-xs leading-relaxed text-zinc-500">Troque experiências sem ataques pessoais. Não compartilhe dados sensíveis. Denuncie conteúdos suspeitos pelo botão da publicação.</p></section></aside>
+
     {profileAuthor && <CommunityAuthorProfile key={profileAuthor} authorId={profileAuthor} posts={communityPosts} own={profileAuthor===userId&&user?{name:user.name,avatar_url:user.avatar_url}:undefined} following={following.includes(profileAuthor)} busy={Boolean(followBusy)} onFollow={()=>void toggleFollow(profileAuthor)} onClose={()=>setProfileAuthor(null)} onSelect={postId=>{setProfileAuthor(null);setFeed('all');setCategory('all');setQuery('');setSelectedPost(postId);setReplyTo(postId);}} />}
     {composing && createPortal(<dialog ref={composer} onCancel={event => { if (publishing || uploading || videoUploading) event.preventDefault(); else setComposing(false); }} aria-labelledby="compose-title" className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6 text-white shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm">
       <div className="mb-5 flex items-center justify-between"><h2 id="compose-title" className="text-xl font-black">Criar publicação</h2><button type="button" disabled={publishing || uploading || videoUploading} onClick={() => setComposing(false)} aria-label="Fechar publicação" className="rounded-full p-2 hover:bg-zinc-800"><X className="h-5 w-5" /></button></div>
