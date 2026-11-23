@@ -1,5 +1,6 @@
 'use client';
 
+import { matchesCatalogSearch, catalogSearchScore } from '@/lib/catalog-search';
 import SportPicker from '@/components/shared/SportPicker';
 import { matchesSport } from '@/lib/modalities';
 import React, { useMemo, useState, useEffect } from 'react';
@@ -93,30 +94,40 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
   const [visibleOffers, setVisibleOffers] = useState(PAGE_SIZE);
   const normalizedQuery = normalize(searchQuery.trim());
+  useEffect(() => {
+    const resetSearchFilters = () => {
+      setSelectedTeam(null); setSelectedTab('all'); setSelectedCategory('all');
+      setSelectedSport('all'); setSelectedCondition('all'); setSortBy('relevance');
+      setVisibleCount(PAGE_SIZE); setVisibleOffers(PAGE_SIZE);
+    };
+    window.addEventListener('coremotion:catalog-search', resetSearchFilters);
+    return () => window.removeEventListener('coremotion:catalog-search', resetSearchFilters);
+  }, []);
+
   const filteredOffers = useMemo(() => {
     const filtered = activeOffers.filter((offer) => {
       if (selectedTeam && offer.team_id !== selectedTeam.id) return false;
       const searchText = normalize(`${offer.title} ${offer.description} ${offer.store_name} ${offer.category} ${offer.sport} ${offer.coupon_code || ''}`);
-      if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
+      if (!matchesCatalogSearch(normalizedQuery, searchText)) return false;
       if (!matchesCategory(offer.category, selectedCategory)) return false;
       if (!matchesSport(offer.sport, selectedSport)) return false;
       return true;
     });
-    return sortOffers(filtered, sortBy);
+    return sortBy === 'relevance' && normalizedQuery ? filtered.sort((a,b) => catalogSearchScore(normalizedQuery,b.title) - catalogSearchScore(normalizedQuery,a.title)) : sortOffers(filtered, sortBy);
   }, [activeOffers, normalizedQuery, selectedCategory, selectedSport, sortBy, selectedTeam]);
 
   const filteredC2CProducts = useMemo(() => {
     const filtered = products.filter((product) => {
       if (selectedTeam) return false;
       if (product.product_type !== 'c2c' || product.status !== 'active') return false;
-      const searchText = normalize(`${product.title} ${product.description} ${product.brand || ''} ${product.seller_name} ${product.category} ${product.sport}`);
-      if (normalizedQuery && !searchText.includes(normalizedQuery)) return false;
+      const searchText = normalize(`${product.title} ${product.description} ${product.brand || ''} ${product.seller_name} ${product.category} ${product.sport} ${(product.tags || []).join(' ')}`);
+      if (!matchesCatalogSearch(normalizedQuery, searchText)) return false;
       if (!matchesCategory(product.category, selectedCategory)) return false;
       if (!matchesSport(product.sport, selectedSport)) return false;
       if (selectedCondition !== 'all' && product.condition !== selectedCondition) return false;
       return true;
     });
-    return sortProducts(filtered, sortBy);
+    return sortBy === 'relevance' && normalizedQuery ? filtered.sort((a,b) => catalogSearchScore(normalizedQuery,b.title) - catalogSearchScore(normalizedQuery,a.title)) : sortProducts(filtered, sortBy);
   }, [products, normalizedQuery, selectedCategory, selectedSport, selectedCondition, sortBy, selectedTeam]);
 
   useEffect(() => { setVisibleCount(PAGE_SIZE); setVisibleOffers(PAGE_SIZE); }, [normalizedQuery, selectedTab, selectedCategory, selectedSport, selectedCondition, sortBy, selectedTeam]);
@@ -254,7 +265,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
 
         <div className="space-y-7 md:col-span-3">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-800/60 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-400">
-            <span>{displayedCount} resultado(s) · {hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}{hasC2C && hasOffers ? ' + ' : ''}{hasOffers ? `${filteredOffers.length} em ofertas` : ''}</span>
+            <span aria-live="polite">{displayedCount} resultado(s) · {hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}{hasC2C && hasOffers ? ' + ' : ''}{hasOffers ? `${filteredOffers.length} em ofertas` : ''}</span>
             {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
           </div>
 

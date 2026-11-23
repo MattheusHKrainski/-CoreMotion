@@ -43,7 +43,9 @@ export function useRealtimeRefresh(
         void perform();
       }, 120);
     };
-    const channel = client.channel('coremotion-' + channelId);
+    // Unsubscribe is asynchronous. A remount (or a second widget with the same
+    // logical ID) must not reuse a channel that has already subscribed.
+    const channel = client.channel('coremotion-' + channelId + '-' + crypto.randomUUID());
     for (const source of sources) {
       channel.on('postgres_changes', {
         event: '*',
