@@ -14,6 +14,7 @@ interface ExternalOfferCardProps {
 export default function ExternalOfferCard({ offer }: ExternalOfferCardProps) {
 
   const select = () => window.location.assign(productPath('core', offer.id));
+  const soldOut = offer.stock_status === 'sold_out';
   const discount =
     offer.original_price && offer.original_price > offer.price
       ? Math.round(((offer.original_price - offer.price) / offer.original_price) * 100)
@@ -48,7 +49,8 @@ export default function ExternalOfferCard({ offer }: ExternalOfferCardProps) {
 
         </div>
 
-        {discount && discount > 0 && (
+        {soldOut && <span className="absolute right-3 top-3 rounded-md border border-zinc-600 bg-zinc-950 px-3 py-1 text-xs font-bold text-white">Esgotado</span>}
+        {!soldOut && discount && discount > 0 && (
           <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-600 text-white shadow-sm">
             -{discount}%
           </div>
@@ -82,7 +84,7 @@ export default function ExternalOfferCard({ offer }: ExternalOfferCardProps) {
             </span>
           </div>
 
-          <button type="button" onClick={event => { event.stopPropagation(); select(); }} className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-500"><ShoppingBag className="h-3.5 w-3.5" />Comprar</button>
+          <button type="button" disabled={soldOut} onClick={event => { event.stopPropagation(); select(); }} className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-400"><ShoppingBag className="h-3.5 w-3.5" />{soldOut ? 'Esgotado' : 'Comprar'}</button>
         </div>
       </div>
     </div>
