@@ -15,5 +15,13 @@ it('a conta lista os favoritos e produtos pertencentes ao usuário, e mantém pe
   assert.match(account, /p.seller_id === user.id/);
   assert.match(account, /o.user_id === userId/);
   assert.match(account, /canManageOwnSportsProfile\(user\)/);
-  for (const label of ['Meu carrinho', 'Meus produtos à venda', 'Pedidos feitos', 'Sair da conta']) assert.ok(account.includes(label));
+  for (const label of ['Meu carrinho', 'Meus produtos à venda', 'Pedidos feitos']) assert.ok(account.includes(label));
+});
+
+it('remove os atalhos redundantes das imagens sem remover a saída principal',()=>{
+ const footer=readFileSync('components/shared/Footer.tsx','utf8');
+ const account=readFileSync('components/ProfileView.tsx','utf8');
+ assert.doesNotMatch(footer,/Trocar conta|switchAccount/);
+ assert.doesNotMatch(account,/>Sair da conta</);
+ assert.match(account,/onClick=\{onLogout\}/);
 });
