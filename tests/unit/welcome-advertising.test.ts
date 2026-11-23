@@ -35,8 +35,11 @@ it('as superfícies de venda não prometem garantia ou custódia da plataforma',
   assert.doesNotMatch(footer, /confirmação de pagamento é uma experiência de teste, sem cobrança bancária/);
   // Keep financial transparency where the user confirms the transaction, not a site-wide banner.
   const checkout = readFileSync('components/commerce/CheckoutPage.tsx', 'utf8');
-  assert.match(checkout, /Ambiente de demonstração: nenhuma cobrança financeira é realizada/);
-  assert.match(checkout, /Forma de pagamento simulada/);
+  const payment = readFileSync('components/commerce/DemoPaymentPanel.tsx', 'utf8');
+  assert.match(payment, /Checkout 100% demonstrativo/);
+  assert.match(payment, /Escolha como pagar/);
+  assert.match(payment, /Apenas os dois números de teste/);
+  assert.match(checkout, /DemoPaymentPanel/);
 });
 
 it('mantém as mesmas bordas neutras em todos os módulos de perfil', () => {
