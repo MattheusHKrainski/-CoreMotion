@@ -57,16 +57,16 @@ export default function Footer() {
 
             <div className="flex items-center gap-2 pt-1">
               <a
-                href="#redes-sociais"
-                onClick={(e) => e.preventDefault()}
+                href="https://www.instagram.com/coremotion_ofc?utm_source=qr&knvt=MWhnZ3g3bXlnYWs5Yw=="
+                target="_blank" rel="noopener noreferrer"
                 aria-label="Instagram CoreMotion"
                 className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
               >
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="#redes-sociais"
-                onClick={(e) => e.preventDefault()}
+                href="https://youtube.com/shorts/SmPnzW26o3Y?si=NVimI5eVQPgWp7vs"
+                target="_blank" rel="noopener noreferrer"
                 aria-label="YouTube CoreMotion"
                 className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
               >

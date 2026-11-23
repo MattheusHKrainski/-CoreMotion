@@ -76,3 +76,9 @@ Validação no Supabase com cópias temporárias e ROLLBACK: exclusão administr
 ## Novos exemplos locais
 
 A vitrine sem Supabase usa `fixtures/athlete-examples.ts`: oito novos exemplos com títulos e vendedores explicitamente fictícios, fotos de referência existentes, valores simulados, estoque zero e sem contato pessoal. Não são inseridos nem mesclados no catálogo real. Fixtures antigas continuam apenas para testes e compatibilidade documental. Anúncios publicados por usuários reais não são substituídos por exemplos.
+
+## Exclusões que reapareciam na vitrine
+
+Corrigidos dois caminhos do cliente: reconstrução do catálogo local sem persistência das exclusões e respostas de consultas iniciadas antes de uma exclusão confirmada. `catalog-deletion.ts` mantém exclusões locais separadas por tipo (apenas sem banco configurado) e usa revisões de leitura em memória para descartar itens excluídos durante consultas pendentes. A proteção de leitura não bloqueia uma leitura nova após restauração explícita pela lixeira. Consultas vazias da equipe limpam o estado antigo e falhas ao consultar um produto real não retornam um exemplo fictício no lugar.
+
+A verificação do Supabase não encontrou tarefas de reposição/restauração automática: apenas os dois crons de descarte da lixeira. Nenhum snapshot da lixeira consultado tinha seu ID novamente na tabela de produtos/ofertas. Não houve alteração de dados de produtos reais nesta correção.

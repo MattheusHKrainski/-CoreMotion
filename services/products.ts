@@ -1,3 +1,4 @@
+import {localCatalogRows,rememberLocalDeletion,productReadFence} from '@/lib/catalog-deletion';
 import { Product, ProductCondition, ProductType } from '@/lib/types';
 import { ATHLETE_EXAMPLES as INITIAL_PRODUCTS } from '@/fixtures/athlete-examples';
 import { DEMO_MODE } from '@/lib/demo-mode';
@@ -25,8 +26,9 @@ export class ProductService {
    * Gracefully falls back to local products if offline.
    */
   static async getProducts(filters?: ProductFilters): Promise<Product[]> {
+    const readVersion=productReadFence.begin();
     if (!isSupabaseConfigured && DEMO_MODE) {
-      return this.applyLocalFilters(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'), filters);
+      return this.applyLocalFilters(localCatalogRows(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'),'athlete'), filters);
     }
 
     // Public reads can use Supabase REST if the SQL API is not configured. RLS still applies.
@@ -36,11 +38,11 @@ export class ProductService {
       if (filters?.status !== 'all') request = request.eq('status', filters?.status || 'active');
       const { data, error } = await request.order('created_at', { ascending: false });
       if (error) throw new Error('Não foi possível carregar os anúncios do Supabase.');
-      return this.applyLocalFilters(data as Product[], filters?.status === 'all' ? { ...filters, status: undefined } : filters);
+      return this.applyLocalFilters(productReadFence.filter(data as Product[],readVersion), filters?.status === 'all' ? { ...filters, status: undefined } : filters);
     }
 
     // C9: dados de demonstração só com NEXT_PUBLIC_DEMO_MODE=true; sem isso, catálogo vazio.
-    return DEMO_MODE ? this.applyLocalFilters(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'), filters) : [];
+    return DEMO_MODE ? this.applyLocalFilters(localCatalogRows(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'),'athlete'), filters) : [];
   }
 
   /**
@@ -51,7 +53,8 @@ export class ProductService {
       const products = await this.getProducts();
       return products.find((p) => p.id === id) || null;
     } catch {
-      return INITIAL_PRODUCTS.find((p) => p.id === id && p.product_type === 'c2c') || null;
+      // Never resurrect fixture data when the real catalog fails.
+      return !isSupabaseConfigured && DEMO_MODE ? localCatalogRows(INITIAL_PRODUCTS,'athlete').find(p=>p.id===id)||null : null;
     }
   }
 
@@ -113,10 +116,13 @@ export class ProductService {
    */
   static async deleteProduct(id: string): Promise<ApiResult> {
     try {
+      if(!isSupabaseConfigured){rememberLocalDeletion(id,'athlete');productReadFence.remove(id);return {success:true};}
       const sb = getSupabaseClient();
       if (!sb) return { success: false, error: 'Conexão indisponível.' };
       const { data, error } = await sb.from('products').delete().eq('id', id).select('id');
-      return error || !data?.length ? { success: false, error: error?.message || 'Anúncio não encontrado ou sem permissão.' } : { success: true };
+      if(error||!data?.length)return {success:false,error:error?.message||'Anúncio não encontrado ou sem permissão.'};
+      productReadFence.remove(id);
+      return {success:true};
 
     } catch {
       return { success: false, error: 'Não foi possível conectar ao servidor.' };
