@@ -1060,6 +1060,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       addToast('Anúncio indisponível', 'Esse item não está mais disponível no catálogo.', 'error');
       return;
     }
+    if (!live.seller_id) {
+      addToast('Apenas referência', 'Este exemplar não está vinculado a um vendedor. Não é possível comprá-lo.', 'info');
+      return;
+    }
     const stock = Number(live.stock);
     if (!Number.isInteger(stock) || stock < 1) {
       addToast('Sem estoque', 'O item não está disponível para adicionar ao carrinho.', 'error');
@@ -1089,7 +1093,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     if (!Number.isInteger(quantity)) return;
     if (quantity <= 0) { removeFromCart(productId); return; }
     const live = products.find(item => item.id === productId);
-    if (!live || live.status !== 'active' || live.product_type !== 'c2c' || !Number.isInteger(live.stock) || live.stock < quantity) {
+    if (!live || !live.seller_id || live.status !== 'active' || live.product_type !== 'c2c' || !Number.isInteger(live.stock) || live.stock < quantity) {
       addToast('Quantidade indisponível', 'Confira o estoque atual desse anúncio.', 'info');
       return;
     }

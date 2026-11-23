@@ -24,7 +24,7 @@ test('athlete cart rejects inactive listings and caps quantity to verified stock
   assert.match(store, /already \+ quantity > stock/);
   assert.match(store, /live\.stock < quantity/);
   const card = source('components/marketplace/ProductCard.tsx');
-  assert.match(card, /disabled=\{product\.status !== 'active' \|\| product\.stock < 1\}/);
+  assert.match(card, /disabled=\{!hasIdentifiedSeller \|\| product\.status !== 'active' \|\| product\.stock < 1\}/);
 });
 
 test('used-item reference photos are labeled rather than presented as seller originals', () => {
