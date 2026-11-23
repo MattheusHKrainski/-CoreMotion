@@ -5,12 +5,13 @@ import HelpCenter from './HelpCenter';
 import { HELP_TOPICS, SUPPORT_EMAIL, type HelpTopic } from '@/lib/support';
 import { useCoreMotiom } from '@/lib/store';
 import BrandMark from '@/components/shared/BrandMark';
-import { Mail, Clock, Instagram, Youtube } from 'lucide-react';
+import { Mail, Instagram, Youtube } from 'lucide-react';
 
 
 export default function Footer() {
   const { setActiveView, setSearchQuery, setCheckoutOpen, isVisitor, setAuthModalOpen, setAuthModalMode } = useCoreMotiom();
 
+  const [helpFaq, setHelpFaq] = useState(false);
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
   const switchAccount = () => { setAuthModalMode('switch'); setAuthModalOpen(true); };
 
@@ -51,8 +52,7 @@ export default function Footer() {
                 <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-white">{SUPPORT_EMAIL}</a>
               </p>
               <p className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                <span>Seg. a Sex. das 8h às 20h · Sáb. das 9h às 15h</span>
+                <span>Atendimento por solicitação · acompanhe as respostas no site</span>
               </p>
             </div>
 
@@ -120,6 +120,7 @@ export default function Footer() {
             <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200 mb-3.5">Ajuda & Suporte</h5>
             <ul className="space-y-2.5 text-xs">
               <li><button type="button" onClick={() => setHelpTopic('general')} className="hover:text-white">Central de Atendimento</button></li>
+              <li><button type="button" onClick={() => {setHelpFaq(true);setHelpTopic('general');}} className="hover:text-white">Perguntas frequentes</button></li>
               {Object.entries(HELP_TOPICS).map(([id, topic]) => <li key={id}><button type="button" onClick={() => setHelpTopic(id as HelpTopic)} className="hover:text-white">{topic.label}</button></li>)}
             </ul>
           </div>
@@ -142,7 +143,7 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-    {helpTopic && <HelpCenter initialTopic={helpTopic} onClose={() => setHelpTopic(null)} />}
+    {helpTopic && <HelpCenter initialTopic={helpTopic} initialFaq={helpFaq} onClose={() => {setHelpTopic(null);setHelpFaq(false);}} />}
     </>
   );
 }

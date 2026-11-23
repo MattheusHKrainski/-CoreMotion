@@ -1,12 +1,12 @@
 'use client';
 
+import CommunityShare from './community-share';
 import CommunityComments from './community-comments';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowUp, Heart, Search, Flame, MessageCircle, Plus, Share2, X } from 'lucide-react';
+import { Heart, Search, Flame, MessageCircle, Plus, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import type { CommunityPost } from '@/lib/types';
-import { copyText } from '@/lib/clipboard';
 import { validImageUrl } from '@/lib/media';
 import { getFollowing, setFollowing } from '@/services/communityFollows';
 import { getSupabaseClient } from '@/services/supabaseClient';
@@ -43,6 +43,13 @@ export default function CommunityView() {
   const composer = useRef<HTMLDialogElement>(null);
   const userId = user?.id;
   const client = getSupabaseClient();
+  useEffect(() => {
+    const target = new URLSearchParams(window.location.search).get('post');
+    if (!target || !communityPosts.some(post => post.id === target)) return;
+    const frame = requestAnimationFrame(() => document.getElementById(`community-post-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    return () => cancelAnimationFrame(frame);
+  }, [communityPosts]);
+
   const refreshFollowing = useCallback(async () => {
     if (!userId) return;
     try {
@@ -102,7 +109,7 @@ export default function CommunityView() {
     </header>
     <div className="divide-y divide-zinc-800 overflow-hidden border-b border-zinc-800">
       {visible.length === 0 && <div className="p-10 text-center"><p className="font-bold">{feed === 'following' ? 'Seu feed começa com uma conexão' : 'A conversa pode começar com você'}</p><p className="mt-2 text-sm text-zinc-400">{feed === 'following' ? 'Siga pessoas na aba Para você para ver as próximas publicações delas aqui.' : 'Nenhuma publicação nesta seleção. Compartilhe um treino, uma dúvida ou uma conquista.'}</p></div>}
-      {visible.map(post => <article key={post.id} className="p-4 sm:p-5 hover:bg-zinc-900/60 transition-colors">
+      {visible.map(post => <article id={`community-post-${post.id}`} key={post.id} className="scroll-mt-24 p-4 sm:p-5 hover:bg-zinc-900/60 transition-colors">
         <div className="flex items-start gap-3">
           <UserAvatar src={post.author_id === userId ? user?.avatar_url : post.author_avatar} name={post.author_name} />
           <div className="min-w-0 flex-1">
@@ -112,13 +119,13 @@ export default function CommunityView() {
             {post.title !== post.content.trim().slice(0, 100) && <h2 className="mt-3 break-words text-base font-bold">{post.title}</h2>}
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300">{post.content}</p>
             {post.image_url && <div className="relative mt-4 aspect-video overflow-hidden rounded-2xl border border-zinc-800"><ProductImage src={post.image_url} alt={`Imagem de ${post.author_name}`} sizes="(max-width: 640px) 85vw, 640px" /></div>}
-            <div className="mt-4 flex items-center justify-between gap-3 text-xs text-zinc-400">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-400">
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={() => void likeCommunityPost(post.id)} aria-label={likedCommunityPosts.includes(post.id) ? 'Remover apoio à publicação' : 'Apoiar publicação'} aria-pressed={likedCommunityPosts.includes(post.id)} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-red-400 focus-visible:outline focus-visible:outline-red-500"><ArrowUp aria-hidden="true" className={`h-4 w-4 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500 text-red-500' : ''}`} />{post.likes_count}</button>
+              <button type="button" aria-expanded={replyTo===post.id} aria-controls={`comments-${post.id}`} onClick={() => { setReplyTo(replyTo === post.id ? null : post.id); }} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-white"><MessageCircle className="h-4 w-4" />{post.comments?.length ?? 0} respostas</button>
               <button type="button" onClick={() => void likeCommunityPost(post.id)} aria-label={likedCommunityPosts.includes(post.id) ? 'Remover curtida' : 'Curtir publicação'} aria-pressed={likedCommunityPosts.includes(post.id)} className={`flex items-center gap-2 rounded-full border px-3 py-2 transition-colors focus-visible:outline focus-visible:outline-red-500 ${likedCommunityPosts.includes(post.id) ? 'border-red-500/40 bg-red-950/40 text-red-400' : 'border-transparent bg-zinc-800/70 text-zinc-300 hover:text-red-400'}`}><Heart aria-hidden="true" className={`h-4 w-4 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500 text-red-500' : ''}`} /><span>{likedCommunityPosts.includes(post.id) ? 'Curtido' : 'Curtir'}</span><span>{post.likes_count}</span></button>
               </div>
-              <button type="button" aria-expanded={replyTo===post.id} aria-controls={`comments-${post.id}`} onClick={() => { setReplyTo(replyTo === post.id ? null : post.id); }} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-white"><MessageCircle className="h-4 w-4" />{post.comments?.length ?? 0} respostas</button>
-              <button type="button" aria-label="Compartilhar comunidade" onClick={async () => { const copied = await copyText(window.location.href); addToast(copied ? 'Link copiado' : 'Cópia indisponível', copied ? 'Endereço da página copiado.' : 'Copie o endereço na barra do navegador.', copied ? 'success' : 'info'); }}><Share2 className="h-4 w-4" /></button>
+              <CommunityShare id={post.id} title={post.title} />
+
             </div>
             <div className="mt-3"><ReportButton category="community" targetId={post.id} title={post.title} /></div>
             {replyTo === post.id && <CommunityComments key={post.id} post={post}/>}

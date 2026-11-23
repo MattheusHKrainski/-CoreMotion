@@ -48,12 +48,14 @@ import type {
   CommunityPost,
 } from '@/lib/types';
 import { ACCOUNT_TYPES, type AccountType } from '@/lib/sports';
+import SupportDesk from './SupportDesk';
 import AdminOffersManager from './AdminOffersManager';
 import { removeAccountMedia } from '@/services/accountMedia';
 import SportsHub from '@/components/SportsHub';
 
 const TABS = [
   ['accounts', 'Contas', Users],
+  ['support', 'Atendimento', MessageSquare],
   ['products', 'Produtos de atletas', Package],
   ['offers', 'Central de Ofertas', Tag],
   ['community', 'Comunidade', MessageSquare],
@@ -357,6 +359,7 @@ export default function AdminDashboard() {
     setLastChecked('');
     void refresh();
     const tablesByTab: Record<Tab, string[]> = {
+      support: ['support_tickets','support_messages'],
       accounts: ['profiles'],
       products: ['products'],
       offers: ['external_offers'],
@@ -537,7 +540,7 @@ export default function AdminDashboard() {
                 ? 'A listagem esportiva informa erros de carregamento na própria aba.'
                 : 'Consulta pendente'}
         </span>
-        {!['offers', 'sports', 'diagnostics'].includes(tab) && (
+        {!['offers', 'sports', 'diagnostics', 'support'].includes(tab) && (
           <label className="flex items-center gap-2">
             <Search className="h-4 w-4" />
             <input
@@ -657,6 +660,7 @@ export default function AdminDashboard() {
             )}
           </>
         )}
+        {tab === 'support' && <SupportDesk />}
         {tab === 'offers' && <AdminOffersManager />}
         {tab === 'products' && (
           <>
