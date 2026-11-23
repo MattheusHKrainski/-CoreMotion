@@ -8,3 +8,8 @@ export const ACCOUNT_TYPES: Record<AccountType, { label: string; description: st
 export function canRecruit(user: UserProfile | null | undefined) { return !!user && !user.is_banned && (['admin', 'supervisor'].includes(user.role) || user.account_type === 'coach'); }
 export function canAccessSports(user: UserProfile | null | undefined) { return !!user && !user.is_banned && (['admin', 'supervisor'].includes(user.role) || ['athlete', 'coach'].includes(user.account_type || '')); }
 export interface SportsRecord { id: string; owner: string; kind: 'athlete' | 'coach' | 'trial' | 'application' | 'invite'; data: Record<string, string>; }
+
+/** Staff moderate sports records, but do not maintain a personal sports résumé. */
+export function canManageOwnSportsProfile(user: UserProfile | null | undefined) {
+ return canAccessSports(user) && !['admin', 'supervisor'].includes(user!.role);
+}

@@ -1,6 +1,8 @@
 'use client';
+import { reportUpdateUnread } from '@/lib/report-groups';
 import ModerationTargetLink from '@/components/shared/ModerationTargetLink';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDialogScrollLock } from '@/hooks/useDialogScrollLock';
 import { Bell, RefreshCw, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
@@ -49,8 +51,8 @@ export default function NotificationsInbox() {
       ]);
       if (current !== version.current) return;
       if (error) throw new Error(error.message);
-      setNotifications(data || []);
-      setReports(allReports.filter((r) => r.reporter_id === userId));
+      setNotifications((data || []).filter((item:AccountNotification)=>!item.read_at));
+      setReports(allReports.filter((r) => r.reporter_id === userId && reportUpdateUnread(r)));
       setError('');
     } catch (err) {
       if (current === version.current)
@@ -80,23 +82,26 @@ export default function NotificationsInbox() {
   if (!user) return null;
   const unread = notifications.filter((n) => !n.read_at).length;
   return (
-    <div className="mb-4 flex justify-end">
+    <div className="relative shrink-0">
       <button
         type="button"
         onClick={() => {
           setOpen(true);
           void refresh();
         }}
-        className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-300 hover:text-white"
+        aria-label={unread > 0 ? `Notificações: ${unread} não lidas` : 'Notificações'}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="relative flex h-10 w-10 items-center justify-center rounded-full text-zinc-300 hover:bg-zinc-800 hover:text-white focus-visible:outline focus-visible:outline-red-500"
       >
-        <Bell className="h-4 w-4" /> Notificações{' '}
+        <Bell aria-hidden="true" className="h-5 w-5" />
         {unread > 0 && (
-          <span className="rounded-full bg-red-600 px-2 text-white">
-            {unread}
+          <span aria-hidden="true" className="absolute -right-1 -top-0.5 min-w-4 rounded-full bg-red-600 px-1 text-center text-[10px] font-bold text-white">
+            {unread > 99 ? '99+' : unread}
           </span>
         )}
       </button>
-      {open && (
+      {open && createPortal(
         <div
           className="fixed inset-0 z-[80] bg-black/80 p-4 sm:p-8 overflow-y-auto"
           onClick={() => setOpen(false)}
@@ -190,13 +195,17 @@ export default function NotificationsInbox() {
                   {REPORT_CATEGORIES[r.category]} • {REPORT_STATUSES[r.status]}
                 </p>
                 <p className="whitespace-pre-wrap break-words">{r.reason}</p>
+                {r.reviewed_at && <button type="button" disabled={busy} className="text-xs font-bold text-red-400" onClick={async()=>{
+                  const {error}=await client!.rpc('read_report_update',{p_id:r.id});
+                  if(error)setError('Não foi possível marcar como lida. Tente novamente.');else void refresh();
+                }}>Marcar atualização como lida</button>}
                 {r.response && (
                   <p className="text-emerald-300">Resposta: {r.response}</p>
                 )}
               </article>
             ))}
           </section>
-        </div>
+        </div>, document.body
       )}
     </div>
   );

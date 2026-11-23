@@ -1,5 +1,6 @@
 'use client';
 
+import DeleteOwnAccount from '@/components/shared/DeleteOwnAccount';
 import UserAvatar from '@/components/shared/UserAvatar';
 import ImageEditor from '@/components/shared/ImageEditor';
 import { validImageUrl } from '@/lib/media';
@@ -12,7 +13,7 @@ import { ROLE_LABELS, isStaffRole } from '@/lib/permissions';
 import ProductCard from '@/components/marketplace/ProductCard';
 import ProductDetailModal from '@/components/marketplace/ProductDetailModal';
 import type { Product, Order, UserProfile, UserRole } from '@/lib/types';
-import { ACCOUNT_TYPES, canAccessSports } from '@/lib/sports';
+import { ACCOUNT_TYPES, canManageOwnSportsProfile } from '@/lib/sports';
 import { LogOut, Save, ShieldCheck, Tag, UserCircle2 } from 'lucide-react';
 
 const ROLE_DESCRIPTIONS: Record<Exclude<UserRole, 'visitor'>, string> = {
@@ -88,7 +89,7 @@ export default function ProfileView({ initialSection = 'details' }: { initialSec
         {([['details', 'Dados da conta'], ['favorites', `Meus favoritos (${favorites.length})`], ['orders', 'Pedidos feitos']] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={section === id} onClick={() => setSection(id)} className={`rounded-xl border p-4 text-left text-sm font-bold transition-colors ${section === id ? 'border-red-500 bg-red-950/30 text-white' : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-red-500'}`}>{label}</button>)}
         <button type="button" onClick={() => setCheckoutOpen(true)} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meu carrinho</button>
         <button type="button" onClick={() => setSection('products')} aria-pressed={section === 'products'} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">Meus produtos à venda</button>
-        {canAccessSports(user) && <button type="button" onClick={() => setActiveView('sports-profile')} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">{user.account_type === 'coach' ? 'Meu perfil profissional' : 'Criar ou editar currículo de atleta'}</button>}
+        {canManageOwnSportsProfile(user) && <button type="button" onClick={() => setActiveView('sports-profile')} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left">{user.account_type === 'coach' ? 'Meu perfil profissional' : 'Criar ou editar currículo de atleta'}</button>}
         <button type="button" onClick={() => logout()} className="rounded-xl border border-zinc-700 p-4 text-sm font-bold text-left text-red-400">Sair da conta</button>
       </nav>
       <a href="/pedidos" className="block rounded-xl border border-red-900/60 bg-red-950/20 p-4 text-sm font-bold text-red-400">Pedidos CoreMotion — acompanhar compras →</a>
@@ -369,6 +370,7 @@ function ProfileContent({ user, orders, onSave, onOpenAdmin, onLogout, onSwitchA
           </div>
         </div>
       </form>
+      <DeleteOwnAccount />
     </div>
   );
 }

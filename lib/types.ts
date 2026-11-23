@@ -176,6 +176,7 @@ export interface CommunityPost {
   comments_count: number;
   comments: {
     id: string;
+    parent_id?: string;
     author_name: string;
     author_avatar?: string;
     content: string;

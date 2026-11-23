@@ -171,7 +171,7 @@ interface CoreMotiomContextType {
   createCommunityPost: (post: { title: string; content: string; category: CommunityPost['category']; image_url?: string; video_url?: string }) => Promise<boolean>;
   likedCommunityPosts: string[];
   likeCommunityPost: (postId: string) => Promise<void>;
-  addCommunityComment: (postId: string, content: string, requestKey?: string) => Promise<boolean>;
+  addCommunityComment: (postId: string, content: string, requestKey?: string, parentId?: string) => Promise<boolean>;
   reportCommunityPost: (postId: string, reason: string) => Promise<void>;
   adminDeleteCommunityPost: (postId: string) => void;
 
@@ -1354,9 +1354,9 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     } finally { likesInFlight.current.delete(postId); }
   };
 
-  const addCommunityComment = async (postId: string, content: string, requestKey?: string): Promise<boolean> => {
+  const addCommunityComment = async (postId: string, content: string, requestKey?: string, parentId?: string): Promise<boolean> => {
     if (!requireLogin('Entre para comentar nas publicações da comunidade.')) return false;
-    const comment = { id: requestKey || crypto.randomUUID(), author_name: user?.name || 'Atleta', author_avatar: user?.avatar_url, content: content.trim(), created_at: new Date().toISOString() };
+    const comment = { id: requestKey || crypto.randomUUID(), parent_id: parentId, author_name: user?.name || 'Atleta', author_avatar: user?.avatar_url, content: content.trim(), created_at: new Date().toISOString() };
     const result = await CommunityService.addComment(postId, comment);
     if (!result.success) { addToast('Comentário não enviado', result.error || 'Tente novamente.', 'error'); return false; }
     setCommunityPosts(previous => previous.map(post => post.id === postId ? result.post || { ...post, comments: [...(post.comments || []), comment], comments_count: (post.comments?.length || 0) + 1 } : post));

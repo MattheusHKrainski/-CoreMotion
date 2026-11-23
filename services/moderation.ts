@@ -16,6 +16,9 @@ export const REPORT_STATUSES: Record<ReportStatus, string> = {
   dismissed: 'Arquivada',
 };
 export interface ModerationReport {
+  owner_id?: string | null;
+  owner_name?: string | null;
+  reporter_read_at?: string | null;
   id: string;
   reporter_id: string;
   category: ReportCategory;
@@ -119,4 +122,13 @@ export async function getDiagnostics(): Promise<ModerationDiagnostics> {
 export async function deleteReport(id: string) {
   const { error } = await moderationClient().rpc('delete_moderation_report', { p_id: id });
   if (error) throw new Error(error.message);
+}
+
+/** Staff-only enrichment; reporter views never request owner identities. */
+export async function attachReportOwners(reports: ModerationReport[]): Promise<ModerationReport[]> {
+  if (!reports.length) return [];
+  const { data, error } = await moderationClient().rpc('list_report_owners', { p_ids: reports.map(report=>report.id) });
+  if (error) throw new Error('Não foi possível agrupar denúncias por conta. Tente atualizar.');
+  const owners = new Map<string,{owner_id:string|null;owner_name:string|null}>((data || []).map((row:{report_id:string;owner_id:string|null;owner_name:string|null})=>[row.report_id,row]));
+  return reports.map(report=>({...report,...owners.get(report.id)}));
 }
