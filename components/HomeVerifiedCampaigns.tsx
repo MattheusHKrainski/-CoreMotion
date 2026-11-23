@@ -79,7 +79,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
     <div className="flex flex-wrap items-end justify-between gap-4 px-1">
       <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-red-400">Editorial CoreMotion / Esporte em movimento</p>
         <h2 id="campaigns-title" className="mt-2 text-2xl font-black uppercase tracking-[-.04em] text-white sm:text-4xl">ESCOLHA SEU <span className="text-red-400">PRÓXIMO MOVIMENTO.</span></h2>
-        <p className="mt-2 text-xs text-zinc-400">Campanhas por modalidade com produtos e preços do catálogo.</p></div>
+      </div>
       <div className="flex items-center gap-2">
         <button type="button" aria-label="Campanha anterior" onClick={() => move(-1)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10"><ChevronLeft className="h-4 w-4"/></button>
         
@@ -105,7 +105,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
             <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4 pt-16 text-white">
               <span className="line-clamp-2 block text-xs font-black leading-4 sm:text-sm">{primary.title}</span>
               <span className="mt-1.5 block text-xl font-black">{currency(primary.price)}</span>
-              {off !== null && <span className="mt-1 block text-[10px] font-bold text-[#ffdb7b]"><Tag className="mr-1 inline h-3 w-3"/> {off}% abaixo do preço de referência</span>}
+              {off !== null && <span className="mt-1 block text-[10px] font-bold text-[#ffdb7b]"><Tag className="mr-1 inline h-3 w-3"/> {off}% OFF</span>}
             </span>
           </button>
           {next.slice(0,2).map(offer => <button type="button" key={offer.id} onClick={() => onSelectOffer?.(offer)}

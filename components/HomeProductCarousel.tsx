@@ -67,7 +67,6 @@ export default function HomeProductCarousel({ products, offers, onSelectProduct,
           <div className="mt-5">
             {slide.value.original_price && slide.value.original_price > slide.value.price && <p className="text-sm text-zinc-500 line-through">{formatPrice(slide.value.original_price)}</p>}
             <p className="text-3xl font-black tracking-tight text-white">{formatPrice(slide.value.price)}</p>
-            <p className="mt-1 text-[11px] text-zinc-500">{slide.kind === 'product' ? 'Negocie diretamente com o anunciante.' : 'Veja cores, fotos e tamanhos disponíveis no catálogo.'}</p>
           </div>
           <button type="button" onClick={select} className="mt-5 inline-flex w-fit items-center justify-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-bold text-white hover:bg-purple-500">{slide.kind === 'product' ? 'Conhecer produto' : 'Ver oferta'}<ArrowRight className="h-4 w-4" /></button>
         </div>

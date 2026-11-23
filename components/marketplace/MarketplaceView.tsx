@@ -303,7 +303,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
                       <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas</h2>
-                      <p className="mt-1 text-[11px] text-zinc-500">Consulte fotos, tamanhos e preços de referência de cada produto.</p>
                     </div>
                     {isStaffRole(user?.role) && (
                       <button
