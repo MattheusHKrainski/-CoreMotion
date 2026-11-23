@@ -36,7 +36,7 @@ it('parcelamento em centavos mantém o total exato mesmo com divisão não intei
 });
 
 it('renderiza campos próximos ao checkout real, preservando rótulos de ambiente demonstrativo', () => {
-  const props = { onMethodChange() {}, subtotal: 20990, available: true, busy: false, async onConfirm() {} };
+  const props = { operationKey: '11111111-1111-4111-8111-111111111111', onMethodChange() {}, subtotal: 20990, available: true, busy: false, async onConfirm() {} };
   const credit = renderToStaticMarkup(React.createElement(DemoPaymentPanel,{...props,method:'credit'}));
   for(const fragment of ['Número do cartão de teste','Nome impresso no cartão','Validade (MM/AA)','CVV fictício','Parcelamento sem juros','Apenas os dois números de teste','Confirmar pedido simulado'])assert.ok(credit.includes(fragment), fragment);
   assert.match(credit, /type="password"/);

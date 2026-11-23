@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, type FormEvent } from 'react';
+import QRCode from 'qrcode';
 import { Banknote, Check, Copy, CreditCard, LockKeyhole, QrCode, ReceiptText, ShieldCheck } from 'lucide-react';
 import { money } from '@/lib/commerce';
 import { DEMO_PAYMENT_METHODS, type DemoPaymentMethod } from '@/lib/demo-payments';
@@ -16,32 +17,33 @@ interface Props {
   available: boolean;
   busy: boolean;
   onConfirm: () => Promise<void>;
+  operationKey: string;
 }
 
 const EMPTY_CARD: DemoCardFields = { holder: '', number: '', expiry: '', cvc: '' };
 const inputClass = 'mt-2 w-full rounded-xl border border-zinc-700 bg-[#101116] px-3.5 py-3 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/40';
 
-function DemoQrArt() {
-  return <div role="img" aria-label="QR Code ilustrativo não escaneável" className="relative h-44 w-44 shrink-0 rounded-xl bg-white p-3 shadow-inner">
-    <div className="grid h-full w-full" style={{ gridTemplateColumns: 'repeat(17,minmax(0,1fr))' }}>
-      {Array.from({ length: 289 }, (_, index) => {
-        const r = Math.floor(index / 17), c = index % 17;
-        const finder = (x: number, y: number) => {
-          const rr = r - x, cc = c - y;
-          return rr >= 0 && rr < 5 && cc >= 0 && cc < 5
-            ? (rr === 0 || rr === 4 || cc === 0 || cc === 4 || (rr === 2 && cc === 2))
-            : null;
-        };
-        const corner = finder(0, 0) ?? finder(0, 12) ?? finder(12, 0);
-        const active = corner === null ? ((r * 11 + c * 7 + r * c) % 9 < 4) : corner;
-        return <span key={index} aria-hidden="true" className={active ? 'bg-zinc-950' : 'bg-white'} />;
-      })}
-    </div>
-    <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center"><span className="rounded bg-white px-2 py-1 text-[11px] font-black tracking-wide text-zinc-950 shadow">DEMO</span></span>
-  </div>;
+// ========================================
+// COREMOTION | QR CODE DE DEMONSTRAÇÃO
+// O conteúdo é legível por leitores comuns, mas não é um payload Pix bancário.
+// ========================================
+function DemoQrArt({ value }: { value: string }) {
+  const { modules } = QRCode.create(value, { errorCorrectionLevel: 'M' });
+  const quietZone = 4;
+  const size = modules.size;
+  const dots = Array.from({ length: size * size }, (_, index) => {
+    const row = Math.floor(index / size);
+    const column = index % size;
+    return modules.get(row, column) ? <rect key={index} x={column + quietZone} y={row + quietZone} width={1} height={1} fill="#101010" /> : null;
+  });
+
+  return <svg role="img" aria-label="QR Code escaneável de demonstração, não pagável" viewBox={'0 0 ' + (size + quietZone * 2) + ' ' + (size + quietZone * 2)} className="h-44 w-44 shrink-0 rounded-xl bg-white p-3 shadow-inner" shapeRendering="crispEdges">
+    <rect width="100%" height="100%" fill="#fff" />
+    {dots}
+  </svg>;
 }
 
-export default function DemoPaymentPanel({ method, onMethodChange, subtotal, available, busy, onConfirm }: Props) {
+export default function DemoPaymentPanel({ method, onMethodChange, subtotal, available, busy, onConfirm, operationKey }: Props) {
   const [card, setCard] = useState<DemoCardFields>(EMPTY_CARD);
   const [installments, setInstallments] = useState(1);
   const [generated, setGenerated] = useState<{ reference: string; dueDate: string } | null>(null);
@@ -87,10 +89,10 @@ export default function DemoPaymentPanel({ method, onMethodChange, subtotal, ava
     } else if (!generated) {
       const due = new Date();
       due.setDate(due.getDate() + 3);
-      setGenerated({
-        reference: 'COREMOTION-' + method.toUpperCase() + '-SIMULADO-' + crypto.randomUUID().slice(0, 8).toUpperCase() + '-NAO-PAGAVEL',
-        dueDate: due.toLocaleDateString('pt-BR'),
-      });
+      if (!operationKey) { setError('A operação ainda não possui identificação. Revise o pedido novamente.'); return; }
+      // A chave de idempotência também fica gravada no pedido para rastreabilidade.
+      const reference = ['COREMOTION', 'PAGAMENTO_SIMULADO', method.toUpperCase(), String(Math.round(subtotal * 100)), operationKey, 'NAO_PAGAVEL'].join('|');
+      setGenerated({ reference, dueDate: due.toLocaleDateString('pt-BR') });
       return;
     }
     await onConfirm();
@@ -160,8 +162,8 @@ export default function DemoPaymentPanel({ method, onMethodChange, subtotal, ava
         <div className="flex items-start justify-between gap-4"><div><h3 className="font-bold">Pagar com Pix</h3><p className="mt-1 text-xs leading-relaxed text-zinc-400">Gere uma cobrança fictícia, visualize o código ilustrativo e simule a aprovação.</p></div><QrCode className="h-7 w-7 text-emerald-300"/></div>
         <div className="flex flex-wrap justify-between gap-3 rounded-lg bg-zinc-950/80 p-3 text-sm"><span>Total do Pix</span><strong>{money(subtotal)}</strong></div>
         {generated ? <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
-          <DemoQrArt />
-          <div className="min-w-0 flex-1 space-y-3"><p className="text-sm font-semibold text-zinc-100">Pix Copia e Cola — somente demonstração</p><p className="break-all rounded-lg border border-zinc-700 bg-zinc-950 p-3 font-mono text-xs text-zinc-300">{generated.reference}</p><button type="button" onClick={() => void copyReference()} className="inline-flex items-center gap-2 rounded-lg border border-zinc-600 px-3 py-2 text-xs font-semibold hover:bg-zinc-800">{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}{copied ? 'Código copiado' : 'Copiar código fictício'}</button><p className="text-xs text-amber-200">QR Code ilustrativo não escaneável. O código não é reconhecido por bancos ou aplicativos de pagamento.</p></div>
+          <DemoQrArt value={generated.reference} />
+          <div className="min-w-0 flex-1 space-y-3"><p className="text-sm font-semibold text-zinc-100">Referência Pix ilustrativa — não pagável</p><p className="break-all rounded-lg border border-zinc-700 bg-zinc-950 p-3 font-mono text-xs text-zinc-300">{generated.reference}</p><button type="button" onClick={() => void copyReference()} className="inline-flex items-center gap-2 rounded-lg border border-zinc-600 px-3 py-2 text-xs font-semibold hover:bg-zinc-800">{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}{copied ? 'Código copiado' : 'Copiar código fictício'}</button><p className="text-xs text-amber-200">QR Code escaneável por leitores comuns. Ele contém apenas uma referência de teste e não pode efetuar pagamentos.</p></div>
         </div> : <p className="text-xs text-zinc-400">Nenhum dinheiro será enviado. A geração do código é apenas uma etapa visual.</p>}
       </section>}
 

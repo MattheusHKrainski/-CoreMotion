@@ -20,7 +20,6 @@ import CoachesView from '@/components/CoachesView';
 import CommunityView from '@/components/CommunityView';
 import ProfileView from '@/components/ProfileView';
 import SupabaseConfigModal from '@/components/SupabaseConfigModal';
-import CheckoutModal from '@/components/CheckoutModal';
 import { X, CheckCircle, AlertCircle, Info, Lock } from 'lucide-react';
 
 export default function CoreMotiomApp() {
@@ -96,7 +95,6 @@ export default function CoreMotiomApp() {
 
       <AuthModal />
       <SupabaseConfigModal />
-      <CheckoutModal />
       <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
       <ExternalOfferModal
         offer={selectedOffer}
