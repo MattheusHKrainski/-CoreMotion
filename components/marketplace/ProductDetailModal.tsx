@@ -264,6 +264,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                     <span className="line-through font-medium">{formatPrice(product.original_price)}</span>
                   </div>
                 )}
+                {!hasIdentifiedSeller && <p className="mb-1 text-xs font-semibold text-amber-300">Valor de referência, sem oferta ativa de vendedor</p>}
                 <div className="text-2xl sm:text-3xl font-black text-white">
                   {formatPrice(product.price)}
                 </div>
@@ -312,11 +313,11 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   onClick={() => {
                     addToCart(product, 1);
                   }}
-                  disabled={product.status !== 'active' || product.stock < 1}
-                  className="py-3 px-4 rounded-xl bg-[#0E1017] hover:bg-[#181B22] border border-[#232836] hover:border-[#3B4252] text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
+                  disabled={!hasIdentifiedSeller || product.status !== 'active' || product.stock < 1}
+                  className="py-3 px-4 rounded-xl bg-[#0E1017] hover:bg-[#181B22] border border-[#232836] hover:border-[#3B4252] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Adicionar ao Carrinho</span>
+                  <span>{hasIdentifiedSeller ? 'Adicionar ao Carrinho' : 'Referência · não disponível para compra'}</span>
                 </button>
 
                 {contactUrl ? (
