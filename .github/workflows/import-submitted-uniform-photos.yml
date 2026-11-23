@@ -1,0 +1,39 @@
+name: Import submitted volleyball uniform images
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/import-submitted-uniform-photos.yml']
+permissions:
+  contents: write
+jobs:
+  import-photos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download exact user-submitted photos from temporary asset previews
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, urllib.request
+          files=json.loads('''[{"name":"monte-carmelo-blue-orange.png","url":"https://media.canva.com/v2/image-resize/format:PNG/height:200/quality:100/uri:ifs%3A%2F%2FM%2F86a7747c-6f26-4d47-9962-ef94d2469821/watermark:F/width:115?csig=AAAAAAAAAAAAAAAAAAAAAMQzmUo5lEJfU6C-HdFrlZBTayD5aLNvHDIDLWdrXOYr&exp=1795430792&osig=AAAAAAAAAAAAAAAAAAAAAPrGCDNw225aynmm_pQ1RDWc-8nisdZ5wOApM09WzmOr&signer=media-rpc&token=AAIAAU0AJDg2YTc3NDdjLTZmMjYtNGQ0Ny05OTYyLWVmOTRkMjQ2OTgyMQAAAAABoggDu0AhRuacFZ9ynsS4-uY-nSYcPMoa6_7nOZUX9uqrSCb3Kg&x-canva-quality=thumbnail"},{"name":"montes-claros-black-gold.png","url":"https://media.canva.com/v2/image-resize/format:PNG/height:200/quality:100/uri:ifs%3A%2F%2FM%2F2ecee9da-bf45-4ff8-9bd1-0a7bd34783ef/watermark:F/width:175?csig=AAAAAAAAAAAAAAAAAAAAAMbuzKnqpMjYOzqXCENx1AS3yqTBKBkTdArlwdkddsCJ&exp=1795429721&osig=AAAAAAAAAAAAAAAAAAAAANiv08pf_Is-R6Zg3m5eXaNXn2t3ig1tHy6nBmm2_C2z&signer=media-rpc&token=AAIAAU0AJDJlY2VlOWRhLWJmNDUtNGZmOC05YmQxLTBhN2JkMzQ3ODNlZgAAAAABogfzY6jjhxrIrWO-PknYeFuq5a9d_vcob76sxFJOXbdym5Tyeg&x-canva-quality=thumbnail"},{"name":"norde-blue-pink.png","url":"https://media.canva.com/v2/image-resize/format:PNG/height:151/quality:100/uri:ifs%3A%2F%2FM%2F44766aaf-4d55-4c29-a31d-b9c7bf3843d2/watermark:F/width:200?csig=AAAAAAAAAAAAAAAAAAAAAISAVnclVAG4EzbsNl2at3sf2YS3RBvZrmAT0AjBIstJ&exp=1795429741&osig=AAAAAAAAAAAAAAAAAAAAAGzFScIRIybG3V-DzdcKmably-gCV9uU5ZJS3pKab8cp&signer=media-rpc&token=AAIAAU0AJDQ0NzY2YWFmLTRkNTUtNGMyOS1hMzFkLWI5YzdiZjM4NDNkMgAAAAABogfzscitB-LZ5FKmLaKGv9j7qimd5KYcpXjRRaYO63xazgfvLg&x-canva-quality=thumbnail"},{"name":"dentil-praia-womens-black.png","url":"https://media.canva.com/v2/image-resize/format:PNG/height:200/quality:100/uri:ifs%3A%2F%2FM%2F445c5367-1089-4276-aca7-9e2421a4c78c/watermark:F/width:118?csig=AAAAAAAAAAAAAAAAAAAAANu2NkvtqVGrH6SPZDc0GEIP0-gsljPOi-UFWnGFuRWU&exp=1795431617&osig=AAAAAAAAAAAAAAAAAAAAAC8vY9sTAzsUNEK-G5pPz80PMY_wkwdAXFgptZDX8XIr&signer=media-rpc&token=AAIAAU0AJDQ0NWM1MzY3LTEwODktNDI3Ni1hY2E3LTllMjQyMWE0Yzc4YwAAAAABoggQUeh1Lt1KOrteKjnS6X-oCVjBi_kdMeMIkt4aCb7HJV9m-Q&x-canva-quality=thumbnail"}]''')
+          base=pathlib.Path('public/catalog/club-uniforms')
+          base.mkdir(parents=True,exist_ok=True)
+          for item in files:
+              req=urllib.request.Request(item['url'],headers={'User-Agent':'Mozilla/5.0 (CoreMotion catalog import)'})
+              with urllib.request.urlopen(req,timeout=30) as response:
+                  data=response.read()
+              if not data.startswith(bytes([137,80,78,71,13,10,26,10])) or len(data)<1000:
+                  raise RuntimeError('Invalid PNG response for '+item['name'])
+              path=base/item['name']
+              path.write_bytes(data)
+              print(path,len(data))
+          
+          PY
+      - name: Commit imported images into CoreMotion catalog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/catalog/club-uniforms
+          git commit -m "assets(catalog): preserve provided real volleyball uniform photos"
+          git push origin HEAD:main
