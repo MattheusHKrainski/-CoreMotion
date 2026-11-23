@@ -247,7 +247,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             </div>
             <CatalogTeams offers={activeOffers} selected={selectedTeam} onSelect={team => {
               setSelectedTeam(team);
-              if (team) { setSelectedTab('offers');setSelectedCategory('all');setSelectedSport('all');setSearchQuery(''); }
+              setSelectedTab(team ? 'offers' : 'all');
+              if (team) { setSelectedCategory('all');setSelectedSport('all');setSelectedCondition('all');setSearchQuery(''); }
             }} />
 
 
