@@ -81,9 +81,9 @@ test('Demo payment RPC checks ownership, transaction locking, idem potency and p
   ]) assert.ok(migration.includes(marker),marker);
   assert.match(migration,/REVOKE ALL ON FUNCTION public\.simulate_core_sale_payment\(uuid\) FROM PUBLIC,anon,authenticated/);
   const checkout=read('components/commerce/CheckoutPage.tsx');
-  assert.match(checkout,/simulateSalePayment\(id\)/);
+  assert.match(checkout,/confirmDemoSale\(cart\.lines,address,request\.current\.key,method\)/);
   assert.match(checkout,/cart\.clear\(\)/);
-  assert.match(checkout,/Pagamento de teste aprovado/);
+  assert.match(checkout,/Pedido confirmado!/);
   assert.doesNotMatch(checkout,/Pagamento, frete e envio ainda não estão disponíveis/);
 });
 

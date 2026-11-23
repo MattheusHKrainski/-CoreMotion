@@ -100,7 +100,7 @@ export default function ExternalOfferModal({
 
           <h2 className="text-xl font-black text-white leading-tight">{offer.title}</h2>
           <p className="text-sm text-zinc-300 leading-relaxed">{offer.description}</p>
-            <ReportButton category="external_offer" targetId={offer.id} title={offer.title} /><p className="text-xs text-zinc-400">Preço de referência. Confira na loja a cor, o tamanho, o estoque e as condições de pagamento antes de comprar.</p>
+            <ReportButton category="external_offer" targetId={offer.id} title={offer.title} />
         </div>
 
         <div className="flex items-baseline justify-between gap-2 pt-3 border-t border-zinc-800">
@@ -150,9 +150,6 @@ export default function ExternalOfferModal({
           </div>
         </> : <p role="alert" className="rounded-xl border border-red-500/30 p-3 text-sm text-red-300">Esta oferta está sem um link válido. Informe a equipe pelo botão de denúncia.</p>}
 
-        <p className="text-[11px] text-zinc-500 text-center leading-relaxed">
-          A loja abre em nova aba. Se o navegador bloquear a abertura, copie o endereço acima e abra diretamente. Preço, frete e estoque são confirmados na loja.
-        </p>
 
         {canManage && (onEditOffer || onDeleteOffer) && (
           <div className="pt-3 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-2">

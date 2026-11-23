@@ -79,10 +79,10 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
     <div className="flex flex-wrap items-end justify-between gap-4 px-1">
       <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-red-400">Editorial CoreMotion / Esporte em movimento</p>
         <h2 id="campaigns-title" className="mt-2 text-2xl font-black uppercase tracking-[-.04em] text-white sm:text-4xl">ESCOLHA SEU <span className="text-red-400">PRÓXIMO MOVIMENTO.</span></h2>
-        <p className="mt-2 text-xs text-zinc-400">Campanhas por modalidade com produtos e preços do catálogo.</p></div>
+      </div>
       <div className="flex items-center gap-2">
         <button type="button" aria-label="Campanha anterior" onClick={() => move(-1)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10"><ChevronLeft className="h-4 w-4"/></button>
-        <span className="min-w-12 text-center text-xs tabular-nums text-zinc-300">{index % campaigns.length + 1} / {campaigns.length}</span>
+        
         <button type="button" aria-label="Próxima campanha" onClick={() => move(1)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10"><ChevronRight className="h-4 w-4"/></button>
         <button type="button" disabled={reduceMotion} aria-label={paused ? 'Retomar campanhas' : 'Pausar campanhas'} aria-pressed={paused} onClick={() => setPaused(p => !p)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10 disabled:opacity-40">{paused ? <Play className="h-4 w-4"/> : <Pause className="h-4 w-4"/>}</button>
       </div>
@@ -97,7 +97,6 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
             <p className="mt-6 max-w-md text-sm font-medium leading-6 text-white/85 sm:text-base">{active.subtitle}</p></div>
           <div className="flex flex-wrap items-center gap-3">
             <button type="button" onClick={() => onSelectOffer?.(primary)} className={'inline-flex items-center gap-3 rounded-md px-6 py-3.5 text-xs font-black uppercase tracking-wide text-black transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ' + active.accent}>Conhecer produto <ArrowRight className="h-4 w-4"/></button>
-            <span className="text-[11px] font-bold text-white/75">{active.products.length} produtos no catálogo</span>
           </div>
         </div>
         <div className="relative z-10 grid min-h-[360px] grid-cols-[1.4fr_.8fr] grid-rows-2 gap-1.5 p-2 sm:gap-2 sm:p-3 lg:min-h-[500px]">
@@ -106,7 +105,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
             <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4 pt-16 text-white">
               <span className="line-clamp-2 block text-xs font-black leading-4 sm:text-sm">{primary.title}</span>
               <span className="mt-1.5 block text-xl font-black">{currency(primary.price)}</span>
-              {off !== null && <span className="mt-1 block text-[10px] font-bold text-[#ffdb7b]"><Tag className="mr-1 inline h-3 w-3"/> {off}% abaixo do preço de referência</span>}
+              {off !== null && <span className="mt-1 block text-[10px] font-bold text-[#ffdb7b]"><Tag className="mr-1 inline h-3 w-3"/> {off}% OFF</span>}
             </span>
           </button>
           {next.slice(0,2).map(offer => <button type="button" key={offer.id} onClick={() => onSelectOffer?.(offer)}
@@ -127,7 +126,6 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
         <div role="group" aria-label="Selecionar modalidade" className="flex flex-wrap gap-1.5">{campaigns.map((c,i) =>
           <button type="button" key={c.id} onClick={() => setIndex(i)} aria-current={index % campaigns.length === i ? 'true' : undefined}
             className={'rounded-full border px-3 py-1.5 text-[10px] font-black uppercase transition ' + (index % campaigns.length === i ? 'border-red-500 bg-red-600 text-white' : 'border-white/20 text-zinc-300 hover:bg-white/10')}>{c.sport}</button>)}</div>
-        <p className="text-[10px] leading-4 text-zinc-400">Fotos dos produtos do catálogo. Preços e disponibilidade sujeitos à atualização.</p>
       </div>
     </div>
   </section>;
