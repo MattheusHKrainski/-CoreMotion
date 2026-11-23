@@ -24,7 +24,6 @@ export default function WelcomeCatalog({ products, offers, onExplore }: {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-red-400">Explore antes de entrar</p>
           <h2 id="welcome-catalog-title" className="mt-2 text-2xl sm:text-3xl font-black text-white">Encontre seu próximo equipamento</h2>
-          <p className="mt-2 text-sm text-zinc-400">Produtos de atletas e ofertas de lojas, com fotos e preços para você comparar.</p>
         </div>
         <button type="button" onClick={onExplore} className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-zinc-800">Ver catálogo completo<ArrowRight className="h-4 w-4" /></button>
       </div>
