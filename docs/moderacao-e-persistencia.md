@@ -64,3 +64,15 @@ A fila administrativa agrupa os relatos pela conta responsável pelo conteúdo, 
 A caixa de notificações mostra apenas mensagens não lidas. Atualizações de denúncias enviadas possuem `reporter_read_at`; `read_report_update` verifica a identidade do denunciante e persiste a leitura. Uma nova revisão limpa essa marca e reaparece como atualização. Marcar uma notificação antiga como lida também marca as atualizações anteriores do mesmo alvo como lidas para seu próprio denunciante. O histórico não é excluído.
 
 Validação: teste transacional no Supabase com publicação/denúncia temporárias confirmou notificação ao responsável, ausência de notificação ao denunciante, ausência de vazamento da mensagem privada no relato e persistência das leituras. Tudo revertido por ROLLBACK. Testes unitários cobrem agrupamento entre conteúdos, isolamento de responsáveis ausentes, leitura e reaparecimento após nova revisão.
+
+## Lixeira administrativa de produtos
+
+`product_moderation_trash` guarda snapshots por 30 dias de produtos de atletas (`products`) e da loja (`external_offers`) excluídos diretamente pela equipe ativa. A captura ocorre em trigger: não depende de um botão específico e também cobre chamadas administrativas existentes. Exclusão pelo próprio responsável, operações sem usuário autenticado e cascatas de exclusão da conta não entram na lixeira. A remoção da conta também apaga snapshots anteriores do responsável.
+
+O painel possui a aba **Lixeira de produtos**, com busca, foto, descrição, dados originais, datas e restauração confirmada. `restore_moderated_product` exige equipe ativa, bloqueia entrada vencida e conta removida/na lixeira, e restaura o snapshot na mesma transação que remove o arquivo da lixeira. Conflitos de ID/chave de catálogo deixam o arquivo intacto. A restauração preserva suspensão/pausa anterior; não recria interações e relacionamentos removidos por cascata na exclusão. Um cron horário descarta snapshots vencidos. Não há recuperação retroativa dos produtos excluídos antes desta migração.
+
+Validação no Supabase com cópias temporárias e ROLLBACK: exclusão administrativa e restauração de ambas as tabelas; exclusão pelo dono sem arquivo; usuário comum impedido de restaurar. Nenhum anúncio real foi excluído pelos testes.
+
+## Novos exemplos locais
+
+A vitrine sem Supabase usa `fixtures/athlete-examples.ts`: oito novos exemplos com títulos e vendedores explicitamente fictícios, fotos de referência existentes, valores simulados, estoque zero e sem contato pessoal. Não são inseridos nem mesclados no catálogo real. Fixtures antigas continuam apenas para testes e compatibilidade documental. Anúncios publicados por usuários reais não são substituídos por exemplos.

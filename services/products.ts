@@ -1,5 +1,5 @@
 import { Product, ProductCondition, ProductType } from '@/lib/types';
-import { INITIAL_PRODUCTS } from '@/fixtures/initial-data';
+import { ATHLETE_EXAMPLES as INITIAL_PRODUCTS } from '@/fixtures/athlete-examples';
 import { DEMO_MODE } from '@/lib/demo-mode';
 import { type ApiResult } from '@/lib/auth-fetch';
 import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';

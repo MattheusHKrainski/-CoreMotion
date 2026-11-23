@@ -51,6 +51,7 @@ import type {
   CommunityPost,
 } from '@/lib/types';
 import { ACCOUNT_TYPES, type AccountType } from '@/lib/sports';
+import ProductTrash from './ProductTrash';
 import SupportDesk from './SupportDesk';
 import AdminOffersManager from './AdminOffersManager';
 import SportsHub from '@/components/SportsHub';
@@ -60,6 +61,7 @@ const TABS = [
   ['support', 'Atendimento', MessageSquare],
   ['products', 'Produtos de atletas', Package],
   ['offers', 'Central de Ofertas', Tag],
+  ['product-trash', 'Lixeira de produtos', History],
   ['community', 'Comunidade', MessageSquare],
   ['sports', 'Talentos e seletivas', Trophy],
   ['reports', 'Denúncias e feedback', Flag],
@@ -81,6 +83,8 @@ const auditLabels: Record<string, string> = {
   account_unban: 'Reativação de conta',
   account_delete: 'Exclusão definitiva de conta',
   account_trash: 'Conta enviada à lixeira',
+  product_trash: 'Produto enviado à lixeira',
+  product_restore: 'Produto restaurado',
   account_restore: 'Restauração de conta',
   account_purge: 'Exclusão definitiva após 30 dias',
   report_deleted: 'Exclusão de denúncia',
@@ -373,6 +377,7 @@ export default function AdminDashboard() {
       support: ['support_tickets','support_messages'],
       accounts: ['profiles','account_trash'],
       products: ['products'],
+      'product-trash': ['product_moderation_trash'],
       offers: ['external_offers'],
       community: ['community_posts'],
       sports: ['sports_records'],
@@ -683,6 +688,7 @@ export default function AdminDashboard() {
         )}
         {tab === 'support' && <SupportDesk />}
         {tab === 'offers' && <AdminOffersManager />}
+        {tab === 'product-trash' && <ProductTrash />}
         {tab === 'products' && (
           <>
             <h2 className="text-lg font-bold">
@@ -741,13 +747,13 @@ export default function AdminDashboard() {
                       className={`${button} !text-red-400`}
                       disabled={busy}
                       onClick={() => {
-                        if (window.confirm(`Excluir o anúncio “${p.title}”?`))
+                        if (window.confirm(`Enviar o anúncio “${p.title}” à lixeira por 30 dias?`))
                           void act(async () => {
                             const result = await ProductService.deleteProduct(
                               p.id
                             );
                             if (!result.success) throw new Error(result.error);
-                          }, 'Anúncio excluído.');
+                          }, 'Anúncio enviado à lixeira por 30 dias.');
                       }}
                     >
                       Excluir anúncio
