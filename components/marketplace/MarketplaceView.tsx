@@ -218,7 +218,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-3 text-xs">
           <span className="font-medium text-zinc-500">Filtros ativos:</span>
           {searchQuery && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">Busca: “{searchQuery}”<button type="button" aria-label="Limpar busca" onClick={() => setSearchQuery('')}><X className="h-3 w-3" /></button></span>}
-          {selectedTeam && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{selectedTeam.club_name}<button type="button" aria-label="Limpar clube" onClick={() => setSelectedTeam(null)}><X className="h-3 w-3" /></button></span>}
+          {selectedTeam && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{selectedTeam.club_name}<button type="button" aria-label="Limpar clube" onClick={() => { setSelectedTeam(null); setSelectedTab('all'); }}><X className="h-3 w-3" /></button></span>}
           {selectedCategory !== 'all' && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{selectedCategory}<button type="button" aria-label="Limpar categoria" onClick={() => setSelectedCategory('all')}><X className="h-3 w-3" /></button></span>}
           {selectedSport !== 'all' && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{selectedSport}<button type="button" aria-label="Limpar modalidade" onClick={() => setSelectedSport('all')}><X className="h-3 w-3" /></button></span>}
           {selectedCondition !== 'all' && selectedTab !== 'offers' && <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-zinc-200">{CONDITIONS.find((condition) => condition.id === selectedCondition)?.label}<button type="button" aria-label="Limpar condição" onClick={() => setSelectedCondition('all')}><X className="h-3 w-3" /></button></span>}
@@ -275,7 +275,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <div className="space-y-4 rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-12 text-center shadow-xl">
               <Search className="mx-auto h-8 w-8 text-zinc-600" />
               <h2 className="text-sm font-bold text-white">Nenhum resultado encontrado</h2>
-              <p className="mx-auto max-w-md text-xs text-zinc-400">{selectedTeam ? 'Ainda não há ofertas próprias deste clube na CoreMotion. Acesse a coleção na loja indicada acima.' : 'Tente ajustar a busca, categoria ou modalidade selecionada para explorar mais equipamentos.'}</p>
+              <p className="mx-auto max-w-md text-xs text-zinc-400">{selectedTeam ? 'Ainda não há camisetas ou produtos cadastrados para este clube na CoreMotion. Confira os outros clubes ou limpe o filtro.' : 'Tente ajustar a busca, categoria ou modalidade selecionada para explorar mais equipamentos.'}</p>
               <button type="button" onClick={resetFilters} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-red-500">Limpar filtros</button>
             </div>
           ) : (
