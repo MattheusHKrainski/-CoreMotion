@@ -11,7 +11,6 @@ import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
 import CatalogTeams, { type CatalogTeam } from './CatalogTeams';
-import VerifiedVolleyMerchandise from './VerifiedVolleyMerchandise';
 import {
   ArrowUpDown,
   Check,
@@ -267,20 +266,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <span aria-live="polite">{displayedCount} resultado(s) · {hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}{hasC2C && hasOffers ? ' + ' : ''}{hasOffers ? `${filteredOffers.length} em ofertas` : ''}</span>
             {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
           </div>
-
-          {selectedTeam?.merchandise_url && <section aria-label="Coleção do clube" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-red-800/30 bg-zinc-900 px-5 py-5">
-            <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400">{selectedTeam.league.startsWith('brasileirao')?'Futebol brasileiro':selectedTeam.league.startsWith('superlega')?'Vôlei italiano':'Vôlei japonês'} · {selectedTeam.season}</p>
-              <h3 className="text-base font-black text-white">{selectedTeam.club_name}</h3>
-              <p className="max-w-xl text-xs leading-relaxed text-zinc-400">Explore camisas, uniformes e outros artigos da equipe. Os produtos ainda não cadastrados na CoreMotion podem ser vistos diretamente na origem.</p>
-            </div>
-            <a href={selectedTeam.merchandise_url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-xs font-bold text-white hover:bg-red-500">
-              Ver coleção {selectedTeam.merchandise_source==='retailer'?'na loja':'do clube'} <span aria-hidden="true">↗</span>
-            </a>
-          </section>}
-
-          {selectedTeam && !selectedTeam.league.startsWith('brasileirao') && <VerifiedVolleyMerchandise teamId={selectedTeam.id} />}
 
           {displayedCount === 0 ? (
             <div className="space-y-4 rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-12 text-center shadow-xl">
