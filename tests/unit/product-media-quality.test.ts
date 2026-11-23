@@ -22,7 +22,7 @@ test('Products without manufacturer-confirmed sizes cannot be added to the cart'
  assert.match(detail,/needsVariant && !variant.trim\(\)/);
  assert.match(detail,/A numeração deste modelo ainda não foi confirmada no catálogo/);
  assert.doesNotMatch(detail,/Consultar tamanhos na loja|Ver produto na loja|Referência de/);
- assert.match(detail,/disabled=\{variantRequired/);
+ assert.match(detail,/disabled=\{soldOut \|\| variantRequired\}/);
  const controls=read('components/commerce/ProductOptions.tsx');
  assert.match(controls,/hasCatalogSizes/);
  assert.match(controls,/onChange\(selected\.Tamanho/);
