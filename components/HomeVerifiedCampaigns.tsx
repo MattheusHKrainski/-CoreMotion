@@ -13,7 +13,7 @@ const CAMPAIGNS: Campaign[] = [
   { id: 'running', sport: 'Corrida', headline: 'A RUA É\nSUA PISTA.', subtitle: 'Cada quilômetro conta uma história. Encontre o equipamento para a próxima.', kicker: 'RUN CLUB / 01', theme: 'from-[#006a65] via-[#013a3c] to-[#071716]', accent: 'bg-[#b4ee61]', marker: 'text-[#d2ff97]', outline: 'stroke-[#b4ee61]', primaryIds: ['offer-bf26-adidas-ultraboost5-id8812'] },
   { id: 'basketball', sport: 'Basquete', headline: 'A QUADRA\nÉ NOSSA.', subtitle: 'O ritmo muda. A intensidade fica. Entre para o próximo jogo.', kicker: 'COURT CULTURE / 02', theme: 'from-[#b02b23] via-[#47130f] to-[#110e0d]', accent: 'bg-[#ff7553]', marker: 'text-[#ffb39b]', outline: 'stroke-[#ff9e75]', primaryIds: ['offer-bf26-kipsta-fast500-8977594', 'offer-bf26-spalding-streetball-8633779', 'offer-bf26-nba-lakers-9002131'] },
   { id: 'volleyball', sport: 'Vôlei', headline: 'O PRÓXIMO\nPONTO É SEU.', subtitle: 'Receba. Levante. Ataque. Equipamentos para quem vive cada rally.', kicker: 'ABOVE THE NET / 03', theme: 'from-[#3c278b] via-[#211545] to-[#0c0b1a]', accent: 'bg-[#f9d94d]', marker: 'text-[#fff099]', outline: 'stroke-[#e7d55b]', primaryIds: ['offer-bf26-allsix-v900-8408660', 'offer-bf26-kipsta-bv100-8752032'] },
-  { id: 'football', sport: 'Futebol', headline: 'VESTE O\nSEU JOGO.', subtitle: 'A paixão começa antes do apito. Viva a cultura da arquibancada.', kicker: 'MATCH DAY / 04', theme: 'from-[#163d31] via-[#0d231b] to-[#080f0b]', accent: 'bg-[#cbff4f]', marker: 'text-[#e1ff93]', outline: 'stroke-[#cbff4f]', primaryIds: ['offer-bf26-adidas-copapure3-jh8728'] },
+  { id: 'football', sport: 'Futebol', headline: 'VESTE O\nSEU JOGO.', subtitle: 'A paixão começa antes do apito. Viva a cultura da arquibancada.', kicker: 'MATCH DAY / 04', theme: 'from-[#163d31] via-[#0d231b] to-[#080f0b]', accent: 'bg-[#cbff4f]', marker: 'text-[#e1ff93]', outline: 'stroke-[#cbff4f]', primaryIds: [] },
   { id: 'tennis', sport: 'Tênis', headline: 'JOGUE\nSEM LIMITES.', subtitle: 'Movimento, precisão e atitude em cada ponto.', kicker: 'BASELINE / 05', theme: 'from-[#8d993d] via-[#3d461c] to-[#161a0d]', accent: 'bg-[#e7fe73]', marker: 'text-[#edffa7]', outline: 'stroke-[#e7fe73]', primaryIds: ['offer-bf26-kuikma-9rpro-8934939'] },
 ];
 const currency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -47,7 +47,8 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
     const matching = offers.filter(o => o.is_active !== false && o.price > 0 && o.sport === config.sport && !!o.image_url);
     const products = [...matching].sort((a,b) => {
       const x = config.primaryIds.indexOf(a.id), y = config.primaryIds.indexOf(b.id);
-      return (x === -1 ? 999 : x) - (y === -1 ? 999 : y);
+      const featuredJersey = (o: ExternalOffer) => config.sport === 'Futebol' && /camisa|jersey|manto|uniforme/i.test(o.title) ? -100 : 0;
+      return featuredJersey(a) - featuredJersey(b) || (x === -1 ? 999 : x) - (y === -1 ? 999 : y);
     });
     return { ...config, products };
   }).filter(c => c.products.length > 0), [offers]);
