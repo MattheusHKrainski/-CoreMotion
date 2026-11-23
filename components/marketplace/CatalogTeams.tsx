@@ -19,8 +19,8 @@ export interface CatalogTeam {
 }
 const LEAGUES = [
   {id:'brasileirao-2026', label:'Brasileirão Série A · 2026'},
-  {id:'superlega-italia-2026-27',label:'SuperLega italiana · 2026/27'},
-  {id:'svleague-japao-2026-27',label:'SV.League japonesa · 2026/27'},
+  {id:'superliga-brasil-masculina-2026-27',label:'Superliga A Masculina · 2026/27'},
+  {id:'nbb-brasil-2026-27',label:'NBB CAIXA · 2026/27'},
 ] as const;
 const SOURCES = [{ table:'catalog_teams' }] as const;
 
