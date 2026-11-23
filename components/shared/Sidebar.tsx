@@ -218,7 +218,7 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all group ${
+                className={`core-sidebar-action w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left group ${
                   isActive
                     ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-950/40 font-semibold'
                     : 'text-zinc-300 hover:text-white hover:bg-zinc-900/80 font-medium'

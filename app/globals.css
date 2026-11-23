@@ -58,3 +58,31 @@ img, video { max-width: 100%; }
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Discreet feedback for sidebar navigation, without looping or layout shifts. */
+.core-sidebar-action {
+  transition: transform 160ms ease-out, background-color 160ms ease-out,
+    color 160ms ease-out, box-shadow 160ms ease-out;
+}
+.core-sidebar-action:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .core-sidebar-action:hover {
+    transform: translateX(2px);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .core-sidebar-action:active {
+    transform: scale(0.99);
+    transition-duration: 90ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .core-sidebar-action,
+  .core-sidebar-action * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
