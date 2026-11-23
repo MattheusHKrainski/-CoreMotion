@@ -16,6 +16,7 @@ interface DbExternalOfferRow {
   variant_options?: string[];
   image_urls?: string[];
   team_id?: string | null;
+  stock_status?: 'available' | 'sold_out';
   id: string;
   title: string;
   description: string;
@@ -46,6 +47,7 @@ function mapOfferRow(row: DbExternalOfferRow): ExternalOffer {
     variant_options: row.variant_options,
     image_urls: row.image_urls?.length ? row.image_urls : [row.image_url],
     team_id: row.team_id,
+    stock_status: row.stock_status ?? 'available',
     description: row.description,
     store_name: row.store_name,
     category: row.category,

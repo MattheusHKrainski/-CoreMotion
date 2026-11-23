@@ -83,6 +83,7 @@ interface OfferFormState {
   team_id: string;
   description: string;
   is_active: boolean;
+  stock_status: 'available' | 'sold_out';
 }
 
 const EMPTY_FORM: OfferFormState = {
@@ -99,6 +100,7 @@ const EMPTY_FORM: OfferFormState = {
   team_id: '',
   description: '',
   is_active: true,
+  stock_status: 'available',
 };
 
 function compressImageFile(file: File): Promise<string> {
@@ -197,6 +199,7 @@ export default function AdminOffersManager() {
       team_id: offer.team_id || '',
       description: offer.description,
       is_active: offer.is_active !== false,
+      stock_status: offer.stock_status ?? 'available',
     });
     setCurrentEditId(asCopy ? null : offer.id);
     setFormError(null);
@@ -355,6 +358,7 @@ export default function AdminOffersManager() {
           form.description.trim() ||
           `Oferta selecionada em ${form.store_name.trim() || 'loja parceira'} para ${form.sport.toLowerCase()}.`,
         is_active: form.is_active,
+        stock_status: form.stock_status,
       };
 
       if (currentEditId) {
@@ -760,6 +764,13 @@ export default function AdminOffersManager() {
                   </div>
                 </div>
               </div>
+
+              <label className="block space-y-2 text-xs font-semibold text-zinc-300">Situação do estoque
+                <select value={form.stock_status} onChange={event => setForm(f => ({ ...f, stock_status: event.target.value as 'available' | 'sold_out' }))} className={inputCls}>
+                  <option value="available">Disponível (estoque confirmado)</option>
+                  <option value="sold_out">Esgotado — manter visível sem permitir compra</option>
+                </select>
+              </label>
 
               <label className="flex items-center gap-2.5 text-xs text-zinc-300 cursor-pointer pt-1">
                 <input

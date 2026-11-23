@@ -30,6 +30,7 @@ export interface ExternalOffer {
   variant_options?: string[];
   image_urls?: string[];
   team_id?: string | null;
+  stock_status?: 'available' | 'sold_out';
   id: string;
   title: string;
   description: string;
