@@ -1,4 +1,5 @@
 'use client';
+import {localCatalogRows,rememberLocalDeletion,offerReadFence,productReadFence} from './catalog-deletion';
 import { accountListsKey, readAccountLists } from './account-lists';
 import { MULTI_STORE_STORAGE_MARKER } from '@/fixtures/multi-store-offers';
 import { ADMIN_LOGIN_EMAIL } from './admin-account';
@@ -246,8 +247,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   // C9: estado inicial de demonstração só com NEXT_PUBLIC_DEMO_MODE=true (fixtures/); padrão: vazio.
   const [allUsers, setAllUsers] = useState<UserProfile[]>(DEMO_MODE ? INITIAL_USERS : []);
-  const [products, setProducts] = useState<Product[]>(isSupabaseConfigured ? [] : INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'));
-  const [offers, setOffers] = useState<ExternalOffer[]>(isSupabaseConfigured ? [] : INITIAL_EXTERNAL_OFFERS);
+  const [products, setProducts] = useState<Product[]>(isSupabaseConfigured ? [] : localCatalogRows(INITIAL_PRODUCTS.filter((product) => product.product_type === 'c2c'),'athlete'));
+  const [offers, setOffers] = useState<ExternalOffer[]>(isSupabaseConfigured ? [] : localCatalogRows(INITIAL_EXTERNAL_OFFERS,'store'));
   const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -306,6 +307,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     let authSubscription: { unsubscribe: () => void } | null = null;
 
     const initData = async () => {
+      const offersReadVersion=offerReadFence.begin();
+      const productsReadVersion=productReadFence.begin();
       try {
         if (sessionStorage.getItem(ENTERED_SESSION_KEY) === '1' && isMounted) {
           setHasEnteredPlatform(true);
@@ -316,8 +319,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           if (Array.isArray(parsedOffers)) {
             const refreshed = appendExpansionOffers(refreshLegacyOffers(parsedOffers), localStorage.getItem(quickStorageKey('coremotion_offers_expansion_2026_11_03')) === '1');
             const expanded = appendMultiStoreOffers(refreshed, localStorage.getItem(quickStorageKey(MULTI_STORE_STORAGE_MARKER)) === '1');
-            setOffers(expanded);
-            localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(expanded));
+            setOffers(localCatalogRows(expanded,'store'));
+            localStorage.setItem(OFFERS_STORAGE_KEY, JSON.stringify(localCatalogRows(expanded,'store')));
           }
         }
 
@@ -344,14 +347,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           if (client) {
             const { data, error } = await client.from('external_offers').select('*').eq('is_active', true).order('created_at', { ascending: false });
             if (error) addToast('Ofertas indisponíveis', 'Não foi possível carregar as ofertas do Supabase.', 'error');
-            else if (isMounted) setOffers(data || []);
+            else if (isMounted) setOffers(offerReadFence.filter(data || [],offersReadVersion));
           }
         } else {
           try {
             const response = await fetch('/api/offers');
             if (response.ok) {
               const data = await response.json();
-              if (isMounted && Array.isArray(data.offers)) setOffers(data.offers);
+              if (isMounted && Array.isArray(data.offers)) setOffers(localCatalogRows(data.offers,'store'));
             }
           } catch { /* local catalog remains available without a connected database */ }
         }
@@ -367,7 +370,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (isMounted) {
           if (isSupabaseConfigured) {
             // The database is authoritative, including empty results and older published listings.
-            setProducts(liveProducts);
+            setProducts(productReadFence.filter(liveProducts,productsReadVersion));
             setCommunityPosts(livePosts);
           }
           if (!isSupabaseConfigured && livePosts.length > 0) {
@@ -445,6 +448,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     type LiveTable = 'products' | 'external_offers' | 'community_posts' | 'orders' | 'profiles' | 'coaches' | 'news';
 
     const refreshSharedData = async (table: LiveTable) => {
+      const offersReadVersion=offerReadFence.begin();
+      const productsReadVersion=productReadFence.begin();
       const version = (generations[table] || 0) + 1;
       generations[table] = version;
       try {
@@ -456,13 +461,13 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
           const own = !realtimeStaff && realtimeUserId
             ? await ProductService.getProducts({ seller_id: realtimeUserId, status: 'all' })
             : [];
-          if (!disposed && generations[table] === version) setProducts(mergeProductsById(rows, own));
+          if (!disposed && generations[table] === version) setProducts(productReadFence.filter(mergeProductsById(rows, own),productsReadVersion));
         } else if (table === 'external_offers') {
           const query = client.from('external_offers').select('*');
           const { data, error } = await (realtimeStaff ? query : query.eq('is_active', true))
             .order('created_at', { ascending: false });
           if (error) throw error;
-          if (!disposed && generations[table] === version) setOffers(data || []);
+          if (!disposed && generations[table] === version) setOffers(offerReadFence.filter(data || [],offersReadVersion));
         } else if (table === 'community_posts') {
           const rows = await CommunityService.getPosts();
           if (!disposed && generations[table] === version) setCommunityPosts(rows);
@@ -573,6 +578,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     const loadPrivateData = async () => {
+      const offersReadVersion=offerReadFence.begin();
+      const productsReadVersion=productReadFence.begin();
       if (isStaffRole(userRole)) {
         const [allOrders, users, allProducts] = await Promise.all([
           OrderService.getAllOrdersAdmin(),
@@ -582,7 +589,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         try {
           const { data, error } = await getSupabase()!.from('external_offers').select('*').order('created_at', { ascending: false });
           if (error) throw error;
-          if (!cancelled && data) setOffers(data.map(o => ({ ...o, is_demo: false })));
+          if (!cancelled && data) setOffers(offerReadFence.filter(data.map(o => ({ ...o, is_demo: false })),offersReadVersion));
 
         } catch {
           // ignore if offline
@@ -590,7 +597,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setOrders(allOrders);
         if (users.length > 0) setAllUsers(users);
-        if (allProducts.length > 0) setProducts(allProducts);
+        setProducts(productReadFence.filter(allProducts,productsReadVersion));
       } else {
         const [myOrders, myProducts] = await Promise.all([
           OrderService.getMyOrders(userId),
@@ -598,7 +605,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         ]);
         if (cancelled) return;
         setOrders(myOrders);
-        if (myProducts.length > 0) setProducts((prev) => mergeProductsById(prev, myProducts));
+        if (myProducts.length > 0) setProducts((prev) => productReadFence.filter(mergeProductsById(prev, myProducts),productsReadVersion));
       }
     };
 
@@ -842,6 +849,8 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   );
 
   const adminSyncSupabase = useCallback(async (silent = false) => {
+    const offersReadVersion=offerReadFence.begin();
+      const productsReadVersion=productReadFence.begin();
     const actorId = userRef.current?.id;
     try {
       const client = getSupabase();
@@ -857,11 +866,11 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         if (result.error) throw new Error(result.error.message);
       }
       if (!actorId || userRef.current?.id !== actorId) throw new Error('A sessão mudou durante a consulta.');
-      setProducts(liveProducts);
+      setProducts(productReadFence.filter(liveProducts,productsReadVersion));
       setCommunityPosts((postsResult.data || []).map(CommunityService.mapDbPostToModel));
       setOrders(ordersResult.data || []);
       setAllUsers(usersResult.data || []);
-      setOffers((offersResult.data || []).map(o => ({ ...o, is_demo: false })));
+      setOffers(offerReadFence.filter((offersResult.data || []).map(o => ({ ...o, is_demo: false })),offersReadVersion));
       setIsSupabaseLive(true);
       if (!silent) addToast('Dados atualizados', 'As consultas autenticadas foram concluídas.', 'success');
       return { success: true, count: liveProducts.length + (postsResult.data?.length || 0) };
@@ -1225,7 +1234,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteProduct = async (id: string): Promise<void> => {
-    if (isSupabaseConfigured) {
+    {
       const result = await ProductService.deleteProduct(id);
       if (!result.success) {
         addToast('Anúncio não excluído', result.error || 'Não foi possível excluir o anúncio.', 'error');
@@ -1512,6 +1521,10 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    if(!isSupabaseConfigured){
+      try{rememberLocalDeletion(id,'store');}catch{addToast('Oferta não excluída','Não foi possível salvar a exclusão neste navegador.','error');return false;}
+    }
+    offerReadFence.remove(id);
     persistOffersLocally(offers.filter((item) => item.id !== id));
     if (editingOfferId === id) setEditingOfferId(null);
     addToast('Oferta removida', 'O item foi excluído da vitrine.', 'info');
