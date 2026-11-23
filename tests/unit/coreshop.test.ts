@@ -30,5 +30,7 @@ it('destaque exibe o mesmo produto, preço e percentual do catálogo', () => {
   const html = renderToStaticMarkup(React.createElement(HomeBlackFriday, { offers: INITIAL_EXTERNAL_OFFERS, onExplore() {} }));
   assert.ok(html.includes(first.title));
   assert.ok(html.includes(`ATÉ ${getOfferDiscountPercent(first)}% OFF`));
+  assert.ok(html.includes(first.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })));
+  assert.ok(html.includes(first.original_price!.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })));
   assert.doesNotMatch(html, /Descontos calculados sobre preços de referência dos fornecedores/);
 });

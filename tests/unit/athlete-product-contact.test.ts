@@ -43,6 +43,7 @@ it('não apresenta o aviso de conservação a confirmar como tempo de uso no cat
     const html = render(item, card);
     assert.doesNotMatch(html, /Conservação a confirmar com o anunciante/);
     assert.match(html, /Foto ilustrativa/);
+    assert.match(html, /Conservação não verificada/);
   }
   assert.match(render({ ...product, usage_time: 'Dois meses' }), /Dois meses/);
 });
