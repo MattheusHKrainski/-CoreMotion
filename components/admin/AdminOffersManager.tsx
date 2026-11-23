@@ -221,8 +221,6 @@ export default function AdminOffersManager() {
 
   if (!isStaffRole(user?.role)) return null;
 
-  const activeCount = offers.filter((o) => o.is_active !== false).length;
-  const pausedCount = offers.length - activeCount;
 
   const uniqueStores = Array.from(new Set(offers.map((o) => o.store_name)));
 
@@ -400,10 +398,7 @@ export default function AdminOffersManager() {
               <Tag className="w-3 h-3" />
               Gestão de Ofertas & Afiliados
             </span>
-            <span className="text-xs text-zinc-400">
-              <strong className="text-white">{activeCount}</strong> ativas
-              {pausedCount > 0 ? ` • ${pausedCount} pausadas` : ''}
-            </span>
+
           </div>
           <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
             Central de Ofertas e Links de Promoção
