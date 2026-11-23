@@ -1,5 +1,6 @@
 'use client';
 
+import { uniqueOfferModels } from '@/lib/offer-models';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import type { ExternalOffer, Product } from '@/lib/types';
@@ -11,7 +12,7 @@ export default function HomeProductCarousel({ products, offers, onSelectProduct,
   products: Product[]; offers: ExternalOffer[];
   onSelectProduct?: (product: Product) => void; onSelectOffer?: (offer: ExternalOffer) => void; onExplore: () => void;
 }) {
-  const slides = useMemo(() => homeCarouselSlides(products, offers), [products, offers]);
+  const slides = useMemo(() => homeCarouselSlides(products, uniqueOfferModels(offers)), [products, offers]);
   const [position, setPosition] = useState(0);
   const [paused, setPaused] = useState(false);
   const [hovered, setHovered] = useState(false);

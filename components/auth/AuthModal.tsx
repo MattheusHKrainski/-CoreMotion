@@ -4,6 +4,7 @@ import { isValidEmailAddress, isAllowedSignupEmail, SIGNUP_EMAIL_HELP } from '@/
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { QUICK_ACCESS_ENABLED } from '@/lib/quick-access';
 
+import SuspensionAppeal from './SuspensionAppeal';
 import SavedAccounts from './SavedAccounts';
 import { safeAuthReturn } from '@/lib/auth-navigation';
 import SportPicker from '@/components/shared/SportPicker';
@@ -216,6 +217,8 @@ export default function AuthModal({ page = false }: { page?: boolean }) {
               <span>{errorMsg}</span>
             </div>
           )}
+
+          {errorMsg.includes('conta está suspensa') && <SuspensionAppeal key={email.trim().toLowerCase()} email={email} />}
 
           {/* Info Message if any */}
           {infoMsg && (

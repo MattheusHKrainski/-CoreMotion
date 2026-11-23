@@ -117,9 +117,9 @@ export class OrderService {
    * Pedidos do próprio comprador. O filtro por user_id é uma camada extra: a RLS
    * (orders_select) já restringe as linhas ao dono do pedido e ao staff.
    */
-  static async getMyOrders(userId: string): Promise<Order[]> {
+  static async getMyOrders(userId: string, strict = false): Promise<Order[]> {
     const sb = getSupabaseClient();
-    if (!sb || !userId) return [];
+    if (!sb || !userId) { if (strict) throw new Error('Entre na conta para consultar pedidos.'); return []; }
 
     try {
       const { data, error } = await sb
@@ -128,9 +128,10 @@ export class OrderService {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error || !data) return [];
+      if (error || !data) throw new Error('Não foi possível consultar os pedidos de atletas.');
       return data.map(this.mapDbOrderToModel);
-    } catch {
+    } catch (error) {
+      if (strict) throw error;
       return [];
     }
   }

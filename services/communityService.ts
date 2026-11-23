@@ -54,6 +54,7 @@ export class CommunityService {
       content: string;
       category: CommunityPost['category'];
       image_url?: string;
+      video_url?: string;
       author_name: string;
       author_avatar?: string;
       author_badge?: string;
@@ -76,6 +77,7 @@ export class CommunityService {
             title: post.title,
             content: post.content,
             image_url: post.image_url,
+            video_url: post.video_url,
             likes_count: 0,
             comments_count: 0,
             comments: [],
@@ -154,6 +156,7 @@ export class CommunityService {
       title: dbRow.title || '',
       content: dbRow.content || '',
       image_url: dbRow.image_url,
+      video_url: dbRow.video_url,
       likes_count: Number(dbRow.likes_count) || 0,
       comments_count: comments.length,
       comments,

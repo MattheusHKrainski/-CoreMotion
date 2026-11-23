@@ -1,5 +1,6 @@
 'use client';
 
+import { uniqueOfferModels } from '@/lib/offer-models';
 import React, { useMemo, useState } from 'react';
 import { useCoreMotiom } from '@/lib/store';
 import type { ExternalOffer, Product } from '@/lib/types';
@@ -35,11 +36,12 @@ function matchesQuickFilter(category: string, sport: string, filter: string): bo
 
 export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }: HomeHeroAndHighlightsProps) {
   const { products, activeOffers, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const modelOffers = useMemo(() => uniqueOfferModels(activeOffers), [activeOffers]);
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const filteredOffers = useMemo(() => activeOffers.filter((offer) =>
+  const filteredOffers = useMemo(() => modelOffers.filter((offer) =>
     matchesQuickFilter(offer.category, offer.sport, activeFilter)
-  ), [activeOffers, activeFilter]);
+  ), [modelOffers, activeFilter]);
 
   const filteredC2CProducts = useMemo(() => products.filter((product) =>
     product.product_type === 'c2c' &&
@@ -63,10 +65,10 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-8 pb-16 sm:space-y-12">
-      <HomeBlackFriday offers={activeOffers} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
-      <HomeVerifiedCampaigns offers={activeOffers} onSelectOffer={onSelectOffer} />
-      <HomeRealLaunches offers={activeOffers} onSelectOffer={onSelectOffer} />
-      <HomeProductCarousel products={products} offers={activeOffers} onSelectProduct={onSelectProduct} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
+      <HomeBlackFriday offers={modelOffers} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
+      <HomeVerifiedCampaigns offers={modelOffers} onSelectOffer={onSelectOffer} />
+      <HomeRealLaunches offers={modelOffers} onSelectOffer={onSelectOffer} />
+      <HomeProductCarousel products={products} offers={modelOffers} onSelectProduct={onSelectProduct} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
 
       <section className="space-y-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
@@ -108,7 +110,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
               <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-purple-400" />Ofertas <span className="rounded-full border border-purple-500/25 bg-purple-500/10 px-2 py-0.5 text-[10px] text-purple-200">{filteredOffers.length}</span></h2>
-              <p className="mt-1 text-[11px] text-zinc-500">Produtos da vitrine CoreMotion, com fornecedor de origem informado. Checkout em preparação; sem pagamentos.</p>
+              <p className="mt-1 text-[11px] text-zinc-500">Explore equipamentos, compare opções e encontre o produto para o seu esporte.</p>
             </div>
             <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-purple-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>

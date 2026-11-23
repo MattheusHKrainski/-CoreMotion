@@ -1,5 +1,6 @@
 'use client';
 
+import { uniqueOfferModels } from '@/lib/offer-models';
 import { matchesCatalogSearch, catalogSearchScore } from '@/lib/catalog-search';
 import SportPicker from '@/components/shared/SportPicker';
 import { matchesSport } from '@/lib/modalities';
@@ -113,7 +114,8 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
       if (!matchesSport(offer.sport, selectedSport)) return false;
       return true;
     });
-    return sortBy === 'relevance' && normalizedQuery ? filtered.sort((a,b) => catalogSearchScore(normalizedQuery,b.title) - catalogSearchScore(normalizedQuery,a.title)) : sortOffers(filtered, sortBy);
+    const models = uniqueOfferModels(filtered);
+    return sortBy === 'relevance' && normalizedQuery ? models.sort((a,b) => catalogSearchScore(normalizedQuery,b.title) - catalogSearchScore(normalizedQuery,a.title)) : sortOffers(models, sortBy);
   }, [activeOffers, normalizedQuery, selectedCategory, selectedSport, sortBy, selectedTeam]);
 
   const filteredC2CProducts = useMemo(() => {

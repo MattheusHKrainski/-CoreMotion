@@ -67,6 +67,7 @@ export default function ExternalOfferCard({ offer }: ExternalOfferCardProps) {
           </h3>
 
           <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">{offer.description}</p>
+          {offer.voltage_variants && <p className="text-xs font-bold text-red-400">Voltagens: {offer.voltage_variants.map(item=>item.label).join(' / ')}</p>}
         </div>
 
         <div className="pt-2 border-t border-zinc-800/80 flex items-end justify-between gap-2">

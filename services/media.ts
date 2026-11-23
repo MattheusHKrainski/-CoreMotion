@@ -24,3 +24,17 @@ export async function uploadImage(file: File, purpose: 'products' | 'avatars' | 
   if (result.error) throw new Error('Não foi possível enviar a imagem. Tente novamente.');
   return client.storage.from('user-media').getPublicUrl(path).data.publicUrl;
 }
+
+export async function uploadCommunityVideo(file:File):Promise<string> {
+ const {validateVideoFile}=await import('@/lib/media');validateVideoFile(file);
+ const client=getSupabaseClient();if(!client)throw new Error('Entre na sua conta para enviar vídeos.');
+ const auth=await client.auth.getUser();if(auth.error||!auth.data.user)throw new Error('Sua sessão expirou. Entre novamente.');
+ const header=new Uint8Array(await file.slice(0,12).arrayBuffer());
+ const mp4=String.fromCharCode(...header.slice(4,8))==='ftyp';
+ const webm=header[0]===0x1a&&header[1]===0x45&&header[2]===0xdf&&header[3]===0xa3;
+ if((file.type==='video/mp4'&&!mp4)||(file.type==='video/webm'&&!webm))throw new Error('Arquivo de vídeo inválido ou danificado.');
+ const path=`${auth.data.user.id}/community-videos/${crypto.randomUUID()}.${file.type==='video/mp4'?'mp4':'webm'}`;
+ const result=await client.storage.from('user-media').upload(path,file,{contentType:file.type,upsert:false});
+ if(result.error)throw new Error('Não foi possível enviar o vídeo. Verifique sua conexão e tente novamente.');
+ return client.storage.from('user-media').getPublicUrl(path).data.publicUrl;
+}

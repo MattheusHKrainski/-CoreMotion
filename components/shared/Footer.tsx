@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import HelpCenter from './HelpCenter';
-import { HELP_TOPICS, SUPPORT_EMAIL, type HelpTopic } from '@/lib/support';
+import { HELP_SECTIONS, SUPPORT_EMAIL, type HelpTopic } from '@/lib/support';
 import { useCoreMotiom } from '@/lib/store';
 import BrandMark from '@/components/shared/BrandMark';
 import { Mail, Instagram, Youtube } from 'lucide-react';
 
 
 export default function Footer() {
-  const { setActiveView, setSearchQuery, setCheckoutOpen, isVisitor, setAuthModalOpen, setAuthModalMode } = useCoreMotiom();
+  const { setActiveView, setSearchQuery, isVisitor, setAuthModalOpen, setAuthModalMode } = useCoreMotiom();
 
   const [helpFaq, setHelpFaq] = useState(false);
   const [helpTopic, setHelpTopic] = useState<HelpTopic | null>(null);
@@ -106,10 +106,8 @@ export default function Footer() {
             <div className="mb-3.5 flex flex-wrap items-center gap-2"><h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200">Minha Conta</h5><button type="button" onClick={switchAccount} className="text-[10px] font-bold text-red-400 hover:text-red-300">Trocar conta</button></div>
             <ul className="space-y-2.5 text-xs">
               <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Meu Perfil</button></li>
-              <li><button type="button" onClick={() => handleAccountLink('profile')} className="hover:text-white transition-colors">Pedidos de atletas</button></li>
-              <li><a href="/pedidos" className="hover:text-white">Pedidos CoreMotion</a></li>
-              <li><a href="/compras" className="hover:text-white">Carrinho CoreMotion</a></li>
-              <li><button type="button" onClick={() => setCheckoutOpen(true)} className="hover:text-white transition-colors">Carrinho de atletas</button></li>
+              <li><a href="/pedidos" className="hover:text-white">Pedidos</a></li>
+              <li><a href="/compras" className="hover:text-white">Carrinho</a></li>
               <li><button type="button" onClick={() => handleAccountLink('sell')} className="hover:text-white transition-colors">Quero Vender</button></li>
               <li><button type="button" onClick={() => setActiveView('coaches')} className="hover:text-white transition-colors">Treinadores</button></li>
             </ul>
@@ -119,16 +117,11 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-200 mb-3.5">Ajuda & Suporte</h5>
             <ul className="space-y-2.5 text-xs">
-              <li><button type="button" onClick={() => setHelpTopic('general')} className="hover:text-white">Central de Atendimento</button></li>
               <li><button type="button" onClick={() => {setHelpFaq(true);setHelpTopic('general');}} className="hover:text-white">Perguntas frequentes</button></li>
-              {Object.entries(HELP_TOPICS).map(([id, topic]) => <li key={id}><button type="button" onClick={() => setHelpTopic(id as HelpTopic)} className="hover:text-white">{topic.label}</button></li>)}
+              {HELP_SECTIONS.map(({id, label}) => <li key={id}><button type="button" onClick={() => setHelpTopic(id as HelpTopic)} className="hover:text-white">{label}</button></li>)}
             </ul>
           </div>
         </div>
-
-        <p className="py-6 border-b border-zinc-800/80 text-xs leading-relaxed text-zinc-400">
-          Nas compras CoreMotion, a confirmação de pagamento é uma experiência de teste, sem cobrança bancária. Frete e entrega são informados separadamente. Os anúncios entre atletas são negociados diretamente entre as partes.
-        </p>
 
         {/* Bottom Legal Bar */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500">

@@ -8,7 +8,7 @@ it('organizes all staff functions into tabs without the obsolete services/distri
   assert.match(dashboard, /role="tablist"/); assert.match(dashboard, /role="tabpanel"/);
   assert.doesNotMatch(dashboard, /Serviços da Plataforma|Distribuição do Catálogo|confirmPaymentSandbox/);
   assert.match(dashboard, /setInterval\([^\n]+15000/);
-  assert.match(dashboard, /admin && !protectedAccount &&\s*\(\s*<AccountRoleEditor/);
+  assert.match(dashboard, /admin && !archived && !protectedAccount &&\s*\(\s*<AccountRoleEditor/);
   assert.match(dashboard, /rpc\('moderate_account'/);
 });
 it('offers reporting at every requested content surface and a recipient notification inbox', () => {

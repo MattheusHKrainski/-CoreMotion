@@ -1,0 +1,8 @@
+'use client';
+import React, { useState } from 'react';
+import { uploadCommunityVideo } from '@/services/media';
+import CommunityMedia from './CommunityMedia';
+export default function CommunityVideoEditor({value,onChange,onBusyChange}:{value:string;onChange:(value:string)=>void;onBusyChange:(busy:boolean)=>void}) {
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');
+ return <div className="space-y-3 rounded-2xl border border-zinc-800 p-4"><p className="text-sm font-bold">Vídeo da publicação (opcional)</p><label className="block text-xs text-zinc-400">Importar vídeo · MP4 ou WebM, até 50 MB<input type="file" accept="video/mp4,video/webm" disabled={busy} className="mt-3 block max-w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:p-2 file:text-white" onChange={async event=>{const file=event.target.files?.[0];event.target.value='';if(!file)return;setBusy(true);onBusyChange(true);setError('');try{onChange(await uploadCommunityVideo(file));}catch(e){setError(e instanceof Error?e.message:'Vídeo não enviado.');}finally{setBusy(false);onBusyChange(false);}}}/></label><p className="text-xs text-zinc-500">Publique apenas conteúdo que você tem autorização para compartilhar. O vídeo será público; evite dados pessoais e de localização. Descreva o conteúdo no texto da publicação.</p>{value&&<><CommunityMedia video={value} author="prévia"/><button type="button" disabled={busy} onClick={()=>onChange('')} className="text-xs text-red-400">Remover vídeo da publicação</button></>}{busy&&<p role="status" className="text-xs text-zinc-400">Enviando vídeo… Aguarde antes de publicar.</p>}{error&&<p role="alert" className="text-xs text-red-300">{error}</p>}</div>;
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import CommunityAuthorProfile from './community-author-profile';
 import CommunityShare from './community-share';
 import CommunityComments from './community-comments';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,7 +14,8 @@ import { getSupabaseClient } from '@/services/supabaseClient';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import ImageEditor from './shared/ImageEditor';
 import UserAvatar from './shared/UserAvatar';
-import ProductImage from './shared/ProductImage';
+import CommunityMedia from './shared/CommunityMedia';
+import CommunityVideoEditor from './shared/CommunityVideoEditor';
 import ReportButton from './shared/ReportButton';
 
 const CATEGORIES: { value: CommunityPost['category']; label: string }[] = [
@@ -25,6 +27,8 @@ const FOLLOW_LIVE_SOURCES = [{ table: 'community_follows' }] as const;
 
 export default function CommunityView() {
   const { user, communityPosts, createCommunityPost, likedCommunityPosts, likeCommunityPost, isVisitor, setAuthModalOpen, addToast } = useCoreMotiom();
+  const [profileAuthor,setProfileAuthor] = useState<string|null>(null);
+  const [selectedPost,setSelectedPost] = useState<string|null>(null);
   const [feed, setFeed] = useState<'all' | 'following' | 'mine'>('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'recent' | 'popular'>('recent');
@@ -37,6 +41,8 @@ export default function CommunityView() {
   const [content, setContent] = useState('');
   const [postCategory, setPostCategory] = useState<CommunityPost['category']>('treino');
   const [image, setImage] = useState('');
+  const [video,setVideo]=useState('');
+  const [videoUploading,setVideoUploading]=useState(false);
   const [uploading, setUploading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -49,6 +55,8 @@ export default function CommunityView() {
     const frame = requestAnimationFrame(() => document.getElementById(`community-post-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     return () => cancelAnimationFrame(frame);
   }, [communityPosts]);
+
+  useEffect(()=>{if(!selectedPost)return;const frame=requestAnimationFrame(()=>{document.getElementById(`community-post-${selectedPost}`)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});setSelectedPost(null);});return()=>cancelAnimationFrame(frame);},[selectedPost]);
 
   const refreshFollowing = useCallback(async () => {
     if (!userId) return;
@@ -81,13 +89,13 @@ export default function CommunityView() {
     finally { setFollowBusy(null); }
   };
   const publish = async (event: React.FormEvent) => {
-    event.preventDefault(); if (publishing || uploading || loginRequired()) return;
+    event.preventDefault(); if (publishing || uploading || videoUploading || loginRequired()) return;
     if (!content.trim()) return;
     if (image && !validImageUrl(image)) { addToast('Imagem inválida', 'Use um link HTTPS válido.', 'error'); return; }
     setPublishing(true);
     try {
-      const saved = await createCommunityPost({ title: title.trim() || content.trim().slice(0, 100), content: content.trim(), category: postCategory, image_url: image || undefined });
-      if (saved) { setComposing(false); setTitle(''); setContent(''); setImage(''); setFeed('all'); setCategory('all'); }
+      const saved = await createCommunityPost({ title: title.trim() || content.trim().slice(0, 100), content: content.trim(), category: postCategory, image_url: image || undefined, video_url:video||undefined });
+      if (saved) { setComposing(false); setTitle(''); setContent(''); setImage(''); setVideo(''); setFeed('all'); setCategory('all'); }
     } finally { setPublishing(false); }
   };
   const visible = communityPosts.filter(post => (category === 'all' || post.category === category) && (feed !== 'following' || following.includes(post.author_id)) && (feed !== 'mine' || post.author_id === userId) && `${post.title} ${post.content} ${post.author_name}`.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))).sort((a,b) => sort === 'popular' ? b.likes_count - a.likes_count || new Date(b.created_at).getTime() - new Date(a.created_at).getTime() : new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -111,14 +119,14 @@ export default function CommunityView() {
       {visible.length === 0 && <div className="p-10 text-center"><p className="font-bold">{feed === 'following' ? 'Seu feed começa com uma conexão' : 'A conversa pode começar com você'}</p><p className="mt-2 text-sm text-zinc-400">{feed === 'following' ? 'Siga pessoas na aba Para você para ver as próximas publicações delas aqui.' : 'Nenhuma publicação nesta seleção. Compartilhe um treino, uma dúvida ou uma conquista.'}</p></div>}
       {visible.map(post => <article id={`community-post-${post.id}`} key={post.id} className="scroll-mt-24 p-4 sm:p-5 hover:bg-zinc-900/60 transition-colors">
         <div className="flex items-start gap-3">
-          <UserAvatar src={post.author_id === userId ? user?.avatar_url : post.author_avatar} name={post.author_name} />
+          <button type="button" aria-label={`Ver perfil de ${post.author_name}`} onClick={()=>setProfileAuthor(post.author_id)} className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"><UserAvatar src={post.author_id === userId ? user?.avatar_url : post.author_avatar} name={post.author_name} /></button>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center justify-between gap-2"><div><span className="text-sm font-bold">{post.author_name}</span><p className="text-xs text-zinc-500">{post.author_badge} · {new Date(post.created_at).toLocaleDateString('pt-BR')}</p></div>
+            <div className="flex flex-wrap items-center justify-between gap-2"><div><button type="button" onClick={()=>setProfileAuthor(post.author_id)} className="text-left text-sm font-bold hover:text-red-400 hover:underline focus-visible:outline focus-visible:outline-red-500">{post.author_name}</button><p className="text-xs text-zinc-500">{post.author_badge} · {new Date(post.created_at).toLocaleDateString('pt-BR')}</p></div>
               {post.author_id !== userId && /^[0-9a-f-]{36}$/i.test(post.author_id) && <button type="button" aria-pressed={following.includes(post.author_id)} disabled={Boolean(followBusy)} onClick={() => void toggleFollow(post.author_id)} className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold hover:bg-zinc-800 disabled:opacity-50">{followBusy === post.author_id ? 'Salvando…' : following.includes(post.author_id) ? 'Deixar de seguir' : 'Seguir'}</button>}
             </div>
             {post.title !== post.content.trim().slice(0, 100) && <h2 className="mt-3 break-words text-base font-bold">{post.title}</h2>}
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300">{post.content}</p>
-            {post.image_url && <div className="relative mt-4 aspect-video overflow-hidden rounded-2xl border border-zinc-800"><ProductImage src={post.image_url} alt={`Imagem de ${post.author_name}`} sizes="(max-width: 640px) 85vw, 640px" /></div>}
+            <CommunityMedia image={post.image_url} video={post.video_url} author={post.author_name}/>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-400">
               <div className="flex flex-wrap items-center gap-2">
               <button type="button" aria-expanded={replyTo===post.id} aria-controls={`comments-${post.id}`} onClick={() => { setReplyTo(replyTo === post.id ? null : post.id); }} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-white"><MessageCircle className="h-4 w-4" />{post.comments?.length ?? 0} respostas</button>
@@ -135,15 +143,17 @@ export default function CommunityView() {
     </div>
     </div>
     <aside aria-label="Descubra conversas" className="hidden space-y-4 xl:sticky xl:top-24 xl:block"><section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"><h2 className="text-xs font-black uppercase tracking-wide text-zinc-400">Descubra assuntos</h2><div className="mt-4 space-y-4">{CATEGORIES.map(topic=><button type="button" key={topic.value} onClick={()=>{setCategory(topic.value);setFeed('all');}} className="flex w-full items-center gap-3 text-left"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-950 text-sm font-black text-red-400">{topic.label[0]}</span><span><strong className="block text-xs">c/{topic.label}</strong><span className="mt-1 block text-[10px] text-zinc-500">{communityPosts.filter(post=>post.category===topic.value).length} publicações no feed carregado</span></span></button>)}</div></section><section className="rounded-2xl border border-zinc-800 p-5"><h2 className="text-sm font-bold">Jogue junto, respeite sempre.</h2><p className="mt-3 text-xs leading-relaxed text-zinc-500">Troque experiências sem ataques pessoais. Não compartilhe dados sensíveis. Denuncie conteúdos suspeitos pelo botão da publicação.</p></section></aside>
-    {composing && createPortal(<dialog ref={composer} onCancel={event => { if (publishing || uploading) event.preventDefault(); else setComposing(false); }} aria-labelledby="compose-title" className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6 text-white shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm">
-      <div className="mb-5 flex items-center justify-between"><h2 id="compose-title" className="text-xl font-black">Criar publicação</h2><button type="button" disabled={publishing || uploading} onClick={() => setComposing(false)} aria-label="Fechar publicação" className="rounded-full p-2 hover:bg-zinc-800"><X className="h-5 w-5" /></button></div>
+    {profileAuthor && <CommunityAuthorProfile key={profileAuthor} authorId={profileAuthor} posts={communityPosts} own={profileAuthor===userId&&user?{name:user.name,avatar_url:user.avatar_url}:undefined} following={following.includes(profileAuthor)} busy={Boolean(followBusy)} onFollow={()=>void toggleFollow(profileAuthor)} onClose={()=>setProfileAuthor(null)} onSelect={postId=>{setProfileAuthor(null);setFeed('all');setCategory('all');setQuery('');setSelectedPost(postId);setReplyTo(postId);}} />}
+    {composing && createPortal(<dialog ref={composer} onCancel={event => { if (publishing || uploading || videoUploading) event.preventDefault(); else setComposing(false); }} aria-labelledby="compose-title" className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6 text-white shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm">
+      <div className="mb-5 flex items-center justify-between"><h2 id="compose-title" className="text-xl font-black">Criar publicação</h2><button type="button" disabled={publishing || uploading || videoUploading} onClick={() => setComposing(false)} aria-label="Fechar publicação" className="rounded-full p-2 hover:bg-zinc-800"><X className="h-5 w-5" /></button></div>
       <form onSubmit={publish} className="space-y-4">
         <div className="flex items-center gap-3"><UserAvatar src={user?.avatar_url} name={user?.name || 'Sua conta'} /><span className="text-sm font-bold">{user?.name}</span></div>
         <input aria-label="Título (opcional)" maxLength={120} placeholder="Título (opcional)" value={title} onChange={event => setTitle(event.target.value)} className="w-full rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm" />
         <textarea autoFocus required aria-label="Conteúdo da publicação" rows={6} maxLength={5000} placeholder="O que está acontecendo no seu esporte?" value={content} onChange={event => setContent(event.target.value)} className="w-full resize-y rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm" />
         <label className="block text-xs text-zinc-400">Assunto<select value={postCategory} onChange={event => setPostCategory(event.target.value as CommunityPost['category'])} className="ml-3 rounded-xl border border-zinc-700 bg-zinc-900 p-2 text-white">{CATEGORIES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-        <ImageEditor purpose="community" value={image} onChange={setImage} onBusyChange={setUploading} />
-        <button type="submit" disabled={publishing || uploading || !content.trim()} className="w-full rounded-full bg-red-600 py-3 text-sm font-bold disabled:opacity-50">{publishing ? 'Publicando…' : 'Publicar'}</button>
+        <fieldset disabled={videoUploading||publishing}><ImageEditor purpose="community" value={image} onChange={setImage} onBusyChange={setUploading} /></fieldset>
+        <fieldset disabled={uploading||publishing}><CommunityVideoEditor value={video} onChange={setVideo} onBusyChange={setVideoUploading}/></fieldset>
+        <button type="submit" disabled={publishing || uploading || videoUploading || !content.trim()} className="w-full rounded-full bg-red-600 py-3 text-sm font-bold disabled:opacity-50">{publishing ? 'Publicando…' : 'Publicar'}</button>
       </form>
     </dialog>, document.body)}
   </div>;

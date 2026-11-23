@@ -257,7 +257,7 @@ interface ProductFilters {
 }
 
 export async function getProductsFromDb(filters?: ProductFilters): Promise<Product[]> {
-  const conditions: string[] = [];
+  const conditions: string[] = ['NOT public.is_account_trashed(seller_id)'];
   const params: unknown[] = [];
   const add = (sql: string, value: unknown) => {
     params.push(value);
@@ -291,7 +291,7 @@ export async function getProductsFromDb(filters?: ProductFilters): Promise<Produ
 }
 
 export async function getProductByIdFromDb(id: string): Promise<Product | null> {
-  const rows = await queryDb<DbProductRow>(`SELECT * FROM public.products WHERE id = $1 LIMIT 1`, [id]);
+  const rows = await queryDb<DbProductRow>(`SELECT * FROM public.products WHERE id = $1 AND NOT public.is_account_trashed(seller_id) LIMIT 1`, [id]);
   return rows.length > 0 ? mapDbProductToModel(rows[0]) : null;
 }
 
