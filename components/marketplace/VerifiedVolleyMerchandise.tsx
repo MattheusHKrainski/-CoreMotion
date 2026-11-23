@@ -5,6 +5,9 @@ const VERIFIED_REFERENCES: Record<string, { name: string; price: string; url: st
   'superlega-italia-2026-27:allianz-milano': [
     { name: 'Camisa de jogo Away Allianz Milano 2026/27 (Erreà)', price: '€ 89', url: 'https://powervolleymilano.shop/prodotto/maglia-gara-away-2026-27/', note: 'Personalização e tamanhos sujeitos à loja' },
   ],
+  'superlega-italia-2026-27:valsa-group-modena': [
+    { name: 'Camisa Modena Volley Coppa CEV masculina 2026/27 (Ninesquared)', price: '€ 80', url: 'https://shop.modenavolley.it/prodotto/maglia-coppa-cev-modena-volley-2026-27/', note: 'Personalização e tamanhos disponíveis na página do fornecedor' },
+  ],
   'superlega-italia-2026-27:itas-trentino-trento': [
     { name: '1ª camisa de jogo Itas Trentino — masculina', price: '€ 80', url: 'https://store.trentinovolley.it/products/1-maglia-da-gara-uomo', note: 'Temporada e estoque devem ser confirmados na loja' },
   ],
