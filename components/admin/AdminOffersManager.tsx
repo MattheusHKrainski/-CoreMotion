@@ -649,7 +649,7 @@ export default function AdminOffersManager() {
                 <label className="block text-xs font-semibold text-zinc-300">Clube da liga (opcional)</label>
                 <select value={form.team_id} onChange={event => setForm(f => ({ ...f, team_id: event.target.value }))} className={inputCls}>
                   <option value="">Produto sem clube associado</option>
-                  {clubs.map(club => <option key={club.id} value={club.id}>{club.club_name} · {club.league.replace(/-2026.*$/, '')}</option>)}
+                  {clubs.map(club => <option key={club.id} value={club.id}>{club.club_name} · {club.league === 'brasileirao-2026' ? 'Brasileirão Série A' : club.league === 'superliga-brasil-masculina-2026-27' ? 'Superliga A Masculina' : club.league === 'nbb-brasil-2026-27' ? 'NBB CAIXA' : club.league}</option>)}
                 </select>
                 <p className="text-[11px] text-zinc-500">Vincule somente produtos que indiquem claramente o clube na descrição ou no nome do fornecedor.</p>
               </div>

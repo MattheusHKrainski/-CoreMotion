@@ -27,7 +27,7 @@ test('400 additional product records sourced from real official product URLs and
   }
 });
 
-test('Verified league directory has 44 clubs with publicly readable RLS', () => {
+test('Brazilian league directory uses current 50-team official competition coverage and public RLS', () => {
   const sql=read('supabase/migrations/20261122205716_curated_club_directory_and_verified_galleries.sql');
   assert.match(sql, /ALTER TABLE public\.catalog_teams ENABLE ROW LEVEL SECURITY/);
   assert.match(sql, /GRANT SELECT ON public\.catalog_teams TO anon,authenticated/);
@@ -35,7 +35,12 @@ test('Verified league directory has 44 clubs with publicly readable RLS', () => 
   for(const club of ['Flamengo','São Paulo','Remo','Chapecoense','Sir Susa Scai Perugia','Vero Volley Monza','Osaka Bluteon','Nippon Steel Sakai Blazers']) assert.ok(sql.includes(club),club);
   assert.match(sql,/image_urls text\[\]/);
   const component=read('components/marketplace/CatalogTeams.tsx');
-  for(const name of ['brasileirao-2026','superlega-italia-2026-27','svleague-japao-2026-27'])assert.ok(component.includes(name));
+  for(const name of ['brasileirao-2026','superliga-brasil-masculina-2026-27','nbb-brasil-2026-27'])assert.ok(component.includes(name));
+  assert.doesNotMatch(component,/superlega-italia-2026-27|svleague-japao-2026-27/);
+  const brazilianMigration=read('supabase/migrations/20261123045316_replace_foreign_leagues_with_brazilian_superliga_and_nbb_2026_27.sql');
+  assert.match(brazilianMigration,/DELETE FROM public\.catalog_teams WHERE league IN/);
+  for(const name of ['Sada Cruzeiro','Vôlei Renata','Norde Vôlei','Sesi Franca','Flamengo','Pato Basquete','Unifacisa'])assert.ok(brazilianMigration.includes(name));
+  assert.match(brazilianMigration,/Expected 50 clubs 20\+12\+18/);
   assert.match(read('components/marketplace/MarketplaceView.tsx'),/offer\.team_id !== selectedTeam\.id/);
 });
 
