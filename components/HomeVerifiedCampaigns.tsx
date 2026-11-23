@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Pause, Play, Tag } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, Tag } from 'lucide-react';
 import type { ExternalOffer } from '@/lib/types';
 import ProductImage from './shared/ProductImage';
 
@@ -75,7 +75,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
     </div>
     <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#08080b] shadow-2xl">
       <div key={active.id} className={['relative isolate grid min-h-[440px] overflow-hidden bg-gradient-to-br lg:grid-cols-[1fr_0.95fr]', active.theme].join(' ')}>
-        <div aria-hidden="true" className={['pointer-events-none absolute -left-12 top-4 select-none text-[clamp(8rem,21vw,22rem)] font-black tracking-[-0.12em]',active.backdrop].join(' ')}>CM</div>
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden"><svg viewBox="0 0 920 520" preserveAspectRatio="xMidYMid slice" className="h-full w-full opacity-50"><path d="M-90 460Q180 80 520 240T1010 20M-90 490Q180 110 520 270T1010 50M-90 520Q180 140 520 300T1010 80" stroke="#fff" strokeWidth="2" fill="none" strokeDasharray="13 17" opacity=".35"/><path d="M40 85L130 45 156 135 238 112M655 410l92-80 86 57 52-130" stroke="#fa3a51" strokeWidth="14" fill="none" strokeLinecap="round" strokeLinejoin="round"/><circle cx="760" cy="110" r="160" stroke="#fff" strokeWidth="2" fill="none" opacity=".16"/><circle cx="760" cy="110" r="125" stroke="#fff" strokeWidth="1" fill="none" opacity=".25"/><path d="M450 0L640 520" stroke="#fff" strokeWidth="30" opacity=".04"/></svg><div className="absolute -bottom-10 left-0 -rotate-12 text-[clamp(8rem,21vw,22rem)] font-black italic tracking-[-.15em] text-white/[.055]">MOVE</div><div className="absolute right-4 top-5 -rotate-6 border-2 border-white/20 px-4 py-1 text-xs font-black uppercase tracking-[.4em] text-white/40">CoreMotion / 26</div></div>
         <div className="relative z-10 flex flex-col justify-between gap-6 px-6 py-8 sm:px-10 sm:py-12">
           <div><span className={['text-[10px] font-black uppercase tracking-[0.23em]',active.accent].join(' ')}>{active.kicker} / BLACK FRIDAY</span>
             <h3 className="mt-6 whitespace-pre-line text-[clamp(3.2rem,7.2vw,7rem)] font-black uppercase leading-[0.87] tracking-[-0.07em] text-white">{active.headline}</h3>
@@ -86,15 +86,15 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
             <span className="text-[11px] text-zinc-400">{active.products.length} produto(s) nesta modalidade</span>
           </div>
         </div>
-        <div className="relative grid min-h-[360px] grid-rows-[minmax(210px,1fr)_auto] bg-[#f2f2f1] text-zinc-950 lg:min-h-[440px]">
+        <div className="relative grid min-h-[360px] grid-rows-[minmax(210px,1fr)_auto] bg-[#17171b] text-white lg:min-h-[440px]"><div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[70%] bg-[radial-gradient(ellipse_at_50%_55%,rgba(225,29,72,.15),transparent_66%)]" />
           <button type="button" onClick={() => onSelectOffer?.(primary)} aria-label={'Detalhes de ' + primary.title} className="group relative min-h-[240px] w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500">
             <ProductImage src={primary.image_url} alt={primary.title} sizes="(max-width:1024px) 90vw, 46vw" />
             {pct !== null && <span className="absolute left-4 top-4 rounded-lg bg-red-600 px-3 py-2 text-sm font-black text-white">-{pct}%</span>}
-            <span className="absolute right-4 top-4 rounded-full border border-black/10 bg-white/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-800">{primary.store_name}</span>
+            <span className="absolute right-4 top-4 rounded-full border border-white/20 bg-zinc-950/85 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white">{primary.store_name}</span>
           </button>
-          <div className="relative z-10 flex flex-wrap items-end justify-between gap-3 border-t border-black/10 bg-white/90 px-5 py-4 sm:px-6">
-            <div><h4 className="max-w-md text-sm font-black leading-tight">{primary.title}</h4><p className="mt-2 flex flex-wrap items-baseline gap-3">{primary.original_price && primary.original_price > primary.price && <span className="text-xs text-zinc-500 line-through">{currency(primary.original_price)}</span>}<span className="text-2xl font-black">{currency(primary.price)}</span></p></div>
-            <a href={primary.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-black/20 px-3 py-2 text-[10px] font-black text-zinc-950 hover:bg-zinc-100">Conferir na loja <ExternalLink className="h-3.5 w-3.5" /></a>
+          <div className="relative z-10 flex flex-wrap items-end justify-between gap-3 border-t border-white/10 bg-[#17171b] px-5 py-4 text-white sm:px-6">
+            <div><h4 className="max-w-md text-sm font-black leading-tight">{primary.title}</h4><p className="mt-2 flex flex-wrap items-baseline gap-3">{primary.original_price && primary.original_price > primary.price && <span className="text-xs text-zinc-400 line-through">{currency(primary.original_price)}</span>}<span className="text-2xl font-black">{currency(primary.price)}</span></p></div>
+            <button type="button" onClick={() => onSelectOffer?.(primary)} className="inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-2 text-[10px] font-black text-white hover:bg-white/10">Ver no CoreMotion <ArrowRight className="h-3.5 w-3.5" /></button>
           </div>
         </div>
       </div>
