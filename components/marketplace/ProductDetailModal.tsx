@@ -116,6 +116,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           {/* Left Column: Product Gallery */}
           <div className="space-y-4">
             {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência, não do exemplar anunciado. O modelo, a cor e o estado de conservação precisam ser confirmados com fotos do item real.</p>}
+            {product.images[0]?.includes('upload.wikimedia.org') && <p className="text-xs text-zinc-400">Fotografia real de item usado do Wikimedia Commons (Joxemai, CC BY-SA). Créditos e link de licença na descrição. Este exemplar não está à venda no CoreMotion.</p>}
             <div className="group relative aspect-square w-full bg-[#0E1017] rounded-xl overflow-hidden border border-[#232836] shadow-inner">
               <img
                 key={selectedImgIndex}
@@ -248,7 +249,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                       getConditionMeta(product.condition).pillClass
                     }`}
                   >
-                    {getConditionMeta(product.condition).badge}
+                    {product.image_is_reference ? 'Conservação não verificada' : getConditionMeta(product.condition).badge}
                   </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
@@ -258,7 +259,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
               {/* Price Block */}
               <div className="p-4 rounded-xl bg-[#0E1017] border border-[#232836]">
-                {product.original_price && product.original_price > product.price && (
+                {hasIdentifiedSeller && product.original_price && product.original_price > product.price && (
                   <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-1">
                     <span>Valor pago quando novo:</span>
                     <span className="line-through font-medium">{formatPrice(product.original_price)}</span>
