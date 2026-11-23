@@ -50,20 +50,20 @@ export default function CatalogTeams({offers,selected,onSelect}: {
       result.set(offer.team_id,(result.get(offer.team_id)||0)+1);
     return result;
   },[offers]);
-  return <div className="space-y-3 rounded-2xl border border-red-900/40 bg-gradient-to-b from-red-950/20 to-zinc-950/60 p-3.5 shadow-inner" aria-label="Filtros de campeonato e clube">
-    <h3 className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-zinc-100"><Trophy className="h-3.5 w-3.5 text-red-400"/>Campeonato e clube</h3>
+  return <div className="space-y-3 border-t border-zinc-800 pt-4" aria-label="Filtros de campeonato e clube">
+    <h3 className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-zinc-100"><Trophy className="h-3.5 w-3.5 text-zinc-500"/>Campeonato e clube</h3>
     <label className="block text-[11px] text-zinc-500">Campeonato
       <select aria-label="Campeonato" value={league} onChange={event=>{
         const next=event.target.value;setLeague(next);
         if(selected && selected.league!==next)onSelect(null);
-      }} className="mt-1.5 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-200 focus:border-red-500 focus:outline-none">
+      }} className="mt-1.5 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-200 focus:border-zinc-500 focus:outline-none">
         {LEAGUES.map(l=><option value={l.id} key={l.id}>{l.label}</option>)}
       </select>
     </label>
     <label className="block text-[11px] text-zinc-500">Equipe
       <select aria-label="Filtrar por clube" value={selected?.id||''}
         onChange={event=>onSelect(teams.find(team=>team.id===event.target.value)||null)}
-        className="mt-1.5 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-200 focus:border-red-500 focus:outline-none">
+        className="mt-1.5 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-200 focus:border-zinc-500 focus:outline-none">
         <option value="">Todos os clubes</option>
         {available.map(team=><option key={team.id} value={team.id}>{team.club_name} {counts.get(team.id)?'· '+counts.get(team.id)+' ofertas':''}</option>)}
       </select>
