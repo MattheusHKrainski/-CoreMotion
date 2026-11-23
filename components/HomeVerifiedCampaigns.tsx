@@ -82,7 +82,7 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
         <p className="mt-2 text-xs text-zinc-400">Campanhas por modalidade com produtos e preços do catálogo.</p></div>
       <div className="flex items-center gap-2">
         <button type="button" aria-label="Campanha anterior" onClick={() => move(-1)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10"><ChevronLeft className="h-4 w-4"/></button>
-        <span className="min-w-12 text-center text-xs tabular-nums text-zinc-300">{index % campaigns.length + 1} / {campaigns.length}</span>
+        
         <button type="button" aria-label="Próxima campanha" onClick={() => move(1)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10"><ChevronRight className="h-4 w-4"/></button>
         <button type="button" disabled={reduceMotion} aria-label={paused ? 'Retomar campanhas' : 'Pausar campanhas'} aria-pressed={paused} onClick={() => setPaused(p => !p)} className="rounded-full border border-white/20 p-2 text-white hover:bg-white/10 disabled:opacity-40">{paused ? <Play className="h-4 w-4"/> : <Pause className="h-4 w-4"/>}</button>
       </div>
@@ -97,7 +97,6 @@ export default function HomeVerifiedCampaigns({ offers, onSelectOffer }: Props) 
             <p className="mt-6 max-w-md text-sm font-medium leading-6 text-white/85 sm:text-base">{active.subtitle}</p></div>
           <div className="flex flex-wrap items-center gap-3">
             <button type="button" onClick={() => onSelectOffer?.(primary)} className={'inline-flex items-center gap-3 rounded-md px-6 py-3.5 text-xs font-black uppercase tracking-wide text-black transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ' + active.accent}>Conhecer produto <ArrowRight className="h-4 w-4"/></button>
-            <span className="text-[11px] font-bold text-white/75">{active.products.length} produtos no catálogo</span>
           </div>
         </div>
         <div className="relative z-10 grid min-h-[360px] grid-cols-[1.4fr_.8fr] grid-rows-2 gap-1.5 p-2 sm:gap-2 sm:p-3 lg:min-h-[500px]">

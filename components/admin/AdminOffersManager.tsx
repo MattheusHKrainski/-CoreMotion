@@ -221,8 +221,6 @@ export default function AdminOffersManager() {
 
   if (!isStaffRole(user?.role)) return null;
 
-  const activeCount = offers.filter((o) => o.is_active !== false).length;
-  const pausedCount = offers.length - activeCount;
 
   const uniqueStores = Array.from(new Set(offers.map((o) => o.store_name)));
 
@@ -400,10 +398,7 @@ export default function AdminOffersManager() {
               <Tag className="w-3 h-3" />
               Gestão de Ofertas & Afiliados
             </span>
-            <span className="text-xs text-zinc-400">
-              <strong className="text-white">{activeCount}</strong> ativas
-              {pausedCount > 0 ? ` • ${pausedCount} pausadas` : ''}
-            </span>
+
           </div>
           <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
             Central de Ofertas e Links de Promoção
@@ -843,7 +838,7 @@ export default function AdminOffersManager() {
                 : 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800'
             }`}
           >
-            Todas ({offers.length})
+            Todas
           </button>
           {uniqueStores.map((st) => (
             <button
@@ -1019,7 +1014,7 @@ export default function AdminOffersManager() {
           })}
         </div>
       )}
-      {filteredOffers.length > visibleCount && <button type="button" onClick={() => setVisibleCount(n => n + 12)} className="rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-zinc-700">Mostrar mais ({filteredOffers.length - visibleCount} restantes)</button>}
+      {filteredOffers.length > visibleCount && <button type="button" onClick={() => setVisibleCount(n => n + 12)} className="rounded-xl bg-zinc-800 px-5 py-2.5 text-sm font-bold text-white hover:bg-zinc-700">Mostrar mais</button>}
     </section>
   );
 }
