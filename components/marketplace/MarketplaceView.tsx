@@ -12,7 +12,6 @@ import { getOfferDiscountPercent } from '@/lib/offer-utils';
 import ProductCard from './ProductCard';
 import ExternalOfferCard from './ExternalOfferCard';
 import CatalogTeams, { type CatalogTeam } from './CatalogTeams';
-import ClubUniformPreviewGrid from './ClubUniformPreviewGrid';
 import {
   ArrowUpDown,
   Check,
@@ -161,10 +160,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
     else setActiveView('sell');
   };
 
-  const categoryCount = (category: string) =>
-    activeOffers.filter((offer) => matchesCategory(offer.category, category)).length +
-    products.filter((product) => product.product_type === 'c2c' && product.status === 'active' && matchesCategory(product.category, category)).length;
-
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-3 py-6 sm:px-6 lg:px-8">
       <header className="flex flex-col justify-between gap-4 border-b border-zinc-800/80 pb-5 sm:flex-row sm:items-end">
@@ -238,15 +233,15 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <div>
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Categorias</h3>
               <div className="space-y-1 text-xs">
-                <button type="button" onClick={() => setSelectedCategory('all')} className={`flex w-full items-center justify-between rounded-full px-3 py-1.5 text-left ${selectedCategory === 'all' ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}><span>Todas</span><span className="text-[10px] text-zinc-500">{activeOffers.length + products.filter((product) => product.product_type === 'c2c').length}</span></button>
-                {CATEGORIES.map((category) => <button key={category} type="button" onClick={() => setSelectedCategory(category)} className={`flex w-full items-center justify-between rounded-full px-3 py-1.5 text-left ${selectedCategory === category ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}><span>{category}</span><span className="text-[10px] text-zinc-500">{categoryCount(category)}</span></button>)}
+                <button type="button" onClick={() => setSelectedCategory('all')} className={`flex w-full items-center justify-between rounded-full px-3 py-1.5 text-left ${selectedCategory === 'all' ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}><span>Todas</span></button>
+                {CATEGORIES.map((category) => <button key={category} type="button" onClick={() => setSelectedCategory(category)} className={`flex w-full items-center justify-between rounded-full px-3 py-1.5 text-left ${selectedCategory === category ? 'border border-red-500/20 bg-red-600/15 font-bold text-red-400' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'}`}><span>{category}</span></button>)}
               </div>
             </div>
 
             <div>
               <SportPicker value={selectedSport} onChange={value => setSelectedSport(value || 'all')} options={[...products.map(p => p.sport), ...activeOffers.map(o => o.sport)]} />
             </div>
-            <CatalogTeams offers={activeOffers} selected={selectedTeam} onSelect={team => {
+            <CatalogTeams selected={selectedTeam} onSelect={team => {
               setSelectedTeam(team);
               setSelectedTab(team ? 'offers' : 'all');
               if (team) { setSelectedCategory('all');setSelectedSport('all');setSelectedCondition('all');setSearchQuery(''); }
@@ -267,18 +262,13 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         </aside>
 
         <div className="space-y-7 md:col-span-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-800/60 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-400">
-            <span aria-live="polite">{displayedCount} resultado(s) · {hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}{hasC2C && hasOffers ? ' + ' : ''}{hasOffers ? `${filteredOffers.length} em ofertas` : ''}</span>
-            {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
-          </div>
-
-          {selectedTeam && <ClubUniformPreviewGrid teamId={selectedTeam.id} />}
+          {selectedCategory !== 'all' && <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 px-4 py-2.5 text-xs font-medium text-red-400">Categoria: {selectedCategory}</div>}
 
           {displayedCount === 0 ? (
             <div className="space-y-4 rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-12 text-center shadow-xl">
               <Search className="mx-auto h-8 w-8 text-zinc-600" />
               <h2 className="text-sm font-bold text-white">Nenhum resultado encontrado</h2>
-              <p className="mx-auto max-w-md text-xs text-zinc-400">{selectedTeam ? 'Ainda não há produtos com venda confirmada deste clube na CoreMotion. Os uniformes identificados aparecem acima, quando disponíveis; confira outros clubes ou limpe o filtro.' : 'Tente ajustar a busca, categoria ou modalidade selecionada para explorar mais equipamentos.'}</p>
+              <p className="mx-auto max-w-md text-xs text-zinc-400">{selectedTeam ? 'Ainda não há ofertas cadastradas para este clube. Confira outros clubes ou limpe o filtro.' : 'Tente ajustar a busca, categoria ou modalidade selecionada para explorar mais equipamentos.'}</p>
               <button type="button" onClick={resetFilters} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-red-500">Limpar filtros</button>
             </div>
           ) : (
@@ -287,7 +277,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                 <section aria-labelledby="c2c-listings-title" className="space-y-4">
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
-                      <h2 id="c2c-listings-title" className="flex items-center gap-2 text-base font-black text-white"><Layers className="h-4 w-4 text-red-400" />Equipamentos de Atletas <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">{filteredC2CProducts.length}</span></h2>
+                      <h2 id="c2c-listings-title" className="flex items-center gap-2 text-base font-black text-white"><Layers className="h-4 w-4 text-red-400" />Equipamentos de Atletas</h2>
                       <p className="mt-1 text-[11px] text-zinc-500">Vendidos diretamente por atletas — novos sem uso ou já usados, com tempo de uso e estado real descritos pelo dono.</p>
                     </div>
                   </div>
@@ -297,7 +287,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   {visibleCount < filteredC2CProducts.length && (
                     <div className="flex justify-center border-t border-zinc-800/80 pt-5">
                       <button type="button" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)} className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg shadow-red-950/30 transition hover:bg-red-500">
-                        Mostrar mais ({Math.min(PAGE_SIZE, filteredC2CProducts.length - visibleCount)})
+                        Mostrar mais
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </div>
@@ -312,7 +302,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                 <section aria-labelledby="partner-offers-title" className="space-y-4">
                   <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
                     <div>
-                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-200">{filteredOffers.length}</span></h2>
+                      <h2 id="partner-offers-title" className="flex items-center gap-2 text-base font-black text-white"><Tag className="h-4 w-4 text-red-400" />Ofertas</h2>
                       <p className="mt-1 text-[11px] text-zinc-500">Consulte fotos, tamanhos e preços de referência de cada produto.</p>
                     </div>
                     {isStaffRole(user?.role) && (
@@ -332,7 +322,7 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
                   {visibleOffers < filteredOffers.length && (
                     <div className="flex justify-center pt-4">
                       <button type="button" onClick={() => setVisibleOffers(count => count + PAGE_SIZE)} className="rounded-full bg-red-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-red-500">
-                        Mostrar mais ({Math.min(PAGE_SIZE, filteredOffers.length - visibleOffers)})
+                        Mostrar mais
                       </button>
                     </div>
                   )}
