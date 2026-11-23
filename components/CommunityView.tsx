@@ -3,7 +3,7 @@
 import CommunityComments from './community-comments';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowUp, Search, Flame, MessageCircle, Plus, Share2, X } from 'lucide-react';
+import { ArrowUp, Heart, Search, Flame, MessageCircle, Plus, Share2, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import type { CommunityPost } from '@/lib/types';
 import { copyText } from '@/lib/clipboard';
@@ -113,7 +113,10 @@ export default function CommunityView() {
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-300">{post.content}</p>
             {post.image_url && <div className="relative mt-4 aspect-video overflow-hidden rounded-2xl border border-zinc-800"><ProductImage src={post.image_url} alt={`Imagem de ${post.author_name}`} sizes="(max-width: 640px) 85vw, 640px" /></div>}
             <div className="mt-4 flex items-center justify-between gap-3 text-xs text-zinc-400">
-              <button type="button" onClick={() => void likeCommunityPost(post.id)} aria-label={likedCommunityPosts.includes(post.id) ? 'Remover curtida' : 'Curtir publicação'} aria-pressed={likedCommunityPosts.includes(post.id)} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-red-400"><ArrowUp className={`h-4 w-4 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500 text-red-500' : ''}`} />{post.likes_count}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => void likeCommunityPost(post.id)} aria-label={likedCommunityPosts.includes(post.id) ? 'Remover apoio à publicação' : 'Apoiar publicação'} aria-pressed={likedCommunityPosts.includes(post.id)} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-red-400 focus-visible:outline focus-visible:outline-red-500"><ArrowUp aria-hidden="true" className={`h-4 w-4 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500 text-red-500' : ''}`} />{post.likes_count}</button>
+              <button type="button" onClick={() => void likeCommunityPost(post.id)} aria-label={likedCommunityPosts.includes(post.id) ? 'Remover curtida' : 'Curtir publicação'} aria-pressed={likedCommunityPosts.includes(post.id)} className={`flex items-center gap-2 rounded-full border px-3 py-2 transition-colors focus-visible:outline focus-visible:outline-red-500 ${likedCommunityPosts.includes(post.id) ? 'border-red-500/40 bg-red-950/40 text-red-400' : 'border-transparent bg-zinc-800/70 text-zinc-300 hover:text-red-400'}`}><Heart aria-hidden="true" className={`h-4 w-4 ${likedCommunityPosts.includes(post.id) ? 'fill-red-500 text-red-500' : ''}`} /><span>{likedCommunityPosts.includes(post.id) ? 'Curtido' : 'Curtir'}</span><span>{post.likes_count}</span></button>
+              </div>
               <button type="button" aria-expanded={replyTo===post.id} aria-controls={`comments-${post.id}`} onClick={() => { setReplyTo(replyTo === post.id ? null : post.id); }} className="flex items-center gap-2 rounded-full bg-zinc-800/70 px-3 py-2 hover:text-white"><MessageCircle className="h-4 w-4" />{post.comments?.length ?? 0} respostas</button>
               <button type="button" aria-label="Compartilhar comunidade" onClick={async () => { const copied = await copyText(window.location.href); addToast(copied ? 'Link copiado' : 'Cópia indisponível', copied ? 'Endereço da página copiado.' : 'Copie o endereço na barra do navegador.', copied ? 'success' : 'info'); }}><Share2 className="h-4 w-4" /></button>
             </div>

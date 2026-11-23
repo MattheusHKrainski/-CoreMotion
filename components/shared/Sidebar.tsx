@@ -426,15 +426,10 @@ export default function Sidebar({ className = '', onOpenFavorites }: SidebarProp
           <button type="button" onClick={() => handleNavClick('home')} aria-label="Voltar à tela principal" className="rounded-xl focus-visible:outline focus-visible:outline-red-500"><BrandMark className="h-10 w-10" /></button>
         </div>
 
-        {isStaffRole(user?.role) && <nav aria-label="Navegação da loja" className="hidden items-center gap-6 text-xs font-semibold md:flex">
-          <button type="button" onClick={() => handleNavClick('home')} className="text-red-400 hover:text-white">Black Friday</button>
-          <button type="button" onClick={() => handleNavClick('marketplace')} className="hover:text-red-400">CoreShop</button>
-          <button type="button" onClick={() => handleNavClick('community')} className="hover:text-red-400">Comunidade</button>
-        </nav>}
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <form role="search" onSubmit={event => { event.preventDefault(); setActiveView('marketplace'); }} className="hidden min-[500px]:flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-2">
+          <form role="search" onSubmit={event => { event.preventDefault(); setActiveView('marketplace'); window.dispatchEvent(new Event('coremotion:catalog-search')); }} className="flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-2">
             <button type="submit" aria-label="Pesquisar produtos"><Search className="h-4 w-4 text-zinc-400" /></button>
-            <input aria-label="Buscar no CoreShop" placeholder="Buscar" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="w-20 lg:w-32 bg-transparent text-xs outline-none" />
+            <input type="search" aria-label="Buscar no CoreShop" placeholder="Buscar" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="w-16 sm:w-24 lg:w-40 bg-transparent text-xs outline-none" />
           </form>
           <button type="button" onClick={onOpenFavorites} aria-label="Ver favoritos e salvos" className="relative rounded-full p-2 text-zinc-300 hover:bg-zinc-800 hover:text-white"><Heart className="h-5 w-5" />{favorites.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-[10px] text-white">{favorites.length}</span>}</button>
           <button
