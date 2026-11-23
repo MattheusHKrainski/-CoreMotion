@@ -65,6 +65,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
     ? ('is_active' in item && item.is_active !== false)
     : ('product_type' in item && item.product_type === 'c2c' && item.status === 'active'));
   const coreOffer = core && item && 'source_url' in item ? item as ExternalOffer : null;
+  const soldOut = coreOffer?.stock_status === 'sold_out';
   const athlete = !core && item && 'product_type' in item ? item as Product : null;
   const voltageOptions = coreOffer ? voltageVariants(coreOffer, activeOffers) : [];
   const presentation = coreOffer ? productPresentation(id, coreOffer.source_url) : undefined;
@@ -101,7 +102,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   };
 
   const addToCart = (buy = false) => {
-    if (!item || !core || variantRequired) return;
+    if (!item || !core || !available || soldOut || variantRequired) return;
     cart.add(id, selectedVariant.trim());
     if (buy) window.location.assign('/compras');
     else setNotice('Adicionado ao carrinho CoreMotion.');
@@ -176,9 +177,10 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
           </div>}
           {!core && athlete && <div className="text-sm text-zinc-500">{athlete.location && <p className="inline-flex items-center gap-2"><MapPin className="h-4 w-4"/>{athlete.location}</p>}</div>}
           {coreOffer ? <>
+            {soldOut && <p role="status" className="rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm font-bold text-zinc-200">Esgotado — uniforme mantido no catálogo, compra indisponível.</p>}
             <div className="space-y-2">
-              <button type="button" disabled={variantRequired} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">Comprar agora</button>
-              <button type="button" disabled={variantRequired} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-400 hover:bg-red-950/30 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>Adicionar ao carrinho</button>
+              <button type="button" disabled={soldOut || variantRequired} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">{soldOut ? 'Esgotado' : 'Comprar agora'}</button>
+              <button type="button" disabled={soldOut || variantRequired} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-400 hover:bg-red-950/30 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>{soldOut ? 'Indisponível' : 'Adicionar ao carrinho'}</button>
               {notice&&<p role="status" className="text-sm font-semibold text-emerald-400">{notice}</p>}
             </div>
             <div className="space-y-3 border-t border-zinc-800 pt-5">
