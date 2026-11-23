@@ -1,0 +1,6 @@
+-- SBE Sports official 2026/27 União Corinthians home jersey, with an independent press launch photo.
+INSERT INTO public.external_offers (id,title,description,store_name,category,sport,price,image_url,source_url,image_urls,variant_options,team_id,is_active,stock_status)
+SELECT 'club-2026-uniao-corinthians-green','Regata Oficial Ceisc/União Corinthians I 2026/27 Verde','Regata de jogo oficial verde Ceisc União Corinthians 2026/27, dryfit texturizada SBE Sports. Fotografia de lançamento: Vinicius Molz Schubert, publicada pela Gazeta. Preço integral consultado na SBE Sports em novembro de 2026.','SBE Sports','Vestuário','Basquete',180.00,'https://www.gaz.com.br/uploads/2026/10/@vinicius_schubert-9192-Horizontal.jpg.jpg','https://sbesportes.com.br/produto/regata-de-jogo-oficial-verde-ceisc-uniao-corinthians/',ARRAY['https://www.gaz.com.br/uploads/2026/10/@vinicius_schubert-9192-Horizontal.jpg.jpg']::text[],ARRAY['PP','P','M','G','GG','XGG','2GG','3GG']::text[],'nbb-brasil-2026-27:ceisc-uniao-corinthians',true,'available'
+WHERE EXISTS(SELECT 1 FROM public.catalog_teams c WHERE c.id='nbb-brasil-2026-27:ceisc-uniao-corinthians')
+AND NOT EXISTS(SELECT 1 FROM public.external_offers e WHERE e.id='club-2026-uniao-corinthians-green' OR e.source_url='https://sbesportes.com.br/produto/regata-de-jogo-oficial-verde-ceisc-uniao-corinthians/')
+ON CONFLICT(id) DO NOTHING;
