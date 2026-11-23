@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Heart, Image as ImageIcon, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Heart, Image as ImageIcon, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { useCommerce } from '@/lib/commerce-store';
 import { money, retailPriceCents, productPath } from '@/lib/commerce';
@@ -149,7 +149,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
           {item.original_price && item.original_price > item.price && <p className="text-xs text-zinc-400 line-through">De {money(retailPriceCents(item.original_price))}</p>}
           <div className="flex flex-wrap items-center gap-3"><p className="text-3xl font-black tracking-tight">{money(retailPriceCents(item.price))}</p>{percentage>0&&<span className="rounded-md bg-emerald-500/15 px-2 py-1 text-xs font-bold text-emerald-400">-{percentage}%</span>}</div>
           <div className="border-t border-zinc-800 pt-4 text-sm text-zinc-500">
-            {coreOffer ? <p>Referência de <strong className="text-white">{coreOffer.store_name}</strong>. <a href={coreOffer.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-red-400 hover:underline">Ver produto na loja <ExternalLink className="h-3.5 w-3.5"/></a></p>
+            {coreOffer ? <p>Loja: <strong className="text-white">{coreOffer.store_name}</strong></p>
               : <p>Vendido por <strong className="text-white">{athlete?.seller_name || 'Atleta'}</strong> {athlete?.condition && '· '+getConditionMeta(athlete.condition).badge}</p>}
           </div>
           {otherColors.length>0 && <div className="space-y-3 border-t border-zinc-800 pt-4">
@@ -162,7 +162,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
               description={coreOffer.description} listedSizes={coreOffer.variant_options} onChange={setVariant} />
           </div>}
           {missingVerifiedSizes && coreOffer && <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-zinc-300">
-            A numeração deste modelo não foi confirmada no catálogo. <a href={coreOffer.source_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-red-400 underline">Consultar tamanhos na loja</a>
+            A numeração deste modelo ainda não foi confirmada no catálogo.
           </div>}
           {!core && athlete && <div className="text-sm text-zinc-500">{athlete.location && <p className="inline-flex items-center gap-2"><MapPin className="h-4 w-4"/>{athlete.location}</p>}</div>}
           {coreOffer ? <>
