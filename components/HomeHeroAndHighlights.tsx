@@ -34,7 +34,7 @@ function matchesQuickFilter(category: string, sport: string, filter: string): bo
 }
 
 export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }: HomeHeroAndHighlightsProps) {
-  const { products, activeOffers, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { products, activeOffers, setActiveView, setSearchQuery, setLaunchSport, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [activeFilter, setActiveFilter] = useState('all');
 
   const filteredOffers = useMemo(() => activeOffers.filter((offer) =>
@@ -65,7 +65,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
     <div className="mx-auto max-w-[1440px] space-y-8 pb-16 sm:space-y-12">
       <HomeBlackFriday offers={activeOffers} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
       <HomeVerifiedCampaigns offers={activeOffers} onSelectOffer={onSelectOffer} />
-      <HomeRealLaunches offers={activeOffers} onSelectOffer={onSelectOffer} />
+      <HomeRealLaunches onExploreSport={sport => { setLaunchSport(sport); openMarketplace(); }} offers={activeOffers} onSelectOffer={onSelectOffer} />
       <HomeProductCarousel products={products} offers={activeOffers} onSelectProduct={onSelectProduct} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
 
       <section className="space-y-4">

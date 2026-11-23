@@ -96,6 +96,8 @@ interface CoreMotiomContextType {
   setCheckoutOpen: (open: boolean) => void;
   isSupabaseConfigOpen: boolean;
   setSupabaseConfigOpen: (open: boolean) => void;
+  launchSport: string;
+  setLaunchSport: (value: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 
@@ -212,6 +214,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [hasEnteredPlatform, setHasEnteredPlatform] = useState(true);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
+  const [launchSport, setLaunchSport] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -1566,7 +1569,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         setCheckoutOpen,
         isSupabaseConfigOpen,
         setSupabaseConfigOpen,
-        searchQuery,
+        launchSport, setLaunchSport, searchQuery,
         setSearchQuery,
         user,
         role,

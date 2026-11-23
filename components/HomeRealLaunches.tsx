@@ -13,7 +13,7 @@ const LAUNCHES: Launch[] = [
   { id: 'nimbus29', brand: 'ASICS PERFORMANCE RUNNING', title: 'GEL-NIMBUS 29.', subtitle: 'Uma nova geração de conforto.', detail: 'A ASICS anunciou o GEL-NIMBUS 29 em 29 de outubro. O lançamento global está previsto para 1º de dezembro de 2026; disponibilidade e preço no Brasil não foram confirmados aqui.', date: '29 OUT 2026', availability: 'PREVISTO / 01 DEZ 2026', sport: 'Corrida', category: 'RUNNING / AMORTECIMENTO', image: 'https://preview.thenewsmarket.com/Previews/ASIC/StillAssets/1920x1080/736421_v3.jpg', tint: 'from-[#362344] via-[#171123] to-[#090a0e]' },
 ];
 
-export default function HomeRealLaunches({ offers, onSelectOffer }: { offers: ExternalOffer[]; onSelectOffer?: (offer: ExternalOffer) => void }) {
+export default function HomeRealLaunches({ offers, onSelectOffer, onExploreSport }: { onExploreSport: (sport: string) => void; offers: ExternalOffer[]; onSelectOffer?: (offer: ExternalOffer) => void }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [hover, setHover] = useState(false);
@@ -54,7 +54,7 @@ export default function HomeRealLaunches({ offers, onSelectOffer }: { offers: Ex
           <p className="mt-5 text-lg font-bold text-white">{current.subtitle}</p>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-300">{current.detail}</p></div>
         <div className="flex flex-wrap items-center gap-3">
-          {related.length > 0 && <button type="button" onClick={() => onSelectOffer?.(related[0])} className="inline-flex items-center gap-3 rounded-full bg-white px-5 py-3 text-xs font-black text-black transition hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-400">Explorar {current.sport} no CoreMotion <ArrowRight className="h-4 w-4"/></button>}
+          {related.length > 0 && <button type="button" onClick={() => onExploreSport(current.sport)} className="inline-flex items-center gap-3 rounded-full bg-white px-5 py-3 text-xs font-black text-black transition hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-400">Explorar {current.sport} no CoreMotion <ArrowRight className="h-4 w-4"/></button>}
           <span className="rounded-full border border-white/20 px-3 py-2 text-[10px] font-black text-zinc-300">{current.availability}</span>
         </div>
       </div>

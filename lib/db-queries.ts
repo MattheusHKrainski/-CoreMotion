@@ -1,3 +1,4 @@
+import { catalogClient, readCatalogPages } from './catalog-read';
 /**
  * Consultas SQL usadas pelas rotas de API (somente servidor).
  * Todas seguem o esquema oficial em supabase/migrations/ (tabelas public.profiles,
@@ -256,7 +257,26 @@ interface ProductFilters {
   status?: string;
 }
 
-export async function getProductsFromDb(filters?: ProductFilters): Promise<Product[]> {
+export async function getProductsFromDb(filters?: ProductFilters, authorization: string | null = null): Promise<Product[]> {
+  const client = catalogClient(authorization);
+  if (client) {
+    let query = client.from('products').select('*');
+    if (filters?.status !== 'all') query = query.eq('status', filters?.status || 'active');
+    for (const key of ['product_type', 'condition', 'seller_id', 'category', 'sport'] as const) {
+      const value = filters?.[key];
+      if (value && !(['sport', 'category'].includes(key) && ['all', 'Todos'].includes(value))) query = query.eq(key, value);
+    }
+    if (Number.isFinite(filters?.minPrice)) query = query.gte('price', filters!.minPrice!);
+    if (Number.isFinite(filters?.maxPrice)) query = query.lte('price', filters!.maxPrice!);
+    const search = filters?.search?.trim();
+    if (search) {
+      const pattern = JSON.stringify('%' + search + '%');
+      query = query.or(['title', 'description', 'category', 'sport'].map(key => key + '.ilike.' + pattern).join(','));
+    }
+    const ordered = query.order('created_at', { ascending: false }).order('id');
+    const rows = await readCatalogPages<DbProductRow>((start, end) => ordered.range(start, end));
+    return rows.map(mapDbProductToModel);
+  }
   const conditions: string[] = [];
   const params: unknown[] = [];
   const add = (sql: string, value: unknown) => {
@@ -290,7 +310,13 @@ export async function getProductsFromDb(filters?: ProductFilters): Promise<Produ
   return rows.map(mapDbProductToModel);
 }
 
-export async function getProductByIdFromDb(id: string): Promise<Product | null> {
+export async function getProductByIdFromDb(id: string, authorization?: string | null): Promise<Product | null> {
+  const client = authorization === undefined ? null : catalogClient(authorization);
+  if (client) {
+    const { data, error } = await client.from('products').select('*').eq('id', id).maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? mapDbProductToModel(data as DbProductRow) : null;
+  }
   const rows = await queryDb<DbProductRow>(`SELECT * FROM public.products WHERE id = $1 LIMIT 1`, [id]);
   return rows.length > 0 ? mapDbProductToModel(rows[0]) : null;
 }

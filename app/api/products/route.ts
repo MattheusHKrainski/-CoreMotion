@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   try {
     const id = sp.get('id');
     if (id) {
-      const product = await getProductByIdFromDb(id);
+      const product = await getProductByIdFromDb(id, req.headers.get('authorization'));
       if (!product || product.product_type !== 'c2c') return errorResponse('Anúncio não encontrado.', 404);
       if (product.status !== 'active') {
         const auth = await requireAuth(req);
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const products = await getProductsFromDb(filters);
+    const products = await getProductsFromDb(filters, req.headers.get('authorization'));
     return NextResponse.json({ success: true, products });
   } catch (error: unknown) {
     console.error('[API /api/products GET]', error);

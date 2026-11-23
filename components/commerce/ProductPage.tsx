@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Heart, Image as ImageIcon, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
@@ -28,6 +28,13 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   const [variant, setVariant] = useState('');
   const [notice, setNotice] = useState('');
   const [zoom, setZoom] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!zoom || !dialog.current) return;
+    const element = dialog.current;
+    element.showModal();
+    return () => element.close();
+  }, [zoom]);
   const [cep, setCep] = useState('');
   const [cepStatus, setCepStatus] = useState('');
   const [checkingCep, setCheckingCep] = useState(false);
@@ -65,7 +72,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   const missingVerifiedSizes = Boolean(needsVariant && !(coreOffer?.variant_options?.length)
     && !presentation?.options.some(option => option.label === 'Tamanho' && option.values.length > 0));
   const selectedVariant = variant;
-  const variantRequired = Boolean(needsVariant && !variant.trim());
+  const variantRequired = Boolean(coreOffer?.variant_options?.length ? !coreOffer.variant_options.includes(variant) : needsVariant && !variant.trim());
   const otherColors = coreOffer ? activeOffers.filter(other =>
     other.id !== coreOffer.id && other.store_name === coreOffer.store_name &&
     normalize(other.title) === normalize(coreOffer.title) && other.is_active !== false &&
@@ -92,7 +99,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
   };
 
   const addToCart = (buy = false) => {
-    if (!item || !core || (variantRequired && !selectedVariant.trim())) return;
+    if (!item || !core || variantRequired) return;
     cart.add(id, selectedVariant.trim());
     if (buy) window.location.assign('/compras');
     else setNotice('Adicionado ao carrinho CoreMotion.');
@@ -167,8 +174,8 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
           {!core && athlete && <div className="text-sm text-zinc-500">{athlete.location && <p className="inline-flex items-center gap-2"><MapPin className="h-4 w-4"/>{athlete.location}</p>}</div>}
           {coreOffer ? <>
             <div className="space-y-2">
-              <button type="button" disabled={variantRequired&&!selectedVariant.trim()} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">Comprar agora</button>
-              <button type="button" disabled={variantRequired&&!selectedVariant.trim()} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-400 hover:bg-red-950/30 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>Adicionar ao carrinho</button>
+              <button type="button" disabled={variantRequired} onClick={()=>addToCart(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40">Comprar agora</button>
+              <button type="button" disabled={variantRequired} onClick={()=>addToCart(false)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-600 px-5 py-4 text-sm font-bold text-red-400 hover:bg-red-950/30 disabled:opacity-40"><ShoppingBag className="h-4 w-4"/>Adicionar ao carrinho</button>
               {notice&&<p role="status" className="text-sm font-semibold text-emerald-400">{notice}</p>}
             </div>
             <div className="space-y-3 border-t border-zinc-800 pt-5">
@@ -185,7 +192,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
       </div>
     </main>
 
-    {zoom && gallery.length>0 && <div role="dialog" aria-modal="true" aria-label="Galeria ampliada" className="fixed inset-0 z-[100] flex flex-col bg-black/95 px-4 py-4 text-white">
+    {zoom && gallery.length>0 && <dialog ref={dialog} onCancel={() => setZoom(false)} aria-label="Galeria ampliada" className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none flex flex-col bg-black/95 px-4 py-4 text-white">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between"><span className="text-sm font-semibold">{index+1} / {gallery.length}</span><button type="button" aria-label="Fechar galeria" onClick={()=>setZoom(false)} className="rounded-full border border-zinc-600 p-3 hover:bg-zinc-800"><X className="h-5 w-5"/></button></div>
       <div className="mx-auto flex w-full max-w-6xl flex-1 items-center gap-2 py-6">
         <button type="button" aria-label="Foto anterior" onClick={previous} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronLeft/></button>
@@ -193,7 +200,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
         <button type="button" aria-label="Próxima foto" onClick={next} disabled={gallery.length<2} className="rounded-full p-2 hover:bg-zinc-800 disabled:opacity-20"><ChevronRight/></button>
       </div>
       <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-2">{gallery.map((src,i)=><button type="button" onClick={()=>setIndex(i)} key={src+i} aria-label={'Foto '+(i+1)} className={'relative h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-transparent')}><ProductImage src={src} fallbackSrcs={gallery.filter(candidate => candidate !== src)} alt="" sizes="56px"/></button>)}</div>
-    </div>}
+    </dialog>}
     <AuthModal />
   </div>;
 }
