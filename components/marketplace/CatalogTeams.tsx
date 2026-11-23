@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trophy } from 'lucide-react';
-import type { ExternalOffer } from '@/lib/types';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 
@@ -24,8 +23,7 @@ const LEAGUES = [
 ] as const;
 const SOURCES = [{ table:'catalog_teams' }] as const;
 
-export default function CatalogTeams({offers,selected,onSelect}: {
-  offers: ExternalOffer[];
+export default function CatalogTeams({selected,onSelect}: {
   selected: CatalogTeam | null;
   onSelect: (team: CatalogTeam | null) => void;
 }) {
@@ -44,12 +42,6 @@ export default function CatalogTeams({offers,selected,onSelect}: {
   useEffect(()=>{void refresh()},[refresh]);
   useRealtimeRefresh(client,SOURCES,refresh,Boolean(client),'catalog-teams');
   const available = useMemo(()=>teams.filter(team=>team.league===league),[teams,league]);
-  const counts = useMemo(()=>{
-    const result = new Map<string,number>();
-    for(const offer of offers) if(offer.team_id&&offer.is_active!==false)
-      result.set(offer.team_id,(result.get(offer.team_id)||0)+1);
-    return result;
-  },[offers]);
   return <div className="space-y-3 border-t border-zinc-800 pt-4" aria-label="Filtros de campeonato e clube">
     <h3 className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-zinc-100"><Trophy className="h-3.5 w-3.5 text-zinc-500"/>Campeonato e clube</h3>
     <label className="block text-[11px] text-zinc-500">Campeonato
@@ -65,13 +57,12 @@ export default function CatalogTeams({offers,selected,onSelect}: {
         onChange={event=>onSelect(teams.find(team=>team.id===event.target.value)||null)}
         className="mt-1.5 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-200 focus:border-zinc-500 focus:outline-none">
         <option value="">Todos os clubes</option>
-        {available.map(team=><option key={team.id} value={team.id}>{team.club_name} {counts.get(team.id)?'· '+counts.get(team.id)+' ofertas':''}</option>)}
+        {available.map(team=><option key={team.id} value={team.id}>{team.club_name}</option>)}
       </select>
     </label>
     {error&&<p role="alert" className="text-xs text-amber-400">{error}</p>}
     {selected && <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/80 p-3">
       <p className="text-xs font-semibold text-white">{selected.club_name}</p>
-      <p className="text-[11px] text-zinc-400">{counts.get(selected.id)||0} ofertas na CoreMotion</p>
       <button type="button" onClick={()=>onSelect(null)} className="block text-[11px] text-zinc-400 underline hover:text-white">Limpar clube</button>
     </div>}
   </div>;
