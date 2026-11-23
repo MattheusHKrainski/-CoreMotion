@@ -65,28 +65,13 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     setSelectedImgIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
   };
 
-  const getAngleLabel = (idx: number, cat: string) => {
-    if (cat === 'Calçados') {
-      const shoeLabels = [
-        'Perfil Lateral Externo',
-        'Frontal / Superior (Cabedal & Cadarços)',
-        'Traseira / Calcanhar',
-        'Solado / Tração & Grip',
-        'Detalhes & Textura'
-      ];
-      return shoeLabels[idx] || `Ângulo ${idx + 1}`;
-    }
-    const genericLabels = [
-      'Visão Principal',
-      'Ângulo Lateral / Detalhe',
-      'Vista Traseira / Funcional',
-      'Em Uso / Contexto',
-      'Acabamento & Material'
-    ];
-    return genericLabels[idx] || `Foto ${idx + 1}`;
-  };
+  // Reference galleries have no verified photo-by-photo descriptions.
+  // Never claim an image shows a sole, back, or usage mark based solely on its position.
+  const getAngleLabel = (idx: number): string =>
+    product.image_is_reference ? `Imagem ilustrativa ${idx + 1}` : `Foto ${idx + 1} do anúncio`;
 
-  const contactUrl = sellerContactUrl(product.contact_phone, product.title);
+  const hasIdentifiedSeller = Boolean(product.seller_id);
+  const contactUrl = hasIdentifiedSeller ? sellerContactUrl(product.contact_phone, product.title) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in overflow-y-auto">
@@ -130,12 +115,12 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           
           {/* Left Column: Product Gallery */}
           <div className="space-y-4">
-            {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência: a foto ilustrativa não comprova o estado da peça usada. Peça fotos atuais ao anunciante.</p>}
+            {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência, não do exemplar anunciado. O modelo, a cor e o estado de conservação precisam ser confirmados com fotos do item real.</p>}
             <div className="group relative aspect-square w-full bg-[#0E1017] rounded-xl overflow-hidden border border-[#232836] shadow-inner">
               <img
                 key={selectedImgIndex}
                 src={galleryImages[selectedImgIndex] || galleryImages[0]}
-                alt={`${product.title} - ${getAngleLabel(selectedImgIndex, product.category)}`}
+                alt={`${product.title} - ${getAngleLabel(selectedImgIndex)}`}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = '/products/image-unavailable.svg';
@@ -175,13 +160,13 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
               <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                 <div className="rounded-md border border-[#232836] bg-[#12151C]/90 px-2.5 py-1 text-xs font-semibold text-[#E5E7EB] shadow-md backdrop-blur-sm">
-                  Anúncio de atleta
+                  {hasIdentifiedSeller ? 'Anúncio de atleta' : 'Vitrine de referência CoreMotion'}
                 </div>
               </div>
 
               <div className="absolute bottom-3 inset-x-3 text-center pointer-events-none">
                 <span className="inline-block px-3 py-1 rounded-full bg-black/75 text-zinc-300 text-[11px] font-medium backdrop-blur-md border border-zinc-800/80 shadow-md">
-                  {getAngleLabel(selectedImgIndex, product.category)}
+                  {getAngleLabel(selectedImgIndex)}
                 </span>
               </div>
             </div>
@@ -189,7 +174,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
             {galleryImages.length > 1 && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-zinc-400 font-medium px-0.5">
-                  <span>Ângulos e Detalhes ({galleryImages.length} fotos)</span>
+                  <span>{product.image_is_reference ? 'Imagens ilustrativas' : 'Fotos do produto'} ({galleryImages.length})</span>
                   <span className="text-red-400 text-[10px]">Clique para alternar</span>
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5">
@@ -204,7 +189,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                             ? 'border-red-600 ring-2 ring-red-500/60 scale-105 shadow-lg shadow-red-950/40 opacity-100'
                             : 'border-[#232836] opacity-60 hover:opacity-100 hover:border-zinc-600'
                         }`}
-                        title={getAngleLabel(idx, product.category)}
+                        title={getAngleLabel(idx)}
                       >
                         <img
                           src={img}
@@ -227,7 +212,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
             {/* Seller info card */}
             <div className="space-y-2 rounded-xl border border-[#232836] bg-[#0E1017] p-4 text-xs">
-              <span className="text-[#9CA3AF]">Vendido por:</span>
+              <span className="text-[#9CA3AF]">{hasIdentifiedSeller ? 'Vendido por:' : 'Referência publicada por:'}</span>
               <div className="flex items-center gap-3 pt-1">
                 <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#232836] bg-[#181B22] font-bold text-white">
                   {product.seller_avatar ? (
@@ -256,7 +241,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-950/60 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-sky-200">
                     <User className="h-3 w-3 text-sky-400" />
-                    Equipamento de Atleta
+                    {hasIdentifiedSeller ? 'Equipamento de Atleta' : 'Catálogo de referência'}
                   </span>
                   <span
                     className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
@@ -309,7 +294,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               {/* Description */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#9CA3AF] mb-1.5">
-                  Relato do Atleta sobre Conservação e Uso
+                  {hasIdentifiedSeller ? 'Relato do atleta sobre conservação e uso' : 'Descrição do produto de referência'}
                 </h4>
                 <p className="text-xs text-[#D1D5DB] leading-relaxed whitespace-pre-line">
                   {product.description}
@@ -346,7 +331,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   </a>
                 ) : (
                   <span className="py-3 px-4 rounded-xl border border-zinc-700 text-zinc-400 text-xs text-center">
-                    WhatsApp não informado pelo atleta
+                    {hasIdentifiedSeller ? 'WhatsApp não informado pelo atleta' : 'Vendedor não identificado · contato indisponível'}
                   </span>
                 )}
               </div>
