@@ -354,10 +354,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               <button
                 type="button"
                 onClick={() => {
-                  if (isVisitor) setAuthModalOpen(true);
-                  else toggleFavorite(product.id);
+                  toggleFavorite(product.id);
                 }}
-                className={`w-full py-2 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-colors ${
+                aria-pressed={isFav}
+                 className={`w-full py-2 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-colors ${
                   isFav
                     ? 'bg-red-600/10 text-red-400 border-red-500/30'
                     : 'bg-[#12151C] text-[#9CA3AF] border-[#232836] hover:text-white'
