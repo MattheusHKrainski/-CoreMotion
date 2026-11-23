@@ -191,7 +191,7 @@ export default function SellC2CView() {
           }`}
         >
           <Package className="w-3.5 h-3.5" />
-          <span>Meus Anúncios ({myListings.length})</span>
+          <span>Meus Anúncios</span>
         </button>
 
         <button
