@@ -683,7 +683,7 @@ export default function AdminDashboard() {
         {tab === 'products' && (
           <>
             <h2 className="text-lg font-bold">
-              Anúncios de atletas ({products.length})
+              Anúncios de atletas
             </h2>
             {products
               .filter((p) => matches(p.title, p.id, p.seller_name))
@@ -1071,8 +1071,6 @@ export default function AdminDashboard() {
                     [
                       ['Contas', diagnostics.profiles],
                       ['Contas suspensas', diagnostics.suspended],
-                      ['Anúncios', diagnostics.products],
-                      ['Ofertas externas', diagnostics.offers],
                       ['Pedidos', diagnostics.orders],
                       [
                         'Denúncias abertas / em análise',
