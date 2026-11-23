@@ -7,7 +7,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { queryDb } from './db';
+import { catalogClient } from './catalog-read';
 import type { UserRole } from './types';
 
 interface AuthContext {
@@ -45,11 +45,11 @@ async function getAuthContext(req: NextRequest): Promise<AuthContext | null> {
   const verified = await verifyAccessToken(token);
   if (!verified) return null;
 
-  const rows = await queryDb<{ email: string; role: string; is_banned: boolean; ban_reason: string | null }>(
-    `SELECT email, role, is_banned, ban_reason FROM public.profiles WHERE id = $1 LIMIT 1`,
-    [verified.id]
-  );
-  const profile = rows[0];
+  const client = catalogClient('Bearer ' + token);
+  if (!client) return null;
+  const { data: profile, error } = await client.from('profiles')
+    .select('email, role, is_banned, ban_reason').eq('id', verified.id).single();
+  if (error) throw new Error(error.message);
   const email = profile?.email || verified.email;
   const role: UserRole = (profile?.role as UserRole) || 'user';
 

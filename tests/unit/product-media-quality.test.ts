@@ -18,7 +18,8 @@ test('Same-product fallback uses only the current gallery, never a stock replace
 test('Products without manufacturer-confirmed sizes cannot be added to the cart',()=>{
  const detail=read('components/commerce/ProductPage.tsx');
  assert.match(detail,/missingVerifiedSizes/);
- assert.match(detail,/variantRequired = Boolean\(needsVariant/);
+ assert.match(detail,/!coreOffer.variant_options.includes\(variant\)/);
+ assert.match(detail,/needsVariant && !variant.trim\(\)/);
  assert.match(detail,/Consultar tamanhos na loja/);
  assert.match(detail,/disabled=\{variantRequired/);
  const controls=read('components/commerce/ProductOptions.tsx');

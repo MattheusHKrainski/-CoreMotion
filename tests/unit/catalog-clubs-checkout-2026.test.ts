@@ -45,7 +45,8 @@ test('Real product photo gallery and size selector do not invent alternate produ
   assert.match(read('lib/product-gallery.ts'),/image_urls/);
   assert.match(page,/gallery\.slice\(0,4\)/);
   assert.match(page,/Ver galeria completa/);
-  assert.match(page,/role="dialog" aria-modal="true"/);
+  assert.match(page,/<dialog ref=\{dialog\} onCancel=/);
+  assert.match(page,/element\.showModal\(\)/);
   const selectors = read('components/commerce/ProductOptions.tsx');
   assert.match(page, /<ProductOptions/);
   assert.match(selectors, /getProductVariantConfig\(title, category, sport, description, \[\]\)/);

@@ -82,11 +82,12 @@ function sortOffers(items: ExternalOffer[], sortBy: SortBy): ExternalOffer[] {
 }
 
 export default function MarketplaceView({ onSelectProduct, onSelectOffer }: MarketplaceViewProps) {
-  const { user, products, activeOffers, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { user, products, activeOffers, launchSport, setLaunchSport, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [selectedTab, setSelectedTab] = useState<CatalogTab>('all');
   const [selectedTeam, setSelectedTeam] = useState<CatalogTeam | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedSport, setSelectedSport] = useState('all');
+  const [selectedSport, setSelectedSport] = useState(launchSport);
+  useEffect(() => { setLaunchSport('all'); }, [setLaunchSport]);
   const [selectedCondition, setSelectedCondition] = useState('all');
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
