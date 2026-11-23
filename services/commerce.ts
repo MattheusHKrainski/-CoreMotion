@@ -1,10 +1,28 @@
 import { getSupabaseClient } from './supabaseClient';
 import { validateAddress, validateCart, type SaleCartLine, type SaleOrder, type ShippingAddress } from '@/lib/commerce';
+import type { DemoPaymentMethod } from '@/lib/demo-payments';
 function client() { const sb = getSupabaseClient(); if (!sb) throw new Error('O banco de vendas não está configurado neste ambiente. Nenhum pedido foi registrado.'); return sb; }
 export async function prepareSale(lines: SaleCartLine[], address: ShippingAddress, key: string): Promise<string> {
   validateCart(lines); validateAddress(address);
   const { data, error } = await client().rpc('prepare_core_sale', { p_items: lines, p_address: address, p_request_key: key });
   if (error || !data) throw new Error('Não foi possível salvar a preparação. Verifique a conexão e a configuração do banco; tente novamente sem fechar esta tela.');
+  return String(data);
+}
+/** Single atomic RPC: recalculate catalog prices, save the order, and mark a fictitious approval.
+ * Request key is reused on network retries, so a double click cannot create a second order.
+ * No real payment identifiers or card data are collected or transmitted.
+ */
+export async function confirmDemoSale(
+  lines: SaleCartLine[], address: ShippingAddress, key: string, method: DemoPaymentMethod
+): Promise<string> {
+  validateCart(lines);
+  validateAddress(address);
+  const { data, error } = await client().rpc('confirm_demo_order', {
+    p_items: lines, p_address: address, p_request_key: key, p_method: method,
+  });
+  if (error || !data) {
+    throw new Error(error?.message || 'Não foi possível confirmar o pedido. Tente novamente; o mesmo pedido não será duplicado.');
+  }
   return String(data);
 }
 export async function listSaleOrders(): Promise<SaleOrder[]> { const { data, error } = await client().from('core_sale_orders').select('*').order('created_at', { ascending: false }).limit(100); if (error) throw new Error('Não foi possível carregar os pedidos CoreMotion.'); return data || []; }
