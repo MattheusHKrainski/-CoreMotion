@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { test } from 'node:test';
 
 const read = (path: string) => readFileSync(path,'utf8');
@@ -28,10 +28,7 @@ test('Uniform photos never masquerade as checkout-eligible offers', () => {
 });
 
 test('Image import workflow preserves four original user-submitted club photos', () => {
-  const workflow=read('.github/workflows/import-submitted-uniform-photos.yml');
   for (const filename of ['monte-carmelo-blue-orange.png','montes-claros-black-gold.png','norde-blue-pink.png','dentil-praia-womens-black.png']) {
-    assert.ok(workflow.includes(filename),filename);
+    assert.ok(existsSync('public/catalog/club-uniforms/' + filename),filename);
   }
-  assert.match(workflow,/python3 - <<'PY'/);
-  assert.match(workflow,/write_bytes/);
 });
