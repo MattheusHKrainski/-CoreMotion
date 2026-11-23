@@ -1,3 +1,4 @@
+import { catalogClient, readCatalogPages } from './catalog-read';
 /**
  * Persistência SQL da vitrine de Ofertas externas / links de afiliados (public.external_offers).
  * Auto-inicializa a tabela e semeia a curadoria real inicial na primeira consulta caso o banco
@@ -152,7 +153,15 @@ export async function seedInitialExternalOffers(): Promise<void> {
 
 }
 
-export async function getExternalOffersFromDb(includeInactive = false): Promise<ExternalOffer[]> {
+export async function getExternalOffersFromDb(includeInactive = false, authorization: string | null = null): Promise<ExternalOffer[]> {
+  const client = catalogClient(authorization);
+  if (client) {
+    let query = client.from('external_offers').select('*');
+    if (!includeInactive) query = query.eq('is_active', true);
+    const ordered = query.order('created_at', { ascending: false }).order('id');
+    const rows = await readCatalogPages<DbExternalOfferRow>((start, end) => ordered.range(start, end));
+    return rows.map(mapOfferRow);
+  }
   await ensureExternalOffersTable();
   const whereClause = includeInactive ? '' : 'WHERE is_active = true';
   const rows = await queryDb<DbExternalOfferRow>(
@@ -210,7 +219,7 @@ export async function updateExternalOfferInDb(id: string, input: OfferUpdateInpu
   if (input.image_url !== undefined) pushField('image_url', input.image_url);
   if (input.image_urls !== undefined) pushField('image_urls', input.image_urls);
   if (input.team_id !== undefined) pushField('team_id', input.team_id);
-  else if (input.image_url !== undefined) pushField('image_urls', [input.image_url]);
+  // Database trigger preserves alternate photos when replacing only the cover.
   if (input.source_url !== undefined) pushField('source_url', input.source_url);
   if (input.coupon_code !== undefined) pushField('coupon_code', input.coupon_code || null);
   if (input.is_active !== undefined) pushField('is_active', input.is_active);

@@ -1,17 +1,73 @@
 'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { getProductVariantConfig } from '@/lib/product-variants';
 import { productPresentation } from '@/lib/product-presentation';
-export default function ProductOptions({ id, category, source, title = '', sport = '', description = '', listedSizes, onChange }: { id: string; category: string; source?: string; title?: string; sport?: string; description?: string; listedSizes?: string[]; onChange: (value:string)=>void }) {
-  const verified=productPresentation(id,source);
-  const options = useMemo(() => {
-    const config = getProductVariantConfig(title, category, sport, description, listedSizes);
-    if (listedSizes?.length && config) return [{ label: config.label, values: config.options }];
-    if (verified?.options.length) return verified.options;
-    return config ? [{ label: config.label, values: config.options }] : [];
-  }, [verified, title, category, sport, description, listedSizes]);
-  const [selected,setSelected]=useState<Record<string,string>>({});
-  const [other,setOther]=useState('');
-  useEffect(()=>{const complete=options.every(option=>selected[option.label]);onChange(other.trim()?`Outra variante: ${other.trim()}`:complete?options.map(option=>`${option.label}: ${selected[option.label]}`).join('; '):'');},[options,selected,other,onChange]);
-  return <div className="space-y-5">{options.map(option=><fieldset key={option.label}><legend className="mb-3 text-sm font-bold">{option.label}{selected[option.label]&&<span className="ml-2 font-normal text-zinc-400">{selected[option.label]}</span>}</legend><div className="flex flex-wrap gap-2">{option.values.map(value=><button type="button" key={value} aria-pressed={selected[option.label]===value&&!other} onClick={()=>{setOther('');setSelected(previous=>({...previous,[option.label]:value}));}} className={`min-h-11 min-w-11 rounded-lg border px-3 py-2 text-xs font-bold transition ${selected[option.label]===value&&!other?'border-red-500 bg-red-950/40 text-white':'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-400'}`}>{value}</button>)}</div></fieldset>)}<p className="text-[11px] leading-relaxed text-zinc-500">{verified?'Opções identificadas na página do fornecedor. A disponibilidade de cada variante ainda precisa ser confirmada.':'Grade de referência para informar sua preferência, não representa tamanhos disponíveis no fornecedor.'} Nenhuma seleção reserva estoque.</p><details className="rounded-xl border border-zinc-800 p-3"><summary className="cursor-pointer text-xs text-zinc-400">{options.length?'Outro tamanho ou variante':'Informar cor, tamanho ou outra especificação'}</summary><label className="mt-3 block text-xs text-zinc-400">Preferência a confirmar<input aria-label="Outra variante desejada" maxLength={95} value={other} onChange={event=>setOther(event.target.value)} placeholder="Informe a especificação que deseja" className="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm text-white"/></label></details>{category==='Calçados'&&<details className="rounded-xl border border-zinc-800 p-3"><summary className="cursor-pointer text-xs font-bold">Como escolher o tamanho?</summary><p className="mt-3 text-xs leading-relaxed text-zinc-400">Meça o comprimento do pé em centímetros e compare com a tabela oficial do modelo. Numerações variam entre marcas. Não usamos uma tabela genérica como se fosse a tabela do fabricante.</p></details>}</div>;
+
+interface OptionGroup { label: string; values: string[] }
+
+/** Show only store-confirmed SKUs; never invent stock for a shoe or shirt. */
+export default function ProductOptions({ id, category, source, title = '', sport = '', description = '', listedSizes, onChange }: {
+  id: string;
+  category: string;
+  source?: string;
+  title?: string;
+  sport?: string;
+  description?: string;
+  listedSizes?: string[];
+  onChange: (value: string) => void;
+}) {
+  const verified = productPresentation(id, source);
+  const [selected, setSelected] = useState<Record<string,string>>({});
+  const hasCatalogSizes = Boolean(listedSizes?.some(size => size.trim()));
+
+  const options = useMemo<OptionGroup[]>(() => {
+    const sizes = [...new Set((listedSizes || []).map(size => size.trim()).filter(Boolean))];
+    if (sizes.length) return [{ label: 'Tamanho', values: sizes }];
+    if (verified?.options.length) return verified.options.map(option => ({
+      label: option.label,
+      values: [...new Set(option.values.map(v => v.trim()).filter(Boolean))],
+    }));
+    // Some balls identify a single, fixed model size in the verified product description.
+    if (/^bola\b/i.test(title) && (/(?:tamanho|size)\s*[1-9]/i.test(title + ' ' + description) || /cerâmica\s*2[.,]0/i.test(title))) {
+      const ball = getProductVariantConfig(title, category, sport, description, []);
+      if (ball) return [{ label: ball.label, values: ball.options }];
+    }
+    return [];
+  }, [listedSizes, verified, title, category, sport, description]);
+
+  useEffect(() => {
+    if (!options.length) { onChange(''); return; }
+    if (hasCatalogSizes) {
+      // The database compares variants against the EXACT SKU strings, not "Tamanho: 40".
+      const sizes = options[0].values;
+      onChange(selected.Tamanho || (sizes.length === 1 ? sizes[0] : ''));
+      return;
+    }
+    if (!options.every(option => selected[option.label])) { onChange(''); return; }
+    onChange(options.length === 1
+      ? selected[options[0].label]
+      : options.map(option => option.label + ': ' + selected[option.label]).join('; '));
+  }, [options, selected, hasCatalogSizes, onChange]);
+
+  if (!options.length) return null;
+  return <div className="space-y-4">
+    {options.map(option => {
+      const current = selected[option.label] || (hasCatalogSizes && option.values.length === 1 ? option.values[0] : '');
+      return <fieldset key={option.label}>
+        <legend className="mb-3 text-sm font-bold text-white">{option.label}{current && <span className="ml-2 font-normal text-zinc-400">{current}</span>}</legend>
+        <div className="flex flex-wrap gap-2">{option.values.map(value =>
+          <button key={value} type="button" aria-pressed={current === value}
+            onClick={() => setSelected(previous => ({...previous, [option.label]: value}))}
+            className={'min-h-11 min-w-11 rounded-lg border px-3 py-2 text-xs font-bold transition ' +
+              (current === value ? 'border-red-500 bg-red-600 text-white' : 'border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-400')}>
+            {value}
+          </button>
+        )}</div>
+      </fieldset>;
+    })}
+    <p className="text-[11px] leading-relaxed text-zinc-500">
+      {hasCatalogSizes ? 'Numerações cadastradas pelo fornecedor.' : 'Opções identificadas para este modelo na fonte consultada.'} A seleção não reserva estoque.
+    </p>
+  </div>;
 }

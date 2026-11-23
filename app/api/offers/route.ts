@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const offers = await getExternalOffersFromDb(includeInactive);
+    const offers = await getExternalOffersFromDb(includeInactive, req.headers.get('authorization'));
     return NextResponse.json({ success: true, offers });
   } catch (error: unknown) {
     console.warn('[API /api/offers GET] Database unavailable or fallback mode:', error);

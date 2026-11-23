@@ -83,11 +83,12 @@ function sortOffers(items: ExternalOffer[], sortBy: SortBy): ExternalOffer[] {
 }
 
 export default function MarketplaceView({ onSelectProduct, onSelectOffer }: MarketplaceViewProps) {
-  const { user, products, activeOffers, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { user, products, activeOffers, launchSport, setLaunchSport, searchQuery, setSearchQuery, setActiveView, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const [selectedTab, setSelectedTab] = useState<CatalogTab>('all');
   const [selectedTeam, setSelectedTeam] = useState<CatalogTeam | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedSport, setSelectedSport] = useState('all');
+  const [selectedSport, setSelectedSport] = useState(launchSport);
+  useEffect(() => { setLaunchSport('all'); }, [setLaunchSport]);
   const [selectedCondition, setSelectedCondition] = useState('all');
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -186,8 +187,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
         </button>
       </header>
 
-      <CatalogTeams offers={activeOffers} selected={selectedTeam} onSelect={team => { setSelectedTeam(team); setSelectedTab(team ? 'offers' : 'all'); if (team) {setSearchQuery(''); setSelectedSport('all'); setSelectedCategory('all'); setSelectedTab('offers');} }} />
-
       <label className="block text-sm font-semibold text-zinc-300">Pesquisar no CoreShop
         <div className="relative mt-2"><Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500" /><input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar produtos ou esportes..." className="w-full rounded-2xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm text-white focus:border-red-500 focus:outline-none" /></div>
       </label>
@@ -270,18 +269,6 @@ export default function MarketplaceView({ onSelectProduct, onSelectOffer }: Mark
             <span aria-live="polite">{displayedCount} resultado(s) · {hasC2C ? `${filteredC2CProducts.length} de atletas` : ''}{hasC2C && hasOffers ? ' + ' : ''}{hasOffers ? `${filteredOffers.length} em ofertas` : ''}</span>
             {selectedCategory !== 'all' && <span className="font-medium text-red-400">Categoria: {selectedCategory}</span>}
           </div>
-
-          {selectedTeam?.merchandise_url && <section aria-label="Coleção do clube" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-red-800/30 bg-zinc-900 px-5 py-5">
-            <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400">{selectedTeam.league.startsWith('brasileirao')?'Futebol brasileiro':selectedTeam.league.startsWith('superlega')?'Vôlei italiano':'Vôlei japonês'} · {selectedTeam.season}</p>
-              <h3 className="text-base font-black text-white">{selectedTeam.club_name}</h3>
-              <p className="max-w-xl text-xs leading-relaxed text-zinc-400">Explore camisas, uniformes e outros artigos da equipe. Os produtos ainda não cadastrados na CoreMotion podem ser vistos diretamente na origem.</p>
-            </div>
-            <a href={selectedTeam.merchandise_url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-xs font-bold text-white hover:bg-red-500">
-              Ver coleção {selectedTeam.merchandise_source==='retailer'?'na loja':'do clube'} <span aria-hidden="true">↗</span>
-            </a>
-          </section>}
 
           {displayedCount === 0 ? (
             <div className="space-y-4 rounded-3xl border border-zinc-800/80 bg-zinc-900/60 p-12 text-center shadow-xl">

@@ -1,5 +1,7 @@
 # Expansão verificada CoreMotion — 22/11/2026
 
+> **Histórico de 22/11/2026:** a seção abaixo registra a configuração anterior. Em 23/11/2026 as ligas internacionais foram substituídas pela **Superliga A Masculina 2026/27 (12 clubes)** e pelo **NBB CAIXA 2026/27 (18 clubes)**. O diretório atual contém **50 clubes brasileiros** (incluindo os 20 do Brasileirão). Fonte: CBV e LNB. Consulte `supabase/migrations/20261123045316_replace_foreign_leagues_with_brazilian_superliga_and_nbb_2026_27.sql`. Os clubes recém-incluídos não têm camisas cadastradas automaticamente; produtos só podem ser vinculados após verificação da identidade da equipe, da SKU e de fotos reais.
+
 ## Catálogo publicado no Supabase
 
 - **448 ofertas existentes mantidas**, sem apagar produtos, alterações de vendedores ou referências anteriores.

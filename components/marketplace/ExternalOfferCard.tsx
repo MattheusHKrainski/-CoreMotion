@@ -37,8 +37,8 @@ export default function ExternalOfferCard({ offer }: ExternalOfferCardProps) {
       }}
       className="group relative flex flex-col justify-between bg-zinc-900/70 rounded-2xl border border-zinc-800/80 overflow-hidden transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900 hover:shadow-xl hover:shadow-red-950/20 cursor-pointer"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
-<ProductImage src={offer.image_url} alt={offer.title} sizes="(max-width: 640px) 100vw, 512px" />
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#11141b]">
+<ProductImage src={offer.image_url} fallbackSrcs={offer.image_urls?.filter(url => url !== offer.image_url)} alt={offer.title} sizes="(max-width: 640px) 100vw, 512px" />
 
         <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 max-w-[76%]">
           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-950/90 text-zinc-100 border border-zinc-700/80 backdrop-blur-md flex items-center gap-1">

@@ -96,6 +96,8 @@ interface CoreMotiomContextType {
   setCheckoutOpen: (open: boolean) => void;
   isSupabaseConfigOpen: boolean;
   setSupabaseConfigOpen: (open: boolean) => void;
+  launchSport: string;
+  setLaunchSport: (value: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 
@@ -212,6 +214,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   const [hasEnteredPlatform, setHasEnteredPlatform] = useState(true);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
   const [isSupabaseConfigOpen, setSupabaseConfigOpen] = useState(false);
+  const [launchSport, setLaunchSport] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -1049,21 +1052,36 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   // Cart operations
   const addToCart = (product: Product, quantity = 1, selected_size?: string) => {
     if (product.product_type !== 'c2c') {
-      addToast('Oferta externa', 'Ofertas B2C ficam fora do carrinho e do checkout C2C.', 'info');
+      addToast('Carrinho C2C', 'Este carrinho aceita somente anúncios de atletas.', 'info');
       return;
     }
-    setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id && item.selected_size === selected_size);
-      if (existing) {
-        return prev.map((item) =>
-          item.product.id === product.id && item.selected_size === selected_size
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [...prev, { product, quantity, selected_size }];
+    const live = products.find(item => item.id === product.id);
+    if (!live || live.status !== 'active' || live.product_type !== 'c2c') {
+      addToast('Anúncio indisponível', 'Esse item não está mais disponível no catálogo.', 'error');
+      return;
+    }
+    if (!live.seller_id) {
+      addToast('Apenas referência', 'Este exemplar não está vinculado a um vendedor. Não é possível comprá-lo.', 'info');
+      return;
+    }
+    const stock = Number(live.stock);
+    if (!Number.isInteger(stock) || stock < 1) {
+      addToast('Sem estoque', 'O item não está disponível para adicionar ao carrinho.', 'error');
+      return;
+    }
+    if (!Number.isInteger(quantity) || quantity < 1) return;
+    const already = cart.filter(item => item.product.id === live.id).reduce((sum,item) => sum + item.quantity, 0);
+    if (already + quantity > stock) {
+      addToast('Quantidade indisponível', 'Esse anúncio possui apenas ' + stock + ' unidade(s) disponível(is).', 'info');
+      return;
+    }
+    setCart(prev => {
+      if (prev.filter(item => item.product.id === live.id).reduce((sum, item) => sum + item.quantity, 0) + quantity > stock) return prev;
+      const existing = prev.find(item => item.product.id === live.id && item.selected_size === selected_size);
+      if (existing) return prev.map(item => item === existing ? { ...item, product: live, quantity: item.quantity + quantity } : item);
+      return [...prev, { product: live, quantity, selected_size }];
     });
-    addToast('Carrinho Atualizado', `${product.title} adicionado ao seu carrinho.`, 'success');
+    addToast('Carrinho atualizado', live.title + ' adicionado ao carrinho.', 'success');
   };
 
   const removeFromCart = (productId: string) => {
@@ -1072,13 +1090,14 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCartQty = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
+    if (!Number.isInteger(quantity)) return;
+    if (quantity <= 0) { removeFromCart(productId); return; }
+    const live = products.find(item => item.id === productId);
+    if (!live || !live.seller_id || live.status !== 'active' || live.product_type !== 'c2c' || !Number.isInteger(live.stock) || live.stock < quantity) {
+      addToast('Quantidade indisponível', 'Confira o estoque atual desse anúncio.', 'info');
       return;
     }
-    setCart((prev) =>
-      prev.map((item) => (item.product.id === productId ? { ...item, quantity } : item))
-    );
+    setCart(prev => prev.map(item => item.product.id === productId ? { ...item, product: live, quantity } : item));
   };
 
   const clearCart = () => setCart([]);
@@ -1556,7 +1575,7 @@ export function CoreMotiomProvider({ children }: { children: ReactNode }) {
         setCheckoutOpen,
         isSupabaseConfigOpen,
         setSupabaseConfigOpen,
-        searchQuery,
+        launchSport, setLaunchSport, searchQuery,
         setSearchQuery,
         user,
         role,

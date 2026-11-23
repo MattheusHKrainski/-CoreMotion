@@ -35,7 +35,7 @@ function matchesQuickFilter(category: string, sport: string, filter: string): bo
 }
 
 export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }: HomeHeroAndHighlightsProps) {
-  const { products, activeOffers, setActiveView, setSearchQuery, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { products, activeOffers, setActiveView, setSearchQuery, setLaunchSport, isVisitor, setAuthModalOpen } = useCoreMotiom();
   const modelOffers = useMemo(() => uniqueOfferModels(activeOffers), [activeOffers]);
   const [activeFilter, setActiveFilter] = useState('all');
 
@@ -67,13 +67,13 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
     <div className="mx-auto max-w-[1440px] space-y-8 pb-16 sm:space-y-12">
       <HomeBlackFriday offers={modelOffers} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
       <HomeVerifiedCampaigns offers={modelOffers} onSelectOffer={onSelectOffer} />
-      <HomeRealLaunches offers={modelOffers} onSelectOffer={onSelectOffer} />
+      <HomeRealLaunches onExploreSport={sport => { setLaunchSport(sport); openMarketplace(); }} offers={modelOffers} onSelectOffer={onSelectOffer} />
       <HomeProductCarousel products={products} offers={modelOffers} onSelectProduct={onSelectProduct} onSelectOffer={onSelectOffer} onExplore={openMarketplace} />
 
       <section className="space-y-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-black text-white sm:text-xl"><ShoppingBag className="h-5 w-5 text-purple-400" />Explore o catálogo</h2>
+            <h2 className="flex items-center gap-2 text-lg font-black text-white sm:text-xl"><ShoppingBag className="h-5 w-5 text-red-400" />Explore o catálogo</h2>
             <p className="mt-1 text-xs text-zinc-500">{resultCount} itens disponíveis em anúncios de atletas e ofertas.</p>
           </div>
 
@@ -81,7 +81,7 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           {QUICK_FILTERS.map((filter) => (
-            <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition ${activeFilter === filter ? 'border-purple-500 bg-purple-600 text-white shadow-md shadow-purple-950/40' : 'border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-zinc-700 hover:text-white'}`}>
+            <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition ${activeFilter === filter ? 'border-red-500 bg-red-600 text-white shadow-md shadow-red-950/40' : 'border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-zinc-700 hover:text-white'}`}>
               {filter === 'all' ? 'Todas as categorias' : filter}
             </button>
           ))}
@@ -92,10 +92,10 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Layers className="h-4 w-4 text-purple-400" />Equipamentos de Atletas <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">{filteredC2CProducts.length}</span></h2>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Layers className="h-4 w-4 text-red-400" />Equipamentos de Atletas <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">{filteredC2CProducts.length}</span></h2>
               <p className="mt-1 text-[11px] text-zinc-500">Vendidos diretamente por atletas — novos sem uso ou já usados, com descrição e conservação informadas pelo anunciante.</p>
             </div>
-            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-purple-400 hover:text-red-300">Ver todos <ChevronRight className="h-3.5 w-3.5" /></button>
+            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver todos <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
           {filteredC2CProducts.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
@@ -109,10 +109,10 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-3 border-b border-zinc-800/80 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-purple-400" />Ofertas <span className="rounded-full border border-purple-500/25 bg-purple-500/10 px-2 py-0.5 text-[10px] text-purple-200">{filteredOffers.length}</span></h2>
+              <h2 className="flex items-center gap-2 text-base font-black text-white sm:text-lg"><Tag className="h-4 w-4 text-red-400" />Ofertas <span className="rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-200">{filteredOffers.length}</span></h2>
               <p className="mt-1 text-[11px] text-zinc-500">Explore equipamentos, compare opções e encontre o produto para o seu esporte.</p>
             </div>
-            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-purple-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
+            <button type="button" onClick={() => openMarketplace()} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">Ver ofertas <ChevronRight className="h-3.5 w-3.5" /></button>
           </div>
           {filteredOffers.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
@@ -123,16 +123,16 @@ export default function HomeHeroAndHighlights({ onSelectProduct, onSelectOffer }
       )}
 
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <button type="button" onClick={() => openMarketplace()} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-purple-500/35 hover:bg-zinc-900">
-          <Tag className="mt-0.5 h-5 w-5 shrink-0 text-purple-400" />
+        <button type="button" onClick={() => openMarketplace()} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/35 hover:bg-zinc-900">
+          <Tag className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
           <span><strong className="block text-sm text-white">Economize nas Melhores Marcas</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Descontos em kimonos, bolas oficiais, raquetes, tênis de quadra, chuteiras e muito mais.</span></span>
         </button>
-        <button type="button" onClick={handleSellClick} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-purple-500/35 hover:bg-zinc-900">
-          <Bike className="mt-0.5 h-5 w-5 shrink-0 text-purple-400" />
+        <button type="button" onClick={handleSellClick} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/35 hover:bg-zinc-900">
+          <Bike className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
           <span><strong className="block text-sm text-white">Venda seu Equipamento Parado</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Anuncie em poucos cliques e negocie diretamente com atletas de todo o país.</span></span>
         </button>
-        <button type="button" onClick={() => setActiveView('community')} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-purple-500/35 hover:bg-zinc-900">
-          <Users className="mt-0.5 h-5 w-5 shrink-0 text-purple-400" />
+        <button type="button" onClick={() => setActiveView('community')} className="group flex items-start gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-left transition hover:border-red-500/35 hover:bg-zinc-900">
+          <Users className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
           <span><strong className="block text-sm text-white">Comunidade de Atletas</strong><span className="mt-1 block text-xs leading-relaxed text-zinc-500">Veja opiniões sinceras sobre equipamentos, relatos de prova e dicas de treino.</span></span>
         </button>
       </section>
