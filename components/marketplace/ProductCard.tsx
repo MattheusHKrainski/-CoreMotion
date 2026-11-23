@@ -86,7 +86,7 @@ export function getDefaultUsageTime(condition: Product['condition']): string {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { addToCart, favorites, toggleFavorite, isVisitor, setAuthModalOpen } = useCoreMotiom();
+  const { addToCart, favorites, toggleFavorite } = useCoreMotiom();
   const isFavorite = favorites.includes(product.id);
 
   if (product.product_type !== 'c2c') return null;
@@ -97,7 +97,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/60 shadow-xl shadow-black/30 transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900/90">
-      {product.image_is_reference && <span className="absolute left-3 top-12 z-10 rounded-md bg-black/80 px-2 py-1 text-[10px] text-zinc-200 pointer-events-none">Imagem de referência</span>}
+      {product.image_is_reference && <span className="absolute left-3 top-12 z-10 rounded-md bg-black/80 px-2 py-1 text-[10px] text-zinc-200 pointer-events-none">Imagem de referência · estado a confirmar</span>}
       <button
         type="button"
         onClick={selectProduct}
@@ -128,8 +128,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <button
         type="button"
-        onClick={() => (isVisitor ? setAuthModalOpen(true) : toggleFavorite(product.id))}
-        aria-label={isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
+        onClick={() => toggleFavorite(product.id)}
+        aria-label={isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'} aria-pressed={isFavorite}
         className={`absolute right-3 top-3 rounded-full p-2 backdrop-blur transition ${
           isFavorite ? 'bg-red-600 text-white' : 'border border-zinc-700 bg-zinc-950/80 text-zinc-300 hover:text-white'
         }`}
@@ -202,7 +202,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               type="button"
               onClick={() => addToCart(product, 1)}
               title="Adicionar ao carrinho"
-              className="rounded-full border border-zinc-700/60 bg-zinc-800/80 p-2 text-zinc-300 transition hover:scale-105 hover:bg-zinc-800 hover:text-white"
+              disabled={product.status !== 'active' || product.stock < 1}
+              className="rounded-full border border-zinc-700/60 bg-zinc-800/80 p-2 text-zinc-300 transition hover:scale-105 hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ShoppingBag className="h-3.5 w-3.5" />
             </button>

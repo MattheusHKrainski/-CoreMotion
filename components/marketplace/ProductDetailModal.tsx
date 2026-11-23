@@ -31,8 +31,6 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
     addToCart,
     favorites,
     toggleFavorite,
-    isVisitor,
-    setAuthModalOpen,
     addToast,
   } = useCoreMotiom();
 
@@ -132,7 +130,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
           
           {/* Left Column: Product Gallery */}
           <div className="space-y-4">
-            {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência do produto.</p>}
+            {product.image_is_reference && <p className="rounded-xl border border-zinc-700 p-3 text-xs text-zinc-400">Imagem de referência: a foto ilustrativa não comprova o estado da peça usada. Peça fotos atuais ao anunciante.</p>}
             <div className="group relative aspect-square w-full bg-[#0E1017] rounded-xl overflow-hidden border border-[#232836] shadow-inner">
               <img
                 key={selectedImgIndex}
@@ -329,6 +327,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
                   onClick={() => {
                     addToCart(product, 1);
                   }}
+                  disabled={product.status !== 'active' || product.stock < 1}
                   className="py-3 px-4 rounded-xl bg-[#0E1017] hover:bg-[#181B22] border border-[#232836] hover:border-[#3B4252] text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
                 >
                   <ShoppingBag className="w-4 h-4" />
@@ -355,10 +354,10 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               <button
                 type="button"
                 onClick={() => {
-                  if (isVisitor) setAuthModalOpen(true);
-                  else toggleFavorite(product.id);
+                  toggleFavorite(product.id);
                 }}
-                className={`w-full py-2 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-colors ${
+                aria-pressed={isFav}
+                 className={`w-full py-2 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-colors ${
                   isFav
                     ? 'bg-red-600/10 text-red-400 border-red-500/30'
                     : 'bg-[#12151C] text-[#9CA3AF] border-[#232836] hover:text-white'
