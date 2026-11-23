@@ -137,7 +137,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
               <ProductImage src={selectedImage} fallbackSrcs={gallery.filter(candidate => candidate !== selectedImage)} alt={item.title} sizes="(max-width: 1023px) 100vw, 740px"/>
             </button>}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500"><ImageIcon className="h-4 w-4"/>{gallery.length} {gallery.length===1?'imagem':'imagens'} do produto</span>
+              
               {gallery.length>1 && <button type="button" onClick={()=>setZoom(true)} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-100 hover:border-red-500">Ver galeria completa</button>}
             </div>
             {gallery.length>1 && <div className="flex gap-2 overflow-x-auto pb-1">{gallery.map((src,i)=><button type="button" key={src+i} onClick={()=>setIndex(i)} aria-label={'Selecionar foto '+(i+1)} aria-pressed={index===i} className={'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-[#11141b] '+(index===i?'border-red-600':'border-zinc-200')}><ProductImage src={src} fallbackSrcs={gallery.filter(candidate => candidate !== src)} alt={item.title+' — miniatura '+(i+1)} sizes="64px"/></button>)}</div>}
@@ -145,7 +145,7 @@ export default function ProductPage({ kind, id }: { kind: string; id: string }) 
           <details open className="rounded-2xl border border-zinc-800 bg-[#14161d] p-5 sm:p-6">
             <summary className="cursor-pointer text-sm font-black">Informações do produto</summary>
             <p className="mt-4 whitespace-pre-line text-sm leading-7 text-zinc-300">{item.description}</p>
-            {'image_is_reference' in item && item.image_is_reference && <p className="mt-3 text-xs text-zinc-500">Imagem de referência fornecida pelo anunciante.</p>}
+            {'image_is_reference' in item && item.image_is_reference && <span className="mt-3 inline-flex rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-200">Foto ilustrativa</span>}
           </details>
         </div>
 
