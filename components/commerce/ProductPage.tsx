@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { isStaffRole } from '@/lib/permissions';
-import { ArrowLeft, ChevronLeft, ChevronRight, Heart, Image as ImageIcon, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Heart, MapPin, ShoppingBag, Truck, X } from 'lucide-react';
 import { useCoreMotiom } from '@/lib/store';
 import { useCommerce } from '@/lib/commerce-store';
 import { money, retailPriceCents, productPath } from '@/lib/commerce';
