@@ -5,7 +5,8 @@ import { useCoreMotiom } from '@/lib/store';
 import { useCommerce } from '@/lib/commerce-store';
 import { EMPTY_ADDRESS, money, retailPriceCents, validateAddress, type ShippingAddress } from '@/lib/commerce';
 import { confirmDemoSale } from '@/services/commerce';
-import { DEMO_PAYMENT_METHODS, demoPaymentLabel, demoPaymentReference, type DemoPaymentMethod } from '@/lib/demo-payments';
+import { demoPaymentLabel, demoPaymentReference, type DemoPaymentMethod } from '@/lib/demo-payments';
+import DemoPaymentPanel from '@/components/commerce/DemoPaymentPanel';
 import AuthModal from '@/components/auth/AuthModal';
 import { sellerContactUrl } from '@/lib/seller-contact';
 import ProductImage from '@/components/shared/ProductImage';
@@ -18,14 +19,12 @@ export default function CheckoutPage() {
   const [step,setStep] = useState<'cart'|'address'|'review'>('cart');
   const [busy,setBusy] = useState(false), [error,setError] = useState(''), [saved,setSaved] = useState('');
   const [method,setMethod] = useState<DemoPaymentMethod>('pix');
-  const [cardBrand,setCardBrand] = useState<'visa' | 'mastercard'>('visa');
-  const [installments,setInstallments] = useState(1);
   const request = useRef<{ signature: string; key: string } | null>(null);
   useEffect(() => {
     let postalCode = '';
     try { const savedCep = sessionStorage.getItem('coremotion-cep') || ''; postalCode = /^\d{8}$/.test(savedCep) ? savedCep : ''; } catch { /* Session storage can be unavailable. */ }
     setAddress({ ...EMPTY_ADDRESS, postalCode });
-    setStep('cart'); setSaved(''); setMethod('pix'); setCardBrand('visa'); setInstallments(1); setError(''); request.current = null;
+    setStep('cart'); setSaved(''); setMethod('pix'); setError(''); request.current = null;
   }, [user?.id]);
   const lines = cart.lines.map(line => ({...line, offer: activeOffers.find(item => item.id===line.offerId)}));
   const invalidVariant = (line: typeof lines[number]) => Boolean(line.offer?.variant_options?.length && !line.offer.variant_options.includes(line.variant));
@@ -66,22 +65,8 @@ export default function CheckoutPage() {
       {step==='review' && <section className="space-y-5 rounded-2xl border border-zinc-800 p-5">
         <div><h2 className="text-lg font-black">Revise e confirme</h2><p className="mt-2 text-sm text-zinc-400">{address.recipient} · {address.street}, {address.number} · {address.district} · {address.city}/{address.state} · CEP {address.postalCode}</p></div>
         <div className="rounded-xl bg-zinc-900 p-4"><p className="text-xs text-zinc-500">Valor dos produtos</p><strong className="text-2xl">{money(subtotal)}</strong><p className="mt-1 text-xs text-zinc-500">O frete não é calculado ou cobrado nesta simulação.</p></div>
-        <fieldset className="space-y-4 rounded-xl border border-zinc-800 p-4">
-          <legend className="px-2 text-sm font-semibold">Forma de pagamento simulada</legend>
-          <div className="grid gap-3 sm:grid-cols-2">{DEMO_PAYMENT_METHODS.map(option => <label key={option.id} className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${method===option.id?'border-red-500 bg-red-500/10':'border-zinc-700 bg-zinc-900'}`}>
-            <input type="radio" name="demo-payment" value={option.id} checked={method===option.id} onChange={() => setMethod(option.id)} className="accent-red-500" />
-            <span><span className="block text-sm font-bold">{option.label}</span><span className="mt-1 block text-xs text-zinc-400">{option.description}</span></span>
-          </label>)}</div>
-          {method==='pix' && <div className="space-y-2 rounded-xl bg-zinc-900 p-4 text-sm"><p className="font-bold">Pix de demonstração</p><p className="text-xs text-zinc-400">Aprovação instantânea simulada ao confirmar o pedido. Não existe QR Code, chave Pix ou cobrança real.</p><p className="break-all font-mono text-xs text-zinc-500">COREMOTION-PIX-DEMONSTRACAO</p></div>}
-          {(method==='credit'||method==='debit') && <div className="grid gap-3 rounded-xl bg-zinc-900 p-4 text-sm sm:grid-cols-2">
-            <label className="text-xs text-zinc-400">Cartão fictício<select value={cardBrand} onChange={event=>setCardBrand(event.target.value as 'visa'|'mastercard')} className="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-sm text-white"><option value="visa">Visa de teste ·•••• 4242</option><option value="mastercard">Mastercard de teste ·•••• 4444</option></select></label>
-            {method==='credit' ? <label className="text-xs text-zinc-400">Parcelamento ilustrativo<select value={installments} onChange={event=>setInstallments(Number(event.target.value))} className="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-sm text-white">{Array.from({length:6},(_,i)=>i+1).map(number=><option key={number} value={number}>{number}x de {money(Math.round(subtotal / number))} (simulado)</option>)}</select></label> : <p className="self-center text-xs text-zinc-400">Débito simulado em uma única parcela.</p>}
-            <p className="sm:col-span-2 text-xs text-amber-200">Não informe número, validade ou CVV reais. Estes cartões são apenas ilustrativos.</p>
-          </div>}
-          {method==='boleto' && <div className="space-y-2 rounded-xl bg-zinc-900 p-4 text-sm"><p className="font-bold">Boleto de demonstração</p><p className="text-xs text-zinc-400">A confirmação é simulada imediatamente, sem banco, vencimento real ou documento pagável.</p><p className="break-all font-mono text-xs text-zinc-500">COREMOTION-BOLETO-DEMONSTRACAO</p></div>}
-        </fieldset>
-        <button type="button" disabled={busy || !available} onClick={() => void finalizeDemo()} className="w-full rounded-xl bg-red-600 p-4 text-sm font-bold hover:bg-red-500 disabled:opacity-40">{busy ? 'Confirmando…' : 'Confirmar pedido simulado'}</button>
-        <p className="text-center text-xs text-zinc-500">Ambiente de demonstração: nenhuma cobrança financeira é realizada.</p>
+        <DemoPaymentPanel method={method} onMethodChange={setMethod} subtotal={subtotal} busy={busy} available={available} onConfirm={finalizeDemo} />
+
         <button type="button" disabled={busy} onClick={() => setStep('address')} className="text-xs text-zinc-400">Editar endereço</button>
       </section>}
       {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
