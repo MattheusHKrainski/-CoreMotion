@@ -1,102 +1,101 @@
 # CoreMotion
 
-**Marketplace esportivo para atletas de todos os tipos.**
+**Marketplace e comunidade esportiva em um só lugar.**
 
-O CoreMotion é uma plataforma web que reúne produtos e ofertas esportivas, anúncios de equipamentos entre usuários e recursos de comunidade em um único ambiente. O projeto é desenvolvido como Trabalho de Conclusão de Curso (TCC), com foco em facilitar a descoberta de produtos e aproximar pessoas que praticam esportes.
+O **CoreMotion** é um projeto de Trabalho de Conclusão de Curso (TCC) desenvolvido para reunir produtos esportivos, anúncios de equipamentos entre atletas e uma comunidade de pessoas ligadas ao esporte. O objetivo é facilitar a descoberta de produtos por modalidade e aproximar atletas, treinadores e consumidores.
 
-> **Fluxo de compra:** o checkout permite concluir um pagamento de **teste** e acompanhar seu registro no banco, sem processamento financeiro externo. Frete e entrega são tratados separadamente.
-
----
+> **Importante:** o checkout da CoreShop é **100% simulado**. Pix, cartões e boleto não movimentam dinheiro. O QR de demonstração é escaneável como texto, mas **não é um código Pix bancário pagável**.
 
 ## Sumário
 
-- [Principais funcionalidades](#principais-funcionalidades)
+- [Proposta e funcionalidades](#proposta-e-funcionalidades)
+- [Como funciona a compra](#como-funciona-a-compra)
 - [Perfis e permissões](#perfis-e-permissões)
-- [Tecnologias](#tecnologias)
-- [Arquitetura](#arquitetura)
+- [Tecnologias e arquitetura](#tecnologias-e-arquitetura)
 - [Banco de dados](#banco-de-dados)
-- [Qualidade e testes](#qualidade-e-testes)
-- [Estrutura do projeto](#estrutura-do-projeto)
+- [Testes e validação](#testes-e-validação)
+- [Estrutura do repositório](#estrutura-do-repositório)
 - [Equipe](#equipe)
+- [Estado e limitações](#estado-e-limitações)
+- [Links](#links)
 
-## Principais funcionalidades
+## Proposta e funcionalidades
 
-### Marketplace esportivo
-- Catálogo de produtos esportivos com pesquisa, filtragem por modalidade e navegação por clube; em 22/11/2026, são 848 ofertas ativas, incluindo 400 produtos adicionais conferidos em lojas oficiais.
-- Exibição de produtos e ofertas de lojas externas, com acesso ao endereço de origem da oferta.
-- Anúncios de equipamentos entre atletas, incluindo informações sobre condição, modalidade e preço.
-- Galerias reais do mesmo produto (589 ofertas com múltiplas imagens na captura de 22/11/2026), opções de tamanho e cores quando disponíveis, carrinho, favoritos e acompanhamento de pedidos.
-- Área de perfil para informações da conta e atividades relacionadas ao usuário.
+### CoreShop — catálogo esportivo
+
+- Descoberta por modalidade, marcas e clubes; pesquisa e filtros.
+- Produtos com imagens, descrição, preço, opções de tamanho/cor quando disponíveis e indicação de estoque ou esgotamento.
+- Favoritos, carrinho, revisão da compra e histórico de pedidos demonstrativos.
+- Página inicial com campanha, carrosséis, destaques e notícias de lançamentos reais. **Um produto divulgado como lançamento não significa que esteja disponível à venda.**
+- Catálogo de clubes de futebol, vôlei e basquete, conforme os dados disponíveis.
+
+### Equipamentos de atletas — C2C
+
+Usuários podem anunciar equipamentos usados ou novos sem uso, com informações sobre modalidade, preço e conservação. A negociação ocorre por **contato direto com o anunciante**, não pelo checkout demonstrativo da CoreShop. O carrinho de anúncios de atletas está acessível em `/compras` para consulta e contato.
 
 ### Comunidade esportiva
-- Publicações sobre treinos, equipamentos, eventos, dúvidas e conquistas.
-- Curtidas, comentários e denúncias de publicações.
-- Recursos voltados à descoberta de atletas e treinadores.
+
+Feed de publicações, interações, comentários, curtidas, denúncias e recursos de perfis esportivos. A intenção é aproximar atletas, treinadores e outros participantes além do processo de compra.
 
 ### Gestão e moderação
-- Painel administrativo para gerenciamento de usuários, produtos, ofertas, pedidos e conteúdo denunciado.
-- Perfis de acesso com permissões diferentes.
-- Gestão de ofertas externas, incluindo cadastro, atualização, ativação e remoção.
-- Recursos de moderação para ajudar a manter a plataforma organizada.
 
-### Pagamento e checkout
-O checkout CoreMotion organiza carrinho, endereço e revisão do pedido. A função autenticada `simulate_core_sale_payment` registra a aprovação de teste com verificação de propriedade, idempotência e histórico de eventos. O cliente recebe confirmação no site e consegue acompanhar/cancelar o pedido; nenhum pagamento bancário é efetivado por esse procedimento. O catálogo de clubes contém os 20 participantes da Série A brasileira, os 12 da Superliga A Masculina de vôlei e os 18 do NBB CAIXA de basquete masculino em 2026/27. Só são anunciados produtos de times com páginas e imagens de produtos identificadas.
+Recursos para usuários, supervisores e administradores, incluindo gerenciamento e moderação de contas, anúncios e publicações, observadas as permissões de cada perfil.
+
+**Nota sobre a evolução:** o projeto deixou de ter como proposta principal o encaminhamento do comprador para ofertas externas. Algumas tabelas e componentes ainda conservam nomes históricos, como `external_offers`, por compatibilidade com o catálogo existente. Isso não representa o modelo comercial pretendido.
+
+## Como funciona a compra
+
+O fluxo de demonstração da **CoreShop** é: **carrinho → endereço → revisão e CPF → escolha do pagamento → confirmação → Meus pedidos**.
+
+- **Pix:** QR Code e referência demonstrativos, sem chave bancária e sem pagamento real.
+- **Cartão de crédito e débito:** formulário visual realista, mas com **dados fictícios**, sem processamento financeiro.
+- **Boleto:** referência ilustrativa, que não representa cobrança bancária.
+- **CPF:** o formulário exige um número com dígitos verificadores válidos antes de permitir a confirmação; isso não equivale a identificação fiscal externa ou antifraude.
+- **Confirmação:** a RPC autenticada `confirm_demo_order` valida o carrinho e os preços a partir do catálogo, usa uma chave idempotente para evitar duplicidade da mesma tentativa e registra o pedido demonstrativo em `core_sale_orders`.
+- **Histórico:** o usuário acompanha os registros na área `/pedidos`, conforme suas permissões.
+
+**Não existe integração com banco, adquirente, gateway de pagamento, transportadora nem liquidação real de valores.** Não use dados de cartões verdadeiros nas demonstrações.
 
 ## Perfis e permissões
 
-As permissões são organizadas conforme o papel da conta:
-
-| Perfil | Acesso geral |
+| Perfil | O que pode fazer |
 |---|---|
-| **Visitante** | Explorar as áreas públicas da plataforma. |
-| **Atleta / usuário** | Participar da comunidade, interagir com publicações e anunciar equipamentos entre usuários. |
-| **Anunciante** | Utilizar os recursos de usuário e administrar seus anúncios conforme as permissões disponíveis. |
-| **Supervisor** | Apoiar a moderação de conteúdo, anúncios, contas e pedidos. |
-| **Administrador** | Gerenciar a plataforma e as permissões administrativas. |
+| Visitante | Navegar pelo conteúdo público e explorar produtos. |
+| Usuário / atleta | Gerenciar perfil, interagir com a comunidade, usar a CoreShop e anunciar equipamentos quando autenticado. |
+| Anunciante | Gerenciar seus próprios anúncios conforme as regras de acesso. |
+| Supervisor | Exercer funções autorizadas de acompanhamento e moderação. |
+| Administrador | Gerenciar funcionalidades e permissões administrativas da plataforma. |
 
-As permissões são definidas no código e reforçadas no servidor e no banco de dados. As ações disponíveis podem variar conforme o recurso e a configuração do ambiente.
+A aplicação usa autenticação do Supabase e políticas de **Row Level Security (RLS)** para proteger operações no banco. O acesso exato depende do papel, do recurso e das regras implementadas.
 
-## Tecnologias
+### Acesso rápido
 
-| Área | Tecnologias | Uso |
+Login e cadastro oferecem a opção de salvar uma conta real autenticada para acesso rápido no navegador, desmarcada por padrão. Não há usuários de teste automáticos nessa função. Evite utilizar a opção em dispositivos compartilhados. Detalhes em [Acesso rápido de contas](docs/auth/acesso-rapido-contas-salvas.md).
+
+## Tecnologias e arquitetura
+
+| Camada | Tecnologias | Finalidade |
 |---|---|---|
-| **Front-end** | Next.js 15, React 19, TypeScript, Tailwind CSS 4 | Interface, navegação e componentes da aplicação. |
-| **Back-end** | Rotas de API do Next.js, Node.js | Regras de negócio, validação e operações executadas no servidor. |
-| **Banco de dados** | Supabase, PostgreSQL | Persistência e relacionamento dos dados. |
-| **Autenticação** | Supabase Auth | Cadastro, login e sessão de usuário. |
-| **Validação** | Zod | Validação de dados de entrada. |
-| **Qualidade** | ESLint, TypeScript, testes automatizados | Verificações de código e testes. |
-| **Versionamento e CI** | Git, GitHub, GitHub Actions | Colaboração, histórico e execução automatizada de verificações. |
+| Front-end | Next.js 15, React 19, TypeScript, Tailwind CSS 4 | Páginas, componentes, navegação e interface responsiva. |
+| Back-end | Node.js, rotas de API Next.js | Regras e operações no servidor. |
+| Dados | Supabase e PostgreSQL | Persistência, funções SQL e políticas RLS. |
+| Autenticação | Supabase Auth | Login, sessão e autorização. |
+| Validação | Zod e validações no código e no banco | Conferência dos dados de entrada. |
+| Qualidade | ESLint, TypeScript e testes automatizados | Análise estática e testes. |
+| Colaboração | Git, GitHub e GitHub Actions | Versionamento, pull requests e CI. |
+| Deploy | Vercel | Preview e hospedagem da aplicação web. |
 
-## Arquitetura
-
-A aplicação utiliza Next.js para a interface e para as rotas de API. O Supabase fornece autenticação e banco de dados PostgreSQL. As rotas de servidor executam operações que exigem validação e acesso protegido aos dados.
-
-Em linhas gerais:
-
-1. **Interface:** páginas, visualizações e componentes React.
-2. **Aplicação:** regras de negócio e rotas de API do Next.js.
-3. **Dados:** PostgreSQL hospedado no Supabase, com políticas de Row Level Security (RLS).
-4. **Acesso:** autenticação e verificação de permissões antes de operações restritas.
-
-A segurança depende também da configuração correta das políticas RLS, das variáveis de ambiente e das permissões no Supabase. Chaves privadas não devem ser expostas no navegador nem enviadas ao repositório.
+A interface React/Next.js conversa com as rotas e serviços da aplicação, que consultam ou alteram o banco PostgreSQL através de operações autorizadas. Funções críticas de pedidos são executadas no Supabase. Variáveis de ambiente privadas e segredos nunca devem ser adicionados ao repositório.
 
 ## Banco de dados
 
-O CoreMotion utiliza PostgreSQL no Supabase para organizar informações relacionadas a:
+O esquema PostgreSQL registra perfis, papéis, produtos e anúncios, opções de produto, imagens, carrinhos, pedidos demonstrativos, publicações, interações, denúncias e ações administrativas. As mudanças estruturais são versionadas em [supabase/migrations](supabase/migrations/).
 
-- Perfis e permissões de usuários.
-- Produtos e anúncios.
-- Ofertas externas, galerias de produto e diretório dos 50 clubes.
-- Carrinho, pedidos e informações de entrega.
-- Publicações e interações da comunidade.
-- Denúncias, notificações e registros de gestão.
+Leia também a [documentação do banco](database/README.md) e a [auditoria técnica de pré-lançamento](docs/validacao/auditoria-v1-20261123.md). Alguns arquivos de documentação antigos explicam etapas anteriores do projeto e podem não refletir o fluxo comercial atual.
 
-As tabelas, políticas e funções SQL versionadas encontram-se em `supabase/migrations/`. A documentação complementar está em [`database/README.md`](database/README.md). Consulte também a [auditoria da ampliação do catálogo](docs/catalogo/expansao-400-reais-e-ligas-2026-11-22.md).
+## Testes e validação
 
-## Qualidade e testes
-
-O projeto inclui verificações estáticas com ESLint e TypeScript, além de scripts de teste para partes do sistema e do banco de dados. Para conferir a situação atual antes de uma entrega, execute:
+Os comandos abaixo permitem executar as verificações automatizadas do repositório:
 
 ```bash
 npm run lint
@@ -106,58 +105,49 @@ npm run test:db
 npm run build
 ```
 
-O resultado dos testes pode variar conforme as variáveis de ambiente e a configuração local. Não considere um teste aprovado sem executar o comando e conferir sua saída no ambiente atual.
+Os resultados variam conforme as dependências e o ambiente. A auditoria de 23/11/2026 registrou **300 testes unitários, 77 testes de banco e CI aprovados**, além de **16 avisos de lint sem erros bloqueantes** naquele commit. **Isso não significa homologação completa:** o fluxo autenticado em navegador, a experiência em dispositivos diferentes e as permissões avançadas precisam ser validados antes de afirmar ausência de falhas.
 
-## Estrutura do projeto
+## Estrutura do repositório
 
 ```text
-app/                    Páginas e rotas da aplicação Next.js
-  api/                  Endpoints de API
-components/             Componentes e telas da interface
-lib/                    Tipos, permissões, estado e regras auxiliares
-services/               Integrações e acesso a dados
-fixtures/               Dados iniciais e conteúdo de referência do projeto
-supabase/
-  migrations/           Migrações SQL e políticas do banco
-database/               Documentação e testes do banco de dados
-scripts/                Scripts auxiliares
-tests/                  Testes automatizados
-docs/                   Diagramas, validações e documentos do TCC
-.github/workflows/      Fluxos de integração contínua
+app/                  Páginas e rotas da aplicação
+components/           Componentes da interface e comércio
+lib/                  Regras auxiliares, tipos e estado
+services/             Integrações e acesso aos dados
+fixtures/             Conteúdos de referência e dados iniciais
+supabase/migrations/  Migrações SQL e políticas
+database/             Testes e documentação do banco
+tests/                Testes automatizados
+docs/                 Documentação do TCC e auditorias
+.github/workflows/    Integração contínua
 ```
 
 ## Equipe
 
-Projeto desenvolvido por uma equipe de cinco integrantes, com organização de tarefas inspirada na metodologia ágil Scrum.
+Projeto desenvolvido por **cinco integrantes**, organizados com práticas de Scrum. As responsabilidades se complementam.
 
-| Integrante | Responsabilidade principal |
+| Integrante | Área principal |
 |---|---|
-| **Marcus** | Liderança e Scrum Master; organização das sprints e acompanhamento das tarefas. |
-| **André** | Design; identidade visual, UI/UX, telas e componentes. |
-| **Alfeu** | Banco de dados; modelagem, Supabase, SQL e integridade dos dados. |
-| **Mattheus Krainski** | Funcionalidades e back-end; rotas, APIs, marketplace, carrinho e fluxo de compra. |
-| **Bruno e Mattheus** | Comunidade; feed, perfis, publicações e interações. |
+| Marcus | Organização de tarefas, liderança e Scrum Master. |
+| André | Identidade visual, design e experiência do usuário. |
+| Alfeu | Banco de dados, Supabase e integridade das informações. |
+| Mattheus Krainski | Funcionalidades, back-end, carrinho e pedidos. |
+| Bruno | Recursos de comunidade, perfis e interações em colaboração com a equipe. |
+
+## Estado e limitações
+
+O CoreMotion é um **protótipo acadêmico funcional**, não uma operação comercial com pagamentos reais. A monetização por comissões e parcerias é parte da **proposta de negócio futura**, e exigiria validação de fornecedores, pagamentos, logística, documentação e operação.
+
+O histórico de commits e deploys pode ser conferido no GitHub e na Vercel. Um build bem-sucedido **não comprova que todos os fluxos foram testados de ponta a ponta**. A versão estável `v1.0.0` só deve ser marcada como concluída após os critérios de homologação definidos em [auditoria de pré-lançamento](docs/validacao/auditoria-v1-20261123.md).
 
 ## Links
 
+- **Aplicação:** https://core-motion-siyz.vercel.app
 - **Repositório:** https://github.com/MattheusHKrainski/-CoreMotion
-- **Supabase:** configurar o acesso pelo painel do projeto; não publicar chaves privadas ou credenciais.
-- **Documentação do banco:** [`database/README.md`](database/README.md)
-- **Migrações:** [`supabase/migrations/`](supabase/migrations/)
+- **Banco e migrações:** [supabase/migrations](supabase/migrations/)
+- **Expansão do catálogo:** [Relatório de 22/11/2026](docs/catalogo/expansao-400-reais-e-ligas-2026-11-22.md)
+- **Auditoria de segurança e estabilidade:** [Relatório de 23/11/2026](docs/validacao/auditoria-v1-20261123.md)
 
 ---
 
-**CoreMotion — Marketplace esportivo para atletas de todos os tipos.**
-
-
-### Contas salvas no acesso rápido
-
-Login e cadastro oferecem a opção **Salvar esta conta no acesso rápido**, desmarcada por padrão. Somente contas reais autenticadas são adicionadas; não há mais perfis rápidos temporários. Os cartões mostram nome/tipo e permitem remover o acesso com confirmação, sem excluir a conta. A lista e os tokens de sessão ficam apenas neste navegador, nunca as senhas. Use somente em um dispositivo de confiança. Consulte [persistência, logout e validação](docs/auth/acesso-rapido-contas-salvas.md).
-
-## Auditoria de estabilidade e segurança
-
-O CoreShop tem checkout **exclusivamente simulado** (Pix, crédito, débito e boleto), com pedido salvo em core_sale_orders e confirmação pela RPC confirm_demo_order. O QR da demonstração pode ser lido por um leitor comum, mas **não é um payload Pix bancário nem um meio de transferir dinheiro**.
-
-Anúncios C2C de atletas são negociados pelo contato com o anunciante, separados do checkout CoreShop. O carrinho de atletas permanece acessível em /compras. A antiga janela de checkout C2C, que permitia persistir pedidos sem validação de preços no servidor, não é mais apresentada.
-
-A auditoria de pré-lançamento, os testes executados, as limitações e critérios para a tag v1.0.0 estão descritos em [docs/validacao/auditoria-v1-20261123.md](docs/validacao/auditoria-v1-20261123.md). Um build aprovado não significa que todas as funcionalidades tenham sido homologadas em navegador.
+**CoreMotion — Encontre. Movimente-se. Evolua.**
